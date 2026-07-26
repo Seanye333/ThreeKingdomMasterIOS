@@ -132,6 +132,7 @@ import { HudButton, HudChip } from '../components/HudControls';
 //  re-exported so existing importers keep working.)
 import { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_COLOR } from './battle3d/battleGrid';
 import { EmbeddedSceneCtx, IS_MOBILE } from './battle3d/shared';
+import { hitArc, ARC_MUL, ARC_LABEL } from './battle3d/facing';
 export { EmbeddedSceneCtx };
 import { AdaptiveFx, UnitMesh, UNIT_GLYPH } from './battle3d/UnitVisuals3D';
 export { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_COLOR };
@@ -2262,6 +2263,12 @@ export function BattleScene({
             isWounded={isWounded}
             lunge={arc ? { to: arc.to, at: arc.spawnedAt } : null}
             formation={u.side === 'attacker' ? battle.attackerFormation : battle.defenderFormation}
+            // 向背 — full arcs on the unit in hand; dimmed on whatever the
+            // cursor is over, which is exactly when you are sizing up an
+            // enemy's exposed back.
+            showArcs={selectedId === u.id ? 'full'
+              : (hovered && hovered.col === u.coord.col && hovered.row === u.coord.row) ? 'dim'
+                : false}
           />
         );
       })}
@@ -3543,6 +3550,19 @@ export function TacticalBattleScreen3D() {
                 {counterBad && (
                   <div style={{ color: '#e88a7a' }}>↓ {t(`被${counterBad.zh}`, `vuln ${counterBad.en}`)}</div>
                 )}
+                {/* 向背 — name the arc this blow lands on. The engine already
+                    applies ×1.25 / ×1.12 for rear and flank; without this the
+                    player had to guess where the target was pointed. */}
+                {(() => {
+                  const arcKind = hitArc(tgt, selectedUnit.coord);
+                  if (arcKind === 'front' || arcKind === 'unknown') return null;
+                  const L = ARC_LABEL[arcKind];
+                  return (
+                    <div style={{ color: arcKind === 'rear' ? '#ff8a6a' : '#e0c070' }}>
+                      {arcKind === 'rear' ? '⇠' : '⇢'} {t(`擊其${L.zh}`, `${L.en} attack`)} ×{ARC_MUL[arcKind].toFixed(2)}
+                    </div>
+                  );
+                })()}
                 {f.defShield < 1 && (
                   <div style={{ color: '#a0b8d8' }}>🛡 {t('敵據地利', 'enemy terrain')} ×{f.defShield.toFixed(2)}</div>
                 )}

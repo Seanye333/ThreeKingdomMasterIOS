@@ -14,6 +14,7 @@ import { groundNormalTexture } from '../battleTextures';
 import { SelectionRing3D } from '../../components/SelectionRing3D';
 import { useT } from '../../i18n';
 import { hexWorld } from './battleGrid';
+import { facingRotationY } from './facing';
 import { EmbeddedSceneCtx, IS_MOBILE } from './shared';
 
 /** Subtler grain for armour plate so it catches light without looking pitted. */
@@ -462,6 +463,46 @@ function SelectionMarker({ yLift }: { yLift: number }) {
   return <SelectionRing3D radius={0.66} y={0.05} chevronY={1.5 + yLift} />;
 }
 
+/**
+ * 向背 — the three arcs drawn flat on a unit's hex: where it is strong, where
+ * it is soft, and where it is open.
+ *
+ * Front is one hex-direction wide (the braced arc), the two flanks amber, the
+ * rear a single red wedge. Drawn in the unit group's LOCAL space, so it turns
+ * with the model and needs no extra bookkeeping.
+ *
+ * This is what makes ×1.25 playable: a glance now tells you which enemy has
+ * its back to you, and whether your own spear line is pointed the right way.
+ * Only rendered for the unit under the cursor or selection — six of these on
+ * screen at once would be noise, not information.
+ */
+function FacingArcs({ dim = false }: { dim?: boolean }) {
+  const R_IN = 0.70, R_OUT = 1.02;
+  // A hex direction spans 60°; three.js ring angles start at +X and go CCW,
+  // while the model faces −Z, so the front wedge is centred on −Z.
+  const wedge = (fromDeg: number, toDeg: number, color: string, opacity: number) => {
+    const a0 = (fromDeg * Math.PI) / 180;
+    const span = ((toDeg - fromDeg) * Math.PI) / 180;
+    return (
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.035, 0]}>
+        <ringGeometry args={[R_IN, R_OUT, 24, 1, a0, span]} />
+        <meshBasicMaterial color={color} transparent opacity={opacity * (dim ? 0.5 : 1)} depthWrite={false} />
+      </mesh>
+    );
+  };
+  return (
+    <group>
+      {/* Front — 60° centred on the facing direction (−Z ⇒ 90° in ring space). */}
+      {wedge(60, 120, '#7ec0e0', 0.5)}
+      {/* Flanks — the two 120° arcs either side. */}
+      {wedge(120, 240, '#e0b050', 0.34)}
+      {wedge(-60, 60, '#e0b050', 0.34)}
+      {/* Rear — 60° opposite the facing: the ×1.25 window. */}
+      {wedge(240, 300, '#e04a30', 0.55)}
+    </group>
+  );
+}
+
 /** 武將立繪 — a properly proportioned low-poly warrior to replace the old
  *  cylinder-and-sphere "snowman": armoured legs + boots, a layered lamellar
  *  cuirass with tassets, broad curved pauldrons, posed arms with hands, a
@@ -592,7 +633,7 @@ function WarriorFigure({
 }
 
 export function UnitMesh({
-  unit, terrainH, isPlayer, selected, onClick, isWounded, lunge, formation,
+  unit, terrainH, isPlayer, selected, onClick, isWounded, lunge, formation, showArcs,
 }: {
   unit: TacticalUnit;
   terrainH: number;
@@ -604,6 +645,9 @@ export function UnitMesh({
   lunge?: { to: HexCoord; at: number } | null;
   /** 陣形 — the side's active formation shapes the rank-and-file layout. */
   formation?: string;
+  /** 向背 — draw the front/flank/rear arcs under this unit. 'full' for the
+   *  selected unit, 'dim' while merely hovered. */
+  showArcs?: 'full' | 'dim' | false;
 }) {
   const t = useT();
   const [tx, tz] = hexWorld(unit.coord.col, unit.coord.row);
@@ -632,6 +676,16 @@ export function UnitMesh({
     // Lerp x/z toward target hex
     tgt.x += (tx - tgt.x) * Math.min(1, delta * 6);
     tgt.z += (tz - tgt.z) * Math.min(1, delta * 6);
+    // 朝向 — turn the model to face its hex `facing`, eased so a unit pivots
+    // rather than snapping. This is the visible half of a mechanic that has
+    // been running invisibly: a rear hit is ×1.25, a flank ×1.12, and a spear
+    // line facing its attacker braces against cavalry. See ./facing.
+    const wantY = facingRotationY(unit.coord, unit.facing);
+    // Shortest way round the circle, so 350° → 10° turns 20° and not 340°.
+    let dY = wantY - g.rotation.y;
+    while (dY > Math.PI) dY -= Math.PI * 2;
+    while (dY < -Math.PI) dY += Math.PI * 2;
+    g.rotation.y += dY * Math.min(1, delta * 8);
     // Idle bob + selected hover
     const moving = Math.abs(tgt.x - tx) > 0.01 || Math.abs(tgt.z - tz) > 0.01;
     const bobBase = terrainH + 0.02;
@@ -824,6 +878,11 @@ export function UnitMesh({
       )}
       {/* 選定標記 — pulsing ground ring + bobbing head chevron. */}
       {selected && <SelectionMarker yLift={yLift} />}
+      {/* 向背 — which side of this unit is soft. Only for the unit in hand or
+          under the cursor: six sets of arcs at once would be noise. */}
+      {showArcs && unit.troops > 0 && unit.facing !== undefined && (
+        <FacingArcs dim={showArcs === 'dim'} />
+      )}
       {/* HTML overlay — unit info, always-upright crisp text. Skipped in the
           embedded diorama, and dropped the instant the unit is wiped out so a
           floating label doesn't hover over the toppling corpse. */}
