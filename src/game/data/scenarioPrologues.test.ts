@@ -32,6 +32,23 @@ describe('SCENARIO_PROLOGUES wiring', () => {
     }
   });
 
+  /**
+   * 混語 — half-translated fragments have shipped in this file before
+   * ("north上太行" survived review and tsc alike). Nothing else can catch it:
+   * it is valid TypeScript and renders happily.
+   */
+  it('has no latin words stranded inside the Chinese text', () => {
+    for (const [sid, p] of Object.entries(SCENARIO_PROLOGUES)) {
+      const zh = [p.intro.zh, ...Object.values(p.forces ?? {}).map((t) => t.zh)];
+      for (const text of zh) {
+        expect(
+          /[A-Za-z]{3,}/.test(text.replace(/\\n/g, '')),
+          `${sid}: latin word inside Chinese — "${text.slice(0, 40)}"`,
+        ).toBe(false);
+      }
+    }
+  });
+
   it('scenarioPrologue() resolves intro and force text, and degrades safely', () => {
     const known = Object.keys(SCENARIO_PROLOGUES)[0];
     const withForce = Object.entries(SCENARIO_PROLOGUES).find(([, p]) => p.forces);
