@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
 import { surfaceRelief } from '../../materials';
+import { FLOWER, HOUSE_ROOF, HOUSE_WALL, ROBE } from './sceneryData';
 import { RENDER_HI } from '../../renderQuality';
 import { useT } from '../../i18n';
 import { shade, ChineseRoof3D, SeasonCtx, NightCtx } from './Folk3D';
@@ -22,18 +23,9 @@ import type { Officer } from '../../../game/types';
  * (people and the season/night contexts).
  */
 
-export function dwellingHash(col: number, row: number): number {
-  let h = (col * 73856093) ^ (row * 19349663);
-  h = (h ^ (h >>> 13)) >>> 0;
-  return h;
-}
-export const HOUSE_WALL = ['#c8b48a', '#bfa980', '#cdbb95', '#b8a276', '#d0bd97'];
-export const HOUSE_ROOF = ['#3a2818', '#46342a', '#2f4a55', '#403020', '#34404a'];
 // Terrains a house can't sit on.
-export const NO_BUILD_TERRAIN = new Set(['river', 'water', 'lake', 'sea', 'mountain', 'deep-water']);
 // Wilderness flattened to level city ground (no mountains/hills/trees inside
 // the walls); standing water is kept as the odd pond.
-export const WILDERNESS_TERRAIN = new Set(['mountain', 'hill', 'forest', 'wetland', 'river', 'marsh', 'rocky']);
 
 // Per-season lighting mood for the city view. The game advances by season (no
 // wall-clock), so each season also carries a characteristic sun angle —
@@ -43,12 +35,6 @@ export const WILDERNESS_TERRAIN = new Set(['mountain', 'hill', 'forest', 'wetlan
 export type SeasonKey = 'spring' | 'summer' | 'autumn' | 'winter';
 // nightGlow: how strongly the braziers/lanterns cast warm light — low in the
 // bright seasons, high in the dim ones, so winter reads as a lantern-lit dusk.
-export const SEASON_LIGHT: Record<SeasonKey, { ambient: number; ambientColor: string; sun: string; sunI: number; sunPos: [number, number, number]; fog: string; sky: string; nightGlow: number }> = {
-  spring: { ambient: 0.62, ambientColor: '#fdf3e0', sun: '#fff0d8', sunI: 1.2, sunPos: [10, 17, 8], fog: '#bcd2e4', sky: 'linear-gradient(180deg, #6f9fd8 0%, #a8c8e0 100%)', nightGlow: 0.25 },
-  summer: { ambient: 0.72, ambientColor: '#fffaf0', sun: '#fff8e8', sunI: 1.5, sunPos: [6, 23, 4], fog: '#c8dcec', sky: 'linear-gradient(180deg, #4f93d8 0%, #9fc8ee 100%)', nightGlow: 0.1 },
-  autumn: { ambient: 0.55, ambientColor: '#f6e6c4', sun: '#ffd49a', sunI: 1.08, sunPos: [15, 10, 6], fog: '#d8c6a4', sky: 'linear-gradient(180deg, #b8946a 0%, #e0c89a 100%)', nightGlow: 0.55 },
-  winter: { ambient: 0.5, ambientColor: '#e8f0f8', sun: '#e8eef8', sunI: 0.82, sunPos: [12, 9, -4], fog: '#cdd8e6', sky: 'linear-gradient(180deg, #8aa6c0 0%, #cdd9e6 100%)', nightGlow: 0.7 },
-};
 
 
 
@@ -572,8 +558,6 @@ export function MarketStall3D({ x, z, seed }: { x: number; z: number; seed: numb
 }
 
 /* ─── Street life — villagers, props, water features ─────────────────── */
-export const ROBE = ['#b8442e', '#3a6a98', '#5a8a3a', '#8a6a40', '#7a4a8a', '#c2a23a', '#4a6a6a', '#a85838'];
-export const FLOWER = ['#d24a6a', '#e0a83a', '#c85ad0', '#e85a3a', '#f0d040', '#e86aa0'];
 
 /** A tiny townsfolk figure — robe, head, conical hat or topknot. Static. */
 export function Villager3D({ x, z, seed }: { x: number; z: number; seed: number }) {

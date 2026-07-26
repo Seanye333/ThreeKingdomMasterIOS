@@ -92,8 +92,14 @@ export function SkyEnvironment({
     const rt = pmrem.fromScene(envScene, 0.06);
     const prevEnv = scene.environment;
     const prevIntensity = scene.environmentIntensity;
+    // Mutating the three.js Scene is how this API works — `scene.environment`
+    // is the documented way to bind an IBL map, and R3F hands us the live
+    // object precisely so effects can do this. The compiler rule assumes React
+    // state semantics; the cleanup below restores the previous values.
+    /* eslint-disable react-hooks/immutability */
     scene.environment = rt.texture;
     scene.environmentIntensity = intensity;
+    /* eslint-enable react-hooks/immutability */
 
     return () => {
       scene.environment = prevEnv;

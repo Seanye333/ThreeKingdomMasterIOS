@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useRef, useContext } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { ScenePostFx, seasonGrade } from '../components/ScenePostFx';
+import { ScenePostFx } from '../components/ScenePostFx';
+import { seasonGrade } from '../sceneGrade';
 import { SkyEnvironment } from '../components/SkyEnvironment';
 import { OrbitControls, Html, Instances, Instance, SoftShadows } from '@react-three/drei';
 import * as THREE from 'three';
@@ -88,25 +89,22 @@ import {
   LilyPads3D,
   MarketStall3D,
   MovingCart3D,
-  NO_BUILD_TERRAIN,
   Pagoda3D,
   Paifang3D,
   Reed3D,
   RuinsOverlay,
-  SEASON_LIGHT,
   SmallBoat3D,
   SpecialtyProp3D,
   StoneBridge3D,
   StonePath3D,
   Tavern3D,
   Villager3D,
-  WILDERNESS_TERRAIN,
   Walker3D,
   WallBanner3D,
   WaterGate3D,
   Well3D,
-  dwellingHash,
 } from './city3d/Scenery3D';
+import { NO_BUILD_TERRAIN, SEASON_LIGHT, WILDERNESS_TERRAIN, dwellingHash } from './city3d/sceneryData';
 import type {
   CityActivity,
   CityFigures,

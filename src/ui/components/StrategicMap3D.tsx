@@ -1,7 +1,8 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Html, Line, OrbitControls, SoftShadows } from '@react-three/drei';
-import { ScenePostFx, seasonGrade } from './ScenePostFx';
+import { ScenePostFx } from './ScenePostFx';
+import { seasonGrade } from '../sceneGrade';
 import { SkyEnvironment } from './SkyEnvironment';
 import { RENDER_HI } from '../renderQuality';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
