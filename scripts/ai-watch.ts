@@ -60,12 +60,29 @@ const PHRASES: Array<[string, RegExp, 'common' | 'rare']> = [
   ['設伏/伏擊', /設伏|伏兵|中伏/, 'common'],
   ['計略', /離間|流言|疑兵|詐降|反間/, 'common'],
   ['諜報', /細作|間諜|諜報|刺探/, 'common'],
-  ['外交', /結盟|和睦|絕交|稱臣|歲幣/, 'common'],
   ['災異', /蝗|大水|地動|疫|旱/, 'common'],
   ['民變/教亂', /起義|信眾蔓延|太平道|黃天|流民作亂|饑荒蔓延/, 'common'],
-  ['焚橋/攔江', /焚橋|斷渡|攔江|鐵鎖/, 'rare'],
-  ['劫糧道', /劫了.*糧道/, 'rare'],
 ];
+
+/*
+ * Three rows used to live here and all three lied.
+ *
+ *  外交 — matched /結盟|和睦|絕交|稱臣|歲幣/ and read 7 against 諜報's 372, which
+ *    looks like an inert diplomacy AI. It isn't: measured off the state, the
+ *    same run ends with 33 non-aggression pacts, 4 alliances, and 2,083 changes
+ *    of relation status/score. The regex simply missed the wording. It is now
+ *    counted from `diplomacy.relations` below.
+ *
+ *  焚橋/攔江 and 劫糧道 — 0 forever, because no AI code path can produce either:
+ *    `burnBridge` is a player store action, and `raid-supply` is a TACTICAL
+ *    stratagem that has no strategic-layer equivalent. A row that asks the AI
+ *    for something it structurally cannot do is not a smell test, it is a
+ *    permanent false alarm. Stated at the end of the report instead.
+ *
+ * The rule this leaves behind: a keyword row is only honest when the behaviour
+ * actually narrates AND the AI can actually perform it. Everything else gets
+ * measured off the state.
+ */
 
 const counts: Record<string, number> = Object.fromEntries(PHRASES.map(([k]) => [k, 0]));
 const seenArmies = new Set<string>();
@@ -73,6 +90,18 @@ let flips = 0, siegeTurns = 0, maxArmies = 0, facilitiesMax = 0;
 
 const owners: Record<string, string | null> = {};
 for (const c of Object.values(st.getState().cities)) owners[c.id] = c.ownerForceId;
+
+// ── 外交,量自狀態 ────────────────────────────────────────────────────
+type RelMap = Record<string, { status?: string; score?: number } | undefined>;
+const readRelations = (): RelMap =>
+  ((st.getState() as unknown as { diplomacy?: { relations?: RelMap } }).diplomacy?.relations ?? {});
+const relFingerprint = (r: RelMap) => {
+  const out: Record<string, string> = {};
+  for (const k of Object.keys(r)) out[k] = `${r[k]?.status}|${r[k]?.score}`;
+  return out;
+};
+let relChanges = 0;
+let prevRel = relFingerprint(readRelations());
 
 for (let t = 0; t < TURNS; t++) {
   st.getState().endSeason();
@@ -91,6 +120,9 @@ for (let t = 0; t < TURNS; t++) {
     const zh = String(e.textZh ?? '');
     for (const [key, re] of PHRASES) if (re.test(zh)) counts[key]++;
   }
+  const nowRel = relFingerprint(readRelations());
+  for (const k of Object.keys(nowRel)) if (nowRel[k] !== prevRel[k]) relChanges++;
+  prevRel = nowRel;
 }
 
 const s = st.getState();
@@ -101,6 +133,13 @@ for (const c of Object.values(s.cities)) {
 
 console.log(`\n=== ${scn.name.zh} (${scn.id}) · ${TURNS} 旬 ≈ ${(TURNS / 24).toFixed(1)} 年 · 全 AI ===`);
 console.log(`城池易主 ${flips}   出過的軍隊 ${seenArmies.size}   同時在野最多 ${maxArmies}   圍城旬次 ${siegeTurns}   施設峰值 ${facilitiesMax}`);
+// 外交 — from the relation table, not from report wording (see the note above).
+{
+  const rel = readRelations();
+  const by = (want: string) => Object.values(rel).filter((r) => r?.status === want).length;
+  console.log(`外交:關係 ${Object.keys(rel).length} 組 · 互不侵犯 ${by('non-aggression')} · 同盟 ${by('allied')} · 敵對 ${by('hostile')}   關係變動 ${relChanges} 次`);
+  if (relChanges === 0) console.log('\n⚠ 關係表整場沒動過 — AI 外交可能完全沒跑。');
+}
 console.log('\n報告關鍵詞出現次數:');
 for (const [k, , freq] of PHRASES) {
   const n = counts[k];
@@ -109,6 +148,7 @@ for (const [k, , freq] of PHRASES) {
   console.log(`  ${flag}${k.padEnd(10, '　')} ${String(n).padStart(4)}${n === 0 && freq === 'rare' ? '   (條件苛刻,0 未必是問題)' : ''}`);
 }
 console.log('  (城池陷落沒有單一文案,見上方「城池易主」計數)');
+console.log('\n註:焚橋斷渡與劫糧道皆無 AI 呼叫路徑(前者是玩家指令,後者只存在於戰術層),故不列。');
 console.log(`\n開局勢力 ${scn.forces.length} → 存活 ${Object.keys(byForce).length}`);
 console.log('城數:', Object.entries(byForce).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([f, n]) => `${f}:${n}`).join('  '));
 console.log('終局:', s.date, '\n');
