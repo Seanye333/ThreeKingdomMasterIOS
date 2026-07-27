@@ -15,7 +15,7 @@ import type { EntityId, FormationId, HexCoord, Officer, StratagemId, TacticalBat
 import type { DefenseBuildingId } from '../../game/data/defenseBuildings';
 import { stratagemFxKind, tacticFxKind, tacticFxSpec, FX_DURATION, FX_IMPACT, type StratagemFxInstance, type StratagemFxKind } from '../../game/data/stratagemFx';
 import { categoryOfTactic } from '../../game/data/officerAttributes';
-import { attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, pickAiFormation, formationCounterMul, breakGate, repairWall, scaleWall, batterTargets, repairTargets, scaleTargets, WALL_REPAIR_PER_ACTION } from '../../game/systems/tactical';
+import { attackUnits, canAttack, canMove, endTurn, hexDistance, moveUnit, resolveBattleEnd, unitAt, tileAt, hexNeighbours, forecastAttack, matchupLabel, battleStratagemSituation, defenderTerrainShield, terrainDamageMod, moveCost, findPath, moveUnitAlong, reachableHexes, isRouting, changeFormation, canChangeFormation, canFortify, fortifyTile, FIELDWORKS_AP_COST, canRetreatUnit, retreatUnit, pickAiFormation, formationCounterMul, breakGate, repairWall, scaleWall, batterTargets, repairTargets, scaleTargets, WALL_REPAIR_PER_ACTION } from '../../game/systems/tactical';
 import { applyBattlePrep, applyStratagem, pickAiBattlePrep, pickDuelChampion, canIssuePreBattleDuel, applyPreBattleDuel, aiMaybePreBattleDuel } from '../../game/systems/tacticalSchemes';
 import { duelDread } from '../../game/systems/duelChallenge';
 import { realmEthos, ethosDreadBonus } from '../../game/systems/realmEthos';
@@ -4624,6 +4624,23 @@ function UnitPanel3D({
             title={t('就地築壘:本格化為工事 — 受擊×0.85、敵入耗步、破騎兵衝鋒。木柵怕火。', 'Entrench: this hex becomes fieldworks — damage ×0.85, slows entry, breaks cavalry charges. Burns.')}
             onClick={() => { playSfx('click'); startBattle(fortifyTile(battle, unit.id)); setActionMode({ kind: 'none' }); }}
           >⛏ {t('築壘', 'Entrench')} <span style={{ float: 'right', color: 'var(--tkm-hud-dim)' }}>{FIELDWORKS_AP_COST} AP</span></button>
+        )}
+        {/* 脫離 — pull ONE battered unit off the field instead of conceding the
+            whole battle. The engine has had this since the AI learned to save
+            its wounded; the player's only exit was 撤退 (the entire army). Only
+            offered where the engine allows it: back at your own edge, not the
+            commander. 10% of the unit is written off as stragglers. */}
+        {canRetreatUnit(battle, unit) && (
+          <button
+            style={{ ...btnBase }}
+            title={t(`脫離戰場:此部退出本戰(折損約 ${Math.floor(unit.troops * 0.1).toLocaleString()} 人為潰散),餘眾保全。主將不可脫離,且須退至我方陣後兩格內。`,
+                     `Pull this unit out of the battle — about ${Math.floor(unit.troops * 0.1).toLocaleString()} are written off as stragglers, the rest are saved. The commander cannot leave, and a unit must be within two hexes of your own edge.`)}
+            onClick={() => {
+              playSfx('march');
+              startBattle(retreatUnit(battle, unit.id));
+              setActionMode({ kind: 'none' });
+            }}
+          >🏳 {t('脫離', 'Withdraw unit')} <span style={{ float: 'right', color: 'var(--tkm-hud-dim)' }}>−10%</span></button>
         )}
         {/* 攻城三動作 — battering, scaling and repairing were all implemented in
             the engine but only ever called from the AI, so a besieging player

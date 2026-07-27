@@ -22,6 +22,8 @@ export function AdvisorModal({ onClose }: { onClose: () => void }) {
   const appointments = useGameStore((s) => s.appointments);
   const pendingCommands = useGameStore((s) => s.pendingCommands);
   const pendingTrainings = useGameStore((s) => s.pendingTrainings);
+  const lordRapport = useGameStore((s) => s.lordRapport);
+  const deeds = useGameStore((s) => s.deeds);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const season = useGameStore((s) => s.date.season);
   const issueCommand = useGameStore((s) => s.issueCommand);
@@ -57,8 +59,10 @@ export function AdvisorModal({ onClose }: { onClose: () => void }) {
       diplomacy,
       playerCapitalId: force?.capitalCityId,
       rulerOfficerId: force?.rulerOfficerId,
+      lordRapport,
+      deeds,
     });
-  }, [cities, officers, armies, forces, diplomacy, pendingCommands, pendingTrainings, playerForceId, season, advisor]);
+  }, [cities, officers, armies, forces, diplomacy, pendingCommands, pendingTrainings, lordRapport, deeds, playerForceId, season, advisor]);
 
   const tips = allTips.filter((tip) => !dismissed[tip.id]);
 

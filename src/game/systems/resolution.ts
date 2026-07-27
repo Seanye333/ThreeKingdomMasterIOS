@@ -95,7 +95,7 @@ import { honorificEffects } from '../data/honorifics';
 import { rollEvents } from './events';
 import { generateFictionalOfficer } from './officerGen';
 import { resolveAmbitions } from './ambition';
-import { postVictoryAmbitionBoost } from './afterVictory';
+import { postVictoryAmbitionBoost, peaceReport } from './afterVictory';
 import {
   provinceGovernorEffect, provinceWarlordismDelta, seceProvince, planAIProvinceGovernors,
   seededRng, WARLORDISM_WARN, WARLORDISM_CAP,
@@ -3830,15 +3830,29 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
     // and the army idle, ambition turns inward; no new engine, just a heavier
     // thumb on the betrayal odds §7.5 already rolls.
     if (input.postVictory) {
-      const peaceBoost = postVictoryAmbitionBoost({
+      const peaceCtx = {
         officers,
         cities,
         forces,
         playerForceId: input.playerForceId,
         lordRapport: input.lordRapport,
-      });
+      };
+      const peaceBoost = postVictoryAmbitionBoost(peaceCtx);
       for (const [id, boost] of Object.entries(peaceBoost)) {
         factionBoost[id] = Math.min(0.12, (factionBoost[id] ?? 0) + boost);
+      }
+      // …and say so. The pressure was applied silently: a player carrying on
+      // after victory watched loyalty slide with nothing on screen connecting
+      // it to the peace. peaceReport exists for exactly this and was never
+      // called, so the one mechanic whose whole point is atmosphere had none.
+      const note = peaceReport(peaceCtx);
+      if (note) {
+        entries.push({
+          cityId: forces[input.playerForceId ?? '']?.capitalCityId ?? Object.keys(cities)[0],
+          kind: 'note',
+          text: note.en,
+          textZh: note.zh,
+        });
       }
     }
     // 朋黨 — a discontented general's clique of high-rapport allies emboldens him;

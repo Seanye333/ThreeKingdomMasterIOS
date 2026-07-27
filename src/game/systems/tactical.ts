@@ -1389,13 +1389,25 @@ export function scaleTargets(b: TacticalBattle, unitId: EntityId): HexCoord[] {
  * since they're no longer engaged, but at full troops — no rout).
  * Commanders cannot retreat — they must be the last to leave.
  */
+/**
+ * 脫離戰場 — may this unit walk off the field right now?
+ *
+ * Exported because the action itself signals "not allowed" by returning the
+ * battle unchanged, which is enough for the AI but useless for a player: a
+ * button that silently does nothing reads as a broken game, not as a rule.
+ * (Same lesson as 破城/搶修/雲梯 — see tacticalSiegeActions.)
+ */
+export function canRetreatUnit(b: TacticalBattle, unit: TacticalUnit): boolean {
+  if (unit.troops <= 0) return false;
+  if (unit.isCommander) return false;             // 主將不走 — the commander stays
+  const myEdgeCol = unit.side === 'attacker' ? 0 : b.width - 1;
+  return Math.abs(unit.coord.col - myEdgeCol) <= 2; // must be back at your own edge
+}
+
 export function retreatUnit(b: TacticalBattle, unitId: EntityId): TacticalBattle {
   const unit = b.units.find((u) => u.id === unitId);
   if (!unit) return b;
-  if (unit.isCommander) return b; // commander stays
-  // Must be at the appropriate edge (close to a side edge) — within 2 hexes.
-  const myEdgeCol = unit.side === 'attacker' ? 0 : b.width - 1;
-  if (Math.abs(unit.coord.col - myEdgeCol) > 2) return b;
+  if (!canRetreatUnit(b, unit)) return b;
   const remaining = b.units.filter((u) => u.id !== unitId);
   const lossKey = unit.side === 'attacker' ? 'attackerLosses' : 'defenderLosses';
   return {

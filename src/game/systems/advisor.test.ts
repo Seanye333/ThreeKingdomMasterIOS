@@ -1,6 +1,6 @@
 /** 軍師錦囊 — locks the advisor's priorities and one-tap payloads. */
 import { describe, expect, it } from 'vitest';
-import type { Army, City, EntityId, Officer } from '../types';
+import type { Army, City, EntityId, Force, Officer } from '../types';
 import { mkOfficer } from '../../test/factories';
 import { adviseTips, pickAdvisor, type AdvisorInput } from './advisor';
 
@@ -180,5 +180,72 @@ describe('名士奇策 — the great strategists counsel in their own hand', () 
       advisor: officers.zg,
     }));
     expect(tips.some((t) => t.id === 'sage-zhuge-liang')).toBe(true);
+  });
+});
+
+/**
+ * 兩條「引擎在算、沒人說」的告警。兩者都不是新機制 —— brewingRebels 與
+ * ledgerHealth 早就寫好且被測試覆蓋,只是生產環境零呼叫,於是玩家被扣忠誠、
+ * 被謀反,卻沒有任何一句話事先提過。
+ */
+describe('謀反前兆 / 賞罰之柄 — 引擎算了就要說', () => {
+  const city = (over: Partial<City> = {}): City => ({
+    id: 'c1', name: { zh: '城', en: 'City' }, ownerForceId: 'p',
+    population: 100000, gold: 2000, food: 20000, troops: 5000,
+    agriculture: 50, commerce: 50, defense: 50, loyalty: 70,
+    adjacentCityIds: [], coords: { x: 0, y: 0 },
+  } as unknown as City);
+
+  const baseInput = (over: Partial<AdvisorInput> = {}): AdvisorInput => ({
+    cities: { c1: city(), c2: { ...city(), id: 'c2' } },
+    officers: {},
+    armies: {},
+    busyOfficerIds: new Set<string>(),
+    playerForceId: 'p',
+    season: 'spring',
+    forces: { p: { id: 'p', name: { zh: '我', en: 'Me' }, rulerOfficerId: 'lord', capitalCityId: 'c1' } as unknown as Force },
+    rulerOfficerId: 'lord',
+    ...over,
+  });
+
+  it('names the officer the rebellion roll is already looking at', () => {
+    // Every gate brewingRebels reads: disloyal, ambitious, seated in his own
+    // city, and a realm with more than one city to split.
+    const rebel = mkOfficer({
+      id: 'rebel', forceId: 'p', status: 'idle', loyalty: 20,
+      locationCityId: 'c1', traits: ['ambitious'] as never,
+    });
+    const tips = adviseTips(baseInput({ officers: { rebel } }));
+    const tip = tips.find((x) => x.id === 'rebel-rebel');
+    expect(tip, '謀反前兆 must reach the advisor').toBeTruthy();
+    // It must outrank the plain loyalty warning about the same man.
+    const loyaltyTip = tips.find((x) => x.id === 'loyalty-rebel');
+    if (loyaltyTip) expect(tip!.priority).toBeGreaterThan(loyaltyTip.priority);
+  });
+
+  it('a loyal officer in the same spot raises nothing', () => {
+    const steady = mkOfficer({
+      id: 'steady', forceId: 'p', status: 'idle', loyalty: 85,
+      locationCityId: 'c1', traits: ['ambitious'] as never,
+    });
+    expect(adviseTips(baseInput({ officers: { steady } })).some((x) => x.id.startsWith('rebel-'))).toBe(false);
+  });
+
+  it('unsettled merit is reported with the loyalty it costs per season', () => {
+    const veteran = mkOfficer({ id: 'vet', forceId: 'p', status: 'idle', loyalty: 70, locationCityId: 'c1' });
+    const tips = adviseTips(baseInput({
+      officers: { vet: veteran },
+      // 13 battles won, nothing paid out → past MERIT_GRUDGE, so −1/season.
+      deeds: { vet: { battlesWon: 13 } as never },
+    }));
+    const tip = tips.find((x) => x.id === 'ledger-owed');
+    expect(tip, '賞罰 roll-up must reach the advisor').toBeTruthy();
+    expect(tip!.zh).toContain('欠賞');
+  });
+
+  it('a settled ledger says nothing', () => {
+    const paid = mkOfficer({ id: 'paid', forceId: 'p', status: 'idle', loyalty: 70, locationCityId: 'c1', meritRewarded: 999 } as never);
+    const tips = adviseTips(baseInput({ officers: { paid }, deeds: { paid: { battlesWon: 13 } as never } }));
+    expect(tips.some((x) => x.id === 'ledger-owed')).toBe(false);
   });
 });

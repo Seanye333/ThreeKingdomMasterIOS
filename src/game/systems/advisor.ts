@@ -22,6 +22,9 @@ import { getRelation } from '../types/diplomacy';
 import { COMMAND_DEFS } from './commands';
 import { foodRate } from './market';
 import { forcesAdjacent, forceEmbroiled, SCHEME_DEFS, type SchemeId } from './schemes';
+import { brewingRebels } from './ambition';
+import { ledgerHealth, meritResentment, outstandingFault, outstandingMerit } from './militaryLaw';
+import type { HeroicDeeds } from '../types';
 
 export interface AdvisorTip {
   id: string;
@@ -55,6 +58,10 @@ export interface AdvisorInput {
   playerCapitalId?: EntityId;
   /** The lord himself never "defects"; excluded from 忠誠告警. */
   rulerOfficerId?: EntityId;
+  /** 心腹 — high regard with the lord exempts an officer from 謀反前兆. */
+  lordRapport?: Record<EntityId, number>;
+  /** 功過簿 — per-officer deeds, for the realm-wide 賞罰 roll-up. */
+  deeds?: Record<EntityId, HeroicDeeds>;
 }
 
 /** A 軍師 appointment, if any (a thin slice of the civic-appointment record). */
@@ -292,6 +299,63 @@ export function adviseTips(input: AdvisorInput): AdvisorTip[] {
       priority: 90 - wavering.loyalty,
       action: canAct ? { kind: 'banquet', cityId: here.id } : { kind: 'none' },
     });
+  }
+
+  // ⑦a 謀反前兆 (§7.5) — 忠誠告警 above warns about a slipping heart; this is the
+  //     narrower, graver signal: the officers who have crossed EVERY threshold
+  //     the rebellion roll actually reads (loyalty, temperament or accumulated
+  //     grievances, a seat of their own to rise in, a realm big enough to split).
+  //     `brewingRebels` was written for exactly this display — its own comment
+  //     says "rough risk for display" — and nothing had ever called it, so the
+  //     game rolled for revolt against men the player was never warned about.
+  {
+    const risks = brewingRebels(
+      input.officers, input.forces ?? {}, input.cities, input.playerForceId, input.lordRapport,
+    );
+    const worst = Object.entries(risks).sort((a, b) => b[1] - a[1])[0];
+    if (worst) {
+      const [officerId, risk] = worst;
+      const o = input.officers[officerId];
+      const seat = o?.locationCityId ? input.cities[o.locationCityId] : null;
+      const others = Object.keys(risks).length - 1;
+      if (o) {
+        tips.push({
+          id: `rebel-${officerId}`,
+          zh: `${o.name.zh}據${seat?.name.zh ?? '一城'}而心懷怨望(忠${o.loyalty}),恐有異圖${others > 0 ? `,另有 ${others} 人同此` : ''} — 宜早彈壓:或安撫、或調離、或下獄。`,
+          en: `${o.name.en} holds ${seat?.name.en ?? 'a city'} and nurses a grudge (loyalty ${o.loyalty})${others > 0 ? `, and ${others} more like them` : ''} — placate, reassign or gaol them before it breaks.`,
+          // Above the plain loyalty warning: this one is already at the brink.
+          priority: 95 + Math.round(risk * 100),
+          action: { kind: 'none' },
+        });
+      }
+    }
+  }
+
+  // ⑦c 賞罰之柄 — the realm-wide state of the merit ledger. Per-officer 行賞/
+  //     行罰 has always been on the officer panel, but the roll-up (`ledgerHealth`,
+  //     never called) is the one that matters: unpaid merit drains −1 to −2
+  //     loyalty PER OFFICER PER SEASON, so twenty unsettled accounts bleed the
+  //     realm quietly and the player only sees the symptom, one officer at a time.
+  if (input.deeds) {
+    const mine = Object.values(input.officers).filter(
+      (o) => o.forceId === input.playerForceId && o.id !== input.rulerOfficerId
+        && (o.status === 'active' || o.status === 'idle'));
+    const ledger = mine.map((o) => ({
+      merit: outstandingMerit(o, input.deeds?.[o.id]),
+      fault: outstandingFault(o, input.deeds?.[o.id]),
+    }));
+    const health = ledgerHealth(ledger);
+    const resentful = ledger.filter((e) => meritResentment(e.merit) < 0).length;
+    if (resentful > 0) {
+      const drain = ledger.reduce((s, e) => s + meritResentment(e.merit), 0);
+      tips.push({
+        id: 'ledger-owed',
+        zh: `${health.zh} — ${resentful} 人有功未賞,合計欠賞 ${health.owed};每季忠誠共損 ${Math.abs(drain)}。宜開府行賞。`,
+        en: `${health.en} — ${resentful} officers are owed (${health.owed} merit outstanding), costing ${Math.abs(drain)} loyalty every season. Settle the accounts.`,
+        priority: 78 + Math.min(20, resentful * 2),
+        action: { kind: 'none' },
+      });
+    }
   }
 
   // ⑦b 民政三患 (§1.11–§1.14) — the advisor names the civic rot the player is
