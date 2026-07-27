@@ -630,7 +630,7 @@ function WarriorFigure({
 }
 
 export function UnitMesh({
-  unit, terrainH, isPlayer, selected, onClick, isWounded, lunge, formation, showArcs, ground,
+  unit, terrainH, isPlayer, selected, onClick, isWounded, lunge, formation, showArcs, ground, extra,
 }: {
   unit: TacticalUnit;
   terrainH: number;
@@ -648,6 +648,9 @@ export function UnitMesh({
   /** 地利 — terrain edge badge, computed by the host from the engine's own
    *  terrainDamageMod / defenderTerrainShield so it can't drift. */
   ground?: StatusBadge | null;
+  /** 水戰/糧車 — badges the host derives from engine state that this component
+   *  can't see (hull class, grounding, seasickness drill, whose convoy it is). */
+  extra?: StatusBadge[];
 }) {
   const t = useT();
   const [tx, tz] = hexWorld(unit.coord.col, unit.coord.row);
@@ -941,7 +944,7 @@ export function UnitMesh({
                 trap you set), and reading a line used to mean clicking
                 through it unit by unit. Worst-first, capped at three so a
                 narrow plate keeps the one that matters. */}
-            {[...plateBadges(unit.effects), ...derivedBadges(unit), ...(ground ? [ground] : [])].map((b) => (
+            {[...plateBadges(unit.effects), ...derivedBadges(unit), ...(extra ?? []), ...(ground ? [ground] : [])].map((b) => (
               <span
                 key={b.glyph}
                 style={{ color: b.color, marginLeft: 3 }}

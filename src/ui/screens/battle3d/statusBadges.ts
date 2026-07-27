@@ -221,3 +221,77 @@ export function terrainBadge(
     tipEn: `${terrainEn} — ${bitsEn.join(', ')}`,
   };
 }
+
+/* ─── 水戰 ───────────────────────────────────────────────────────────
+ * Ship class was the widest engine/HUD gap on the battlefield: `shipClass`
+ * is read in 49 places under src/game (hull power, 擱淺 grounding at ×0.55 for
+ * deep hulls in the shoals, 暈船 seasickness scaled by 水軍熟練度, fire
+ * vulnerability, 連環/接舷/撞角/火船) and in exactly ONE place under src/ui —
+ * and that one is the harbour panel, not the battle. On a Chibi board the
+ * player could not tell a 樓船 from a 走舸, nor see which of their hulls was
+ * about to run aground.
+ *
+ * Same contract as terrainBadge: the caller passes numbers the ENGINE
+ * computed, so a badge can never promise something the combat model withholds.
+ */
+
+export interface NavalReading {
+  /** Hull name, already localised by the caller. Absent → not a ship. */
+  shipZh?: string;
+  shipEn?: string;
+  /** Deep hull sitting in the shoals — fights at a fraction of strength. */
+  grounded: boolean;
+  /** Hull power multiplier from `shipPowerMul` (1 = the neutral hull). */
+  hullMul: number;
+  /** Crew-sickness power multiplier from `seasickness` (1 = steady). */
+  sickMul: number;
+  sickNoteZh?: string;
+  sickNoteEn?: string;
+  /** 擱淺 penalty from `groundingMul`, for the tooltip. */
+  groundMul?: number;
+}
+
+export function navalBadges(r: NavalReading): StatusBadge[] {
+  if (!r.shipZh) return [];
+  const out: StatusBadge[] = [];
+  out.push({
+    glyph: '艦', color: r.hullMul >= 1.1 ? '#8ad8f0' : r.hullMul <= 0.9 ? '#b09a7a' : '#9ec8d8',
+    zh: r.shipZh, en: r.shipEn ?? r.shipZh,
+    tipZh: `${r.shipZh} — 船身戰力 ×${r.hullMul.toFixed(2)}`,
+    tipEn: `${r.shipEn ?? r.shipZh} — hull strength ×${r.hullMul.toFixed(2)}`,
+  });
+  if (r.grounded) {
+    out.push({
+      glyph: '淺', color: '#e0623a', zh: '擱淺', en: 'Aground',
+      tipZh: `深舟陷於淺瀨 — 戰力 ×${(r.groundMul ?? 0.55).toFixed(2)},須退回深水`,
+      tipEn: `A deep hull fast in the shoals — ×${(r.groundMul ?? 0.55).toFixed(2)} strength until it warps back to the channel`,
+    });
+  }
+  if (r.sickMul < 1) {
+    out.push({
+      glyph: '暈', color: '#c8a060', zh: '暈船', en: 'Seasick',
+      tipZh: `${r.sickNoteZh ?? '舟中暈眩'} — 戰力 ×${r.sickMul.toFixed(2)}(連環可穩)`,
+      tipEn: `${r.sickNoteEn ?? 'Sick on the rolling deck'} — ×${r.sickMul.toFixed(2)} strength (chaining steadies it)`,
+    });
+  }
+  return out;
+}
+
+/* ─── 糧車 ───────────────────────────────────────────────────────────
+ * `isSupply` is read 26 times in the engine — burning a convoy puts the whole
+ * side into `starving` (desertion plus sapped strength, one-shot per battle) —
+ * and had exactly one reader in the UI: the 3D model that draws a cart. So the
+ * single most valuable target on some boards looked like a weak unit, and the
+ * side that owned it got no warning at all. 烏巢 without a signpost.
+ */
+export function supplyBadge(mine: boolean): StatusBadge {
+  return {
+    glyph: '糧', color: mine ? '#d8b24a' : '#e0623a', zh: '糧車', en: 'Grain train',
+    tipZh: mine
+      ? '本軍糧車 — 被燒則全軍糧盡(逃亡且戰力衰減)。護住它。'
+      : '敵軍糧車 — 燒了它,敵軍全軍糧盡(逃亡且戰力衰減)。烏巢之計。',
+    tipEn: mine
+      ? 'Your grain train — burn it and your whole host starves (desertion and sapped strength). Guard it.'
+      : 'Their grain train — burn it and their whole host starves. This is the Wuchao play.',
+  };
+}

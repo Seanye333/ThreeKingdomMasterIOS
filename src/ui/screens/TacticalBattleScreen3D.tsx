@@ -64,6 +64,8 @@ type ActionMode =
   | { kind: 'siege'; act: 'batter' | 'scale' | 'repair' }
   /* 車輪戰 — pick which enemy the rush goes at, when more than one qualifies. */
   | { kind: 'gauntlet' }
+  /* 陣前招降 — pick which broken enemy to call on, when more than one will hear. */
+  | { kind: 'surrender' }
   | { kind: 'stratagem'; id: StratagemId; tacticId?: string };
 
 
@@ -139,8 +141,12 @@ import { HudButton, HudChip } from '../components/HudControls';
 import { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_COLOR } from './battle3d/battleGrid';
 import { EmbeddedSceneCtx, IS_MOBILE, UNIT_GLYPH } from './battle3d/shared';
 import { hitArc, ARC_MUL, ARC_LABEL } from './battle3d/facing';
-import { STATUS_BADGE, terrainBadge } from './battle3d/statusBadges';
+import { STATUS_BADGE, terrainBadge, navalBadges, supplyBadge, type StatusBadge } from './battle3d/statusBadges';
+import { SHIP_CLASSES_BY_ID } from '../../game/data/ships';
+import { isGrounded, groundingMul, seasickness } from '../../game/systems/navalWarfare';
+import { shipPowerMul } from '../../game/systems/tactical';
 import { canGauntlet, gauntletChallengers, battleGauntlet } from '../../game/systems/tacticalGauntlet';
+import { surrenderTargets, surrenderCheck, callSurrender, SURRENDER_REFUSAL_MORALE, SURRENDER_LOYALTY_WALL } from '../../game/systems/tacticalSurrender';
 import {
   wallFraction, wallState, WALL_STATE_LABEL, fortMaxHp, wallKey, weakestWall,
   hitsToBreach, repairsOutpace,
@@ -2159,6 +2165,12 @@ export function BattleScene({
           m.set(`${c.col},${c.row}`, 'attack');
         }
       }
+    } else if (actionMode.kind === 'surrender') {
+      // 招降 — light up the broken foes within earshot. Tinted as friendly work
+      // (a move tint, not the attack red): the aim is to take him, not kill him.
+      for (const e of surrenderTargets(battle, selectedUnit.id, officers)) {
+        m.set(`${e.coord.col},${e.coord.row}`, 'move');
+      }
     } else if (actionMode.kind === 'siege') {
       // 攻城 — light up the masonry this unit can actually work on. Repairs are
       // friendly work, so they get the move tint rather than the attack red.
@@ -2437,6 +2449,30 @@ export function BattleScene({
                 L?.zh ?? tl.terrain, L?.en ?? tl.terrain,
               );
             })()}
+            // 水戰/糧車 — hull class, grounding and crew sickness all come
+            // straight out of navalWarfare; the convoy flag is whose it is.
+            extra={(() => {
+              const out: StatusBadge[] = [];
+              if (u.isSupply) out.push(supplyBadge(u.side === playerSide));
+              if (u.shipClass) {
+                const tl = tileAt(battle, u.coord);
+                const def = SHIP_CLASSES_BY_ID[u.shipClass];
+                const drill = battle.navalDrill?.[u.side];
+                const chained = u.effects.some((e) => e.kind === 'chained');
+                const sick = typeof drill === 'number' ? seasickness(drill, chained) : null;
+                out.push(...navalBadges({
+                  shipZh: def?.name.zh ?? u.shipClass,
+                  shipEn: def?.name.en ?? u.shipClass,
+                  grounded: isGrounded(u.shipClass, tl?.terrain ?? 'plain'),
+                  groundMul: groundingMul(u.shipClass, tl?.terrain ?? 'plain'),
+                  hullMul: shipPowerMul(u.shipClass),
+                  sickMul: sick?.powerMul ?? 1,
+                  sickNoteZh: sick?.noteZh,
+                  sickNoteEn: sick?.noteEn,
+                }));
+              }
+              return out;
+            })()}
           />
         );
       })}
@@ -2504,6 +2540,10 @@ export function TacticalBattleScreen3D() {
   // 戰報 — a collapsible drawer of the recent battle log (the ticker only
   // flashes the last line for ~3.6s; this lets a player review what happened).
   const [showLog, setShowLog] = useState(false);
+  // 逐擊 — include the per-blow play-by-play (kind: 'blow'). On by default: an
+  // empty-looking log was the complaint that produced it. Off collapses the
+  // drawer back to the dramatic beats for a long siege.
+  const [logBlows, setLogBlows] = useState(true);
   // ⚙ 工具托盤 — the utility buttons (錄影/委託/暫停/速度/戰報) fold behind one
   // gear by default; any ENGAGED tool keeps its button out so its state (and
   // off-switch) is never hidden (e.g. stop-recording while recording).
@@ -3007,6 +3047,17 @@ export function TacticalBattleScreen3D() {
           && hexDistance(selectedUnit.coord, u.coord) === 1) {
         playSfx('sword');
         start(battleGauntlet(battle, u.id, officers, Math.random));
+        setActionMode({ kind: 'none' });
+      }
+      return;
+    }
+    // 陣前招降 — the broken officer to call on was picked out of several.
+    if (actionMode.kind === 'surrender') {
+      if (u && u.side !== selectedUnit.side
+          && surrenderCheck(battle, selectedUnit, u, officers).ok) {
+        const res = callSurrender(battle, selectedUnit.id, u.id, officers, Math.random);
+        playSfx(res.yielded ? 'victory' : 'click');
+        start(res.battle);
         setActionMode({ kind: 'none' });
       }
       return;
@@ -3693,20 +3744,38 @@ export function TacticalBattleScreen3D() {
               background: 'rgba(16, 12, 8, 0.98)',
             }}>
               <span style={{ fontSize: '0.72rem', letterSpacing: '0.12rem', color: 'var(--tkm-hud-gold)' }}>📜 {t('戰報', 'Battle Log')}</span>
-              <button
-                onClick={() => setShowLog(false)}
-                aria-label={t('關閉戰報', 'Close log')}
-                style={{ background: 'transparent', border: 'none', color: 'var(--tkm-hud-dim)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}
-              >×</button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {/* 逐擊/要事 — the play-by-play is on by default (that is the point
+                    of it), but a long siege turns it into a wall of blows, so it
+                    can be muted back down to the dramatic beats. */}
+                <button
+                  onClick={() => setLogBlows((v) => !v)}
+                  aria-pressed={logBlows}
+                  title={t('逐擊戰報 — 每一次交鋒的細節', 'Play-by-play — every exchange in detail')}
+                  style={{
+                    background: logBlows ? 'rgba(200,160,80,0.18)' : 'transparent',
+                    border: `1px solid ${logBlows ? '#8a6a3a' : '#3a2f22'}`,
+                    borderRadius: 4, color: logBlows ? 'var(--tkm-hud-gold)' : 'var(--tkm-hud-dim)',
+                    cursor: 'pointer', fontSize: '0.62rem', padding: '0.1rem 0.4rem', lineHeight: 1.5,
+                  }}
+                >{t('逐擊', 'Blows')}</button>
+                <button
+                  onClick={() => setShowLog(false)}
+                  aria-label={t('關閉戰報', 'Close log')}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--tkm-hud-dim)', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }}
+                >×</button>
+              </div>
             </div>
             <div style={{ padding: '0.4rem 0.7rem' }}>
               {(() => {
-                const entries = (battle.log ?? []).slice(-40).reverse();
+                const all = battle.log ?? [];
+                const shown = logBlows ? all : all.filter((e) => e.kind !== 'blow');
+                const entries = shown.slice(-60).reverse();
                 if (entries.length === 0) return <div style={{ fontSize: '0.75rem', color: '#7a6850', fontStyle: 'italic', padding: '0.3rem 0' }}>{t('尚無戰報。', 'No events yet.')}</div>;
                 return entries.map((e, i) => (
                   <div key={i} style={{
-                    fontSize: '0.75rem', lineHeight: 1.6, padding: '0.12rem 0',
-                    color: e.kind === 'event' ? '#e8c878' : e.kind === 'arrival' ? '#9ed6c0' : '#bcb090',
+                    fontSize: e.kind === 'blow' ? '0.71rem' : '0.75rem', lineHeight: 1.6, padding: '0.12rem 0',
+                    color: e.kind === 'event' ? '#e8c878' : e.kind === 'arrival' ? '#9ed6c0' : e.kind === 'blow' ? '#9d9078' : '#bcb090',
                     borderBottom: i < entries.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
                   }}>
                     <span style={{ color: '#6a5c44', fontFamily: 'ui-monospace, monospace', fontSize: '0.66rem', marginRight: 6 }}>{t(`第${e.turn}回`, `T${e.turn}`)}</span>
@@ -3857,6 +3926,10 @@ export function TacticalBattleScreen3D() {
             gauntlet: {
               color: 'var(--tkm-hud-gold)',
               text: t('點擊要圍攻的敵將 — 眾人輪番上陣', 'Click the enemy to gang up on — your officers go at him in turn'),
+            },
+            surrender: {
+              color: 'var(--tkm-hud-mint)',
+              text: t('點擊要招降的殘破敵將', 'Click the broken enemy to call on'),
             },
             siege: {
               color: 'var(--tkm-hud-ember)',
@@ -4651,6 +4724,45 @@ function UnitPanel3D({
                 {rushable.length > 1
                   ? t(`${rushable.length} 敵`, `${rushable.length} foes`)
                   : t(`${queueOf(rushable[0]).length} 員齊上`, `${queueOf(rushable[0]).length} join`)}
+              </span>
+            </button>
+          );
+        })()}
+        {/* 陣前招降 — call a broken enemy officer to lay down arms. Offered only
+            when someone within earshot is actually finished (routing / shaken /
+            nearly wiped out); the odds are shown up front because a refusal
+            steels them, so it is a decision, not a free re-roll. */}
+        {(() => {
+          const callable = surrenderTargets(battle, unit.id, officers);
+          if (callable.length === 0) return null;
+          const armed = actionMode.kind === 'surrender';
+          const oddsOf = (e: TacticalUnit) => surrenderCheck(battle, unit, e, officers).chance;
+          const best = callable.reduce((a, e) => (oddsOf(e) > oddsOf(a) ? e : a));
+          const go = (e: TacticalUnit) => {
+            const res = callSurrender(battle, unit.id, e.id, officers, Math.random);
+            playSfx(res.yielded ? 'victory' : 'click');
+            startBattle(res.battle);
+            setActionMode({ kind: 'none' });
+          };
+          return (
+            <button
+              style={{ ...btnBase, ...(armed ? btnActive : {}), opacity: apDisabled ? 0.4 : 1 }}
+              disabled={apDisabled}
+              title={t(
+                `隔陣喊話,勸已無戰意的敵將棄械歸降。只有潰走、士氣將盡或殘部無幾的敵人肯聽;每名敵將**一戰只能勸一次**,拒絕者反而重整士氣(+${SURRENDER_REFUSAL_MORALE})。成算看你的魅力、對方的忠誠與殘破程度 —— 他若曾在你麾下、或與你有結義骨肉之親,格外容易;忠誠 ${SURRENDER_LOYALTY_WALL} 以上或與你有宿怨者,聽都不聽。歸降者於你**守住戰場**時成為俘虜。`,
+                `Shout across the line for a finished enemy officer to yield. Only the routing, the nearly broken, or the nearly wiped out will listen; each foe can be called ONCE per battle, and a refusal rallies them (+${SURRENDER_REFUSAL_MORALE} morale). The odds turn on your charisma, their loyalty and how broken they are — a man who once served your banner, or who is sworn or kin to you, is far likelier to come over; loyalty ${SURRENDER_LOYALTY_WALL}+ or a blood feud will not even hear it. A yielded officer becomes your prisoner if your side holds the field.`,
+              )}
+              onClick={() => {
+                if (armed) { setActionMode({ kind: 'none' }); return; }
+                if (callable.length === 1) { go(callable[0]); return; }
+                playSfx('click');
+                setActionMode({ kind: 'surrender' });
+              }}
+            >☮ {t('招降', 'Call to Yield')}{' '}
+              <span style={{ float: 'right', color: 'var(--tkm-hud-gold)' }}>
+                {callable.length > 1
+                  ? t(`${callable.length} 敵 · 至多 ${Math.round(oddsOf(best) * 100)}%`, `${callable.length} foes · up to ${Math.round(oddsOf(best) * 100)}%`)
+                  : `${Math.round(oddsOf(best) * 100)}%`}
               </span>
             </button>
           );

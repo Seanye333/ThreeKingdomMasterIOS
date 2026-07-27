@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STATUS_BADGE, plateBadges, derivedBadges, FATIGUE_BADGE_AT, VALIANT_ROUTS, terrainBadge } from './statusBadges';
+import { STATUS_BADGE, plateBadges, derivedBadges, FATIGUE_BADGE_AT, VALIANT_ROUTS, terrainBadge, navalBadges, supplyBadge } from './statusBadges';
 import type { TacticalStatus } from '../../../game/types';
 
 /**
@@ -152,5 +152,41 @@ describe('terrainBadge', () => {
   it('speaks when only one side of the ledger is strong', () => {
     expect(terrainBadge(1.0, 0.85, ...T)?.zh).toBe('得地利');   // defence only
     expect(terrainBadge(1.3, 1.0, ...T)?.zh).toBe('得地利');    // attack only
+  });
+});
+
+describe('navalBadges — the widest engine/HUD gap on the board', () => {
+  const base = { shipZh: '樓船', shipEn: 'Tower ship', grounded: false, hullMul: 1.3, sickMul: 1 };
+
+  it('says nothing for a land unit', () => {
+    expect(navalBadges({ grounded: false, hullMul: 1, sickMul: 1 })).toEqual([]);
+  });
+
+  it('names the hull and quotes the strength the engine actually applies', () => {
+    const [hull] = navalBadges(base);
+    expect(hull.zh).toBe('樓船');
+    expect(hull.tipZh).toContain('1.30');
+  });
+
+  it('warns when a deep hull is stuck in the shoals', () => {
+    const out = navalBadges({ ...base, grounded: true, groundMul: 0.55 });
+    const aground = out.find((b) => b.zh === '擱淺')!;
+    expect(aground).toBeTruthy();
+    expect(aground.tipZh).toContain('0.55');
+  });
+
+  it('shows seasickness only when the crews are actually sick', () => {
+    expect(navalBadges({ ...base, sickMul: 0.82, sickNoteZh: '北軍不習水戰' }).some((b) => b.zh === '暈船')).toBe(true);
+    expect(navalBadges({ ...base, sickMul: 1 }).some((b) => b.zh === '暈船')).toBe(false);
+    // A hull steadied above the neutral line is not a warning either.
+    expect(navalBadges({ ...base, sickMul: 1.12 }).some((b) => b.zh === '暈船')).toBe(false);
+  });
+});
+
+describe('supplyBadge — 烏巢 needs a signpost', () => {
+  it('tells you to guard your own and to burn theirs', () => {
+    expect(supplyBadge(true).tipZh).toContain('護住');
+    expect(supplyBadge(false).tipZh).toContain('燒');
+    expect(supplyBadge(true).color).not.toBe(supplyBadge(false).color);
   });
 });
