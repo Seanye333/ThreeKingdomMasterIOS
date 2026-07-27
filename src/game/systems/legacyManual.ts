@@ -21,7 +21,7 @@ const MARTIAL_LEGACY: Record<number, string> = {
 };
 /** 文辯遺集 by scholarship tier. */
 const DEBATE_LEGACY: Record<number, string> = {
-  4: 'gongyang-zhuan',   // 名士 → 春秋公羊傳 (silver)
+  4: 'gongyang-zhuan-manual', // 名士 → 春秋公羊傳(研讀型,與可裝備的公羊傳同名不同物)
   5: 'guiguzi-canon',    // 辯聖 → 鬼谷子 (gold)
 };
 

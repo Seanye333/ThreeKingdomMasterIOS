@@ -82,17 +82,17 @@ describe('武將成長 — store integration', () => {
 
   it('研讀兵書 — studyManual grants growth, lifts latent, and destroys the book', () => {
     const o = myOfficers()[0];
-    placeOfficer(o.id, myCity(), { equipment: ['sunzi-bingfa'], xp: 0 });
+    placeOfficer(o.id, myCity(), { equipment: ['sunzi-bingfa-manual'], xp: 0 });
     const before = s().officers[o.id];
     const latentBefore = before.latentStats?.war;
-    const r = s().studyManual(o.id, 'sunzi-bingfa');
+    const r = s().studyManual(o.id, 'sunzi-bingfa-manual');
     expect(r.ok).toBe(true);
     const after = s().officers[o.id];
     expect((after.xp ?? 0)).toBeGreaterThan(0);                       // 歷練 +200
     expect(after.latentStats!.war).toBeGreaterThan(latentBefore ?? 0); // 武力潛能 +2
-    expect(after.equipment).not.toContain('sunzi-bingfa');            // consumed
+    expect(after.equipment).not.toContain('sunzi-bingfa-manual');            // consumed
     // The book is gone — studying again is refused.
-    expect(s().studyManual(o.id, 'sunzi-bingfa').ok).toBe(false);
+    expect(s().studyManual(o.id, 'sunzi-bingfa-manual').ok).toBe(false);
   });
 
   it('山長 — assignHeadmaster binds an officer to a school (and rejects non-schools)', () => {
