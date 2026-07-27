@@ -446,9 +446,8 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
       continue;
     }
     const haul = exp.haul ?? {};
-    let nextHome = home;
     if (haul.gold || haul.food || haul.homeLoyaltyDelta || haul.auxTroops) {
-      nextHome = {
+      const nextHome = {
         ...home,
         gold: home.gold + (haul.gold ?? 0),
         food: home.food + (haul.food ?? 0),
