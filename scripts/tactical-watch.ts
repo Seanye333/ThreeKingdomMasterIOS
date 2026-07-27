@@ -54,15 +54,19 @@ const ARMS: UnitType[] = ['infantry', 'spearmen', 'cavalry', 'archers', 'siege']
 /**
  * Phrases the AI's own battle log emits, tiered by how often they should show
  * up. `common` at 0 is a warning; `rare` at 0 proves little on its own.
+ *
+ * Only behaviours that actually NARRATE belong here. 移動 and 變陣 used to sit
+ * in this list and read 0 forever — movement is deliberately never logged (it
+ * would drown the drawer), so the row was measuring nothing and the permanent ⚠
+ * beside it trained the reader to ignore warnings. Both are now counted from
+ * the battle STATE below, which is what they were always trying to ask.
  */
 const PHRASES: Array<[string, RegExp, 'common' | 'rare']> = [
-  ['移動', /行(?:軍|進)|移動|逼近/, 'common'],
   ['近戰', /斬|殺|擊潰|力戰|交鋒|白刃/, 'common'],
   ['矢雨', /矢雨|齊射|箭雨|放箭/, 'common'],
   ['士氣潰', /潰|奔逃|奪氣|軍心/, 'common'],
   ['追擊', /掩殺|銜尾|追擊/, 'common'],
   ['據守', /據守|立防|嚴陣/, 'common'],
-  ['陣形', /陣$|改陣|變陣|布陣/, 'rare'],
   ['計略', /計|謀|火攻|亂/, 'common'],
   ['衝鋒', /衝鋒|蓄勢|突陣/, 'common'],
   ['單挑', /搦戰|單挑|挑落|一騎/, 'rare'],
@@ -76,7 +80,7 @@ const PHRASES: Array<[string, RegExp, 'common' | 'rare']> = [
   ['伏兵', /伏兵|埋伏|現形/, 'rare'],
   ['夜戰', /日暮|入夜|夜/, 'rare'],
   ['天候', /雨|風|雪|霧/, 'rare'],
-  ['糧盡', /糧盡|斷糧|補給/, 'rare'],
+  ['燒糧餓敵', /糧車被焚|乏食|糧盡|斷糧/, 'rare'],
   ['異象', /流星|疫疾|鼓舞/, 'rare'],
 ];
 
@@ -91,6 +95,15 @@ let capturedTotal = 0;
 let deadTotal = 0;
 let siegeBoards = 0;
 let breaches = 0;
+// ── State-derived counters (not log text) ──────────────────────────────
+/** Unit-turns in which a unit actually changed hex — "does the AI manoeuvre". */
+let moveTurns = 0;
+let unitTurns = 0;
+/** Battles in which either side re-formed mid-fight (臨陣變陣). */
+let reforms = 0;
+/** Boards that fielded a grain train at all — 燒糧 is unreachable without one. */
+let supplyBoards = 0;
+let supplyBurned = 0;
 
 for (let n = 0; n < BATTLES; n++) {
   const rng = lcg(7919 + n * 131);
@@ -98,6 +111,10 @@ for (let n = 0; n < BATTLES; n++) {
   const aArm = ARMS[n % ARMS.length];
   const dArm = ARMS[(n * 3 + 1) % ARMS.length];
   const walled = n % 3 === 0;              // every third battle is a siege
+  // 糧車 are opt-in per named map (3 of the 18 carry a wagon/supply tile), so a
+  // harness of purely procedural boards fields none and reports 燒糧 = 0 as if
+  // the mechanic were broken. Every seventh board is 官渡/長坂, which do.
+  const namedMapId = n % 7 === 5 ? 'map-guandu' : n % 7 === 6 ? 'map-changban' : undefined;
   const officers: Record<string, Officer> = {};
   /**
    * Mixed arms, not three of a kind. A single-arm column makes several
@@ -107,8 +124,12 @@ for (let n = 0; n < BATTLES; n++) {
    * 雲梯 = 0 for exactly that reason, which was a flaw in the harness rather
    * than a finding about the AI.
    */
-  const side = (arm: UnitType, siegeFirst: boolean) => [0, 1, 2].map((i) => {
-    const o = mkOfficer(i === 0 ? 84 : 72, i === 0 ? 80 : 68, i === 1 ? 88 : 62);
+  const side = (arm: UnitType, siegeFirst: boolean, cmdInt = 62) => [0, 1, 2].map((i) => {
+    // The COMMANDER's own intelligence is the one every in-battle wits gate
+    // reads (臨陣變陣 needs ≥75). Passing one number to pickAiFormation while
+    // the commander actually carries another made 變陣 structurally impossible
+    // and it read as a dead branch — the sample contradicted itself.
+    const o = mkOfficer(i === 0 ? 84 : 72, i === 0 ? 80 : 68, i === 0 ? cmdInt : i === 1 ? 88 : 62);
     officers[o.id] = o;
     const unitType: UnitType = siegeFirst && i === 0 ? 'siege'
       : i === 2 ? 'infantry'
@@ -116,31 +137,53 @@ for (let n = 0; n < BATTLES; n++) {
     return { officer: o, troops: 6000, unitType };
   });
 
-  // Wooded ground AND a defender sharp enough to use it, on every third board.
-  // Both are needed for 十面埋伏 to be picked at all; a harness that pins the
-  // commander at int 66 reports 伏兵 = 0 forever and looks like a finding.
-  // 十面埋伏 is gated on the formation's own minIntelligence of 95, so a
-  // harness with ordinary commanders would report 伏兵 = 0 as if the mechanic
-  // were dead. Every third board fields a defender sharp enough for it.
+  // 十面埋伏 is gated on the formation's OWN minIntelligence of 95, and 臨陣變陣
+  // on a commander of int ≥ 75 — a harness that pins every commander at 66
+  // reports both as 0 and they read like findings about the AI rather than
+  // about the sample. Commanders are therefore spread across the thresholds.
   const woodedBoard = n % 3 === 1;
-  const dInt = woodedBoard ? 96 : 66;
+  const dInt = woodedBoard ? 96 : n % 3 === 2 ? 80 : 66;
   const dForm = pickAiFormation([dArm, dArm, dArm], dInt, { defensive: true, wooded: woodedBoard });
-  const aForm = pickAiFormation([aArm, aArm, aArm], 66, { counter: dForm });
+  // The attacker deliberately does NOT counter-pick on some boards: when both
+  // sides counter-pick at setup there is never a bad matchup left for 臨陣變陣
+  // to fix, so the branch can't fire and reads as dead.
+  const aForm = n % 4 === 3
+    ? pickAiFormation([aArm, aArm, aArm], 66)
+    : pickAiFormation([aArm, aArm, aArm], 66, { counter: dForm });
   let b: TacticalBattle = setupTacticalBattle({
     cityId: walled ? `tw-town-${n}` : `tw-field-${n}`,
     width: 14, height: 10,
     attackerForceId: 'A', defenderForceId: 'D',
-    attackers: side(aArm, walled), defenders: side(dArm, false),
+    // Independent of the n % 4 === 3 rule that leaves the attacker's formation
+    // un-countered: tying both to n's parity made them mutually exclusive, so
+    // the one board that needed a bad matchup never had a commander sharp
+    // enough to fix it. Anti-correlated sampling hides a live branch as neatly
+    // as a broken one.
+    attackers: side(aArm, walled, n % 3 === 0 ? 62 : 82),
+    defenders: side(dArm, false, dInt),
     attackerFormation: aForm, defenderFormation: dForm,
-    field: !walled,
+    field: !walled && !namedMapId,
+    namedMapId,
   });
   if (walled) siegeBoards++;
   const wallsAtStart = b.tiles.filter((t) => t.terrain === 'wall' || t.terrain === 'gate').length;
+  const formsAtStart = `${b.attackerFormation}|${b.defenderFormation}`;
+  const hadSupply = b.units.some((u) => u.isSupply);
+  if (hadSupply) supplyBoards++;
 
   let guard = MAX_TURNS * 4;
   while (!b.winner && b.turn <= MAX_TURNS && guard-- > 0) {
+    const before = new Map(b.units.map((u) => [u.id, `${u.coord.col},${u.coord.row}`]));
     b = aiTakeTurn(b, officers, rng, { skill: 1, autoDuel: true }).battle;
+    for (const u of b.units) {
+      const was = before.get(u.id);
+      if (was === undefined) continue;
+      unitTurns++;
+      if (was !== `${u.coord.col},${u.coord.row}`) moveTurns++;
+    }
   }
+  if (`${b.attackerFormation}|${b.defenderFormation}` !== formsAtStart) reforms++;
+  if (hadSupply && !b.units.some((u) => u.isSupply)) supplyBurned++;
   totalTurns += b.turn;
   if (b.winner) { decided++; if (b.winner === 'attacker') attackerWins++; } else capped++;
 
@@ -163,6 +206,8 @@ console.log(`\n=== 戰術觀測 · ${BATTLES} 場 AI 對 AI · 每場至多 ${MA
 console.log(`分出勝負 ${decided}   打到回合上限 ${capped}   平均 ${(totalTurns / BATTLES).toFixed(1)} 回合`);
 console.log(`攻方勝率 ${decided ? ((attackerWins / decided) * 100).toFixed(0) : '—'}%   生擒 ${capturedTotal}   陣亡 ${deadTotal}`);
 console.log(`攻城棋盤 ${siegeBoards} 場,其中曾破牆/破門 ${breaches} 場`);
+// Measured from the board, not from log text — see the note above PHRASES.
+console.log(`機動 ${unitTurns ? ((moveTurns / unitTurns) * 100).toFixed(0) : '—'}% 的單位回合有換格   臨陣變陣 ${reforms} 場   糧車棋盤 ${supplyBoards} 場(其中糧車被毀 ${supplyBurned} 場)`);
 console.log('\n戰報關鍵詞出現次數:');
 for (const [k, , freq] of PHRASES) {
   const v = counts[k];
@@ -176,4 +221,13 @@ if (capped / BATTLES > 0.35) {
 if (siegeBoards > 0 && breaches === 0) {
   console.log('\n⚠ 攻城棋盤一場都沒破牆 — 攻城 AI 可能不會用攻城械。');
 }
+if (unitTurns > 0 && moveTurns / unitTurns < 0.15) {
+  console.log(`\n⚠ 僅 ${((moveTurns / unitTurns) * 100).toFixed(0)}% 的單位回合有位移 — AI 可能站著不動。`);
+}
+if (reforms === 0) {
+  console.log('\n⚠ 一場都沒有臨陣變陣 — 檢查 aiTakeTurn 的 turn-1 變陣閘(int ≥ 75 且陣形被剋)。');
+}
+// 車輪戰 is a PLAYER action: no AI code path calls battleGauntlet, so a 0 here
+// says nothing about the AI. Stated rather than left to look like a finding.
+console.log('\n註:車輪戰為玩家專屬動作,AI 無呼叫路徑 —— 此列為 0 屬預期。');
 console.log('');
