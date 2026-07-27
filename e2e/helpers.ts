@@ -58,8 +58,31 @@ export async function dismissPrologue(page: Page): Promise<void> {
  * want this.
  */
 export async function advanceTurn(page: Page): Promise<void> {
-  const endBtn = page.locator('button', { hasText: /[上下]旬|End/ }).last();
-  await endBtn.click();
+  // Clear FIRST, not only after. An overlay left up by the previous tick (or by
+  // campaign start) covers the advance button, and Playwright's actionability
+  // check then waits out the whole timeout on "receives pointer events" — the
+  // saveLoad flake was exactly this, and clearing only at the end of the
+  // previous call left the very first tick of a spec unprotected.
+  await clearOverlays(page);
+  // Drive it by the keyboard: the control advertises 「過旬結算 — 空格亦可」 and
+  // MapScreen's Space handler does not care what a stray overlay does to
+  // hit-testing. Space is ignored while a BUTTON holds focus, so blur first.
+  const clock = () => page.evaluate(() => {
+    const s = (window as unknown as {
+      __tkm?: { getState: () => { date?: { year?: number; season?: string; phase?: string } } };
+    }).__tkm?.getState();
+    return `${s?.date?.year}|${s?.date?.season}|${s?.date?.phase}`;
+  }).catch(() => '');
+  const before = await clock();
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.locator('body').press('Space');
+  await page.waitForTimeout(600);
+  // Fall back to the button only if the key did nothing — pressing both would
+  // tick twice, which is worse than the flake it replaced.
+  if (await clock() === before) {
+    await page.locator('button', { hasText: /[上下]旬|End/ }).last()
+      .click({ timeout: 15_000 }).catch(() => undefined);
+  }
   // A tick can open the 日流 day-by-day animation; the clock does not settle
   // until it finishes, and clicking again mid-flow does nothing useful.
   for (let i = 0; i < 30; i++) {

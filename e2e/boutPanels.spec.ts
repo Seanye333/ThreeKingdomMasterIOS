@@ -22,13 +22,34 @@ async function startCampaign(page: Page): Promise<void> {
   await expect(page.locator('canvas').first()).toBeVisible({ timeout: 30_000 });
 }
 
-/** Open a panel through the command palette, which every screen exposes. */
+/**
+ * Open a panel through the command palette, which every screen exposes.
+ *
+ * This used to press Ctrl+K and then check `box.isVisible()` — an INSTANTANEOUS
+ * check (see the note in helpers.ts), taken before the palette had mounted. On
+ * a loaded machine (the full suite runs two workers against SwiftShader) it
+ * read false, the whole open was silently skipped, and the caller then sat for
+ * twenty seconds waiting on a panel nobody had asked for. That was the entire
+ * "known flaky" boutPanels case: not a race in the app, a race in the helper.
+ *
+ * Now it waits for the palette, retries the keypress once (the map can swallow
+ * the first one while the scene is still initialising), and throws if the
+ * palette never comes up — a spec that cannot open its subject must fail
+ * loudly, not pass by accident.
+ */
 async function openViaPalette(page: Page, label: string): Promise<void> {
-  await page.keyboard.press('Control+k').catch(() => undefined);
   const box = page.locator('input[type="text"], input:not([type])').last();
-  if (await box.isVisible().catch(() => false)) {
-    await box.fill(label);
-    await page.keyboard.press('Enter');
+  for (const attempt of [0, 1]) {
+    await page.keyboard.press('Control+k');
+    try {
+      await box.waitFor({ state: 'visible', timeout: attempt === 0 ? 8_000 : 20_000 });
+      await box.fill(label);
+      await page.keyboard.press('Enter');
+      return;
+    } catch {
+      if (attempt === 1) throw new Error(`command palette never opened for "${label}"`);
+      await page.waitForTimeout(1_000);
+    }
   }
 }
 
@@ -54,7 +75,11 @@ test.describe('§6.10–§6.18 panels survive a real render', () => {
     const hall = page.getByText('武鬥館', { exact: false }).first();
     await expect(hall).toBeVisible({ timeout: 20_000 });
     for (const tab of ['戰績', '武評', '擂台', '團戰', '恩怨', '名門', '名局', '賭坊']) {
+      // Same instantaneous-isVisible trap as the palette: give the tab a beat
+      // to mount before deciding it isn't there. A tab that genuinely doesn't
+      // exist on this build is still skipped, not failed.
       const btn = page.locator('button', { hasText: new RegExp(`^${tab}`) }).first();
+      await btn.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
       if (await btn.isVisible().catch(() => false)) {
         await btn.click();
         await page.waitForTimeout(250); // a crash on this tab would fire pageerror
@@ -69,6 +94,7 @@ test.describe('§6.10–§6.18 panels survive a real render', () => {
     await page.waitForTimeout(2_000);
     for (const tab of ['切磋', '劇情', '群儒', '月旦', '合辯']) {
       const btn = page.locator('button', { hasText: new RegExp(`^${tab}`) }).first();
+      await btn.waitFor({ state: 'visible', timeout: 3_000 }).catch(() => {});
       if (await btn.isVisible().catch(() => false)) {
         await btn.click();
         await page.waitForTimeout(250);
