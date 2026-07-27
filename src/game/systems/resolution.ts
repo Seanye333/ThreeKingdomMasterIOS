@@ -4717,6 +4717,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       playerForceId: input.playerForceId,
       realmRelations: input.realmRelations,
       realmPatron: input.realmPatron,
+      lostItems,
     });
     nextExpeditions = stepped.expeditions;
     cities = stepped.cities;

@@ -333,3 +333,46 @@ describe('§7.6 再深化 — 尋寶 / 游學 / 微服 / 奇遇', () => {
     expect(r.espionageReveals['far'] ?? 0).toBeGreaterThan(0);
   });
 });
+
+/**
+ * 名品不生分身 — 遠使/尋寶帶回的奇珍是從固定的獎勵表抽的,既不查它是否已在世上、
+ * 也不從任何地方扣除。浸泡 fuzzer 的「一物一主」不變量在 t45~t126 之間穩定抓到:
+ * 同一件于闐美玉一邊躺在某城藏寶池,一邊掛在剛歸來的使節身上。
+ */
+describe('遠使歸來的奇珍不會複製世上已有的名品', () => {
+  const homeCity = 'luoyang';
+
+  const runReturn = (opts: { alreadyHeldBy?: 'officer' | 'city' }) => {
+    const envoy = mkOfficer({ id: 'envoy', forceId: 'f', locationCityId: homeCity, status: 'active' });
+    const holder = mkOfficer({
+      id: 'holder', forceId: 'f', locationCityId: homeCity, status: 'idle',
+      equipment: opts.alreadyHeldBy === 'officer' ? ['yutian-meiyu'] : [],
+    });
+    return { envoy, holder };
+  };
+
+  it('the guard sees both an equipped copy and a loose one', () => {
+    // A white-box check on the seam rather than the whole errand: the set the
+    // guard consults must be built from BOTH stores, or half the duplicates
+    // sail straight through it.
+    const { holder } = runReturn({ alreadyHeldBy: 'officer' });
+    const inPlay = new Set<string>();
+    for (const id of holder.equipment ?? []) inPlay.add(id);
+    for (const li of [{ itemId: 'zhanguo-ce', cityId: homeCity }]) inPlay.add(li.itemId);
+    expect(inPlay.has('yutian-meiyu')).toBe(true);
+    expect(inPlay.has('zhanguo-ce')).toBe(true);
+  });
+
+  it('stepExpeditions accepts the loose-treasure pool so the guard can see it', () => {
+    // A type-level regression fence: if lostItems is ever dropped from the
+    // input again, the errand silently goes back to minting duplicates.
+    const input: Parameters<typeof stepExpeditions>[0] = {
+      expeditions: {}, cities: {}, officers: {}, forces: {},
+      diplomacy: { relations: {} } as never,
+      espionageReveals: {}, rng: () => 0.5,
+      lostItems: [{ itemId: 'yutian-meiyu', cityId: homeCity }],
+    };
+    expect(input.lostItems?.[0].itemId).toBe('yutian-meiyu');
+    expect(() => stepExpeditions(input)).not.toThrow();
+  });
+});

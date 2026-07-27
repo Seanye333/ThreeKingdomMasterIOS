@@ -25,6 +25,8 @@ beforeAll(() => {
 
 import { useGameStore } from './store';
 import { SCENARIOS } from '../data/scenarios';
+import { getRelation } from '../types/diplomacy';
+import { ITEMS_BY_ID } from '../data/items';
 
 const TURNS = 48;
 /**
@@ -148,6 +150,80 @@ function assertInvariants(turn: number): void {
   // ── Forts ──
   for (const f of Object.values(s.forts)) {
     expect(f.hp, `t${turn} fort ${f.id} hp ≥ 0`).toBeGreaterThanOrEqual(0);
+    // A fort belongs to somebody who exists, and guards cities that exist —
+    // a fort left guarding a city id that no longer resolves is how
+    // siegeFacilityAid ends up crediting defence to nobody.
+    if (f.ownerForceId) {
+      expect(s.forces[f.ownerForceId], `t${turn} fort ${f.id} owned by a live force`).toBeTruthy();
+    }
+    for (const g of f.guards ?? []) {
+      expect(s.cities[g], `t${turn} fort ${f.id} guards a real city (${g})`).toBeTruthy();
+    }
+  }
+
+  // ── 外交對稱 ── Relations are stored per unordered pair; if the two
+  // directions can disagree, one side thinks it is at war while the other
+  // thinks it is allied, and every AI decision downstream reads whichever it
+  // happened to look up first. Nothing in the engine checks this.
+  for (const a of Object.keys(s.forces)) {
+    for (const b of Object.keys(s.forces)) {
+      if (a >= b) continue;
+      const ab = getRelation(s.diplomacy, a, b);
+      const ba = getRelation(s.diplomacy, b, a);
+      expect(ab.status, `t${turn} diplomacy ${a}/${b} status asymmetric`).toBe(ba.status);
+      expect(ab.score, `t${turn} diplomacy ${a}/${b} score asymmetric`).toBe(ba.score);
+    }
+  }
+
+  // ── 名品不生分身 ── One named treasure, one holder. Equipment and the
+  // unclaimed hoard are separate stores that hand items to each other
+  // (奪寶/繳獲/賞賜/義釋/遠使); a copy left behind in the source is how a
+  // 神兵 quietly becomes two. This invariant caught exactly that: errand
+  // rewards minted a second 于闐美玉 while the first still lay in a city.
+  //
+  // 研讀秘笈 are deliberately exempt — legacyManual.ts states outright that a
+  // dead master's notes reuse the shared 秘籍 catalogue rather than minting a
+  // per-instance item, so two officers may each carry a copy of the same
+  // manual. They are consumed on study, so they are stock, not treasure.
+  const uniqueOnly = (id: string) => !ITEMS_BY_ID[id]?.consumable;
+  const itemHolder = new Map<string, string>();
+  for (const o of Object.values(s.officers)) {
+    for (const it of o.equipment ?? []) {
+      if (!uniqueOnly(it)) continue;
+      const prev = itemHolder.get(it);
+      expect(prev, `t${turn} item ${it} held by both ${prev} and officer ${o.id}`).toBeUndefined();
+      itemHolder.set(it, `officer:${o.id}`);
+    }
+  }
+  for (const li of s.lostItems ?? []) {
+    if (!uniqueOnly(li.itemId)) continue;
+    const prev = itemHolder.get(li.itemId);
+    expect(prev, `t${turn} item ${li.itemId} both unclaimed and held by ${prev}`).toBeUndefined();
+    itemHolder.set(li.itemId, `lost:${li.cityId}`);
+  }
+
+  // ── 城池與勢力互相認得 ── A force with a capital it does not own, or with
+  // no cities at all while still being alive, is a realm that exists only in
+  // the bookkeeping — the map shows nothing but the AI keeps taking turns.
+  const cityCount = new Map<string, number>();
+  for (const c of Object.values(s.cities)) {
+    if (c.ownerForceId) cityCount.set(c.ownerForceId, (cityCount.get(c.ownerForceId) ?? 0) + 1);
+  }
+  for (const f of Object.values(s.forces)) {
+    const cap = s.cities[f.capitalCityId];
+    if (cap && (cityCount.get(f.id) ?? 0) > 0) {
+      expect(cap.ownerForceId, `t${turn} force ${f.id} capital ${f.capitalCityId} is held by ${cap.ownerForceId}`).toBe(f.id);
+    }
+  }
+
+  // ── 俘虜必有俘主 ── An imprisoned officer sits in somebody's gaol. If the
+  // city fell and nobody re-homed them, they are frozen out of every path
+  // (ransom, recruit, execute, release) with no way for the player to reach
+  // them and no way for the engine to tick them.
+  for (const o of Object.values(s.officers)) {
+    if (o.status !== 'imprisoned') continue;
+    if (!o.locationCityId) continue;
+    expect(s.cities[o.locationCityId], `t${turn} captive ${o.id} held in a real city`).toBeTruthy();
   }
 }
 

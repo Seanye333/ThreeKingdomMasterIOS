@@ -13855,7 +13855,7 @@ export const ITEMS: Item[] = [
   // to apply a one-time growth boost and be destroyed. `effects: {}` so merely
   // carrying one does nothing; the payoff is in `consumable`. See store.studyManual. ──
   {
-    id: 'sunzi-bingfa',
+    id: 'sunzi-bingfa-manual',
     name: { en: "Sun Tzu's Art of War", zh: '孫子兵法' },
     kind: 'book',
     originCityId: 'wu',
@@ -13899,7 +13899,7 @@ export const ITEMS: Item[] = [
     rarity: 'bronze',
   },
   {
-    id: 'zhanguo-ce',
+    id: 'zhanguo-ce-manual',
     name: { en: 'Stratagems of the Warring States', zh: '戰國策' },
     kind: 'book',
     originCityId: 'luoyang',
@@ -13960,7 +13960,7 @@ export const ITEMS: Item[] = [
     rarity: 'gold',
   },
   {
-    id: 'gongyang-zhuan',
+    id: 'gongyang-zhuan-manual',
     name: { en: 'The Gongyang Commentary', zh: '春秋公羊傳' },
     kind: 'book',
     originCityId: 'beihai',

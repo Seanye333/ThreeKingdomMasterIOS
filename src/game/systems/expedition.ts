@@ -227,6 +227,10 @@ export interface ExpeditionStepInput {
   /** §7.7 ① 邦交競逐 — who currently holds each realm's 封號 (realmId → forceId).
    *  Only the patron may call in a realm's 借兵 troop loan. */
   realmPatron?: Record<string, EntityId>;
+  /** 無主名品 — the world's loose treasure, so an errand cannot bring home a
+   *  second copy of something already lying in a city. Omit and the guard only
+   *  sees equipped items. */
+  lostItems?: ReadonlyArray<{ itemId: EntityId; cityId: EntityId }>;
 }
 
 export interface ExpeditionStepResult {
@@ -277,6 +281,12 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
   const realmRelationDeltas: Record<string, number> = {};
   const realmsPatronClaimed: Record<string, EntityId> = {};
   const pf = input.playerForceId;
+  // 現存名品 — every item id already equipped by somebody or lying loose in a
+  // city's treasure pool. Built once per tick; errands that would mint a second
+  // copy of one of them pay out in gold instead (see the guard on return).
+  const itemsInPlay = new Set<EntityId>();
+  for (const o of Object.values(input.officers)) for (const id of o.equipment ?? []) itemsInPlay.add(id);
+  for (const li of input.lostItems ?? []) itemsInPlay.add(li.itemId);
   // Surface an errand to the player only when it's his, or it touches a city he
   // holds (a rival scouting/turning/raiding HIS land). Undefined pf ⇒ report all.
   const report = (exp: Expedition, entry: ReportEntry) => {
@@ -462,7 +472,18 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
         capturedFromForceId: undefined,
       };
     }
-    const item = haul.itemId;
+    // 名品不生分身 — an errand's treasure is minted from a fixed reward table
+    // (foreignRealms 的 itemIds / TREASURE_ITEM_IDS / BOOK_ITEM_IDS),既不查它
+    // 是否已在世上,也不從任何地方扣除。於是同一件于闐美玉可以被帶回無數次,
+    // 而世上原本那一件還躺在某城的藏寶池裡 —— 浸泡 fuzzer 的「一物一主」不變量
+    // 在 t45~t126 之間必然抓到它。守衛放在這裡:這是異域之物真正進入世界的唯一
+    // 接縫(embassy 與 expedition 兩種來源都收束於此)。
+    const item = haul.itemId && !itemsInPlay.has(haul.itemId) ? haul.itemId : undefined;
+    if (haul.itemId && !item) {
+      // 已在世上 — the envoy comes home with the goods sold on the road instead,
+      // so the errand still pays and the note above stays honest.
+      haul.gold = (haul.gold ?? 0) + 300;
+    }
     // 歷練 — the journey seasons the officer; pay XP on his return (level-ups
     // steer toward the stats the errand exercised + his own 練兵 focus).
     const xpRes = grantXp(officer, expeditionXp(exp.mode, exp.legSeasons), rng, expeditionFavoredStats(exp.mode));
