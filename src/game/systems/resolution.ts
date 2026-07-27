@@ -110,6 +110,9 @@ import { graftAccrual } from './graft';
 
 export interface ResolutionInput {
   date: GameDate;
+  /** 盤面 — which board this campaign is on. Era-specific content keys off it
+   *  rather than the calendar (every scenario opens at game year 178). */
+  scenarioId?: string | null;
   cities: Record<EntityId, City>;
   officers: Record<EntityId, Officer>;
   forces: Record<EntityId, Force>;
@@ -4764,7 +4767,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
       // (通西域/出使倭/安撫邊族). Its deltas (force mandate, tribe aggression)
       // bubble up like the player's.
       if (rng() < 0.2) {
-        const targets = embassyTargets(input.date.year);
+        const targets = embassyTargets(input.date.year, input.scenarioId);
         const target = targets[Math.floor(rng() * targets.length)];
         if (target) {
           const eleg = embassyLegSeasons(target, officer);

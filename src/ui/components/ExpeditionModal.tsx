@@ -256,6 +256,7 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
   const date = useGameStore((s) => s.date);
+  const scenarioId = useGameStore((s) => s.scenarioId);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const dispatchEmbassy = useGameStore((s) => s.dispatchEmbassy);
   const designateProtectorate = useGameStore((s) => s.designateProtectorate);
@@ -281,7 +282,7 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
   const deputy = deputyId && deputies.some((o) => o.id === deputyId) ? officers[deputyId] : undefined;
   const fromGold = cities[fromCityId]?.gold ?? 0;
 
-  const targets = useMemo(() => embassyTargets(date.year), [date.year]);
+  const targets = useMemo(() => embassyTargets(date.year, scenarioId), [date.year, scenarioId]);
   const byRegion = useMemo(() => {
     const groups: Record<string, EmbassyTarget[]> = {};
     for (const tg of targets) (groups[tg.region] ??= []).push(tg);
@@ -444,7 +445,7 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
       {Object.keys(openedRealms ?? {}).length > 0 && (
         <div style={{ fontSize: '0.66rem', color: '#7a8893', marginBottom: '0.6rem', lineHeight: 1.5 }}>
           {t('已通商路', 'Caravans')}: {Object.entries(openedRealms).map(([rid, cid]) => {
-            const rn = embassyTargets(date.year).find((tt) => tt.id === rid);
+            const rn = embassyTargets(date.year, scenarioId).find((tt) => tt.id === rid);
             const c = cities[cid];
             return rn ? `${lang === 'en' ? rn.name.en : rn.name.zh}${c ? `←${lang === 'en' ? c.name.en : c.name.zh}` : ''}` : null;
           }).filter(Boolean).join(' · ')}

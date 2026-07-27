@@ -1413,7 +1413,7 @@ export function loadScenario(
     recruitState: {},
     edictHistory: [],
     edictCooldowns: {},
-    tribeState: createInitialTribeState(),
+    tribeState: createInitialTribeState(scenario.id),
     tribeDiplomacy: emptyTribeDiplomacy(),
     lastSuburbanRiteYear: null,
     rainRiteDone: false,

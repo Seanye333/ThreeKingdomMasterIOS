@@ -8,7 +8,7 @@ import type {
   TribeId,
   TribeState,
 } from '../types';
-import { TRIBES } from '../data/tribes';
+import { TRIBES, tribesOnBoard } from '../data/tribes';
 import {
   buildTribalFounding,
   FOUNDING_CHANCE,
@@ -73,6 +73,9 @@ export function resolveTribeRaids(ctx: TribeContext): TribeOutput {
       continue;
     }
 
+    // 不在此盤者不擾邊 — no aggression entry means this people has not yet
+    // coalesced (or is long gone) in this board's era.
+    if (tribeAbsent(aggression, tribe.id)) continue;
     const ag = aggression[tribe.id] ?? tribe.baseAggression;
     // Aggression drift up over time.
     aggression[tribe.id] = Math.min(1, ag + 0.015);
@@ -228,10 +231,22 @@ function pickTarget(
   return valid[Math.floor(rng() * valid.length)];
 }
 
-export function createInitialTribeState(): TribeState {
+/**
+ * 部族開局 — only the peoples that exist on THIS board get an aggression entry.
+ * Absence is the signal used everywhere downstream: a tribe with no entry is
+ * not on the frontier at all (it does not raid, cannot be campaigned, cannot
+ * found a state), which is why the raid/levy loops below skip on `== null`
+ * rather than falling back to `baseAggression`.
+ */
+export function createInitialTribeState(scenarioId?: string | null): TribeState {
   const aggression: Record<TribeId, number> = {} as Record<TribeId, number>;
-  for (const t of TRIBES) aggression[t.id] = t.baseAggression;
+  for (const t of tribesOnBoard(scenarioId)) aggression[t.id] = t.baseAggression;
   return { aggression, lastRaidYear: {} };
+}
+
+/** 不在此盤 — no aggression entry means the people are not on this frontier. */
+export function tribeAbsent(aggression: Partial<Record<TribeId, number>>, id: TribeId): boolean {
+  return aggression[id] == null;
 }
 
 /** Whether the player can mount a frontier campaign / embassy against a
@@ -322,6 +337,7 @@ export function tickTribeMercenaries(args: {
   const cities = { ...args.cities };
   const entries: ReportEntry[] = [];
   for (const tribe of TRIBES) {
+    if (tribeAbsent(args.aggression, tribe.id)) continue;
     const isSubmitted = !!args.submitted?.[tribe.id];
     const agg = args.aggression[tribe.id] ?? tribe.baseAggression;
     if (!isSubmitted && agg > TRIBE_VASSAL_AGGRESSION) continue;

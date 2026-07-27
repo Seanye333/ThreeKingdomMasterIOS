@@ -4585,6 +4585,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
         const result = resolveSeason({
           date: state.date,
+          scenarioId: state.scenarioId,
           foughtPairs: state.foughtPairs ?? undefined,
           cities: planned.cities,
           officers: planned.officers,

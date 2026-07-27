@@ -20,6 +20,7 @@ export const TRIBES: Tribe[] = [
   },
   {
     id: 'wuhuan',
+    foundedYear: -206,   // 烏桓 — 東胡為匈奴所破後始分為烏桓,約前 206 年
     name: { en: 'Wuhuan', zh: '烏桓' },
     description:
       'Horse-lords of the north-eastern steppe. Their cavalry pours through the Liaoxi corridor when the empire weakens.',
@@ -33,6 +34,7 @@ export const TRIBES: Tribe[] = [
   },
   {
     id: 'xianbei',
+    foundedYear: -206,   // 鮮卑 — 與烏桓同出東胡,秦漢之際始見
     name: { en: 'Xianbei', zh: '鮮卑' },
     description:
       'Far-northern tribes — Tan Shihuai\'s heirs — who descend on the frontier in winter and vanish before spring.',
@@ -96,6 +98,7 @@ export const TRIBES: Tribe[] = [
   },
   {
     id: 'goguryeo',
+    foundedYear: -37,   // 高句麗 — 前 37 年朱蒙立國
     name: { en: 'Goguryeo', zh: '高句麗' },
     description:
       'Korean-peninsula kingdom of 高句麗. Often clashes with Liaodong forces; sacked 樂浪 commandery several times in the era.',
@@ -108,6 +111,7 @@ export const TRIBES: Tribe[] = [
   },
   {
     id: 'buyeo',
+    foundedYear: -100,   // 扶餘 — 西漢時始見於史籍
     name: { en: 'Buyeo', zh: '扶餘' },
     description:
       'Manchurian kingdom north of 遼東. Trades horses and hides to the Han; raids when grain prices spike.',
@@ -120,6 +124,7 @@ export const TRIBES: Tribe[] = [
   },
   {
     id: 'linyi',
+    foundedYear: 192,   // 林邑 — 192 年區連殺漢縣令而立國(其說明文字自己就寫著)
     name: { en: 'Linyi', zh: '林邑' },
     description:
       'Southern Champa kingdom on the coast of modern Vietnam — established 192 AD when 區連 killed the Han 縣令. Raids 日南 and 九真 commanderies.',
@@ -135,3 +140,28 @@ export const TRIBES: Tribe[] = [
 export const TRIBES_BY_ID: Record<string, Tribe> = Object.fromEntries(
   TRIBES.map((t) => [t.id, t]),
 );
+
+/**
+ * 盤面紀年 — the real-world year each board's story actually sits in. Every
+ * scenario opens at game year 178 regardless of era (see isLaterHanBoard), so
+ * era-specific content cannot key off `date.year`; it keys off the board.
+ */
+export function boardHistoricalYear(scenarioId: string | null | undefined): number {
+  if (!scenarioId) return 200;
+  if (scenarioId.startsWith('scn-ws-')) return -300;  // 戰國
+  if (scenarioId.startsWith('scn-ch-')) return -205;  // 秦末楚漢
+  if (scenarioId.startsWith('scn-st-')) return 617;   // 隋末唐初
+  return 200;                                          // 漢末三國
+}
+
+/**
+ * 在此盤上存在的部族 — a people that had not yet coalesced (or, for the Sui-Tang
+ * board, one long since absorbed) does not raid, cannot be campaigned against
+ * and cannot found a state. Found by running the all-AI observer on the Warring
+ * States board: it grew a Linyi state four centuries before Linyi existed, the
+ * same shape of bug as the Yellow Turbans rising against Xiang Yu.
+ */
+export function tribesOnBoard(scenarioId: string | null | undefined): Tribe[] {
+  const year = boardHistoricalYear(scenarioId);
+  return TRIBES.filter((t) => t.foundedYear == null || t.foundedYear <= year);
+}

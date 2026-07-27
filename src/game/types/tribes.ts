@@ -38,6 +38,16 @@ export interface Tribe {
   /** The tribe's famous chieftain (officer id). A successful 征討 may win him
    *  over (招降) if he's still a free agent. Omitted = no named chief. */
   chieftainId?: string;
+  /**
+   * 立國之年 — the year this people first appears as an organised polity on the
+   * frontier. Every board opens in game year 178 (see isLaterHanBoard), so this
+   * cannot be checked against the calendar: it is compared against the BOARD's
+   * era instead. Omitted = ancient, present on every board.
+   *
+   * Without it the Warring States board grows a Linyi state — a kingdom whose
+   * own description says it was founded in 192 AD — some four centuries early.
+   */
+  foundedYear?: number;
 }
 
 export interface TribeState {

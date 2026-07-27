@@ -1,6 +1,6 @@
 import type { ExpeditionHaul, ForeignRealm, Officer, RealmRegion } from '../types';
 import { FOREIGN_REALMS, FOREIGN_REALMS_BY_ID } from '../data/foreignRealms';
-import { TRIBES, TRIBES_BY_ID } from '../data/tribes';
+import { TRIBES_BY_ID, tribesOnBoard } from '../data/tribes';
 
 /* ─── 遠使異域 — long-range embassies to distant lands ──────────────────────
    A unified view over two kinds of destination: the historical foreign realms
@@ -35,10 +35,11 @@ function realmToTarget(r: ForeignRealm): EmbassyTarget {
 }
 
 /** Every embassy destination available in a given year (realms gate on minYear;
- *  tribes are always reachable). */
-export function embassyTargets(year: number): EmbassyTarget[] {
+ *  tribes gate on the BOARD's era — every scenario opens in game year 178, so a
+ *  people that had not yet coalesced cannot be gated on the calendar). */
+export function embassyTargets(year: number, scenarioId?: string | null): EmbassyTarget[] {
   const realms = FOREIGN_REALMS.filter((r) => r.minYear == null || year >= r.minYear).map(realmToTarget);
-  const tribes: EmbassyTarget[] = TRIBES.map((t) => ({
+  const tribes: EmbassyTarget[] = tribesOnBoard(scenarioId).map((t) => ({
     id: t.id, name: t.name, region: 'tribe' as const, blurbZh: t.descriptionZh ?? t.description, blurb: t.description,
     homeland: t.homeland, baseSeasons: TRIBE_REWARD_BASE_SEASONS, danger: 0.3, isTribe: true, chieftainId: t.chieftainId,
   }));

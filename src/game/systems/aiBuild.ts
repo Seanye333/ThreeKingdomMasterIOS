@@ -562,6 +562,7 @@ export function planAIFrontierExploits(ctx: {
     // ── 征討異族 — punish a restless border tribe ──
     if (ctx.rng() < AI_TRIBE_CHANCE) {
       for (const tribe of TRIBES) {
+        if (aggression[tribe.id] == null) continue;       // 不在此盤 — no such frontier
         const agg = aggression[tribe.id] ?? tribe.baseAggression;
         if (agg < tribe.baseAggression * 0.8) continue;   // already cowed — leave it
         if (!reaches(force.id, tribe.raidableCityIds)) continue;

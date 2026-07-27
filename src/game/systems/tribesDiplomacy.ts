@@ -320,6 +320,9 @@ export function rollAITribeIncitement(args: {
   // A tribe not already incited, whose frontier includes cities of ≥2 forces.
   const candidates: Array<{ tribe: Tribe; by: EntityId; target: EntityId }> = [];
   for (const tribe of TRIBES) {
+    // 不在此盤者不可煽動 — see createInitialTribeState: no aggression entry
+    // means this people does not exist in the board's era.
+    if (args.aggression[tribe.id] == null) continue;
     if (diplomacyState.incitements[tribe.id]) continue;
     if (diplomacyState.submitted[tribe.id] || diplomacyState.foundedStates[tribe.id]) continue;
     const ownersOnFrontier = new Set(
