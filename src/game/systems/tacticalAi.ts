@@ -281,6 +281,13 @@ export function pickAiTarget(
     if (e.isCommander) s *= 0.5;
     if (counter >= 1.4) s *= 0.6; // we counter them — pursue
     if (counter <= 0.8) s *= 1.8; // they counter us — avoid
+    // 追亡逐北 — a broken foe cannot strike back and is cut down at ×1.5 (×1.8
+    // under horse), yet nothing in this scorer looked at rout: the AI only ever
+    // finished a router that happened to be adjacent already (pickAdjacentTarget
+    // +300), and never went after one. Chasing is a HORSEMAN'S job — foot that
+    // breaks its line to run after fugitives just opens the line, so everyone
+    // else steps around them and keeps to the living enemy.
+    if (isRouting(e)) s *= unit.unitType === 'cavalry' ? 0.5 : 1.6;
     const woundedRatio = e.troops / Math.max(1, e.maxTroops);
     s *= 0.4 + woundedRatio; // weaker = juicier → focus fire
     // 集火紀律 — converge where brothers already grapple: a foe pinned by

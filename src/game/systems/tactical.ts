@@ -694,6 +694,54 @@ export const ARM_ARMOR: Partial<Record<UnitType, number>> = {
   infantry: 0.85, spearmen: 0.85, cavalry: 1.3,
 };
 
+/**
+ * 旗鼓可定,不可復其銳 — the ceiling PASSIVE morale recovery may lift a unit to.
+ *
+ * Every per-turn morale gain on the board (將旗 +3, 旗令 aura, 眾寡懸殊 +3,
+ * 順勢 +1~2) used to run all the way to 100, unconditionally, every turn —
+ * including the five or six turns of marching before anyone is in contact. So
+ * every unit entered the fighting at **100**, not at its 80 starting heart, and
+ * the drain of combat never caught up: measured over 80 AI battles, the average
+ * LOWEST morale a unit ever reached across a whole battle was 81.7, only 3% of
+ * units ever dipped to ≤25, and units were annihilated at an average morale of
+ * 90.3. They died at full heart.
+ *
+ * That made the entire lower half of the morale model unreachable in a normal
+ * battle — 動搖 (<40), the ≤15 band, 潰走 (0), 追擊掩殺 ×1.5/×1.8, 收攏, and
+ * 陣前招降 all sat behind a door nothing could open (5 routs in 80 battles, 0
+ * of them ever run down).
+ *
+ * A banner steadies a wavering line; it does not restore the élan of a host
+ * that has not yet been touched. Passive recovery therefore stops at this line.
+ * 鼓舞 (the rally stratagem) and other deliberate acts are NOT bound by it —
+ * which is the point: rallying a spent unit back to fighting spirit becomes
+ * something you have to spend a card on.
+ */
+export const MORALE_RALLY_CAP = 75;
+
+/**
+ * 死傷奪氣 — morale a unit loses for having its whole establishment felled.
+ *
+ * This was 50, which meant a contingent could be annihilated to the last man
+ * while its heart fell only from 80 to 30. Measured over 60 AI battles: a unit
+ * lost roughly **35 points of morale over the entire course of being wiped
+ * out**. Men ran out before nerve did, every time — so 潰走 happened 5 times in
+ * 80 battles and nothing was ever run down.
+ *
+ * Real formations break at a fraction of their strength, not at annihilation.
+ * At 130 a unit that has taken about half its establishment in casualties is at
+ * the edge, and one at ~60% is broken — which is what puts 動搖 / 潰走 / 追擊
+ * 掩殺 / 收攏 / 陣前招降 inside a battle's reach at last.
+ */
+export const BLOOD_MORALE_COST = 130;
+
+/** Apply a passive morale gain under the 旗鼓 ceiling. A unit already above the
+ *  cap keeps what it has (the banner never *lowers* anyone). */
+function steady(morale: number, gain: number): number {
+  if (morale >= MORALE_RALLY_CAP) return morale;
+  return Math.min(MORALE_RALLY_CAP, morale + gain);
+}
+
 /** 潰走 — a unit still manned but whose heart has broken (morale 0). It can't
  *  attack, auto-flees toward its own edge, and is run down by pursuers until it
  *  is killed or rallied back above 0. Only troops==0 actually removes it. */
@@ -1124,6 +1172,18 @@ function processRout(b: TacticalBattle): TacticalBattle {
       const moved = moveUnit(cur, u.id, step);
       if (moved === cur) break; // blocked
       cur = moved;
+    }
+    // 潰不成軍,遂去 — a router that makes it home quits the field for good.
+    // It used to STOP at the edge and sit there, still on the board, still
+    // counted as a standing unit, for the rest of the battle: of 22 routs
+    // observed in 80 battles, 9 were still standing at their own edge when the
+    // day ended. That limbo made breaking a formation cost its owner almost
+    // nothing — the men were neither lost nor available. Now they stream away
+    // as `retreatUnit` survivors (10% counted as stragglers), which is what
+    // pursuit is racing against: cut them down before they clear the field.
+    const home = cur.units.find((x) => x.id === r.id);
+    if (home && isRouting(home) && !home.isCommander && home.coord.col === edgeCol) {
+      cur = retreatUnit(cur, home.id);
     }
   }
   return cur;
@@ -1819,7 +1879,7 @@ export function attackUnits(
   if (isCrit) damage = Math.floor(damage * (martialSkill ? 1.8 : 1.6));
 
   const newTroops = Math.max(0, target.troops - damage);
-  let moraleLoss = Math.floor((damage / Math.max(1, target.maxTroops)) * 50);
+  let moraleLoss = Math.floor((damage / Math.max(1, target.maxTroops)) * BLOOD_MORALE_COST);
   // 必死則生 — a cornered, unbroken unit steels itself and barely loses heart.
   if (desperate) moraleLoss = Math.floor(moraleLoss * 0.5);
 
@@ -2320,7 +2380,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>,
   // didn't supply the officer map (e.g. unit tests).
   if (officers) {
     tickedUnits = tickedUnits.map((u) => {
-      if (u.troops <= 0 || u.morale >= 100) return u;
+      if (u.troops <= 0 || u.morale >= MORALE_RALLY_CAP) return u;
       let aura = 0;
       for (const other of tickedUnits) {
         if (other.id === u.id || other.side !== u.side || other.troops <= 0) continue;
@@ -2328,7 +2388,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>,
         const oo = officers[other.officerId];
         if (oo) aura += tacticalMoraleAura(oo);
       }
-      return aura > 0 ? { ...u, morale: Math.min(100, u.morale + Math.min(8, aura)) } : u;
+      return aura > 0 ? { ...u, morale: steady(u.morale, Math.min(8, aura)) } : u;
     });
 
     // 將旗統率 — the commander's banner steadies the host within its 統率半徑
@@ -2347,7 +2407,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>,
       if (u.troops <= 0 || u.isCommander) return u;
       const inBanner = banners.some((bn) => bn.side === u.side && hexDistance(bn.coord, u.coord) <= bn.radius);
       if (inBanner) {
-        return u.morale < 100 ? { ...u, morale: Math.min(100, u.morale + 3) } : u;
+        return { ...u, morale: steady(u.morale, 3) };
       }
       const hasShoulder = tickedUnits.some(
         (f) => f.side === u.side && f.id !== u.id && f.troops > 0 && hexDistance(f.coord, u.coord) === 1,
@@ -2374,7 +2434,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>,
       if (foe <= 0) return u;
       const ratio = friend / foe;
       if (ratio < 0.5 && u.morale > 0) return { ...u, morale: Math.max(0, u.morale - 4) };
-      if (ratio > 2.5 && u.morale < 100) return { ...u, morale: Math.min(100, u.morale + 3) };
+      if (ratio > 2.5) return { ...u, morale: steady(u.morale, 3) };
       return u;
     });
 
@@ -2386,7 +2446,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>,
       const favored: 'attacker' | 'defender' = mom > 0 ? 'attacker' : 'defender';
       tickedUnits = tickedUnits.map((u) => {
         if (u.troops <= 0 || isRouting(u)) return u;
-        if (u.side === favored) return u.morale < 100 ? { ...u, morale: Math.min(100, u.morale + swing) } : u;
+        if (u.side === favored) return { ...u, morale: steady(u.morale, swing) };
         return u.morale > 0 ? { ...u, morale: Math.max(0, u.morale - swing) } : u;
       });
     }
