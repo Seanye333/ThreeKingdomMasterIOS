@@ -36,6 +36,12 @@ async function startCampaign(page: Page): Promise<void> {
  * the first one while the scene is still initialising), and throws if the
  * palette never comes up — a spec that cannot open its subject must fail
  * loudly, not pass by accident.
+ *
+ * It then CLICKS the matching row rather than pressing Enter. Enter runs
+ * whatever the palette's internal cursor is on, and the cursor only lands on
+ * the right entry after the filter has re-rendered — so under load the key
+ * outran the list and selected nothing at all. Clicking the row names the
+ * command instead of trusting a cursor to have caught up.
  */
 async function openViaPalette(page: Page, label: string): Promise<void> {
   const box = page.locator('input[type="text"], input:not([type])').last();
@@ -43,13 +49,22 @@ async function openViaPalette(page: Page, label: string): Promise<void> {
     await page.keyboard.press('Control+k');
     try {
       await box.waitFor({ state: 'visible', timeout: attempt === 0 ? 8_000 : 20_000 });
-      await box.fill(label);
-      await page.keyboard.press('Enter');
-      return;
     } catch {
       if (attempt === 1) throw new Error(`command palette never opened for "${label}"`);
       await page.waitForTimeout(1_000);
+      continue;
     }
+    await box.fill(label);
+    // Palette rows render the label in a <span>; wait for the filtered list to
+    // actually contain it before committing.
+    const option = page.locator('span', { hasText: new RegExp(`^${label}`) }).last();
+    try {
+      await option.waitFor({ state: 'visible', timeout: 6_000 });
+      await option.click();
+    } catch {
+      await page.keyboard.press('Enter'); // no row matched — let the palette decide
+    }
+    return;
   }
 }
 
