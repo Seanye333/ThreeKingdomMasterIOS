@@ -4,6 +4,7 @@ import { useGameStore } from '../../game/state/store';
 import { checkEndings } from '../../game/systems/endings';
 import type { EndingKind } from '../../game/state/gameState';
 import { useT, useLanguage } from '../i18n';
+import { Z } from '../zIndex';
 
 /**
  * Small SVG vignettes for each ending — water-ink style.
@@ -212,7 +213,7 @@ export function EndingsModal({ onClose }: Props) {
         background: 'rgba(0,0,0,0.92)',
         display: 'grid',
         placeItems: 'center',
-        zIndex: 990,
+        zIndex: Z.endings,
         padding: '1rem',
       }}
     >

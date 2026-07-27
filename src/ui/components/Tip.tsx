@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { Z } from '../zIndex';
 
 interface TipProps {
   /** Tooltip text. When empty/undefined, the children render with no tooltip. */
@@ -82,7 +83,7 @@ export function Tip({ text, placement = 'bottom', children }: TipProps) {
               borderRadius: 'var(--tkm-radius)',
               boxShadow: '0 4px 16px rgba(0,0,0,0.55)',
               pointerEvents: 'none',
-              zIndex: 10000,
+              zIndex: Z.tip,
               animation: 'tkmFadeIn 0.12s ease-out',
             }}
           >

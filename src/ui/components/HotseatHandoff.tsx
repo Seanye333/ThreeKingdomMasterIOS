@@ -1,6 +1,7 @@
 import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage, pickName } from '../i18n';
 import { seatNumber } from '../../game/systems/hotseat';
+import { Z } from '../zIndex';
 
 /**
  * 換手 — the card between two people sharing a device.
@@ -40,7 +41,7 @@ export function HotseatHandoff() {
       aria-modal="true"
       aria-label={t('換手', 'Pass the device')}
       style={{
-        position: 'fixed', inset: 0, zIndex: 9000,
+        position: 'fixed', inset: 0, zIndex: Z.handoff,
         // Fully opaque: the whole point is that the previous player's board
         // must not be readable through it.
         background: 'radial-gradient(ellipse at 50% 35%, #1d2630 0%, #0b0f14 70%)',

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { createPortal } from 'react-dom';
 import { Tip } from './Tip';
 import { playSfx } from '../../game/systems/sound';
+import { Z } from '../zIndex';
 
 interface MenuItem {
   label: ReactNode;
@@ -125,7 +126,7 @@ export function HudMenu({ label, items, title }: Props) {
             background: 'var(--tkm-bg-modal)',
             border: '1px solid var(--tkm-text-h2)',
             boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
-            zIndex: 9999,
+            zIndex: Z.dropdown,
             animation: 'tkmFadeIn 0.12s ease-out',
           }}
         >

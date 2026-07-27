@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Z } from '../zIndex';
 
 /**
  * 幀率計 — a featherweight FPS readout for performance work. Enabled by
@@ -35,7 +36,7 @@ export function FpsMeter() {
   return (
     <div style={{
       position: 'fixed', top: 'calc(0.4rem + var(--tkm-safe-top))', left: '50%', transform: 'translateX(-50%)',
-      zIndex: 2000, pointerEvents: 'none',
+      zIndex: Z.fps, pointerEvents: 'none',
       background: 'rgba(10, 14, 18, 0.75)', border: `1px solid ${color}`, borderRadius: 'var(--tkm-radius-sm)',
       padding: '0.05rem 0.45rem', color, fontFamily: 'ui-monospace, monospace', fontSize: '0.72rem',
     }}>{fps} fps</div>
