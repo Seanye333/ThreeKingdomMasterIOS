@@ -11,7 +11,7 @@
 | # | 章節 | 涵蓋系統 | 狀態 |
 |---|---|---|---|
 | 速 | [速查總表 Quick Reference](#速查總表-quick-reference) | 一頁掃完所有關鍵常數 / 公式 / 成本 / 機率 | ✅ |
-| 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings(含戰損修繕), cityCivic(民情街景/城中人物/晝夜/街頭際遇/官邸家眷), autoBuild, policyEffects, **law(律令寬嚴/訟獄積案/決獄/冤獄/大赦)**, **household(隱戶/徭役/括戶)**, **culturalWorks(題詠/文集/立祠)**, **hoarding(囤積居奇/抑兼併)**, **grandProjects(大堰/運渠/長城/馳道)**, **grainTrade(米價/糴政/商旅轉輸)**, **coinage(錢法/物價/通脹)**, **workshops(工官/軍器/督造)**, **postalRelay(驛傳網絡/政令所及)**, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
+| 1 | [城市・內政・經濟](#第一章-城市內政經濟) | citySize, economy, commands, civicEvents, market(行情/榷場/馬市/鐵市), buildings(含戰損修繕), cityCivic(民情街景/城中人物/晝夜/街頭際遇/官邸家眷), autoBuild, policyEffects, **law(律令寬嚴/訟獄積案/決獄/冤獄/大赦)**, **household(隱戶/徭役/括戶)**, **culturalWorks(題詠/文集/立祠)**, **hoarding(囤積居奇/抑兼併)**, **grandProjects(大堰/運渠/長城/馳道)**, **grainTrade(米價/糴政/商旅轉輸)**, **coinage(錢法/物價/通脹)**, **workshops(工官/軍器/督造)**, **postalRelay(驛傳網絡/政令所及)**, **graft(貪腐:蝕利/生怨/巡查追贓)**, forging, specialties, specialtyEvents, tradeRoutes, convoy | ✅ |
 | 2 | [武將・成長・家族](#第二章-武將成長家族) | growth, officerGrade, gradeCombat, officerFate, traitEffects, personality, biography, posthumous, aging, officerGen, family, clans, retinues, **formerLord(故主之義)**, wishes, rapport, friction, relationshipEffects, career, codex, peerage, honorifics, battlePower(武將卡/開卡) | ✅, **formerLord(故主之義)** |
 | 3 | [人才・招攬・舌戰](#第三章-人才招攬舌戰) | commands(search), officerFate, recommendation, commonerTalent, appraisal(月旦評), **publicOpinion(鄉論清議)**, **patronage(門生故吏/舉主)**, **officialSelection(察舉/九品中正/開科取士/中正官)**, scenicSites(三顧), captiveFate(處決後果/AI處置), aiRansom, debate, wordWar, persuasion(說客) | ✅ |
 | 4 | [軍事指揮・委任](#第四章-軍事指揮委任) | **conscription(兵制:更卒/世兵/募兵/軍餉)**, **campaignLedger(糧秣簿)**, **militaryLaw(軍功簿/行賞/軍法四等)**, **veterans(傷兵/療傷/廢疾還籍)**, **reorganization(新兵稀釋/傷癒歸伍)**, muster, legion(都督之斷·長圍), governor, governorEval, advisor, 在途指令(駐守/設伏/圍城/焚橋/燒鎖/補給/分兵/召回), rout(潰軍/掩殺收降/殿軍斷後) | ✅ |
@@ -174,6 +174,7 @@
 | 名產↔戰鬥/武將 | 専才坐鎮(對口專才駐城 ×1.35)、戰陣藥營(藥材陣前降傷一級,耗120/人)、名駒入廄(名馬城牧得赤兔等坐騎)、匠籍神品(冶鐵城鍛造神品率+)(§1.9) |
 
 | 律令(§1.11) | 寬刑 民心+1/季·稅×0.93·貪腐×1.25 / 平律 無偏 / 峻法 民心−1·稅×1.07·貪腐×0.70·獄訟×1.35 |
+| 貪腐(§1.20) | 每季 +`max(0, 0.6+商業/120 − min(0.6,最佳政治/130))`×性格×文教×律法×驛傳(政治項封頂 0.6:富城再能幹也壓不住);金收 ×(1−貪腐/250)(滿貪 −40%);鄉論 −min(16,貪×0.16);≥60 貪墨生怨掉民心;天命需 ≤2;巡查肅貪追贓 `商業×1.5+政治×2+貪×8+貪×商業×0.15`,一次清 `max(8,政治/6)`。**城池面板 ≥8 顯示、郡縣一覽可按「貪」排序** |
 | 訟獄積案(§1.11) | 到案=(2+人口/9萬,頂6)×律令;聽斷=1.5+最高政治/22+牢城或安民坊2;無人駐守=不聽訟;≥25/55/80 民忠 −1/−2/−3 |
 | 決獄・冤獄・大赦(§1.11) | 決獄 120金 清 12+政治×0.55+有堂8;冤獄率 (積案−30)/100×0.22×律令(1.7/1.0/0.5)×(1−政治/130)頂0.35 → 民忠−5;大赦 300+城數×40 金,積案歸零、民忠+4~12,8季冷卻 |
 
@@ -1250,6 +1251,25 @@ e2e `statecraft.spec.ts` 走一遍真瀏覽器:開面板 → 四塊皆在 → �
 - 入口:**國政面板 ▸ 驛傳・政令所及**(驛置數、通達城數、斷驛城逐個可點跳轉、驛路迢遙城清單)。無新存檔欄 —— 網絡每季由建築與版圖現算。
 
 ---
+
+### 1.20 貪腐(graft.ts,2026-07-26)
+
+貪腐一直都在算 —— 而且算得很兇 —— 只是**玩家從來看不到那個數字**。`City.corruption` 在 `src/game` 底下被讀 **138 處**,在 `src/ui` 底下 4 處,而那 4 處全是指令 id 字串 `'anti-corruption'`。**數值一次都沒上過畫面。**
+
+它做的事:
+
+- **每季自動累積**:`max(0, 0.6 + 商業/120 − min(0.6, 最佳政治/130))` × 性格 × 文教 × 律法 × 驛傳。政治項封頂 0.6,所以**再能幹的太守也壓不住一座富城** —— 這正是為什麼富城需要定期巡查。
+- **金收 ×(1 − 貪腐/250)**,滿貪 **−40%**
+- **鄉論 −16**(封頂)、**≥60 開始掉民心**(貪墨生怨)、**天命要求 ≤2**、餵養囤積居奇、是 AI 太守出手的門檻
+- **巡查肅貪追贓 = `商業×1.5 + 政治×2 + 貪腐×8 + 貪腐×商業×0.15`**,而一次只清 `max(8, 政治/6)`
+
+所以「什麼時候巡查」是一個**真正的時機決策**:拖越久追贓越多,但一路在漏金。這個決策此前**完全盲打** —— 玩家連自己二十座城裡哪一座爛了都不知道。
+
+現在:
+
+- **城池面板**貪腐 ≥8 時出現數值條(低於此不值得為它派一整季,而永遠都在的條會沒人看):分層(吏治清明/吏胥漸墨/貪墨生怨/蠹吏盈庭)、目前吃掉幾成金收、以及**派城中政治最高者巡查可追贓多少金、清多少貪**。
+- **郡縣一覽**加一欄可排序的「貪」,≥25 轉黃、≥60 轉紅。**「該派人去哪座城」點一下欄位標題就有答案。**
+- **`graft.ts` 是唯一來源**:公式從 `resolution.ts`(累積)、`economy.ts`(金收)、`commands.ts`(追贓/清除)三處搬出來,那三處改成呼叫它。與 `wallDamage.ts`、地利徽記同一條契約 —— **面板顯示的數字,就是帳本實際套用的數字**,不可能各算各的。
 
 ## 第二章 武將・成長・家族
 
