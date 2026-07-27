@@ -4,8 +4,10 @@ import { evaluateGoal, findObjectiveFor } from '../../game/systems/objectives';
 import { findChallenge } from '../../game/data/challenges';
 import { useGameStore } from '../../game/state/store';
 import { Name } from './Name';
+import { useT } from '../i18n';
 
 export function ObjectivePanel() {
+  const t = useT();
   const scenarioId = useGameStore((s) => s.scenarioId);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const cities = useGameStore((s) => s.cities);
@@ -51,7 +53,7 @@ export function ObjectivePanel() {
         }}
       >
         <div style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
-          <span>⚔ Hero Mode · 英雄模式</span>
+          <span>{t('⚔ 英雄模式', '⚔ Hero Mode')}</span>
           <span style={{ color: '#c0504a' }}>{'★'.repeat(challenge.star)}</span>
         </div>
         <div style={{ fontSize: '0.95rem', color: tint }}>
@@ -59,13 +61,13 @@ export function ObjectivePanel() {
         </div>
         <div style={{ fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace', display: 'flex', justifyContent: 'space-between' }}>
           <span>
-            {res.status === 'success' && '✓ 達成 Won'}
-            {res.status === 'failure' && '✗ 失敗 Lost'}
-            {res.status === 'pending' && (res.progress ?? '進行中…')}
+            {res.status === 'success' && t('✓ 達成', '✓ Won')}
+            {res.status === 'failure' && t('✗ 失敗', '✗ Lost')}
+            {res.status === 'pending' && (res.progress ?? t('進行中…', 'In progress…'))}
           </span>
           {res.status === 'pending' && (
             <span style={{ color: yearsLeft <= 1 ? '#c0504a' : '#7a8893' }}>
-              期限 {deadline} · 餘 {Math.max(0, yearsLeft)} 年
+              {t(`期限 ${deadline} · 餘 ${Math.max(0, yearsLeft)} 年`, `by ${deadline} · ${Math.max(0, yearsLeft)}y left`)}
             </span>
           )}
         </div>
@@ -92,15 +94,15 @@ export function ObjectivePanel() {
       }}
     >
       <div style={{ fontSize: '0.7rem', letterSpacing: '0.07rem', color: '#7a8893', textTransform: 'uppercase' }}>
-        Objective · 目標
+        {t('目標', 'Objective')}
       </div>
       <div style={{ fontSize: '0.95rem', color: primaryRes.status === 'success' ? '#7ed68a' : primaryRes.status === 'failure' ? '#b8442e' : '#e6c473' }}>
         <Name pair={objective.primary.title} />
       </div>
       <div style={{ fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace' }}>
-        {primaryRes.status === 'success' && '✓ 達成 Achieved'}
-        {primaryRes.status === 'failure' && '✗ 失敗 Failed'}
-        {primaryRes.status === 'pending' && (primaryRes.progress ?? '進行中…')}
+        {primaryRes.status === 'success' && t('✓ 達成', '✓ Achieved')}
+        {primaryRes.status === 'failure' && t('✗ 失敗', '✗ Failed')}
+        {primaryRes.status === 'pending' && (primaryRes.progress ?? t('進行中…', 'In progress…'))}
       </div>
     </div>
   );

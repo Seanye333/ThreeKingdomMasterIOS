@@ -3,14 +3,20 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useLanguage } from '../i18n';
 import { CatalogModal, type CatalogItem, type CatalogCategory } from './CatalogModal';
 
-function bonusBadge(id: string): string {
+/** The stat kicker on each tactic chip. The rest of this catalogue is fully
+ *  bilingual (TACTIC_DESC / TACTIC_DESC_EN); this badge was the one Chinese-only
+ *  string left in it, so an English reader got 武+3 統+2 with no key. */
+function bonusBadge(id: string, en: boolean): string {
   const b = tacticBonus(id);
+  const L = en
+    ? { war: 'WAR', leadership: 'LDR', intelligence: 'INT', politics: 'POL', charisma: 'CHA' }
+    : { war: '武', leadership: '統', intelligence: '知', politics: '政', charisma: '魅' };
   const parts: string[] = [];
-  if (b.war) parts.push(`武+${b.war}`);
-  if (b.leadership) parts.push(`統+${b.leadership}`);
-  if (b.intelligence) parts.push(`知+${b.intelligence}`);
-  if (b.politics) parts.push(`政+${b.politics}`);
-  if (b.charisma) parts.push(`魅+${b.charisma}`);
+  if (b.war) parts.push(`${L.war}+${b.war}`);
+  if (b.leadership) parts.push(`${L.leadership}+${b.leadership}`);
+  if (b.intelligence) parts.push(`${L.intelligence}+${b.intelligence}`);
+  if (b.politics) parts.push(`${L.politics}+${b.politics}`);
+  if (b.charisma) parts.push(`${L.charisma}+${b.charisma}`);
   const sig = isTacticSignature(id) ? '★ ' : '';
   return sig + parts.join(' ');
 }
@@ -1584,7 +1590,7 @@ export function TacticsModal({ onClose }: Props) {
       en: def.en,
       description: lines.join('\n'),
       category: TACTIC_CATEGORY[id] ?? 'melee',
-      badge: bonusBadge(id),
+      badge: bonusBadge(id, en),
     };
   });
   return (

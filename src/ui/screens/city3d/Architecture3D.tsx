@@ -13,6 +13,7 @@ import { BUILDING_DEFS_BY_ID, BUILDING_CATEGORY, BUILDING_CATEGORY_LABEL } from 
 import { SelectionRing3D } from '../../components/SelectionRing3D';
 import { hexWorld, HEX_COL_STEP, HEX_ROW_STEP } from '../battle3d/battleGrid';
 import { ChineseRoof3D, SeasonCtx, InspectCtx } from './Folk3D';
+import { useLanguage } from '../../i18n';
 
 /** A wisp of opaque chimney smoke — three puffs rise and shrink, then recycle
  *  (no transparency; they just dwindle to nothing). */
@@ -117,6 +118,20 @@ export function Banner3D({ color, w, h, phase, faceX = 0 }: {
   );
 }
 
+
+/**
+ * 建築名 — the city diorama used to label every structure with a Chinese-only
+ * `nameZh` of its own, so an English player walked into their capital and read
+ * 兵營/市場/鐵工坊 with nothing to go on. The canonical bilingual name already
+ * lives in the building data; take it from there rather than keeping a second
+ * table in sync (the local one is now glyph/colour/height only).
+ */
+export function buildingName(id: BuildingId, lang: string): string {
+  const canon = BUILDING_DEFS_BY_ID[id]?.name;
+  if (!canon) return INSIDE_BUILDING_DEF[id]?.nameZh ?? id;
+  return lang === 'en' ? canon.en : canon.zh;
+}
+
 /* ─── Inside-city building (3D block + roof + glyph label) ──────────── */
 export function InsideBuilding3D({ coord, buildingId, level, damaged }: {
   coord: { col: number; row: number };
@@ -126,6 +141,7 @@ export function InsideBuilding3D({ coord, buildingId, level, damaged }: {
   damaged?: boolean;
 }) {
   const [x, z] = hexWorld(coord.col, coord.row);
+  const lang = useLanguage();
   const inspect = useContext(InspectCtx);
   const def = INSIDE_BUILDING_DEF[buildingId];
   const h = def.height + level * 0.15;
@@ -168,10 +184,16 @@ export function InsideBuilding3D({ coord, buildingId, level, damaged }: {
     const cat = BUILDING_CATEGORY[buildingId];
     const catLabel = BUILDING_CATEGORY_LABEL[cat];
     inspect({
-      title: damaged ? `${def.nameZh} · 毀於兵燹` : `${def.nameZh} · ${catLabel?.zh ?? ''} lv${level}`,
+      title: damaged
+        ? `${buildingName(buildingId, lang)} · ${lang === 'en' ? 'burned out' : '毀於兵燹'}`
+        : `${buildingName(buildingId, lang)} · ${(lang === 'en' ? catLabel?.en : catLabel?.zh) ?? ''} lv${level}`,
       body: damaged
-        ? '攻城戰火焚及此坊,梁柱焦黑、匠作俱廢 — 修繕之前不供加成(於城建面板修繕)。'
-        : (bdef?.descriptionZh ?? bdef?.description ?? '城中營造,其加成已接入本城模擬。'),
+        ? (lang === 'en'
+          ? 'The siege fires took this quarter — charred beams, the workshops gone. It grants nothing until rebuilt (repair from the city-building panel).'
+          : '攻城戰火焚及此坊,梁柱焦黑、匠作俱廢 — 修繕之前不供加成(於城建面板修繕)。')
+        : (lang === 'en'
+          ? (bdef?.description ?? bdef?.descriptionZh ?? 'A city work; its bonuses are already folded into this city.')
+          : (bdef?.descriptionZh ?? bdef?.description ?? '城中營造,其加成已接入本城模擬。')),
       color: damaged ? '#b8442e' : def.color,
       commands: !damaged && cat === 'culture' ? ['promote-learning'] : undefined,
     });
@@ -194,9 +216,11 @@ export function InsideBuilding3D({ coord, buildingId, level, damaged }: {
             color: '#e7d6ad', whiteSpace: 'nowrap', lineHeight: 1.5, maxWidth: 260,
             boxShadow: '0 2px 10px rgba(0,0,0,0.6)',
           }}>
-            <div style={{ fontWeight: 'bold', letterSpacing: '0.5px' }}>{def.nameZh} <span style={{ color: '#c0a878', fontWeight: 'normal' }}>lv{level}</span>{damaged && <span style={{ color: '#e05a3a', marginLeft: 4 }}>毀</span>}</div>
+            <div style={{ fontWeight: 'bold', letterSpacing: '0.5px' }}>{buildingName(buildingId, lang)} <span style={{ color: '#c0a878', fontWeight: 'normal' }}>lv{level}</span>{damaged && <span style={{ color: '#e05a3a', marginLeft: 4 }}>{lang === 'en' ? 'ruined' : '毀'}</span>}</div>
             <div style={{ color: '#bfae86', whiteSpace: 'normal', maxWidth: 240 }}>
-              {(BUILDING_DEFS_BY_ID[buildingId]?.descriptionZh ?? BUILDING_DEFS_BY_ID[buildingId]?.description ?? '').slice(0, 60)}
+              {(lang === 'en'
+                ? (BUILDING_DEFS_BY_ID[buildingId]?.description ?? BUILDING_DEFS_BY_ID[buildingId]?.descriptionZh ?? '')
+                : (BUILDING_DEFS_BY_ID[buildingId]?.descriptionZh ?? BUILDING_DEFS_BY_ID[buildingId]?.description ?? '')).slice(0, 60)}
             </div>
           </div>
         </Html>
@@ -260,7 +284,7 @@ export function InsideBuilding3D({ coord, buildingId, level, damaged }: {
           borderRadius: 'var(--tkm-radius-xs)',
           whiteSpace: 'nowrap',
         }}>
-          {def.nameZh} <span style={{ opacity: 0.7 }}>lv{level}</span>
+          {buildingName(buildingId, lang)} <span style={{ opacity: 0.7 }}>lv{level}</span>
         </div>
       </Html>
       </group>
@@ -562,7 +586,8 @@ export function GhostBuilding3D({ x, z, buildingId }: { x: number; z: number; bu
 
 /** Scaffolding shown on a plot whose building is still under construction
  *  (level 0, progress > 0) — wooden frame + a 建造中 banner. */
-export function ConstructionSite3D({ x, z, nameZh }: { x: number; z: number; nameZh: string }) {
+export function ConstructionSite3D({ x, z, name }: { x: number; z: number; name: string }) {
+  const lang = useLanguage();
   const posts: Array<[number, number]> = [[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]];
   return (
     <group position={[x, 0, z]}>
@@ -593,7 +618,7 @@ export function ConstructionSite3D({ x, z, nameZh }: { x: number; z: number; nam
           padding: '1px 5px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
           color: '#e0c060', whiteSpace: 'nowrap', borderRadius: 'var(--tkm-radius-xs)',
         }}>
-          🔨 {nameZh}·建造中
+          🔨 {name}{lang === 'en' ? ' · under construction' : '·建造中'}
         </div>
       </Html>
     </group>

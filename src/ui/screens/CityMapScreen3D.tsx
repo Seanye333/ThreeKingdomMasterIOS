@@ -51,7 +51,7 @@ import {
   InstancedTilePrisms,
   DefenseStructure,
 } from './TacticalBattleScreen3D';
-import { INSIDE_BUILDING_DEF, InsideBuilding3D, WallSegment3D, innerWallCells, InnerWallSeg3D, InnerGate3D, CityGate3D, CornerTower3D, Moat3D, canalRow, CanalBridge3D, cityBuildPlots, FoundationPlot3D, GhostBuilding3D, ConstructionSite3D, Smoke3D } from './city3d/Architecture3D';
+import { INSIDE_BUILDING_DEF, buildingName, InsideBuilding3D, WallSegment3D, innerWallCells, InnerWallSeg3D, InnerGate3D, CityGate3D, CornerTower3D, Moat3D, canalRow, CanalBridge3D, cityBuildPlots, FoundationPlot3D, GhostBuilding3D, ConstructionSite3D, Smoke3D } from './city3d/Architecture3D';
 
 /** Coarse-pointer / small-screen device — drop pixel ratio and skip the
  *  post-processing pass so phones keep a playable framerate. */
@@ -1081,7 +1081,7 @@ function CityScene({
   preview: ReturnType<typeof previewBattlefield>;
   slots: ReturnType<typeof useGameStore.getState>['cities'][string]['buildSlots'];
   buildings: Array<{ coord: { col: number; row: number }; buildingId: BuildingId; level: number; damaged?: boolean }>;
-  construction: Array<{ coord: { col: number; row: number }; nameZh: string }>;
+  construction: Array<{ coord: { col: number; row: number }; name: string }>;
   plots: Array<{ col: number; row: number }>;
   cityWallCol: number;
   light: typeof SEASON_LIGHT[SeasonKey];
@@ -1374,7 +1374,7 @@ function CityScene({
       {/* Buildings still under construction — scaffolding + 建造中 banner. */}
       {construction.map((c) => {
         const [x, z] = hexWorld(c.coord.col, c.coord.row);
-        return <ConstructionSite3D key={`cons-${c.coord.col}-${c.coord.row}`} x={x} z={z} nameZh={c.nameZh} />;
+        return <ConstructionSite3D key={`cons-${c.coord.col}-${c.coord.row}`} x={x} z={z} name={c.name} />;
       })}
 
       {/* Living-city dwellings + central 府衙 (cosmetic) */}
@@ -1929,8 +1929,8 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
   );
   const construction = useMemo(
     () => placed.filter((p) => p.building.level === 0 && p.building.progress > 0)
-      .map((p) => ({ coord: p.coord, nameZh: INSIDE_BUILDING_DEF[p.building.id]?.nameZh ?? p.building.id })),
-    [placed],
+      .map((p) => ({ coord: p.coord, name: buildingName(p.building.id, lang) })),
+    [placed, lang],
   );
   const presentTypes = useMemo(() => new Set(cityBuildingsAll.map((b) => b.id)), [cityBuildingsAll]);
   const plotByHex = useMemo(() => {
