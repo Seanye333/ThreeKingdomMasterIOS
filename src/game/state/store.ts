@@ -252,6 +252,7 @@ import {
   attemptFreeAgentRecruit,
   attemptRecruit,
   estimateRecruitChance,
+  freeAgentRecruitOdds,
   recruitCostFor,
   giftRecruitValue,
 } from '../systems/officerFate';
@@ -825,6 +826,14 @@ export interface GameStore extends GameState {
     cityId: EntityId,
     approach?: import('../systems/officerFate').PersuasionApproach,
   ) => number;
+  /** 訪賢勝算 — the odds a 招攬 would roll against right now, plus the coldest
+   *  reason they hold back. Same seam the attempt uses (freeAgentRecruitOdds),
+   *  so what the button quotes is what the dice see. */
+  estimateFreeAgentRecruit: (
+    officerId: EntityId,
+    cityId: EntityId,
+    opts?: { debateWon?: boolean; bribe?: number; giftItemId?: EntityId },
+  ) => { chance: number; reasonZh?: string; reasonEn?: string };
   /** 訪賢招攬 — invite a free agent (free). opts: a won debate or a paid
    *  bribe raises the odds after a first refusal. */
   recruitFreeAgent: (
@@ -1920,6 +1929,49 @@ function esteemBonusAt(state: GameState, cityId: EntityId): number {
       (o) => o.locationCityId === cityId && o.forceId === city.ownerForceId),
     lawSeverity: city.ownerForceId ? state.lawCode?.[city.ownerForceId] : undefined,
   })).recruitBonus;
+}
+
+/**
+ * 招賢的全部條件 — assembled once, so the preview and the attempt cannot drift
+ * apart (they did once: a hand-copied preview quietly dropped six terms).
+ * Returns null when the recruit is not even possible from here.
+ */
+function freeAgentRecruitInput(
+  state: GameState,
+  officerId: EntityId,
+  cityId: EntityId,
+  opts?: { debateWon?: boolean; bribe?: number; giftItemId?: EntityId },
+) {
+  const officer = state.officers[officerId];
+  const city = state.cities[cityId];
+  const force = state.playerForceId ? state.forces[state.playerForceId] : null;
+  const ruler = force ? state.officers[force.rulerOfficerId] : null;
+  if (!officer || !city || !force || !ruler) return null;
+  const bribe = Math.max(0, Math.floor(opts?.bribe ?? 0));
+  const giftEntry = opts?.giftItemId ? state.lostItems.find((li) => li.itemId === opts.giftItemId) : undefined;
+  const giftItem = giftEntry ? ITEMS_BY_ID[giftEntry.itemId] : undefined;
+  const priorAttempts = state.recruitState[officerId]?.attempts ?? 0;
+  return {
+    officer,
+    city,
+    recruiterForce: force,
+    recruiterRuler: ruler,
+    recruiterReputation: {
+      citiesOwned: Object.values(state.cities).filter((c) => c.ownerForceId === state.playerForceId).length,
+    },
+    family: state.family,
+    free: true,            // 邀請免費 — only a bribe spends gold.
+    debateWon: opts?.debateWon,
+    bribeBonus: bribe > 0 ? Math.min(0.35, bribe / 1200) : 0,
+    // 三顧之誠 — each prior refusal builds a little cumulative warmth.
+    persistenceBonus: Math.min(0.20, priorAttempts * 0.05),
+    recommendedBonus: officer.recommended ? 0.15 : 0, // 舉薦作保
+    giftBonus: giftItem ? giftRecruitValue(giftItem, officer) : 0,
+    esteemBonus: esteemBonusAt(state, cityId),
+    giftEntry,
+    giftItem,
+    priorAttempts,
+  };
 }
 
 export const useGameStore = create<GameStore>()(
@@ -9804,16 +9856,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         });
       },
 
+      estimateFreeAgentRecruit: (officerId, cityId, opts) => {
+        const built = freeAgentRecruitInput(get(), officerId, cityId, opts);
+        if (!built) return { chance: 0 };
+        return freeAgentRecruitOdds(built);
+      },
+
       recruitFreeAgent: (officerId, cityId, opts) => {
         const state = get();
-        const officer = state.officers[officerId];
         const city = state.cities[cityId];
-        const force = state.playerForceId
-          ? state.forces[state.playerForceId]
-          : null;
-        const ruler = force ? state.officers[force.rulerOfficerId] : null;
-        if (!officer || !city || !force || !ruler)
-          return { ok: false, message: 'Invalid state.' };
+        const built = freeAgentRecruitInput(state, officerId, cityId, opts);
+        if (!built || !city) return { ok: false, message: 'Invalid state.' };
+        const { giftEntry, giftItem, priorAttempts } = built;
         if (city.ownerForceId !== state.playerForceId)
           return { ok: false, message: 'Not your city.' };
 
@@ -9827,33 +9881,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const bribe = Math.max(0, Math.floor(opts?.bribe ?? 0));
         if (bribe > 0 && city.gold < bribe)
           return { ok: false, message: '國庫不足以行賄。' };
-        const bribeBonus = bribe > 0 ? Math.min(0.35, bribe / 1200) : 0;
 
-        const citiesOwned2 = Object.values(state.cities).filter(
-          (c) => c.ownerForceId === state.playerForceId,
-        ).length;
-        // 三顧之誠 — each prior refusal builds a little cumulative warmth.
-        const priorAttempts = state.recruitState[officerId]?.attempts ?? 0;
-        const persistenceBonus = Math.min(0.20, priorAttempts * 0.05);
-        // 名品禮聘 — a treasure from the realm's unclaimed hoard sweetens the offer.
-        const giftEntry = opts?.giftItemId ? state.lostItems.find((li) => li.itemId === opts.giftItemId) : undefined;
-        const giftItem = giftEntry ? ITEMS_BY_ID[giftEntry.itemId] : undefined;
-        const giftBonus = giftItem ? giftRecruitValue(giftItem, officer) : 0;
-        const result = attemptFreeAgentRecruit({
-          officer,
-          city,
-          recruiterForce: force,
-          recruiterRuler: ruler,
-          recruiterReputation: { citiesOwned: citiesOwned2 },
-          family: state.family,
-          free: true,            // 邀請免費 — only a bribe spends gold.
-          debateWon: opts?.debateWon,
-          bribeBonus,
-          persistenceBonus,
-          recommendedBonus: officer.recommended ? 0.15 : 0, // 舉薦作保
-          giftBonus,
-          esteemBonus: esteemBonusAt(state, cityId),
-        });
+        const result = attemptFreeAgentRecruit(built);
 
         const updates: Partial<GameState> = {};
         if (bribe > 0) {

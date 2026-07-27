@@ -309,19 +309,20 @@ export interface FreeAgentRecruitInput {
   rng?: () => number;
 }
 
-export function attemptFreeAgentRecruit(
-  input: FreeAgentRecruitInput,
-): RecruitOutput {
-  const rng = input.rng ?? Math.random;
+/**
+ * 招賢勝算 — the free-agent recruit odds as a pure function of the same inputs
+ * the attempt uses. Extracted so the screen can quote the SAME number the roll
+ * will use: the old `previewRecruitChance` was a hand-copied subset that had
+ * drifted to miss 宿怨/舊部/報恩/主義/薦保/賄賂 entirely, so any UI built on it
+ * would have quoted odds the engine does not honour.
+ *
+ * Returns the odds plus the strongest reason they are cold on you, which the
+ * refusal path also uses — one source for both the preview and the excuse.
+ */
+export function freeAgentRecruitOdds(
+  input: Omit<FreeAgentRecruitInput, 'rng'>,
+): { chance: number; reasonZh?: string; reasonEn?: string } {
   const { officer, city, recruiterForce, recruiterRuler, recruiterReputation, family } = input;
-
-  if (officer.status !== 'idle' || officer.forceId !== null) {
-    return { ok: false, message: 'Officer is not a free agent.' };
-  }
-  if (!input.free && city.gold < FREE_AGENT_COST) {
-    return { ok: false, message: 'Not enough gold to offer them service.' };
-  }
-
   // Free agents — base on charisma, modified by traits and reputation.
   let chance = (recruiterRuler.stats.charisma + 20) / 100;
   chance += traitBonus(officer.traits as string[] | undefined);
@@ -355,6 +356,32 @@ export function attemptFreeAgentRecruit(
   chance += input.bribeBonus ?? 0;
   chance = clamp01(chance);
 
+  // 拒絕之由 — the strongest reason they balk, surfaced both before the attempt
+  // (as a warning on the button) and after it (in the refusal message).
+  const enemyPenalty = recruitRefusalPenalty(officer.id, recruiterRuler.id);
+  let reasonZh: string | undefined;
+  let reasonEn: string | undefined;
+  if (enemyPenalty < 0) { reasonZh = '與主公有宿怨,豈肯來投'; reasonEn = 'They bear an old grudge against you'; }
+  else if (docFit.delta < 0 && docFit.reasonZh) { reasonZh = docFit.reasonZh; reasonEn = docFit.reasonEn; }
+  else if (isNoble) { reasonZh = '高潔自矜,不肯輕附'; reasonEn = 'Too proud to be lightly won'; }
+  return { chance, reasonZh, reasonEn };
+}
+
+export function attemptFreeAgentRecruit(
+  input: FreeAgentRecruitInput,
+): RecruitOutput {
+  const rng = input.rng ?? Math.random;
+  const { officer, city, recruiterForce, recruiterRuler } = input;
+
+  if (officer.status !== 'idle' || officer.forceId !== null) {
+    return { ok: false, message: 'Officer is not a free agent.' };
+  }
+  if (!input.free && city.gold < FREE_AGENT_COST) {
+    return { ok: false, message: 'Not enough gold to offer them service.' };
+  }
+
+  const { chance, reasonZh, reasonEn } = freeAgentRecruitOdds(input);
+
   if (rng() < chance) {
     const recruited: Officer = {
       ...officer,
@@ -372,43 +399,12 @@ export function attemptFreeAgentRecruit(
     };
   }
 
-  // 拒絕之由 — surface the strongest reason they balked, so the player learns.
-  const enemyPenalty = recruitRefusalPenalty(officer.id, recruiterRuler.id);
-  let reasonZh: string | undefined;
-  let reasonEn: string | undefined;
-  if (enemyPenalty < 0) { reasonZh = '與主公有宿怨,豈肯來投'; reasonEn = 'They bear an old grudge against you'; }
-  else if (docFit.delta < 0 && docFit.reasonZh) { reasonZh = docFit.reasonZh; reasonEn = docFit.reasonEn; }
-  else if (isNoble) { reasonZh = '高潔自矜,不肯輕附'; reasonEn = 'Too proud to be lightly won'; }
   const tail = reasonZh ? ` ${reasonZh} — ${reasonEn}` : '';
   return {
     ok: false,
     chance,
     message: `${officer.name.en} declines.${tail}`,
   };
-}
-
-/** Pure preview — what's the chance, given inputs, without rolling? */
-export function previewRecruitChance(
-  officer: Officer,
-  city: City,
-  recruiterRuler: Officer,
-  recruiterReputation?: { citiesOwned: number },
-  mode: 'captive' | 'free' = 'free',
-): number {
-  let chance: number;
-  if (mode === 'captive') {
-    chance = (recruiterRuler.stats.charisma - officer.loyalty + 50) / 100;
-  } else {
-    chance = (recruiterRuler.stats.charisma + 20) / 100;
-  }
-  chance += traitBonus(officer.traits as string[] | undefined);
-  chance += hometownBonus(officer, city);
-  chance += reputationBonus(recruiterReputation);
-  chance += prestigeRecruitBonus(recruiterRuler);
-  if ((officer.traits ?? []).includes('noble')) {
-    chance = mode === 'captive' ? Math.min(chance, 0.15) : chance - 0.10;
-  }
-  return clamp01(chance);
 }
 
 export function applyExecute(officer: Officer): Officer {

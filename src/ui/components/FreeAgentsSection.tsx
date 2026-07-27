@@ -20,11 +20,14 @@ interface Props {
 const BRIBE_AMOUNT = 300;
 const RARITY_RANK: Record<string, number> = { gold: 3, silver: 2, bronze: 1 };
 
+type RecruitOpts = { debateWon?: boolean; bribe?: number; giftItemId?: EntityId };
+
 export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
   const officersMap = useGameStore((s) => s.officers);
   const cityGold = useGameStore((s) => s.cities[cityId]?.gold ?? 0);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const recruitFreeAgent = useGameStore((s) => s.recruitFreeAgent);
+  const estimate = useGameStore((s) => s.estimateFreeAgentRecruit);
   const lockFreeAgentRecruit = useGameStore((s) => s.lockFreeAgentRecruit);
   const recruitState = useGameStore((s) => s.recruitState);
   const lostItems = useGameStore((s) => s.lostItems);
@@ -77,6 +80,24 @@ export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
     if (r.ok) setRecruited(id);
   };
 
+  /** Odds as a chip on the button itself — read from the engine's own seam. */
+  const Odds = ({ officerId, opts }: { officerId: EntityId; opts?: RecruitOpts }) => {
+    const { chance } = estimate(officerId, cityId, opts);
+    const pct = Math.round(chance * 100);
+    return (
+      <span style={{
+        marginLeft: 4, fontSize: '0.72em',
+        color: pct >= 60 ? '#8fd08a' : pct >= 30 ? '#e6c473' : '#c88a7a',
+      }}>{pct}%</span>
+    );
+  };
+  /** Tooltip: the odds plus, when they are cold on you, the reason why. */
+  const oddsTitle = (officerId: EntityId, opts: RecruitOpts, base: string) => {
+    const { chance, reasonZh, reasonEn } = estimate(officerId, cityId, opts);
+    const reason = lang === 'en' ? reasonEn : reasonZh;
+    return `${base}\n${t('勝算', 'Odds')} ${Math.round(chance * 100)}%${reason ? ` · ${reason}` : ''}`;
+  };
+
   return (
     <section className={styles.root}>
       <h3 className={styles.title}>{t('浪人', 'Free Agents')} ({agents.length})</h3>
@@ -106,11 +127,16 @@ export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
               )}
               {isPlayerCity && (
                 <div className={styles.actions}>
+                  {/* 勝算 — the captive panel has quoted odds per approach for a
+                      long time; 訪賢 never did, so escalating (賄賂/厚禮/舌戰)
+                      was a blind spend. Each button quotes what IT would roll,
+                      from the same seam the attempt uses. */}
                   {stage === 'locked' ? (
                     <span style={{ fontSize: '0.72rem', color: '#a8825a' }}>{t('舌戰失利 · 下回合再訪', 'Lost the debate — try next turn')}</span>
                   ) : stage === 'fresh' ? (
-                    <button className={styles.recruitBtn} onClick={() => invite(o.id)} title={t('禮聘出仕(免費)', 'Invite to serve (free)')}>
-                      {t('招聘', 'Invite')}
+                    <button className={styles.recruitBtn} onClick={() => invite(o.id)}
+                      title={oddsTitle(o.id, {}, t('禮聘出仕(免費)', 'Invite to serve (free)'))}>
+                      {t('招聘', 'Invite')} <Odds officerId={o.id} />
                     </button>
                   ) : (
                     <>
@@ -119,21 +145,24 @@ export function FreeAgentsSection({ cityId, isPlayerCity }: Props) {
                         <button
                           className={styles.recruitBtn}
                           onClick={() => setDebating(o.id)}
-                          title={t(`遣${orator.name.zh}與其舌戰,勝則機率大增,負則本回合不再見`, `Send ${orator.name.en} to debate — win to greatly boost odds, lose and they won't see you this turn`)}
-                        >💬 {t('舌戰', 'Debate')}</button>
+                          title={oddsTitle(o.id, { debateWon: true },
+                            t(`遣${orator.name.zh}與其舌戰,勝則機率大增,負則本回合不再見`, `Send ${orator.name.en} to debate — win to greatly boost odds, lose and they won't see you this turn`))}
+                        >💬 {t('舌戰', 'Debate')} <Odds officerId={o.id} opts={{ debateWon: true }} /></button>
                       )}
                       <button
                         className={styles.recruitBtn}
                         onClick={() => invite(o.id, { bribe: BRIBE_AMOUNT })}
                         disabled={cityGold < BRIBE_AMOUNT}
-                        title={cityGold < BRIBE_AMOUNT ? `需 ${BRIBE_AMOUNT} 金` : `贈金 ${BRIBE_AMOUNT} 以動其心`}
-                      ><Icon name="gold" size={11} /> {t('賄賂', 'Bribe')} ({BRIBE_AMOUNT}g)</button>
+                        title={cityGold < BRIBE_AMOUNT ? `需 ${BRIBE_AMOUNT} 金`
+                          : oddsTitle(o.id, { bribe: BRIBE_AMOUNT }, `贈金 ${BRIBE_AMOUNT} 以動其心`)}
+                      ><Icon name="gold" size={11} /> {t('賄賂', 'Bribe')} ({BRIBE_AMOUNT}g) <Odds officerId={o.id} opts={{ bribe: BRIBE_AMOUNT }} /></button>
                       {bestGift && (
                         <button
                           className={styles.recruitBtn}
                           onClick={() => invite(o.id, { giftItemId: bestGift.id })}
-                          title={t(`以名品「${bestGift.name.zh}」相贈,動其心(成則隨之入幕)`, `Gift ${bestGift.name.en} to sway them (joins them on success)`)}
-                        >🎁 {t('厚禮', 'Gift')} · {lang === 'en' ? bestGift.name.en : bestGift.name.zh}</button>
+                          title={oddsTitle(o.id, { giftItemId: bestGift.id },
+                            t(`以名品「${bestGift.name.zh}」相贈,動其心(成則隨之入幕)`, `Gift ${bestGift.name.en} to sway them (joins them on success)`))}
+                        >🎁 {t('厚禮', 'Gift')} · {lang === 'en' ? bestGift.name.en : bestGift.name.zh} <Odds officerId={o.id} opts={{ giftItemId: bestGift.id }} /></button>
                       )}
                     </>
                   )}

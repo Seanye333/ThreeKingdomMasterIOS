@@ -4,7 +4,7 @@ import type { Force } from '../types';
 import type { Item } from '../data/items';
 import type { City } from '../types';
 import { mkOfficer } from '../../test/factories';
-import { doctrineRecruitFit, giftRecruitValue, estimateRecruitChance } from './officerFate';
+import { doctrineRecruitFit, giftRecruitValue, estimateRecruitChance, freeAgentRecruitOdds, attemptFreeAgentRecruit } from './officerFate';
 
 const force = (over: Partial<Force> = {}): Force =>
   ({ id: 'f', name: { zh: 'f', en: 'f' }, rulerOfficerId: 'lord', capitalCityId: 'c', color: '#888', isPlayer: false, imperialRank: 'commoner', recruitmentStance: 'balanced', ...over } as Force);
@@ -73,5 +73,60 @@ describe('estimateRecruitChance — captive 良禽擇木 / 舊部 / 復仇 / 報
     const normal = estimateRecruitChance(base());
     const grateful = estimateRecruitChance(base({ freedByForceId: 'f' }));
     expect(grateful).toBeGreaterThan(normal);
+  });
+});
+
+/**
+ * 預覽即擲骰 — the odds the screen quotes must be the odds the attempt rolls
+ * against. This is a regression fence, not a nicety: the old
+ * `previewRecruitChance` was a hand-copied subset that had silently drifted to
+ * ignore 宿怨/舊部/報恩/主義/薦保/賄賂, so anything built on it would have
+ * promised the player numbers the engine never honoured. The seam is now
+ * single (`freeAgentRecruitOdds`), and these tests hold it single.
+ */
+describe('freeAgentRecruitOdds — 訪賢勝算與實際擲骰同源', () => {
+  const city = { id: 'c', name: { zh: '城', en: 'City' }, gold: 5000 } as unknown as City;
+  // A middling lord with one city: the odds must sit well clear of the 0.95
+  // clamp, or every "this bonus helps" assertion silently compares 0.95 to 0.95.
+  const lord = mkOfficer({ id: 'lord', stats: { charisma: 30 } as never });
+  const base = (over: Record<string, unknown> = {}) => ({
+    officer: mkOfficer({ id: 'agent', status: 'idle' as const, forceId: null, loyalty: 50, ...over }),
+    city,
+    recruiterForce: force(),
+    recruiterRuler: lord,
+    recruiterReputation: { citiesOwned: 1 },
+    family: [],
+    free: true,
+  });
+
+  it('the quoted chance is the threshold the roll actually uses', () => {
+    const input = base();
+    const { chance } = freeAgentRecruitOdds(input);
+    // Just under the quoted odds must succeed; just over must fail. If the
+    // attempt ever grows a term the preview lacks, one of these flips.
+    expect(attemptFreeAgentRecruit({ ...input, rng: () => chance - 0.001 }).ok).toBe(true);
+    expect(attemptFreeAgentRecruit({ ...input, rng: () => chance + 0.001 }).ok).toBe(false);
+  });
+
+  it('every escalation the UI offers moves the quoted number', () => {
+    const plain = freeAgentRecruitOdds(base()).chance;
+    expect(freeAgentRecruitOdds({ ...base(), debateWon: true }).chance).toBeGreaterThan(plain);
+    expect(freeAgentRecruitOdds({ ...base(), bribeBonus: 0.25 }).chance).toBeGreaterThan(plain);
+    expect(freeAgentRecruitOdds({ ...base(), giftBonus: 0.2 }).chance).toBeGreaterThan(plain);
+    expect(freeAgentRecruitOdds({ ...base(), persistenceBonus: 0.2 }).chance).toBeGreaterThan(plain);
+    expect(freeAgentRecruitOdds({ ...base(), recommendedBonus: 0.15 }).chance).toBeGreaterThan(plain);
+  });
+
+  it('報恩 — one you freed honourably is warmer, and the preview says so', () => {
+    const plain = freeAgentRecruitOdds(base()).chance;
+    const grateful = freeAgentRecruitOdds(base({ freedByForceId: 'f' })).chance;
+    expect(grateful).toBeGreaterThan(plain);
+  });
+
+  it('a refusal reason is offered before the attempt, not only after', () => {
+    // 'noble' is the simplest cold-reason path that needs no relationship state.
+    const proud = freeAgentRecruitOdds(base({ traits: ['noble'] }));
+    expect(proud.reasonZh).toBeTruthy();
+    expect(proud.reasonEn).toBeTruthy();
   });
 });
