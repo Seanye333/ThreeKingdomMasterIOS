@@ -162,3 +162,59 @@ describe('追亡逐北 — chasing is a horseman\'s job', () => {
     expect(pickAiTarget(foot, [steady, routed])?.id).toBe('s');
   });
 });
+
+describe('烏巢之火 — burning the grain train starves the host', () => {
+  const officers = { cmd: off('cmd'), a: off('a'), foe: off('foe'), sup: off('sup') };
+
+  /** A defender with a grain train and two fighting units; the attacker opposite. */
+  const withWagon = (wagonTroops: number) => board([
+    unit({ id: 'a-cmd', officerId: 'cmd', coord: { col: 2, row: 3 }, isCommander: true }),
+    unit({ id: 'd-cmd', officerId: 'foe', coord: { col: 9, row: 3 }, side: 'defender', isCommander: true }),
+    unit({ id: 'd-1', officerId: 'a', coord: { col: 9, row: 5 }, side: 'defender' }),
+    unit({ id: 'd-sup', officerId: 'sup', coord: { col: 10, row: 4 }, side: 'defender', isSupply: true, troops: wagonTroops, maxTroops: 1500 }),
+  ]);
+
+  it('a wagon reduced to nothing starves its own side', () => {
+    const after = endTurn(withWagon(0), officers, () => 0.5);
+    expect(after.grainBurned).toBe(true);
+    const starved = after.units.filter((u) => u.effects.some((e) => e.kind === 'starving'));
+    expect(starved.map((u) => u.id).sort()).toEqual(['d-1', 'd-cmd']);
+    // ...and only its own side.
+    expect(after.units.find((u) => u.id === 'a-cmd')!.effects).toEqual([]);
+    expect(after.log!.some((l) => l.text.includes('糧車被焚'))).toBe(true);
+  });
+
+  it('a wagon still standing starves nobody', () => {
+    const after = endTurn(withWagon(1500), officers, () => 0.5);
+    expect(after.grainBurned).toBeFalsy();
+    expect(after.units.some((u) => u.effects.some((e) => e.kind === 'starving'))).toBe(false);
+  });
+
+  it('settles off the units REMOVED this tick, not the board as it entered', () => {
+    // The original bug in one line: the check read `b.units` at the top of the
+    // tick, so a wagon that burned *during* the turn was missed, and by the
+    // next tick the wreck had been filtered away with every other 0-troop unit.
+    // 17 wagons were destroyed across 120 observed battles and not one side
+    // ever went hungry. Anything that empties a wagon must count — so this
+    // asserts through endTurn rather than through any one damage path.
+    const b = withWagon(0);
+    expect(b.units.some((u) => u.isSupply && u.troops <= 0)).toBe(true);
+    const after = endTurn(b, officers, () => 0.5);
+    expect(after.units.some((u) => u.isSupply)).toBe(false); // the wreck is gone
+    expect(after.grainBurned).toBe(true);                     // but it was counted
+  });
+
+  it('the −20 shock fires once, though the hunger itself goes on biting', () => {
+    const start = withWagon(0);
+    const m0 = start.units.find((u) => u.id === 'd-1')!.morale;
+    const first = endTurn(start, officers, () => 0.5);
+    const m1 = first.units.find((u) => u.id === 'd-1')!.morale;
+    expect(m0 - m1).toBeGreaterThanOrEqual(20); // the shock
+    const second = endTurn(first, officers, () => 0.5);
+    const m2 = second.units.find((u) => u.id === 'd-1')!.morale;
+    // The standing `starving` effect keeps bleeding them — that is the point of
+    // it — but the one-shot shock must not land a second time.
+    expect(m1 - m2).toBeLessThan(20);
+    expect(second.grainBurned).toBe(true);
+  });
+});

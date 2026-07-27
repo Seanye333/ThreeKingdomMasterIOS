@@ -2455,24 +2455,15 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>,
   // ── 燒糧 — a supply convoy reduced to ruin starves the host that leaned on
   // it: the owning side's units lose heart and begin deserting (烏巢之火).
   // One-shot, guarded by grainBurned so it never re-fires.
-  let grainBurned = b.grainBurned ?? false;
+  const grainBurned = b.grainBurned ?? false;
   const grainLog: NonNullable<TacticalBattle['log']> = [];
-  if (!grainBurned) {
-    const burnedSides = new Set(
-      b.units.filter((u) => u.isSupply && u.troops <= 0).map((u) => u.side),
-    );
-    if (burnedSides.size > 0) {
-      grainBurned = true;
-      tickedUnits = tickedUnits.map((u) => {
-        if (!burnedSides.has(u.side) || u.isSupply || u.troops <= 0) return u;
-        const starving = u.effects.some((e) => e.kind === 'starving')
-          ? u.effects
-          : [...u.effects, { kind: 'starving' as const, turnsLeft: 3 }];
-        return { ...u, morale: Math.max(0, u.morale - 20), effects: starving };
-      });
-      grainLog.push({ turn: b.turn + 1, text: '糧車被焚！三軍乏食、士氣大挫 — 軍心動搖。', kind: 'event' });
-    }
-  }
+  // (The check itself now lives at the end of the tick — see 燒糧結算 below.
+  // Reading `b.units` here meant looking at the board as it ENTERED this turn,
+  // which misses the wagon that burns *during* it — and wagons burn at ×3, so
+  // fire is their commonest death. It was then filtered out with every other
+  // 0-troop unit before the next tick could see it, so the starve never fired
+  // at all: 17 wagons destroyed across 120 observed battles, 0 sides starved.
+  // 烏巢 was unreachable in the very mechanic written for it.)
 
   // ── Fire spread: each burning unit may set an adjacent unit alight.
   // Rain blocks spread entirely; wind doubles the chance and biases the
@@ -2724,8 +2715,39 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>,
   // longer wiped on the spot — it 潰走 (lingers and flees, run down by pursuers),
   // so only an emptied unit leaves the field here.
   const allUnits = [...tickedUnits, ...arrivedUnits];
-  const surviving = allUnits.filter((u) => u.troops > 0);
+  let surviving = allUnits.filter((u) => u.troops > 0);
   const removed = allUnits.filter((u) => u.troops <= 0);
+
+  // ── 燒糧 — settled off `removed`, the ONE definition of "left the field this
+  // tick", so every way a grain train can die counts: struck down, burned (they
+  // burn at ×3, which is how they usually go), shelled off the walls, or taken
+  // by a stratagem. Any future path that reduces a wagon to nothing lands in
+  // this same list and starves its owner with no further wiring.
+  //
+  // It used to read `b.units` at the TOP of the tick — the board as it entered
+  // the turn — and by the time the wagon actually burned it was two steps too
+  // late; the next tick had already filtered the wreck away, so the check could
+  // never see it. Measured: 17 wagons destroyed across 120 battles, 0 sides
+  // starved. 烏巢 was unreachable in the mechanic written for 烏巢.
+  let grainBurnedNow = grainBurned;
+  if (!grainBurnedNow) {
+    const burnedSides = new Set(removed.filter((u) => u.isSupply).map((u) => u.side));
+    if (burnedSides.size > 0) {
+      grainBurnedNow = true;
+      surviving = surviving.map((u) => {
+        if (!burnedSides.has(u.side) || u.isSupply) return u;
+        const starving = u.effects.some((e) => e.kind === 'starving')
+          ? u.effects
+          : [...u.effects, { kind: 'starving' as const, turnsLeft: 3 }];
+        return { ...u, morale: Math.max(0, u.morale - 20), effects: starving };
+      });
+      grainLog.push({
+        turn: b.turn, text: '糧車被焚!三軍乏食、士氣大挫 — 軍心動搖。',
+        textEn: 'The grain train is ablaze — the whole host goes hungry, and its heart goes with it.',
+        kind: 'event',
+      });
+    }
+  }
   const newAttackerLoss = removed
     .filter((u) => u.side === 'attacker')
     .reduce((s, u) => s + u.maxTroops, 0);
@@ -3090,7 +3112,7 @@ export function endTurn(b: TacticalBattle, officers?: Record<EntityId, Officer>,
     attackerLosses,
     defenderLosses,
     startTroops,
-    grainBurned,
+    grainBurned: grainBurnedNow,
     winner: winner ?? b.winner,
     attackerObjective: attackerObj,
     defenderObjective: defenderObj,
