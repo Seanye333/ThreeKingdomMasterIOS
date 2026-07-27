@@ -18,6 +18,7 @@ import { serviceEffects, type ServiceSystem } from './conscription';
 import { diluteDelta, CONSCRIPT_QUALITY } from './reorganization';
 import { pairKey } from '../types/diplomacy';
 import type { WeatherKind } from './weather';
+import { graftClawback, graftCleared } from './graft';
 
 /** 同心／嫌隙 — how well an assistant's season meshes with the lead officer's,
  *  by their rapport (好感). A warm 搭檔 pulls in the same direction (up to ×1.5);
@@ -515,11 +516,14 @@ export function resolveInternalAffairs(
       // down toward zero. The loyalty win ignores the 撫民 taper, so it tops a
       // rich city off; the gold recovered repays the inspection many times over.
       const graft = city.corruption ?? 0;
-      const recovered = Math.floor(city.commerce * 1.5 + statValue * 2 + graft * 8 + graft * city.commerce * 0.15);
+      // Both figures come from graft.ts, which is also what the city panel
+      // previews — the audit is a timing decision, so the number the player
+      // weighed must be the number they get.
+      const recovered = graftClawback(city.commerce, statValue, graft);
       const loyaltyGain = Math.min(100 - city.loyalty, developmentGain(statValue, rng));
       // A sweep never fully eradicates entrenched graft in one pass — an able
       // official (high 政治) clears more of it.
-      const cleared = Math.min(graft, Math.max(8, Math.round(statValue / 6)));
+      const cleared = graftCleared(statValue, graft);
       const graftNote = graft > 0 ? ` (貪腐 −${cleared})` : '';
       return {
         success: true,

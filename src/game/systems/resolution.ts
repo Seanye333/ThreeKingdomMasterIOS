@@ -106,6 +106,7 @@ import { tickClans, clanGentryWeight } from './clans';
 import { tickStatecraft } from './statecraft';
 import { deriveCourtFactions, type FactionId } from './courtFactions';
 import { cliqueBackingBoost, mentorsOf } from './relationshipEffects';
+import { graftAccrual } from './graft';
 
 export interface ResolutionInput {
   date: GameDate;
@@ -2941,9 +2942,14 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         ).realmLoyaltyDelta
       : 0;
     const corruptionAccrual = city.ownerForceId
-      ? Math.max(0, 0.6 + city.commerce / 120 - Math.min(0.6, bestPolitics / 130))
-        * corruptionAccrualMultiplier(cityOfficers) * cultureGraftCurb(city.culture ?? 0)
-        * law.corruptionMul * relay.corruptionMul
+      ? graftAccrual({
+          commerce: city.commerce,
+          bestPolitics,
+          traitMul: corruptionAccrualMultiplier(cityOfficers),
+          cultureMul: cultureGraftCurb(city.culture ?? 0),
+          lawMul: law.corruptionMul,
+          relayMul: relay.corruptionMul,
+        })
       : 0;
     const nextCorruption = corruptionAccrual > 0
       ? Math.min(100, (city.corruption ?? 0) + corruptionAccrual)

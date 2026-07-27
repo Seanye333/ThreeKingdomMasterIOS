@@ -30,6 +30,7 @@ import { buildSpecialtyTradeRoutes } from './tradeRoutes';
 import { appointmentBonusFor, totalStipendForForce } from './appointmentEffects';
 import { peerageEffects } from '../data/peerage';
 import type { WeatherKind } from './weather';
+import { graftIncomeMul } from './graft';
 
 export const FOOD_PER_TROOP_PER_SEASON = 0.25;
 
@@ -139,7 +140,9 @@ export function tickCityEconomy(
   );
   // 貪腐蝕利 — graft skims a slice off the top: clerks pad the books and pocket
   // the difference. Up to −40% at full corruption (100). Cleared by 巡查肅貪.
-  const corruptionMul = 1 - Math.max(0, Math.min(100, city.corruption ?? 0)) / 250;
+  // Shared with the city panel via graft.ts so the figure the player is shown
+  // is the figure the ledger actually applies.
+  const corruptionMul = graftIncomeMul(city.corruption);
   // 性格理財 — a thrifty steward squeezes more from the coin; a wastrel leaks it.
   const incomeTraitMul = cityIncomeTraitMul(cityOfficers);
   const goldIncome = Math.max(0, Math.floor((baseGold * eff.goldMul * bb.commerceMul * size.goldMul * prestigeMul * gradeAdminMul * specGoldMul + eff.goldFlat) * taxEff.goldMul * inflationMul * corruptionMul * incomeTraitMul));
