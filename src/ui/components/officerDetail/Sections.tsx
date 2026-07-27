@@ -63,6 +63,7 @@ export function RelationshipsSection({ officerId, officersOverride, drillDown }:
   const storeOfficers = useGameStore((s) => s.officers);
   const officers = officersOverride ?? storeOfficers;
   const family = useGameStore((s) => s.family);
+  const runtimeBonds = useGameStore((s) => s.runtimeBonds);
   const t = useT();
   const lang = useLanguage();
   // R2 — local state for drill-down: clicking a related officer chip
@@ -110,7 +111,8 @@ export function RelationshipsSection({ officerId, officersOverride, drillDown }:
       })();
       return { otherId, kind, note };
     });
-  if (rels.length === 0 && familyRels.length === 0) return null;
+  const runtimeTies = runtimeBonds.filter((b) => b.officerA === officerId || b.officerB === officerId);
+  if (rels.length === 0 && familyRels.length === 0 && runtimeTies.length === 0) return null;
 
   // R5 — Group entries by category for collapsible display.
   type Entry = {
@@ -149,6 +151,33 @@ export function RelationshipsSection({ officerId, officersOverride, drillDown }:
       noteZh: r.note.zh,
       noteEn: r.note.en,
     });
+  }
+  // 本朝所結 — bonds sworn (or feuds earned) DURING the campaign. The list above
+  // is the static 演義 table only, so a brotherhood the player staged themselves
+  // in 桃園結義 never appeared on either officer's panel, despite carrying a
+  // loyalty floor and a battle-synergy bonus. Runtime ties are marked ✦ so the
+  // player can tell what the campaign made from what history handed them.
+  for (const b of runtimeBonds) {
+    if (b.officerA !== officerId && b.officerB !== officerId) continue;
+    const otherId = b.officerA === officerId ? b.officerB : b.officerA;
+    const depth = b.depth ?? 1;
+    if (b.kind === 'feud') {
+      const sev = depth >= 3 ? { zh: '死敵', en: 'mortal enemies' } : depth === 2 ? { zh: '宿怨', en: 'long grudge' } : { zh: '嫌隙', en: 'bad blood' };
+      addEntry('enemy', {
+        key: `rt-${b.officerA}-${b.officerB}-feud`,
+        otherId, kind: 'enemy',
+        noteZh: `✦ 本朝結怨 · ${sev.zh}`,
+        noteEn: `✦ Fell out this campaign · ${sev.en}`,
+      });
+    } else {
+      const tier = depth >= 3 ? { zh: '生死之交', en: 'to the death' } : depth === 2 ? { zh: '義結金蘭', en: 'sworn deep' } : { zh: '義交', en: 'sworn' };
+      addEntry('sworn-brothers', {
+        key: `rt-${b.officerA}-${b.officerB}-oath`,
+        otherId, kind: 'sworn-brothers',
+        noteZh: `✦ ${b.label || '本朝結義'} · ${tier.zh}(忠誠下限 ${b.floor})`,
+        noteEn: `✦ ${b.label || 'Sworn this campaign'} · ${tier.en} (loyalty floor ${b.floor})`,
+      });
+    }
   }
   const totalCount = Object.values(groups).reduce((n, arr) => n + arr.length, 0);
 

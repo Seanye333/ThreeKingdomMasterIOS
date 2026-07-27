@@ -105,6 +105,13 @@ export function cityCombatTerrain(city?: City): 'naval' | 'river' | 'mountain' |
  * forest and marsh foul an attacker's footing; open plains and water give the
  * defender nothing extra. This is what makes a 山城 worth holding.
  */
+/** 城壁之固 — the defence multiplier a wall tier is worth (1 / 1.18 / 1.40).
+ *  Exported so the pre-march scout report quotes the same number the battle
+ *  uses: it used to carry its own 1.6/1.3/1.0 copy and overstated every wall. */
+export function wallTierDefenseMultiplier(wallTier: number): number {
+  return wallTier >= 3 ? 1.40 : wallTier === 2 ? 1.18 : 1.0;
+}
+
 export function terrainDefenderMultiplier(city?: City): number {
   switch (city?.terrain) {
     case 'pass':     return 1.15; // 關隘 — a handful can hold a chokepoint
@@ -902,7 +909,7 @@ export function resolveBattle(
   // Wall tier multiplier (1 = 1.0×, 2 = 1.18×, 3 = 1.40×) and siege engine
   // counter-multiplier.
   const wallTier = ctx?.city?.wallTier ?? 1;
-  const wallMul = wallTier === 3 ? 1.40 : wallTier === 2 ? 1.18 : 1.0;
+  const wallMul = wallTierDefenseMultiplier(wallTier);
   const siegeEngine = ctx ? selectSiegeEngine(attacker, wallTier) : null;
   // 器械如林 (§5.16) — a built-up siege park compounds with whatever single
   // engine the officers' gear already provides.

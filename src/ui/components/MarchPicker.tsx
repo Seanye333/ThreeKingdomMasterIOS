@@ -15,7 +15,7 @@ import { applicableStratagems } from '../../game/data/stratagems2';
 import { cityPos } from '../../game/data/cityGeo';
 import { geoToPixel } from '../../game/data/geography';
 import { FACILITY_DEFS } from '../../game/types/fort';
-import { attackerArm } from '../../game/systems/combat';
+import { attackerArm, terrainSiegeMultiplier, wallTierDefenseMultiplier, siegeFacilityAid } from '../../game/systems/combat';
 import { setBondPowerMul } from '../../game/systems/setBonds';
 import { partySynergies } from '../../game/systems/partySynergy';
 import { loadDecks, saveDecks, MAX_DECKS, type LineupDeck } from './lineupDecks';
@@ -454,10 +454,27 @@ export function MarchPicker({ cityId, onClose }: Props) {
         )}
 
         {enemyIntel && (() => {
-          // Defender effective strength: garrison hardened by city defense and
-          // wall tier. A rough scout's read, not a battle oracle.
-          const wallMul = enemyIntel.wallTier >= 3 ? 1.6 : enemyIntel.wallTier === 2 ? 1.3 : 1;
-          const defEff = enemyIntel.garrison * (1 + enemyIntel.defense / 200) * wallMul;
+          // Defender effective strength: garrison hardened by city defense, wall
+          // tier, the ground, and any forts standing guard over the city. Still a
+          // scout's read rather than a battle oracle — but every factor in it is
+          // now read from the engine's own function, not re-guessed here. (The
+          // wall figure used to be a local 1.6/1.3/1.0 copy against the engine's
+          // 1.40/1.18/1.0, i.e. the screen overstated every wall it reported.)
+          const companionsForArm = additionalIds.map((id) => officersMap[id]).filter(Boolean) as typeof officer[];
+          const armNow = officer ? attackerArm([officer, ...companionsForArm]) : 'infantry';
+          const wallMul = wallTierDefenseMultiplier(enemyIntel.wallTier);
+          const terrainMul = terrainSiegeMultiplier(target ?? undefined, {
+            arm: armNow,
+            weather,
+            attackerTroops: troops,
+            defenderTroops: enemyIntel.garrison,
+          });
+          // 施設援防 — forts guarding this city add garrison, defence and a
+          // volley before the columns even close. Entirely invisible until now.
+          const aid = target ? siegeFacilityAid(forts, target.ownerForceId ?? null, target.id) : null;
+          const defEff = (enemyIntel.garrison + (aid?.garrison ?? 0))
+            * (1 + (enemyIntel.defense + (aid?.defenseAdd ?? 0)) / 200)
+            * wallMul * terrainMul * (aid?.defenderMul ?? 1);
           const ratio = troops / Math.max(1, defEff);
           const verdict = ratio >= 2 ? { zh: '勝算極大', en: 'Overwhelming', c: '#7ed68a' }
             : ratio >= 1.3 ? { zh: '兵勢佔優', en: 'Favoured', c: '#a8d67e' }
@@ -491,20 +508,40 @@ export function MarchPicker({ cityId, onClose }: Props) {
                 const td = target?.terrain ? TD[target.terrain] : undefined;
                 if (!target || !td) return null;
                 const highland = target.terrain === 'pass' || target.terrain === 'mountain';
-                const companions = additionalIds.map((id) => officersMap[id]).filter(Boolean) as typeof officer[];
-                const arm = officer ? attackerArm([officer, ...companions]) : 'infantry';
+                const arm = armNow;
                 const advice = arm === 'cavalry'
                   ? { zh: '騎兵難施其地 — 宜改遣步卒或攜攻城器械。', en: 'Bad ground for cavalry — lead with foot or bring siege engines.', c: '#e0707a' }
                   : arm === 'siege' && highland
                     ? { zh: '器械破關,正得其法。', en: 'Siege engines crack the pass — well chosen.', c: '#7ec77e' }
                     : { zh: '地利在敵,謹慎為上。', en: 'The ground favours the defender — press with care.', c: '#e0a070' };
+                const pct = Math.round((terrainMul - 1) * 100);
                 return (
                   <div style={{ marginTop: '0.25rem', fontSize: '0.76rem', color: advice.c }}
-                    title={t('守城方據此地形得固有守勢加成,且因攻方兵種/天候而異(§5.6)。', "The defender draws an inherent bonus from this ground, modulated by your arm and the weather (§5.6).")}>
-                    🏔 {t(td.zh, td.en)} — {t(advice.zh, advice.en)}
+                    title={t('守城方據此地形得固有守勢加成,且因攻方兵種/天候而異(§5.6)。此處的倍率直接取自戰鬥引擎。',
+                             "The defender draws an inherent bonus from this ground, modulated by your arm and the weather (§5.6). The figure is read from the combat engine itself.")}>
+                    🏔 {t(td.zh, td.en)}
+                    {pct !== 0 && (
+                      <strong style={{ marginLeft: 5, color: pct > 0 ? '#e0707a' : '#7ec77e' }}>
+                        {t('守勢', 'defence')} {pct > 0 ? '+' : ''}{pct}%
+                      </strong>
+                    )}
+                    {' — '}{t(advice.zh, advice.en)}
                   </div>
                 );
               })()}
+              {/* 施設援防 — forts guarding the target. A 箭樓 volleys the column
+                  as it closes and a 糧站 feeds extra defenders; both were pure
+                  invisible arithmetic on the defender's side until now. */}
+              {aid && aid.count > 0 && (
+                <div style={{ marginTop: '0.25rem', fontSize: '0.76rem', color: '#e0a070' }}
+                  title={t('敵方施設(箭樓/糧站/望樓等)守望此城,已計入上面的守勢評估。',
+                           'Enemy forts stand guard over this city; their aid is already folded into the assessment above.')}>
+                  🏯 {t(`施設 ${aid.count} 座援防`, `${aid.count} fort${aid.count > 1 ? 's' : ''} guarding`)}
+                  {aid.garrison > 0 && <> · {t('守軍', 'garrison')} +{aid.garrison.toLocaleString()}</>}
+                  {aid.defenseAdd > 0 && <> · {t('城防', 'defence')} +{aid.defenseAdd}</>}
+                  {aid.prestrike > 0 && <> · {t(`接戰前矢雨折兵 ${aid.prestrike.toLocaleString()}`, `volley costs you ~${aid.prestrike.toLocaleString()} before contact`)}</>}
+                </div>
+              )}
             </section>
           );
         })()}
