@@ -27,7 +27,7 @@ import { effectivePrestige } from '../../game/data/prestige';
 import { peerageById } from '../../game/data/peerage';
 import { honorificById } from '../../game/data/honorifics';
 import { renownFromDeeds, fameTier, fameMedal } from '../../game/systems/fame';
-import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakthroughIronCost, BREAKTHROUGH_PATHS, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul, growthAptitude, aptitudeLabel, EPIPHANY_THRESHOLD } from '../../game/systems/growth';
+import { xpProgress, learnableSkills, canBreakthrough, breakthroughCost, breakthroughIronCost, BREAKTHROUGH_PATHS, MAX_BREAKTHROUGHS, breakthroughTitle, growthPowerMul, growthAptitude, aptitudeLabel, defaultLatent, EPIPHANY_THRESHOLD } from '../../game/systems/growth';
 import { canAppraise, GRADE_LABEL } from '../../game/systems/appraisal';
 import { officerGrade, officerLevel, nextGradeGap, gradeMeta } from '../../game/systems/officerGrade';
 import { weaponClassFor } from '../../game/systems/duel';
@@ -47,7 +47,7 @@ import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, p
 import { activeMountBondSeasons, mountBondMul } from '../../game/systems/mountBond';
 import { isPhysician, medicalSkillOf, medicalTier } from '../../game/systems/medicalSkill';
 import { inferUnitType } from '../../game/systems/tactical';
-import { skillLevelBadge } from '../../game/systems/skillMastery';
+import { skillLevelBadge, skillLevel, skillEffectMul, MAX_SKILL_LEVEL } from '../../game/systems/skillMastery';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
 import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
   BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID,
@@ -354,6 +354,64 @@ export function OfficerDetail({
                 </div>
               );
             })()}
+            {/* 血仇 — the forces that slew this officer's kin or sworn brothers.
+                Engine-side this is decisive: estimateRecruitChance docks 50 pts
+                and aiRecruitChance returns a flat 0 (誓不事仇), so a player could
+                spend approach after approach on a captive who was never going
+                to serve them — with nothing on screen saying why. */}
+            {(() => {
+              const grudges = new Map<string, { kin: string[]; sworn: boolean }>();
+              for (const [victimId, forceId] of Object.entries(officer.killedRelativesBy ?? {})) {
+                const e = grudges.get(forceId) ?? { kin: [], sworn: false };
+                e.kin.push(allOfficers[victimId]?.name[lang === 'en' ? 'en' : 'zh'] ?? victimId);
+                grudges.set(forceId, e);
+              }
+              for (const [victimId, forceId] of Object.entries(officer.killedSwornBy ?? {})) {
+                const e = grudges.get(forceId) ?? { kin: [], sworn: false };
+                e.kin.push(allOfficers[victimId]?.name[lang === 'en' ? 'en' : 'zh'] ?? victimId);
+                e.sworn = true;
+                grudges.set(forceId, e);
+              }
+              if (grudges.size === 0) return null;
+              return [...grudges.entries()].map(([forceId, e]) => {
+                const f = forces[forceId];
+                const fname = f ? (lang === 'en' ? f.name.en : f.name.zh) : forceId;
+                const mine = forceId === playerForceId;
+                return (
+                  <div key={`grudge-${forceId}`}
+                    title={t(
+                      `${e.sworn ? '手足' : '親族'}${e.kin.join('、')}死於${fname}之手${mine ? ' — 誓不事仇,勸降幾無可能' : ''}`,
+                      `${fname} slew their ${e.sworn ? 'sworn brother' : 'kin'} (${e.kin.join(', ')})${mine ? ' — they will not serve you' : ''}`)}
+                    style={{
+                      display: 'inline-block', marginTop: '0.3rem', marginRight: '0.4rem', padding: '0.12rem 0.5rem',
+                      background: mine ? 'linear-gradient(180deg,#3a1418,#1a0a0c)' : 'linear-gradient(180deg,#2a1a1c,#140c0e)',
+                      border: `1px solid ${mine ? '#b8442e' : '#7a4a44'}`,
+                      color: mine ? '#e88a7a' : '#c09088', fontSize: '0.78rem',
+                      letterSpacing: '0.05rem', borderRadius: 'var(--tkm-radius-xs)',
+                    }}>
+                    {t(`⚔ 血仇 · ${fname}`, `⚔ Blood feud · ${fname}`)}{mine ? t(' (誓不事仇)', ' (never yours)') : ''}
+                  </div>
+                );
+              });
+            })()}
+            {/* 報恩 — one you once released honourably remembers it (+20% recruit). */}
+            {officer.freedByForceId && (() => {
+              const f = forces[officer.freedByForceId];
+              if (!f) return null;
+              const mine = officer.freedByForceId === playerForceId;
+              return (
+                <div title={t(`曾為${lang === 'en' ? f.name.en : f.name.zh}義釋,銜恩在心 — 招攬 +20%`,
+                              `Once freed honourably by ${f.name.en} — recruiting them is 20% easier`)}
+                  style={{
+                    display: 'inline-block', marginTop: '0.3rem', marginRight: '0.4rem', padding: '0.12rem 0.5rem',
+                    background: 'linear-gradient(180deg,#182a1c,#0a140c)', border: `1px solid ${mine ? '#6aa87a' : '#4a6a54'}`,
+                    color: mine ? '#8fd08a' : '#88a894', fontSize: '0.78rem',
+                    letterSpacing: '0.05rem', borderRadius: 'var(--tkm-radius-xs)',
+                  }}>
+                  {t(`🙏 報恩 · ${lang === 'en' ? f.name.en : f.name.zh}`, `🙏 Owes a debt · ${f.name.en}`)}
+                </div>
+              );
+            })()}
             {(officer.afflictions ?? []).map((a) => (
               <div key={a.kind} style={{ marginTop: '0.2rem', fontSize: '0.72rem', color: a.kind === 'wound' ? '#d88a6a' : a.kind === 'chronic' ? '#b8687a' : '#c79ad6' }}>
                 {a.kind === 'wound'
@@ -538,13 +596,19 @@ export function OfficerDetail({
           <h3 className={styles.sectionTitle}>{t('能力', 'Statistics')}</h3>
           {(() => {
             const b = effectiveStatBonuses(officer);
+            // 潛能 — the latent ceilings gate every level-up roll but lived only
+            // in the save file. Passed here so each bar shows the room left.
+            const lat = officer.latentStats ?? defaultLatent(officer.stats);
+            const apt = growthAptitude(officer);
+            const aptOf = (k: keyof typeof apt) =>
+              t(aptitudeLabel(apt[k]).zh, `${apt[k]} aptitude`);
             return (
               <>
-                <StatBar label={t('統率', 'Leadership')}   value={officer.stats.leadership}   bonus={b.leadership} />
-                <StatBar label={t('武力', 'War')}          value={officer.stats.war}          bonus={b.war} />
-                <StatBar label={t('知力', 'Intelligence')} value={officer.stats.intelligence} bonus={b.intelligence} />
-                <StatBar label={t('政治', 'Politics')}     value={officer.stats.politics}     bonus={b.politics} />
-                <StatBar label={t('魅力', 'Charisma')}     value={officer.stats.charisma}     bonus={b.charisma} />
+                <StatBar label={t('統率', 'Leadership')}   value={officer.stats.leadership}   bonus={b.leadership}   latent={lat.leadership}   aptitude={aptOf('leadership')} />
+                <StatBar label={t('武力', 'War')}          value={officer.stats.war}          bonus={b.war}          latent={lat.war}          aptitude={aptOf('war')} />
+                <StatBar label={t('知力', 'Intelligence')} value={officer.stats.intelligence} bonus={b.intelligence} latent={lat.intelligence} aptitude={aptOf('intelligence')} />
+                <StatBar label={t('政治', 'Politics')}     value={officer.stats.politics}     bonus={b.politics}     latent={lat.politics}     aptitude={aptOf('politics')} />
+                <StatBar label={t('魅力', 'Charisma')}     value={officer.stats.charisma}     bonus={b.charisma}     latent={lat.charisma}     aptitude={aptOf('charisma')} />
               </>
             );
           })()}
@@ -1706,9 +1770,14 @@ export function OfficerDetail({
                         }}
                     >
                       {lang === 'en' ? s.name.en : s.name.zh}
-                      {/* 技能等級 — 特訓精研出的 Ⅱ/Ⅲ 熟練徽記 (skillMastery.ts) */}
+                      {/* 技能等級 — 特訓精研出的 Ⅱ/Ⅲ 熟練徽記 (skillMastery.ts).
+                          The badge was there; the number it is worth was not, so
+                          "should I keep training him" had no answer on screen. */}
                       {skillLevelBadge(officer, s.id) && (
-                        <span style={{ marginLeft: 3, color: '#ffd66e', fontWeight: 700 }} title={t('特訓精研 — 效果放大', 'Refined by special training')}>
+                        <span style={{ marginLeft: 3, color: '#ffd66e', fontWeight: 700 }}
+                          title={t(
+                            `特訓精研 Lv.${skillLevel(officer, s.id)}/${MAX_SKILL_LEVEL} — 此技能數值效果 ×${skillEffectMul(officer, s.id).toFixed(2)}`,
+                            `Mastery Lv.${skillLevel(officer, s.id)}/${MAX_SKILL_LEVEL} — this skill's numeric effects ×${skillEffectMul(officer, s.id).toFixed(2)}`)}>
                           {skillLevelBadge(officer, s.id)}
                         </span>
                       )}

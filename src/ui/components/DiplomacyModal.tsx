@@ -19,6 +19,7 @@ import { Duel3DStage } from './duel/Duel3DStage';
 import { Debate3DStage } from './debate/Debate3DStage';
 import { PEACE_DUEL_COST } from '../../game/systems/duelDiplomacy';
 import { CONCORD_COST, TRIBUNE_COST, PERSUADE_COST, canPersuadeCity, pickCourtVoice } from '../../game/systems/debateDiplomacy';
+import { personalityLabel, personalityAttackMul, personalityDiplomacyAppetite } from '../../game/systems/rulerPersonality';
 import { Icon } from './Icon';
 import { Name } from './Name';
 import { useT } from '../i18n';
@@ -384,6 +385,25 @@ export function DiplomacyModal({ onClose }: Props) {
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                     <Icon name="war" size={12} color="#8a98a4" />{t('兵', 'Troops')} <strong>{row.troops.toLocaleString()}</strong>
                   </span>
+                  {/* 君主性格 — the temperament that decides whether this
+                      neighbour attacks on thin margins or courts peace. It has
+                      steered the AI since it was wired, without ever appearing
+                      on screen; the odds of being attacked were unguessable. */}
+                  {(() => {
+                    const p = forces[row.id]?.personality;
+                    const lab = personalityLabel(p);
+                    const hawk = personalityAttackMul(p) >= 1.15;
+                    const dove = personalityDiplomacyAppetite(p) >= 1.25;
+                    return (
+                      <span
+                        title={t(`君主性格 · ${lab.zh} — ${lab.tellZh}(攻擊傾向 ×${personalityAttackMul(p).toFixed(2)}、議和意願 ×${personalityDiplomacyAppetite(p).toFixed(2)})`,
+                                 `Temperament · ${lab.en} — ${lab.tellEn} (attack ×${personalityAttackMul(p).toFixed(2)}, diplomacy ×${personalityDiplomacyAppetite(p).toFixed(2)})`)}
+                        style={{ color: hawk ? '#e0907a' : dove ? '#8fb0d0' : '#9aa8b4' }}
+                      >
+                        {hawk ? '⚔' : dove ? '🕊' : '◈'} {t(lab.zh, lab.en)}
+                      </span>
+                    );
+                  })()}
                   {(grudges[row.id] ?? 0) >= 15 && (
                     <span title={t('對我方積怨 — 越高越難議和結盟', 'Resentment toward you — high grudges make pacts hard')}>
                       {t('積怨', 'Grudge')} <strong style={{ color: (grudges[row.id] ?? 0) >= 50 ? '#e0707a' : '#e0a070' }}>{grudges[row.id] ?? 0}</strong>

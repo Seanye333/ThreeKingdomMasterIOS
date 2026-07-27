@@ -680,12 +680,21 @@ export function StatBar({
   value,
   bonus = 0,
   mode = 'stat',
+  latent,
+  aptitude,
 }: {
   label: string;
   value: number;
   /** Bonuses from items + skills (drawn as a separate fill segment). */
   bonus?: number;
   mode?: 'stat' | 'loyalty';
+  /** 潛能 — the latent ceiling this stat can grow to via XP. Drawn as a ghost
+   *  segment past the current fill, so "how much room is left in him" is a
+   *  glance instead of a guess. Engine-side it gates every level-up roll
+   *  (growth.grantXp) and it had no representation anywhere on screen. */
+  latent?: number;
+  /** 資質 grade for this stat, shown next to the ceiling. */
+  aptitude?: string;
 }) {
   // Loyalty: 0–100 scale. Stats: 0–150 scale (max possible after XP growth).
   // Past 100, glow gold ("transcendent"). Past 130, glow brighter.
@@ -720,6 +729,32 @@ export function StatBar({
             }}
           />
         )}
+        {/* 潛能 — the room left to grow, drawn behind the fills as a faint
+            ghost with a tick at the ceiling. Only when it is actually above
+            where the officer already stands (a maxed-out veteran shows none). */}
+        {mode === 'stat' && latent != null && latent > value && (
+          <>
+            <div
+              style={{
+                position: 'absolute',
+                left: `${baseWidthPct}%`,
+                top: 0, bottom: 0,
+                width: `${Math.min(100, (latent / scaleMax) * 100) - baseWidthPct}%`,
+                background: 'repeating-linear-gradient(90deg, rgba(230,196,115,0.16) 0 3px, transparent 3px 6px)',
+                pointerEvents: 'none',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                left: `${Math.min(100, (latent / scaleMax) * 100)}%`,
+                top: 0, bottom: 0, width: 1,
+                background: 'rgba(230,196,115,0.65)',
+                pointerEvents: 'none',
+              }}
+            />
+          </>
+        )}
         {/* Base stat fill */}
         <div
           className={styles.statBarFill}
@@ -745,12 +780,20 @@ export function StatBar({
         <span
           className={styles.statBarValue}
           style={glow ? { color: '#ffce4a', textShadow: '0 0 4px #000, 0 0 6px #ffce4a' } : undefined}
-          title={bonus > 0 ? `Base ${value} + ${bonus} from items/skills` : undefined}
+          title={[
+            bonus > 0 ? `Base ${value} + ${bonus} from items/skills` : '',
+            latent != null ? `潛能 ${latent}${aptitude ? ` · ${aptitude}` : ''}` : '',
+          ].filter(Boolean).join(' · ') || undefined}
         >
           {effective}
           {bonus > 0 && (
             <span style={{ color: '#88b7e8', fontSize: '0.7em', marginLeft: 4 }}>
               ({value}+{bonus})
+            </span>
+          )}
+          {mode === 'stat' && latent != null && latent > value && (
+            <span style={{ color: '#8a7a4a', fontSize: '0.68em', marginLeft: 4 }}>
+              /{latent}
             </span>
           )}
         </span>

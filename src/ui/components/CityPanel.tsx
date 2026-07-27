@@ -209,6 +209,20 @@ export function CityPanel() {
                   }}
                 >{t('★治所', '★ Capital')}</span>
               )}
+              {/* 京師 — the city holding the Han emperor is pinned to the top city
+                  rank (京) whatever its census says, which silently raises every
+                  stat cap here. The rank was visible; the reason for it was not. */}
+              {city.imperialSeat && (
+                <span
+                  title={t('天子在此 · 城格恆為「京」,各項上限最高',
+                           'the Son of Heaven resides here — city rank is pinned to 京, the highest caps')}
+                  style={{
+                    marginLeft: '0.4rem', background: '#2a1a2a', border: '1px solid #c07ad0',
+                    color: '#e0a8ee', padding: '0.05rem 0.4rem', borderRadius: 'var(--tkm-radius-sm)',
+                    fontSize: '0.7rem', letterSpacing: '0.08rem',
+                  }}
+                >{t('☀京師', '☀ Imperial Seat')}</span>
+              )}
             </>
           ) : (
             <span className={styles.neutral}>{t('中立', 'Neutral')}</span>
@@ -945,13 +959,15 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
   const econCap = cityEconCap(city);
   const statCap = citySize(city).statCap;
   const allPending = useGameStore((s) => s.pendingCommands);
+  const allBuildings = useGameStore((s) => s.buildings);
   // Which dev stats have an order queued in this city this tick.
   const working = useMemo(() => {
-    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false, corruption: false, hiddenHouseholds: false, hoardedGrain: false, armaments: false };
+    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false, corruption: false, hiddenHouseholds: false, hoardedGrain: false, armaments: false, floodWorks: false };
     if (!isPlayerCity) return w;
     for (const c of Object.values(allPending)) {
       if (c.cityId !== city.id) continue;
-      if (c.type === 'develop-agriculture' || c.type === 'major-agriculture') w.agriculture = true;
+      if (c.type === 'flood-control') { w.floodWorks = true; w.agriculture = true; }
+      else if (c.type === 'develop-agriculture' || c.type === 'major-agriculture') w.agriculture = true;
       else if (c.type === 'develop-commerce' || c.type === 'major-commerce') w.commerce = true;
       else if (c.type === 'build-defense' || c.type === 'major-defense' || c.type === 'upgrade-wall' || c.type === 'drill-troops') w.defense = true;
       else if (c.type === 'improve-loyalty' || c.type === 'relief') w.loyalty = true;
@@ -1064,6 +1080,36 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
             note={t(
               `${g.tier.zh} · 金收 −${Math.round(g.skim * 100)}%${g.goldLost > 0 ? `(約 ${g.goldLost} 金/季)` : ''}${g.resented ? ' · 貪墨生怨,民心漸失' : ''} · 遣能吏「巡查肅貪」可追贓約 ${g.clawback} 金、清貪 ${g.cleared}`,
               `${g.tier.en} · gold −${Math.round(g.skim * 100)}%${g.goldLost > 0 ? ` (~${g.goldLost}g/season)` : ''}${g.resented ? ' · resentment is setting in' : ''} · an audit claws back ~${g.clawback}g and clears ${g.cleared}`,
+            )} />
+        );
+      })()}
+      {/* 堤工 (§1.21) — flood works. Two separate mechanics read it and neither
+          was legible: the summer flood event caps immunity at levee+治水 = 3, and
+          a rainy season's 久雨成澇 is cut 22% per level. Shown whenever the city
+          has any works OR sits at real risk (a riverside farm city with none),
+          because "how many more seasons of 治水 until immune" is the whole
+          decision and it was unanswerable from the screen. */}
+      {(() => {
+        const leveeLevel = allBuildings.reduce(
+          (m, b) => (b.cityId === city.id && b.id === 'levee' ? Math.max(m, b.level) : m), 0);
+        const works = city.floodWorks ?? 0;
+        const combined = Math.min(3, leveeLevel + works);
+        // A city with no works and nothing worth drowning isn't worth a bar.
+        if (combined === 0 && city.agriculture < 25) return null;
+        const rainMit = Math.min(0.8, works * 0.22);
+        return (
+          <Bar icon="grain" label="Flood works" zh="堤工" value={combined} cap={3} tone="#6fa8c0"
+            warn={combined === 0 && city.agriculture >= 45}
+            working={working.floodWorks}
+            note={t(
+              combined >= 3
+                ? `堤固河清 · 夏汛免疫${rainMit > 0 ? ` · 久雨成澇 −${Math.round(rainMit * 100)}%` : ''}`
+                : `夏汛機率 −${Math.round((combined / 3) * 100)}%${rainMit > 0 ? ` · 久雨成澇 −${Math.round(rainMit * 100)}%` : ''} · 遣吏「治水」再 ${3 - combined} 級可免`
+              + (leveeLevel > 0 ? `(堤防 ${leveeLevel} + 治水 ${works})` : ''),
+              combined >= 3
+                ? `dikes hold — immune to the summer flood${rainMit > 0 ? ` · washout −${Math.round(rainMit * 100)}%` : ''}`
+                : `summer flood −${Math.round((combined / 3) * 100)}%${rainMit > 0 ? ` · washout −${Math.round(rainMit * 100)}%` : ''} · ${3 - combined} more 治水 for immunity`
+              + (leveeLevel > 0 ? ` (levee ${leveeLevel} + works ${works})` : ''),
             )} />
         );
       })()}
