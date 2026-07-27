@@ -1001,6 +1001,119 @@
 | 雍正密摺 Yongzheng's Secret Memorial Box | treasure | beiping | POL+10 INT+8 |
 | 康熙御筆 Kangxi's Imperial Calligraphy | book | beiping | CHA+7 INT+6 POL+5 |
 | 林則徐流放硯 Lin Zexu's Exile Inkstone | treasure | yili | POL+7 INT+7 |
+| 呼延灼雙鞭 Huyan Zhuo's Twin Cudgels | weapon | — | WAR+10 LEA+4 |
+| 索超金蘸斧 Suo Chao's Gilt Axe | weapon | — | WAR+11 LEA+2 |
+| 董平雙槍 Dong Ping's Twin Spears | weapon | — | WAR+10 INT+3 |
+| 公孫勝松紋古定劍 Gongsun Sheng's Pine-Grain Sword | weapon | — | WAR+4 INT+8 |
+| 盧俊義渾鐵點鋼槍 Lu Junyi's Tempered Steel Spear | weapon | — | WAR+12 LEA+3 |
+| 史進四竅八環刀 Shi Jin's Eight-Ring Saber | weapon | — | WAR+9 LEA+3 |
+| 番天印 Sky-Overturning Seal | weapon | — | WAR+7 INT+6 |
+| 陰陽鏡 Yin-Yang Mirror | weapon | — | WAR+5 INT+8 |
+| 金蛟剪 Golden-Dragon Shears | weapon | — | WAR+9 INT+4 |
+| 戮仙劍 Immortal-Butcher Sword | weapon | — | WAR+10 INT+4 |
+| 五火神焰扇 Five-Fire Divine-Flame Fan | weapon | — | WAR+4 INT+7 |
+| 降妖寶杖 Demon-Subduing Staff | weapon | — | WAR+9 LEA+4 |
+| 東皇鐘 Eastern-Emperor Bell | weapon | — | WAR+6 INT+7 |
+| 昊天塔 Pagoda of Heaven | weapon | — | WAR+5 LEA+6 INT+4 |
+| 神農鼎 Shennong's Cauldron | weapon | — | WAR+4 INT+6 POL+4 |
+| 碧玉刀 Green Jade Saber | weapon | — | WAR+7 CHA+5 |
+| 多情環 Rings of Sentiment | weapon | — | WAR+8 INT+3 |
+| 瀝泉神矛 Liquan Divine Spear | weapon | — | WAR+11 LEA+4 |
+| 天龍破城戟 Dragon City-Breaker Halberd | weapon | — | WAR+11 LEA+3 |
+| 馬其頓長矛 Macedonian Sarissa | weapon | — | WAR+8 LEA+6 |
+| 高寵鏨金槍 Gao Chong's Gilt Spear | weapon | — | WAR+12 LEA+2 |
+| 岳雲銀錘 Yue Yun's Silver Hammers | weapon | — | WAR+11 LEA+3 |
+| 牛皋雙鐧 Niu Gao's Twin Maces | weapon | — | WAR+9 LEA+4 |
+| 楊再興神槍 Yang Zaixing's Spear | weapon | — | WAR+11 INT+2 |
+| 陸文龍雙槍 Lu Wenlong's Twin Spears | weapon | — | WAR+10 INT+3 |
+| 嚴成方金錘 Yan Chengfang's Gold Hammers | weapon | — | WAR+11 LEA+2 |
+| 楊家金刀 Yang Family Gold Saber | weapon | — | WAR+9 LEA+5 |
+| 楊七郎鐵蒺藜 Yang Qilang's Iron Caltrop-Mace | weapon | — | WAR+10 INT+2 |
+| 八卦梅花亮銀錘 Eight-Trigram Plum Silver Hammers | weapon | — | WAR+12 LEA+2 INT+-1 |
+| 禹王槊 Yu-King Lance | weapon | — | WAR+11 LEA+3 |
+| 棗陽槊 Jujube-Yang Lance | weapon | — | WAR+10 LEA+3 |
+| 瓦面金裝鐧 Qin Qiong's Gilt Mace | weapon | — | WAR+9 LEA+4 CHA+3 |
+| 饕餮吞天斧 Taotie Sky-Devouring Axe | weapon | — | WAR+13 INT+-2 |
+| 窮奇噬魂槍 Qiongqi Soul-Eating Spear | weapon | — | WAR+10 INT+3 |
+| 梼杌裂地錘 Taowu Earth-Splitting Maul | weapon | — | WAR+12 LEA+2 |
+| 相柳九首戟 Xiangliu Nine-Head Halberd | weapon | — | WAR+11 INT+3 |
+| 應龍喚雨矛 Responding-Dragon Rain Spear | weapon | — | WAR+9 INT+5 |
+| 烏茲鋼刀 Wootz Steel Saber | weapon | — | WAR+10 LEA+2 |
+| 維京戰斧 Viking War-Axe | weapon | — | WAR+11 LEA+2 |
+| 奧斯曼彎刀 Ottoman Kilij | weapon | — | WAR+9 LEA+4 |
+| 陷仙劍 Trap-Immortal Sword | weapon | — | WAR+9 INT+5 |
+| 絕仙劍 Sever-Immortal Sword | weapon | — | WAR+10 INT+4 |
+| 混元金斗 Primordial Golden Bushel | weapon | — | WAR+5 INT+7 |
+| 落魂鐘 Soul-Falling Bell | weapon | — | WAR+5 INT+8 |
+| 十字軍聖劍 Crusader's Holy Sword | weapon | — | WAR+10 LEA+4 |
+| 圓桌斷鋼劍 Round-Table Steel-Cleaver | weapon | — | WAR+11 LEA+5 |
+| 雙手巨劍 Two-Hand Greatsword | weapon | — | WAR+12 LEA+2 |
+| 晨星流星錘 Morningstar Flail | weapon | — | WAR+10 LEA+2 |
+| 瑞士長戟 Swiss Halberd | weapon | — | WAR+9 LEA+6 |
+| 童子切安綱 Dojigiri Yasutsuna | weapon | — | WAR+11 INT+3 |
+| 鬼丸國綱 Onimaru Kunitsuna | weapon | — | WAR+10 INT+4 |
+| 蜻蛉切 Tonbogiri | weapon | — | WAR+12 LEA+3 |
+| 日本號 Nihongo | weapon | — | WAR+11 LEA+4 |
+| 夔牛震天槌 Kui-Ox Sky-Quaking Maul | weapon | — | WAR+12 LEA+2 |
+| 鯤鵬擊浪槊 Kunpeng Wave-Smiting Lance | weapon | — | WAR+10 INT+4 |
+| 鳳凰涅槃弓 Phoenix-Nirvana Bow | weapon | — | WAR+7 INT+5 |
+| 刑天干戚 Xingtian's Axe and Shield | weapon | — | WAR+13 LEA+1 |
+| 關勝大刀 Guan Sheng's Great Saber | weapon | — | WAR+10 LEA+5 |
+| 花榮穿楊弓 Hua Rong's Willow-Piercing Bow | weapon | — | WAR+8 INT+4 |
+| 王彥章鐵槍 Wang Yanzhang's Iron Spear | weapon | — | WAR+12 LEA+3 |
+| 波塞頓三叉戟 Poseidon's Trident | weapon | — | WAR+11 INT+4 |
+| 阿瑞斯戰矛 Ares' War Spear | weapon | — | WAR+13 LEA+2 |
+| 宙斯雷霆 Zeus's Thunderbolt | weapon | — | WAR+9 INT+6 |
+| 阿喀琉斯之矛 Spear of Achilles | weapon | — | WAR+12 LEA+3 |
+| 雷神之錘 Mjolnir | weapon | — | WAR+12 LEA+3 |
+| 永恆之槍 Gungnir | weapon | — | WAR+11 INT+4 |
+| 提爾斷劍 Tyr's Sword | weapon | — | WAR+11 LEA+3 |
+| 大馬士革彎刀 Damascus Scimitar | weapon | — | WAR+10 LEA+2 |
+| 波斯彎刀 Persian Shamshir | weapon | — | WAR+10 LEA+3 |
+| 羅馬短劍 Roman Gladius | weapon | — | WAR+9 LEA+6 |
+| 村正妖刀 Muramasa Cursed Blade | weapon | — | WAR+12 LEA+-1 |
+| 突厥狼牙箭 Turkic Wolf-Fang Arrows | weapon | — | WAR+9 INT+3 |
+| 燭九陰幽冥劍 Zhujiuyin Netherworld Sword | weapon | — | WAR+9 INT+5 |
+| 帝江渾沌錘 Dijiang Chaos Maul | weapon | — | WAR+12 LEA+1 |
+| 九尾噬魂刀 Nine-Tail Soul-Eating Saber | weapon | — | WAR+8 CHA+5 |
+| 旱魃焚天鞭 Drought-Fiend Sky-Burning Whip | weapon | — | WAR+10 INT+3 |
+| 雷橫朴刀 Lei Heng's Broadsword | weapon | — | WAR+9 LEA+3 |
+| 朱仝美髯刀 Zhu Tong's Saber | weapon | — | WAR+9 LEA+4 CHA+4 |
+| 龐萬春神臂弩 Pang Wanchun's Divine Crossbow | weapon | — | WAR+9 INT+4 |
+| 鄧元覺寶杖 Deng Yuanjue's Staff | weapon | — | WAR+11 LEA+3 |
+| 玄鐵重鎧 Black-Iron Heavy Armor | armor | — | LEA+8 WAR+4 |
+| 百鍊鐵甲 Hundred-Temper Iron Armor | armor | — | LEA+6 WAR+5 |
+| 烏金連環鎧 Black-Gold Chain Armor | armor | — | LEA+7 WAR+4 |
+| 青龍鱗甲 Azure-Dragon Scale Armor | armor | — | LEA+7 WAR+5 |
+| 白虎銀鎧 White-Tiger Silver Armor | armor | — | LEA+6 WAR+6 |
+| 朱雀火甲 Vermilion-Bird Flame Armor | armor | — | LEA+6 WAR+4 INT+3 |
+| 玄武重甲 Black-Tortoise Heavy Armor | armor | — | LEA+9 WAR+3 |
+| 賽唐猊獸面鎧 Beast-Face Armor | armor | — | LEA+7 WAR+6 |
+| 羅馬板甲 Roman Lorica | armor | — | LEA+8 WAR+3 |
+| 維京鎖甲 Viking Mail | armor | — | LEA+6 WAR+5 |
+| 不動明王甲 Acala Body-Armor | armor | — | LEA+8 WAR+5 |
+| 鳳翅紫金盔 Phoenix-Wing Helm | armor | — | LEA+6 WAR+4 CHA+4 |
+| 天王護體甲 Heaven-King Armor | armor | — | LEA+9 WAR+4 |
+| 黃金鎖子甲 Gold Chain Armor | armor | — | LEA+6 WAR+4 CHA+5 |
+| 犀皮藤甲 Rhino-Hide Rattan Armor | armor | — | LEA+5 WAR+6 |
+| 麒麟寶甲 Qilin Treasure Armor | armor | — | LEA+8 WAR+6 INT+3 |
+| 照夜玉獅子 Jade-Lion Steed | horse | — | WAR+5 LEA+4 |
+| 烏騅馬 Black Dapple | horse | — | WAR+6 LEA+3 |
+| 千里雪 Thousand-Li Snow | horse | — | WAR+4 LEA+5 |
+| 獅子驄 Lion Roan | horse | — | WAR+5 LEA+4 |
+| 黃膘透骨龍 Tawny Dragon | horse | — | WAR+5 LEA+3 CHA+3 |
+| 遁甲天書 Dunjia Heaven-Book | book | — | INT+8 |
+| 青囊新解 New Qingnang Canon | book | — | INT+6 POL+3 |
+| 武經總要 Compendium of War | book | — | INT+6 LEA+5 |
+| 將苑 The General's Garden | book | — | INT+7 LEA+4 |
+| 九錫 Nine Bestowments | treasure | — | POL+8 CHA+6 |
+| 虎符 Tiger Tally | treasure | luoyang | LEA+8 |
+| 帥印 Marshal's Seal | treasure | ye | LEA+7 WAR+2 |
+| 兵符 Command Tally | treasure | xuchang | LEA+6 POL+2 |
+| 節鉞 Ceremonial Axe & Banner | treasure | chengdu | LEA+7 CHA+2 |
+| 令旗 Command Banner | treasure | jianye | LEA+6 WAR+1 |
+| 龍紋玉帶 Dragon Jade Belt | treasure | — | POL+6 CHA+6 |
+| 鎮國神璽 Realm-Anchoring Seal | treasure | — | POL+9 CHA+5 |
 | 嚴顏老將軍杖 Yan Yan's Old General's Staff | weapon | baxi | WAR+6 LEA+5 |
 | 馬騰寶劍 Ma Teng's Family Sword | weapon | wuwei | WAR+7 LEA+5 |
 | 韓遂西州印 Han Sui's Western Frontier Seal | treasure | jincheng | LEA+7 POL+5 |
@@ -1298,119 +1411,6 @@
 | 擂鼓甕金錘 War-Drum Golden Hammers | weapon | — | WAR+13 LEA+1 INT+-2 |
 | 五鉤神飛亮銀槍 Five-Hook Silver Spear | weapon | — | WAR+10 INT+4 |
 | 虎蹲炮 Crouching-Tiger Cannon | weapon | — | WAR+6 INT+5 |
-| 呼延灼雙鞭 Huyan Zhuo's Twin Cudgels | weapon | — | WAR+10 LEA+4 |
-| 索超金蘸斧 Suo Chao's Gilt Axe | weapon | — | WAR+11 LEA+2 |
-| 董平雙槍 Dong Ping's Twin Spears | weapon | — | WAR+10 INT+3 |
-| 公孫勝松紋古定劍 Gongsun Sheng's Pine-Grain Sword | weapon | — | WAR+4 INT+8 |
-| 盧俊義渾鐵點鋼槍 Lu Junyi's Tempered Steel Spear | weapon | — | WAR+12 LEA+3 |
-| 史進四竅八環刀 Shi Jin's Eight-Ring Saber | weapon | — | WAR+9 LEA+3 |
-| 番天印 Sky-Overturning Seal | weapon | — | WAR+7 INT+6 |
-| 陰陽鏡 Yin-Yang Mirror | weapon | — | WAR+5 INT+8 |
-| 金蛟剪 Golden-Dragon Shears | weapon | — | WAR+9 INT+4 |
-| 戮仙劍 Immortal-Butcher Sword | weapon | — | WAR+10 INT+4 |
-| 五火神焰扇 Five-Fire Divine-Flame Fan | weapon | — | WAR+4 INT+7 |
-| 降妖寶杖 Demon-Subduing Staff | weapon | — | WAR+9 LEA+4 |
-| 東皇鐘 Eastern-Emperor Bell | weapon | — | WAR+6 INT+7 |
-| 昊天塔 Pagoda of Heaven | weapon | — | WAR+5 LEA+6 INT+4 |
-| 神農鼎 Shennong's Cauldron | weapon | — | WAR+4 INT+6 POL+4 |
-| 碧玉刀 Green Jade Saber | weapon | — | WAR+7 CHA+5 |
-| 多情環 Rings of Sentiment | weapon | — | WAR+8 INT+3 |
-| 瀝泉神矛 Liquan Divine Spear | weapon | — | WAR+11 LEA+4 |
-| 天龍破城戟 Dragon City-Breaker Halberd | weapon | — | WAR+11 LEA+3 |
-| 馬其頓長矛 Macedonian Sarissa | weapon | — | WAR+8 LEA+6 |
-| 高寵鏨金槍 Gao Chong's Gilt Spear | weapon | — | WAR+12 LEA+2 |
-| 岳雲銀錘 Yue Yun's Silver Hammers | weapon | — | WAR+11 LEA+3 |
-| 牛皋雙鐧 Niu Gao's Twin Maces | weapon | — | WAR+9 LEA+4 |
-| 楊再興神槍 Yang Zaixing's Spear | weapon | — | WAR+11 INT+2 |
-| 陸文龍雙槍 Lu Wenlong's Twin Spears | weapon | — | WAR+10 INT+3 |
-| 嚴成方金錘 Yan Chengfang's Gold Hammers | weapon | — | WAR+11 LEA+2 |
-| 楊家金刀 Yang Family Gold Saber | weapon | — | WAR+9 LEA+5 |
-| 楊七郎鐵蒺藜 Yang Qilang's Iron Caltrop-Mace | weapon | — | WAR+10 INT+2 |
-| 八卦梅花亮銀錘 Eight-Trigram Plum Silver Hammers | weapon | — | WAR+12 LEA+2 INT+-1 |
-| 禹王槊 Yu-King Lance | weapon | — | WAR+11 LEA+3 |
-| 棗陽槊 Jujube-Yang Lance | weapon | — | WAR+10 LEA+3 |
-| 瓦面金裝鐧 Qin Qiong's Gilt Mace | weapon | — | WAR+9 LEA+4 CHA+3 |
-| 饕餮吞天斧 Taotie Sky-Devouring Axe | weapon | — | WAR+13 INT+-2 |
-| 窮奇噬魂槍 Qiongqi Soul-Eating Spear | weapon | — | WAR+10 INT+3 |
-| 梼杌裂地錘 Taowu Earth-Splitting Maul | weapon | — | WAR+12 LEA+2 |
-| 相柳九首戟 Xiangliu Nine-Head Halberd | weapon | — | WAR+11 INT+3 |
-| 應龍喚雨矛 Responding-Dragon Rain Spear | weapon | — | WAR+9 INT+5 |
-| 烏茲鋼刀 Wootz Steel Saber | weapon | — | WAR+10 LEA+2 |
-| 維京戰斧 Viking War-Axe | weapon | — | WAR+11 LEA+2 |
-| 奧斯曼彎刀 Ottoman Kilij | weapon | — | WAR+9 LEA+4 |
-| 陷仙劍 Trap-Immortal Sword | weapon | — | WAR+9 INT+5 |
-| 絕仙劍 Sever-Immortal Sword | weapon | — | WAR+10 INT+4 |
-| 混元金斗 Primordial Golden Bushel | weapon | — | WAR+5 INT+7 |
-| 落魂鐘 Soul-Falling Bell | weapon | — | WAR+5 INT+8 |
-| 十字軍聖劍 Crusader's Holy Sword | weapon | — | WAR+10 LEA+4 |
-| 圓桌斷鋼劍 Round-Table Steel-Cleaver | weapon | — | WAR+11 LEA+5 |
-| 雙手巨劍 Two-Hand Greatsword | weapon | — | WAR+12 LEA+2 |
-| 晨星流星錘 Morningstar Flail | weapon | — | WAR+10 LEA+2 |
-| 瑞士長戟 Swiss Halberd | weapon | — | WAR+9 LEA+6 |
-| 童子切安綱 Dojigiri Yasutsuna | weapon | — | WAR+11 INT+3 |
-| 鬼丸國綱 Onimaru Kunitsuna | weapon | — | WAR+10 INT+4 |
-| 蜻蛉切 Tonbogiri | weapon | — | WAR+12 LEA+3 |
-| 日本號 Nihongo | weapon | — | WAR+11 LEA+4 |
-| 夔牛震天槌 Kui-Ox Sky-Quaking Maul | weapon | — | WAR+12 LEA+2 |
-| 鯤鵬擊浪槊 Kunpeng Wave-Smiting Lance | weapon | — | WAR+10 INT+4 |
-| 鳳凰涅槃弓 Phoenix-Nirvana Bow | weapon | — | WAR+7 INT+5 |
-| 刑天干戚 Xingtian's Axe and Shield | weapon | — | WAR+13 LEA+1 |
-| 關勝大刀 Guan Sheng's Great Saber | weapon | — | WAR+10 LEA+5 |
-| 花榮穿楊弓 Hua Rong's Willow-Piercing Bow | weapon | — | WAR+8 INT+4 |
-| 王彥章鐵槍 Wang Yanzhang's Iron Spear | weapon | — | WAR+12 LEA+3 |
-| 波塞頓三叉戟 Poseidon's Trident | weapon | — | WAR+11 INT+4 |
-| 阿瑞斯戰矛 Ares' War Spear | weapon | — | WAR+13 LEA+2 |
-| 宙斯雷霆 Zeus's Thunderbolt | weapon | — | WAR+9 INT+6 |
-| 阿喀琉斯之矛 Spear of Achilles | weapon | — | WAR+12 LEA+3 |
-| 雷神之錘 Mjolnir | weapon | — | WAR+12 LEA+3 |
-| 永恆之槍 Gungnir | weapon | — | WAR+11 INT+4 |
-| 提爾斷劍 Tyr's Sword | weapon | — | WAR+11 LEA+3 |
-| 大馬士革彎刀 Damascus Scimitar | weapon | — | WAR+10 LEA+2 |
-| 波斯彎刀 Persian Shamshir | weapon | — | WAR+10 LEA+3 |
-| 羅馬短劍 Roman Gladius | weapon | — | WAR+9 LEA+6 |
-| 村正妖刀 Muramasa Cursed Blade | weapon | — | WAR+12 LEA+-1 |
-| 突厥狼牙箭 Turkic Wolf-Fang Arrows | weapon | — | WAR+9 INT+3 |
-| 燭九陰幽冥劍 Zhujiuyin Netherworld Sword | weapon | — | WAR+9 INT+5 |
-| 帝江渾沌錘 Dijiang Chaos Maul | weapon | — | WAR+12 LEA+1 |
-| 九尾噬魂刀 Nine-Tail Soul-Eating Saber | weapon | — | WAR+8 CHA+5 |
-| 旱魃焚天鞭 Drought-Fiend Sky-Burning Whip | weapon | — | WAR+10 INT+3 |
-| 雷橫朴刀 Lei Heng's Broadsword | weapon | — | WAR+9 LEA+3 |
-| 朱仝美髯刀 Zhu Tong's Saber | weapon | — | WAR+9 LEA+4 CHA+4 |
-| 龐萬春神臂弩 Pang Wanchun's Divine Crossbow | weapon | — | WAR+9 INT+4 |
-| 鄧元覺寶杖 Deng Yuanjue's Staff | weapon | — | WAR+11 LEA+3 |
-| 玄鐵重鎧 Black-Iron Heavy Armor | armor | — | LEA+8 WAR+4 |
-| 百鍊鐵甲 Hundred-Temper Iron Armor | armor | — | LEA+6 WAR+5 |
-| 烏金連環鎧 Black-Gold Chain Armor | armor | — | LEA+7 WAR+4 |
-| 青龍鱗甲 Azure-Dragon Scale Armor | armor | — | LEA+7 WAR+5 |
-| 白虎銀鎧 White-Tiger Silver Armor | armor | — | LEA+6 WAR+6 |
-| 朱雀火甲 Vermilion-Bird Flame Armor | armor | — | LEA+6 WAR+4 INT+3 |
-| 玄武重甲 Black-Tortoise Heavy Armor | armor | — | LEA+9 WAR+3 |
-| 賽唐猊獸面鎧 Beast-Face Armor | armor | — | LEA+7 WAR+6 |
-| 羅馬板甲 Roman Lorica | armor | — | LEA+8 WAR+3 |
-| 維京鎖甲 Viking Mail | armor | — | LEA+6 WAR+5 |
-| 不動明王甲 Acala Body-Armor | armor | — | LEA+8 WAR+5 |
-| 鳳翅紫金盔 Phoenix-Wing Helm | armor | — | LEA+6 WAR+4 CHA+4 |
-| 天王護體甲 Heaven-King Armor | armor | — | LEA+9 WAR+4 |
-| 黃金鎖子甲 Gold Chain Armor | armor | — | LEA+6 WAR+4 CHA+5 |
-| 犀皮藤甲 Rhino-Hide Rattan Armor | armor | — | LEA+5 WAR+6 |
-| 麒麟寶甲 Qilin Treasure Armor | armor | — | LEA+8 WAR+6 INT+3 |
-| 照夜玉獅子 Jade-Lion Steed | horse | — | WAR+5 LEA+4 |
-| 烏騅馬 Black Dapple | horse | — | WAR+6 LEA+3 |
-| 千里雪 Thousand-Li Snow | horse | — | WAR+4 LEA+5 |
-| 獅子驄 Lion Roan | horse | — | WAR+5 LEA+4 |
-| 黃膘透骨龍 Tawny Dragon | horse | — | WAR+5 LEA+3 CHA+3 |
-| 遁甲天書 Dunjia Heaven-Book | book | — | INT+8 |
-| 青囊新解 New Qingnang Canon | book | — | INT+6 POL+3 |
-| 武經總要 Compendium of War | book | — | INT+6 LEA+5 |
-| 將苑 The General's Garden | book | — | INT+7 LEA+4 |
-| 九錫 Nine Bestowments | treasure | — | POL+8 CHA+6 |
-| 虎符 Tiger Tally | treasure | luoyang | LEA+8 |
-| 帥印 Marshal's Seal | treasure | ye | LEA+7 WAR+2 |
-| 兵符 Command Tally | treasure | xuchang | LEA+6 POL+2 |
-| 節鉞 Ceremonial Axe & Banner | treasure | chengdu | LEA+7 CHA+2 |
-| 令旗 Command Banner | treasure | jianye | LEA+6 WAR+1 |
-| 龍紋玉帶 Dragon Jade Belt | treasure | — | POL+6 CHA+6 |
-| 鎮國神璽 Realm-Anchoring Seal | treasure | — | POL+9 CHA+5 |
 | 孫子兵法 Sun Tzu's Art of War | book | wu |  |
 | 太公六韜 Taigong's Six Secret Teachings | book | ye |  |
 | 道德經 Tao Te Ching | book | chengdu |  |
