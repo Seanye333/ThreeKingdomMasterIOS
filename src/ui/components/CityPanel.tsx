@@ -8,6 +8,7 @@ import { citySize, nextTierPop, cityCarryingCapacity } from '../../game/systems/
 import { buildingBonuses } from '../../game/systems/buildings';
 import { tickCityEconomy } from '../../game/systems/economy';
 import { caseloadTier } from '../../game/systems/law';
+import { graftReading } from '../../game/systems/graft';
 import { hiddenTier, registryYieldMul } from '../../game/systems/household';
 import { hoardTier } from '../../game/systems/hoarding';
 import { armamentTier, armamentEffects } from '../../game/systems/workshops';
@@ -946,14 +947,15 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
   const allPending = useGameStore((s) => s.pendingCommands);
   // Which dev stats have an order queued in this city this tick.
   const working = useMemo(() => {
-    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false, hiddenHouseholds: false, hoardedGrain: false, armaments: false };
+    const w = { agriculture: false, commerce: false, defense: false, loyalty: false, caseload: false, corruption: false, hiddenHouseholds: false, hoardedGrain: false, armaments: false };
     if (!isPlayerCity) return w;
     for (const c of Object.values(allPending)) {
       if (c.cityId !== city.id) continue;
       if (c.type === 'develop-agriculture' || c.type === 'major-agriculture') w.agriculture = true;
       else if (c.type === 'develop-commerce' || c.type === 'major-commerce') w.commerce = true;
       else if (c.type === 'build-defense' || c.type === 'major-defense' || c.type === 'upgrade-wall' || c.type === 'drill-troops') w.defense = true;
-      else if (c.type === 'improve-loyalty' || c.type === 'relief' || c.type === 'anti-corruption') w.loyalty = true;
+      else if (c.type === 'improve-loyalty' || c.type === 'relief') w.loyalty = true;
+      else if (c.type === 'anti-corruption') { w.corruption = true; w.loyalty = true; }
       else if (c.type === 'adjudicate') { w.caseload = true; w.loyalty = true; }
       else if (c.type === 'household-audit') w.hiddenHouseholds = true;
       else if (c.type === 'curb-hoarding') { w.hoardedGrain = true; w.loyalty = true; }
@@ -1038,6 +1040,33 @@ function DevelopmentSection({ city, isPlayerCity }: { city: City; isPlayerCity: 
           note={t(`${hiddenTier(city.hiddenHouseholds ?? 0).zh} · 租賦僅收 ${(registryYieldMul(city.hiddenHouseholds ?? 0) * 100).toFixed(0)}%`,
                   `${hiddenTier(city.hiddenHouseholds ?? 0).en} · only ${(registryYieldMul(city.hiddenHouseholds ?? 0) * 100).toFixed(0)}% taxed`)} />
       )}
+      {/* 貪腐 (§1.20) — the only city stat that had no number anywhere on screen,
+          while it skimmed up to 40% off this city's gold every season. Shown
+          from 8 up: below that a sweep isn't worth an official's season, and a
+          bar that is always present stops being read. */}
+      {(city.corruption ?? 0) >= 8 && (() => {
+        // The clawback is quoted for the ABLEST official standing here, since
+        // that is who the player would send; with nobody resident it falls back
+        // to a plain clerk so the number is never blank.
+        const residentPolitics = Object.values(allOfficersForEsteem)
+          .filter((o) => o.locationCityId === city.id && o.forceId === city.ownerForceId
+            && o.status !== 'dead' && o.status !== 'imprisoned')
+          .reduce((best, o) => Math.max(best, o.stats.politics), 0);
+        const g = graftReading({
+          corruption: city.corruption,
+          commerce: city.commerce,
+          politics: residentPolitics || 50,
+        });
+        return (
+          <Bar icon="gold" label="Graft" zh="貪腐" value={Math.round(g.corruption)} cap={100} tone="#a8894a"
+            warn={g.resented}
+            working={working.corruption}
+            note={t(
+              `${g.tier.zh} · 金收 −${Math.round(g.skim * 100)}%${g.goldLost > 0 ? `(約 ${g.goldLost} 金/季)` : ''}${g.resented ? ' · 貪墨生怨,民心漸失' : ''} · 遣能吏「巡查肅貪」可追贓約 ${g.clawback} 金、清貪 ${g.cleared}`,
+              `${g.tier.en} · gold −${Math.round(g.skim * 100)}%${g.goldLost > 0 ? ` (~${g.goldLost}g/season)` : ''}${g.resented ? ' · resentment is setting in' : ''} · an audit claws back ~${g.clawback}g and clears ${g.cleared}`,
+            )} />
+        );
+      })()}
       {/* 訟獄積案 (§1.11) — an unheard docket bleeds loyalty and breeds 冤獄. */}
       {(city.caseload ?? 0) >= 10 && (
         <Bar icon="scroll" label="Docket" zh="獄訟" value={Math.round(city.caseload ?? 0)} cap={100} tone="#b08a6a"
