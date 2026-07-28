@@ -74,10 +74,24 @@ function bootOnce(): string {
   return JSON.stringify(st.getState());
 }
 
-/** Restore the captured world, force a seed, and grind `turns` seasons. */
+/**
+ * Restore the captured world, force a seed, and grind `turns` ticks.
+ *
+ * The guard matters: this suite shares one zustand singleton with every other
+ * integration test, and `setState` merges rather than replaces. If a previous
+ * file left the store in a degenerate shape (no cities, no forces), both
+ * replays would produce the same EMPTY fingerprint and the "different seeds
+ * diverge" case would fail for a reason that has nothing to do with seeding.
+ * Asserting the world is populated turns that into an honest, legible failure
+ * instead of a mysterious one.
+ */
 function replay(snapshot: string, seed: number, turns: number): string {
   const st = useGameStore;
   st.setState({ ...JSON.parse(snapshot), rngSeed: seed });
+  const s0 = st.getState();
+  expect(Object.keys(s0.cities).length, 'restored world has no cities').toBeGreaterThan(10);
+  expect(Object.keys(s0.forces).length, 'restored world has no forces').toBeGreaterThan(1);
+  expect(s0.rngSeed, 'seed did not take').toBe(seed);
   for (let i = 0; i < turns; i++) st.getState().endSeason();
   return worldFingerprint();
 }
@@ -88,7 +102,7 @@ describe('戰役重播 — 同種子同世界', () => {
     const a = replay(world, 20260727, TURNS);
     const b = replay(world, 20260727, TURNS);
     expect(a).toBe(b);
-  });
+  }, 120_000);
 
   it('a different seed produces a different world', () => {
     // Guards the opposite failure: a seam that "works" because nothing is
@@ -97,7 +111,7 @@ describe('戰役重播 — 同種子同世界', () => {
     const a = replay(world, 1111, TURNS);
     const b = replay(world, 9999, TURNS);
     expect(a).not.toBe(b);
-  });
+  }, 120_000);
 
   it('the seed rides in the save so a reload keeps the stream', () => {
     const st = useGameStore;
@@ -141,5 +155,5 @@ describe('戰役重播 — 同種子同世界', () => {
     }
     const leaks = [...callers.entries()].map(([k, n]) => `${k} ×${n}`);
     expect(leaks, `these still bypass the campaign rng:\n${leaks.join('\n')}`).toEqual([]);
-  });
+  }, 120_000);
 });

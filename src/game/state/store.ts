@@ -6279,6 +6279,42 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           });
         }
 
+        // 州牧同理 — provinceGovernors had NO counterpart to the appointment
+        // pruning above, so a governor who died (or was captured, or defected)
+        // kept his seat forever: the province reads as governed, the living can
+        // never be given the post, and every governor-driven effect keeps
+        // crediting a corpse. Found by the soak's new 死者不持有 invariant
+        // (t25, 徐州 held by a fallen 蘇定方) — it was NOT the dead-letter
+        // assertion I had assumed, because officers die in BATTLE long before
+        // anyone reaches their historical 卒年.
+        const prunedGovernors: Partial<Record<import('../types/province').ProvinceId, EntityId>> = {};
+        const droppedGovernors: Array<{ province: string; officerId: EntityId; reason: string }> = [];
+        // Read the POST-resolution map, not the pre-tick one: resolveSeason
+        // seats new AI governors, and pruning the stale list would discard
+        // this season's appointments.
+        for (const [pid, gid] of Object.entries(result.provinceGovernors ?? state.provinceGovernors ?? {})) {
+          if (!gid) continue;
+          const g = postOfficers[gid];
+          const reason = !g ? 'missing'
+            : g.status === 'dead' ? 'dead'
+            : g.status === 'imprisoned' ? 'imprisoned'
+            : null;
+          if (reason) { droppedGovernors.push({ province: pid, officerId: gid, reason }); continue; }
+          prunedGovernors[pid as import('../types/province').ProvinceId] = gid;
+        }
+        for (const d of droppedGovernors) {
+          const nm = postOfficers[d.officerId]?.name;
+          if (!nm) continue;
+          const zh = d.reason === 'dead' ? '薨' : d.reason === 'imprisoned' ? '被擒' : '不知所終';
+          const en = d.reason === 'dead' ? 'died' : d.reason === 'imprisoned' ? 'was captured' : 'vanished';
+          result.report.entries.push({
+            cityId: null,
+            kind: 'note',
+            text: `${nm.en}, governor of ${d.province}, ${en} — the province is without a governor.`,
+            textZh: `${d.province}牧 ${nm.zh}${zh},州無主司。`,
+          });
+        }
+
         // In-transit multi-season marches stay in pendingCommands; their
         // commanders also need `task: 'march'` preserved so they can't be
         // reassigned to other duties while the army is on the road.
@@ -8118,7 +8154,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           appointments: prunedAppointments,
           governorEvalStreaks: result.governorEvalStreaks ?? state.governorEvalStreaks,
           governorReviewLast: result.governorReviewLast ?? state.governorReviewLast,
-          provinceGovernors: result.provinceGovernors ?? state.provinceGovernors,
+          provinceGovernors: prunedGovernors,
           provinceWarlordism: result.provinceWarlordism ?? state.provinceWarlordism,
           provinceGovernorSince: result.provinceGovernorSince ?? state.provinceGovernorSince,
           appointmentHistory: [
