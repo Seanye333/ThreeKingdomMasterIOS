@@ -634,6 +634,36 @@ function CivicTab({
               <span className={styles.officerStats}>{t.primaryStat.slice(0, 3).toUpperCase()}</span>
             </div>
             <div className={styles.titleDesc}>{desc(t)}</div>
+            {/* 任官之效與所奪 — two facts the appointment path acted on but
+                never showed: the one-shot loyalty the appointee gains, and
+                which posts this one auto-vacates. 丞相 quietly unseating
+                太尉/司徒 was something the player could only find out by
+                watching a name disappear. */}
+            {(t.loyaltyOnAppoint || t.excludes?.length) && (
+              <div className={styles.titleTerms}>
+                {t.loyaltyOnAppoint ? (
+                  <span
+                    className={styles.titleTermGain}
+                    title={lang === 'en'
+                      ? `The appointee gains ${t.loyaltyOnAppoint} loyalty on taking the post.`
+                      : `就任當下,受任者忠誠 +${t.loyaltyOnAppoint}。`}
+                  >
+                    {lang === 'en' ? 'loy' : '忠'}+{t.loyaltyOnAppoint}
+                  </span>
+                ) : null}
+                {t.excludes?.length ? (
+                  <span
+                    className={styles.titleTermCost}
+                    title={lang === 'en'
+                      ? `Appointing this post automatically vacates: ${t.excludes.map((x) => CIVIC_TITLES_BY_ID[x]?.name.en ?? x).join(', ')}`
+                      : `任命此職會自動罷免:${t.excludes.map((x) => CIVIC_TITLES_BY_ID[x]?.name.zh ?? x).join('、')}`}
+                  >
+                    {lang === 'en' ? 'supersedes ' : '罷 '}
+                    {t.excludes.map((x) => (lang === 'en' ? CIVIC_TITLES_BY_ID[x]?.name.en : CIVIC_TITLES_BY_ID[x]?.name.zh) ?? x).join(lang === 'en' ? ', ' : '、')}
+                  </span>
+                ) : null}
+              </div>
+            )}
             <div className={styles.holderRow}>
               <span className={styles.holder}>
                 {holder ? (
@@ -889,7 +919,32 @@ function PeerageTab({
                   {lang === 'en' ? 'merit' : '功勳'} ≥ {p.minMerit}{p.requiresSovereign ? ' · 王/帝' : ''}
                 </div>
                 <div className={styles.rankStipend}>+{p.fiefGold}g +{p.fiefGrain}{lang === 'en' ? ' grain' : '糧'}/season</div>
-                <div className={styles.rankCap}>{lang === 'en' ? 'loy' : '忠'}+{p.loyaltyBonus}/s</div>
+                <div
+                  className={styles.rankCap}
+                  title={lang === 'en'
+                    ? `+${p.loyaltyOnGrant} loyalty once on enfeoffment, then +${p.loyaltyBonus}每season while held · prestige weight ${p.prestige}`
+                    : `受封當下 忠誠 +${p.loyaltyOnGrant},此後在任每季 +${p.loyaltyBonus} · 威望權重 ${p.prestige}`}
+                >
+                  {lang === 'en' ? 'loy' : '忠'}+{p.loyaltyBonus}/s
+                  {p.loyaltyOnGrant > 0 && (
+                    <span className={styles.muted}> ·{lang === 'en' ? '+' : '授+'}{p.loyaltyOnGrant}</span>
+                  )}
+                </div>
+                {/* 授爵之價 — a great fief breeds an over-mighty subject. This
+                    number drove 謀反 all along but was never shown, so the
+                    player met it as a surprise revolt rather than a choice. */}
+                {p.ambitionPressure > 0 ? (
+                  <div
+                    className={styles.rankCost}
+                    title={lang === 'en'
+                      ? `A non-sovereign holder gains +${p.ambitionPressure} ambition every season — great fiefs make restless subjects.`
+                      : `非君主的受封者每季野心 +${p.ambitionPressure} —— 大國之封,養不臣之心。`}
+                  >
+                    {lang === 'en' ? 'amb' : '野心'}+{p.ambitionPressure}/s
+                  </div>
+                ) : (
+                  <div className={styles.rankCostNone}>{lang === 'en' ? 'no risk' : '無患'}</div>
+                )}
                 <div className={styles.rankAction}>
                   {current ? (
                     <span className={styles.muted}>{lang === 'en' ? 'current' : '現爵'}</span>

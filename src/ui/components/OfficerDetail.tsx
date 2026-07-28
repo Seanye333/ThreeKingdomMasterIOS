@@ -47,7 +47,7 @@ import { armProficiency, armProficiencyTier, armMasteryPerkOf, PROF_ARM_LABEL, p
 import { activeMountBondSeasons, mountBondMul } from '../../game/systems/mountBond';
 import { isPhysician, medicalSkillOf, medicalTier } from '../../game/systems/medicalSkill';
 import { inferUnitType } from '../../game/systems/tactical';
-import { skillLevelBadge, skillLevel, skillEffectMul, MAX_SKILL_LEVEL } from '../../game/systems/skillMastery';
+import { skillLevelBadge, skillLevel, skillEffectMul, skillCombatEffectLines, MAX_SKILL_LEVEL } from '../../game/systems/skillMastery';
 import { gradeCombatBonus, itemMasteryMul } from '../../game/systems/gradeCombat';
 import { itemRarity, itemRarityMeta, liveItemById, refineCost, REFINE_MAX,
   BREAKTHROUGH_MAX, breakthroughCost as itemBreakthroughCost, socketsFor, GEMS, GEMS_BY_ID,
@@ -1760,10 +1760,19 @@ export function OfficerDetail({
                     : s.category === 'civil'   ? '#b8c87a'
                     : '#c178c7';
                   const desc = lang === 'zh' && s.descriptionZh ? s.descriptionZh : s.description;
+                  // 技能戰效 — the seven combat multipliers combat.ts/duel.ts
+                  // read off this skill, folded through THIS officer's 特訓
+                  // mastery. Traits already appended their real mechanics to
+                  // the tooltip (P5); skills printed only flavour, so "what is
+                  // this skill worth" was unanswerable on screen.
+                  const combatLines = skillCombatEffectLines(s.id, officer);
+                  const skillTitle = combatLines.length > 0
+                    ? `${desc}\n\n${t('戰場效果', 'In battle')}: ${combatLines.map((l) => (lang === 'en' ? l.en : l.zh)).join(' · ')}`
+                    : desc;
                   return (
                     <span
                       key={`skill-${s.id}`}
-                      title={desc}
+                      title={skillTitle}
                       style={{
                         background: '#10161e', border: `1px solid ${color}`, color,
                         padding: '0.3rem 0.55rem', fontSize: '0.78rem', letterSpacing: '0.1rem',

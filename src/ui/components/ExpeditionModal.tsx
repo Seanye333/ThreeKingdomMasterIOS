@@ -422,7 +422,38 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
           )}
           <div style={{ color: '#7a8893' }}>
             {target.isTribe
-              ? t('回報:安撫邊患(止其侵擾)· 外族義從 · 貢金 · 或招其酋', 'Reward: placate raids · auxiliaries · tribute · maybe win the chieftain')
+              ? (() => {
+                  // 其酋為誰 — the tribe branch used to say only "maybe win the
+                  // chieftain" while the realm branch listed exact gold, aux
+                  // troops and named treasures. foreignRealm.ts carries the
+                  // chieftain's id and rolls a real 30–65% chance to recruit
+                  // him, so the player can be told WHO they are gambling for.
+                  const chief = target.chieftainId ? officers[target.chieftainId] : undefined;
+                  const winnable = chief && !chief.forceId && chief.status !== 'dead';
+                  return (
+                    <>
+                      {t('回報:安撫邊患(止其侵擾)· 外族義從 · 貢金', 'Reward: placate raids · auxiliaries · tribute')}
+                      {chief && (
+                        <>
+                          {' · '}
+                          <span
+                            style={{ color: winnable ? '#e6c473' : '#6a5238' }}
+                            title={winnable
+                              ? t(`交誼愈厚,愈可能招得其酋 ${chief.name.zh} 來投。`,
+                                  `The warmer the ties, the likelier ${chief.name.en} rides back with you.`)
+                              : t(`${chief.name.zh}已有所屬,招攬無門。`, `${chief.name.en} already serves someone.`)}
+                          >
+                            {t('招其酋', 'chieftain')} {lang === 'en' ? chief.name.en : chief.name.zh}
+                            <span style={{ color: '#7a8893', fontSize: '0.72rem' }}>
+                              {' '}({t('武', 'WAR')}{chief.stats.war}·{t('統', 'LDR')}{chief.stats.leadership})
+                            </span>
+                            {!winnable && t('(已仕)', ' (served)')}
+                          </span>
+                        </>
+                      )}
+                    </>
+                  );
+                })()
               : <>
                   {t('回報', 'Reward')}:
                   {realm?.gold && ` ${t('金', 'gold')}${realm.gold[0]}–${realm.gold[1]}`}

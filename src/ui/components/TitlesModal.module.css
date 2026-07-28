@@ -119,6 +119,25 @@
   font-style: italic;
 }
 
+/* 任官條款 — the one-shot loyalty gain and the posts this appointment
+   supersedes. Sits between the flavour line and the holder row. */
+.titleTerms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+}
+
+.titleTermGain {
+  color: #88b7e8;
+}
+
+.titleTermCost {
+  color: #d98a6a;
+}
+
 .holderRow {
   display: flex;
   justify-content: space-between;
@@ -230,7 +249,7 @@
 
 .rankRow {
   display: grid;
-  grid-template-columns: 130px 1fr 100px 80px auto;
+  grid-template-columns: 130px 1fr 100px 80px 92px auto;
   gap: 0.6rem;
   align-items: center;
   padding: 0.55rem 0.4rem;
@@ -263,6 +282,21 @@
 
 .rankCap {
   color: #88b7e8;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+/* 授爵代價 — the ambition a great fief breeds. Read as a warning, not a stat:
+   a 公/王 makes an over-mighty subject, and the player should see that before
+   the enfeoffment, not when the revolt fires. */
+.rankCost {
+  color: #d98a6a;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.rankCostNone {
+  color: #4d5b66;
   font-family: ui-monospace, monospace;
   font-size: 0.75rem;
 }
