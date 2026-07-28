@@ -162,6 +162,52 @@ export function totalStipendForForce(
   return sum;
 }
 
+/** The three ledgers that record "this officer holds a post". */
+export interface PostLedgers {
+  appointments: Appointment[];
+  provinceGovernors: Partial<Record<string, EntityId>>;
+  cityDelegations: Record<EntityId, EntityId>;
+}
+
+/**
+ * 去職 — strip every post an officer holds, across all three ledgers.
+ *
+ * A post is not recorded in one place. A man can hold a court appointment
+ * (`appointments`), a provincial governorship (`provinceGovernors`) and a city
+ * delegation (`cityDelegations`) at once, and each lives in its own map. Any
+ * code path that takes someone off the board therefore has three things to
+ * clear, and clearing two of them leaves a corpse governing a province with
+ * nothing to complain about it.
+ *
+ * That is not hypothetical: `executeOfficer` and `retireOfficer` cleared NONE
+ * of the three. The season resolver has its own sweep, so the world eventually
+ * tidied itself — but between pressing 處決 and the next 旬, the panels showed
+ * a dead man in office. Every removal path now funnels through here instead of
+ * repeating (and forgetting part of) the same three-way cleanup.
+ *
+ * Deliberately NOT filtered by force: a man being executed or retiring leaves
+ * every post he holds, whoever granted it.
+ */
+export function vacatePostsOf(officerId: EntityId, posts: PostLedgers): PostLedgers & { vacated: string[] } {
+  const vacated: string[] = [];
+  const appointments = (posts.appointments ?? []).filter((a) => {
+    if (a.officerId !== officerId) return true;
+    vacated.push(`appointment:${a.titleId}`);
+    return false;
+  });
+  const provinceGovernors: Partial<Record<string, EntityId>> = {};
+  for (const [province, holder] of Object.entries(posts.provinceGovernors ?? {})) {
+    if (holder === officerId) { vacated.push(`governor:${province}`); continue; }
+    if (holder) provinceGovernors[province] = holder;
+  }
+  const cityDelegations: Record<EntityId, EntityId> = {};
+  for (const [cityId, holder] of Object.entries(posts.cityDelegations ?? {})) {
+    if (holder === officerId) { vacated.push(`delegation:${cityId}`); continue; }
+    if (holder) cityDelegations[cityId] = holder;
+  }
+  return { appointments, provinceGovernors, cityDelegations, vacated };
+}
+
 /**
  * Drop appointments whose preconditions no longer hold: officer is dead /
  * imprisoned / unsearched, officer left the force, prefect's city changed

@@ -128,6 +128,8 @@
 | 存檔 key | `tkm-save`(**凍結**);版本走 `SAVE_VERSION`,舊 `tkm-save-vN` 由 fallback 掃出 | saveMigration |
 | 存檔寫入 | 同步提交批合併成 **1 次/旬**(原 1.9),序列化一併推遲(2→1.1 次/旬);macrotask 窗口 + `visibilitychange`/`pagehide` flush | saveWriteCoalescer |
 | 大地圖繪製預算 | 預設視角每幀 draw call **< 9,000**(修前 17,279);城池細部與陰影只在 `near` 層開 | mapDrawCalls spec |
+| 傷害預估校準 | `forecastAttack` 手抄 40 個乘數,須與 `attackUnits` 逐格對齊(士氣低落 ×0.8、糧盡 ×0.85 曾漏抄) | forecastCalibration |
+| 去職唯一接縫 | `vacatePostsOf` 一次清 朝職/州牧/太守 三本帳;所有移除路徑都走它 | appointmentEffects |
 | 存檔體積上限 | 十年戰役 **< 1.5 MB**(現約 690 KB);契約測試釘住,防無界陣列進 `partialize` | persistCost.contract |
 
 ### 城市・經濟
@@ -3772,6 +3774,33 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 **方法論**:兩次歸屬嘗試都失敗了才問對問題。按 three 場景樹遍歷,所有物件的 `name` 都是空的,全歸到 `(root)`;改走 React fiber 樹,只找到 1 個 mesh —— 因為 **r3f 用的是獨立的 reconciler,3D 樹根本不在 canvas 元素的 fiber 上**。最後是靠**對照組**定的案:同一場景拉近後 5,785 calls 跑 60 FPS、拉遠 17,279 calls 跑 19 FPS —— 不必知道那 3,476 個 box 的主人是誰,就已經知道「把 call 壓到 6,000 以下」是充分條件。
 
 `e2e/mapDrawCalls.spec.ts` 釘住上限 9,000。**斷言 draw call 而不是 FPS**:CI 機器負載會改變幀率,但不會改變渲染器被要求畫幾次。
+
+#### 11.4.11 用覆蓋率取代猜測,兩個靜默失真的 bug(2026-07-28)
+
+**先講方法,因為結論全靠它。** 我原本列了「19 個零測試模組」,判準是「有沒有 `*.test.ts` 直接 import 它」。跑一次真實覆蓋率之後:**完全 0% 的模組是 0 個**,那 19 個全被間接覆蓋(經 `resolution.ts` / `store.ts` 進去)。整體行覆蓋率 67.8%,其實是健康的。
+
+真正的空白只有四處,而且形狀完全不同:
+
+| 覆蓋 | 行數 | 模組 |
+|---|---|---|
+| 4.5% | 66 | `randomScenario.ts` |
+| 6.7% | 586 | `sound.ts` |
+| 22.2% | 45 | `idbStorage.ts` |
+| **24.2%** | **8,475** | **`store.ts`** |
+
+再往 `store.ts` 裡看函式層級:**約 390 個 action 裡,356 個從未被任何測試執行過**。多數是無害的 setter,但清單裡包含了每一個不可逆的操作 —— 處決俘虜、屠城、遷都、毀婚盟、解散軍團、致仕。
+
+> 跑法(工具不留在 `package.json`,一次性裝):
+> `npm i -D @vitest/coverage-v8 && npx vitest run --coverage.enabled --coverage.provider=v8 --coverage.reporter=json --coverage.include='src/game/**'`
+> 再讀 `coverage/coverage-final.json` 的 `fnMap`/`f`,`f[id] === 0` 就是從未執行的函式。
+
+**bug 一:傷害預估漏抄兩個乘數。** `forecastAttack` 不與 `attackUnits` 共用程式碼,而是**手抄**同一套約 40 個乘數重新推導一遍。抄漏是遲早的事,而且沒有任何症狀 —— 不當機、不紅字,只是玩家據以出兵的數字悄悄失真。實測:攻方**士氣低落**時預估高估 20%(漏了 `×0.8`)、**糧盡**時高估 15%(漏了 `×0.85`)。兩者在 `attackUnits` 裡就緊挨著已經抄到的 `burning ×0.9` 下面兩行。新增 `forecastCalibration.test.ts`:兵種相剋 25 組 × 地形 16 種 × 天候 5 種 × 陣型 14 種 × 傷勢/疲勞/士氣/潰逃 + 組合情境,每格都用受控 rng 跑真實 `attackUnits`,斷言實際傷害落在預估區間內。漏抄任何一個乘數,對應那一列就會紅。
+
+**bug 二:玩家親手送走的人,官位不會空出。** `executeOfficer` 與 `retireOfficer` **一個職位都沒清**。職位分散在三本帳上 —— `appointments`(朝職)、`provinceGovernors`(州牧)、`cityDelegations`(太守)—— 清兩本漏一本,就會有屍體繼續治理一個州而毫無警告。季結算有自己的掃除(§11.4.9 那批加的),所以世界最終會自己收拾乾淨,但**從你按下「處決」到下一旬之間,面板上就掛著一個死人在做官**。修法是唯一接縫:`vacatePostsOf(officerId, ledgers)` 一次清三本,所有移除路徑都走它,而不是各自重複(並各自漏掉)同一段清理。
+
+**這批最值得記的測試工程教訓**:第一版的「無懸掛引用」檢查**是空轉的**。開局劇本的 `marriageAlliances` / `legions` / `armies` / `appointments` / `provinceGovernors` / `cityDelegations` **全是 0** —— 檢查跑了,但沒有任何東西可查,於是穩穩地通過。**先給世界裝上職位**(`installPosts`)之後,同一段檢查立刻抓到上面那個 bug。同理 `retireOfficer` 的守衛有四道(年齡≥60、非君主、狀態、同城有 45 歲以下傳人),隨手挑一個人只會撞到守衛、action 直接 return,然後「職位已清空」這條斷言會**因為完全錯誤的理由**通過 —— 所以測試先建好前置條件,並**檢查回傳值 `ok` 為真**,才進入真正的斷言。
+
+浸泡測試的 `assertInvariants` 也順勢抽成共用的 `src/test/worldInvariants.ts`:它本來是浸泡測試的私產,但一次性的破壞性 action 才是最需要它的地方 —— 季結算寫得很小心,而 action 沒人替它收尾。
 
 ### 11.5 大地圖呈現與資訊層(3D,`StrategicMap3D.tsx`)
 

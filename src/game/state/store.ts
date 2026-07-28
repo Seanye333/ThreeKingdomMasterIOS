@@ -193,7 +193,7 @@ import { rollRemonstrance } from '../systems/remonstrance';
 import { trackService } from '../systems/formerLord';
 import { pruneSeats } from '../systems/hotseat';
 import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
-import { appointmentBonusFor, pruneStaleAppointments, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
+import { appointmentBonusFor, pruneStaleAppointments, vacatePostsOf, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
 import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
 import { planMassMuster, musterStrain, MUSTER_GATHER_SEASONS, MUSTER_CAMPAIGN_SEASONS, type MusterOptions } from '../systems/muster';
@@ -8473,7 +8473,20 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           relations[key] = { ...rel, score: Math.max(-100, rel.score - 12) };
           diplomacy = { ...state.diplomacy, relations };
         }
-        set({ officers, diplomacy });
+        // 去職 — a corpse holds no post. Without this the panels showed the
+        // executed man still governing until the next 旬 swept him out.
+        const vacated = vacatePostsOf(officerId, {
+          appointments: state.appointments ?? [],
+          provinceGovernors: state.provinceGovernors ?? {},
+          cityDelegations: state.cityDelegations ?? {},
+        });
+        set({
+          officers,
+          diplomacy,
+          appointments: vacated.appointments,
+          provinceGovernors: vacated.provinceGovernors as GameState['provinceGovernors'],
+          cityDelegations: vacated.cityDelegations,
+        });
       },
 
       // ── §7.5 ① 君主彈壓 ─────────────────────────────────────────────
@@ -10661,12 +10674,22 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           loyalty: Math.min(100, heir.loyalty + 5),
           mentorId: officerId,
         };
+        // 去職 — a man who has gone home governs nothing. Same three-ledger
+        // sweep the execution path uses; see vacatePostsOf.
+        const retiredPosts = vacatePostsOf(officerId, {
+          appointments: state.appointments ?? [],
+          provinceGovernors: state.provinceGovernors ?? {},
+          cityDelegations: state.cityDelegations ?? {},
+        });
         set({
           officers: {
             ...state.officers,
             [officerId]: { ...o, status: 'retired', task: null, equipment: [] },
             [disciple.id]: heir,
           },
+          appointments: retiredPosts.appointments,
+          provinceGovernors: retiredPosts.provinceGovernors as GameState['provinceGovernors'],
+          cityDelegations: retiredPosts.cityDelegations,
         });
         get().notify(
           `${o.name.zh}告老 — 衣缽盡傳${disciple.name.zh}(歷練+${xpGrant}${heirloomSkill ? '、承一技' : ''}${o.equipment.length > 0 ? '、名器盡付' : ''})`,
