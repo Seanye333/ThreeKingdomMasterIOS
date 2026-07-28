@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { idbStorage } from './idbStorage';
+import { LIVE_SAVE_KEY, SAVE_VERSION, migrateSave, legacyKeyFallback } from './saveMigration';
 import type {
   Building,
   City,
@@ -17679,11 +17680,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       reset: () => set(() => ({ ...EMPTY_STATE })),
     }),
     {
-      name: 'tkm-save-v26',
+      // 存檔 key 已凍結 — versioning is `version`/`migrate` below, NOT a
+      // rename. Renaming orphaned every in-progress campaign; see
+      // saveMigration.ts. legacyKeyFallback still finds the old tkm-save-vN
+      // blobs so nobody loses the game they were in the middle of.
+      name: LIVE_SAVE_KEY,
+      version: SAVE_VERSION,
+      migrate: migrateSave,
       // 存檔遷移 IndexedDB — the live campaign blob leaves the 5MB
       // localStorage budget to the save slots; transparent fallback +
       // one-time migration live in idbStorage.
-      storage: createJSONStorage(() => idbStorage),
+      storage: createJSONStorage(() => legacyKeyFallback(idbStorage)),
       partialize: (state) => ({
         chronicle: state.chronicle,
         date: state.date,
