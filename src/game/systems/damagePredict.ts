@@ -30,9 +30,22 @@ export function predictAttackDamage(
     dmgLo *= 0.5;
     dmgHi *= 0.5;
   }
+  // 攻方自身狀態減傷 — mirrors the three consecutive lines at the end of
+  // `attackUnits`' damage assembly. They were copied one-for-one except the
+  // last two were missed, which overstated the preview by 20%/15% for a unit
+  // that was demoralized or out of rations — exactly when a player most needs
+  // the forecast to be honest. Covered by forecastCalibration.test.ts.
   if (attacker.effects.some((e) => e.kind === 'burning')) {
     dmgLo *= 0.9;
     dmgHi *= 0.9;
+  }
+  if (attacker.effects.some((e) => e.kind === 'demoralized')) {
+    dmgLo *= 0.8;
+    dmgHi *= 0.8;
+  }
+  if (attacker.effects.some((e) => e.kind === 'starving')) {
+    dmgLo *= 0.85;
+    dmgHi *= 0.85;
   }
 
   // Counter-attack ≈ 40% of forward damage from defender to attacker.
