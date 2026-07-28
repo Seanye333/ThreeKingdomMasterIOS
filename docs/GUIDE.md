@@ -126,6 +126,8 @@
 | 種子涵蓋範圍 | 模擬層全走種子(季結算 + AI);**玩家主動觸發的 30 處刻意用裸隨機** | campaignRng |
 | 技能熟練折算 | 平添值 ×m;乘數 `1+(v−1)×m`(m = 1 / 1.15 / 1.3) | skillMastery / combat |
 | 存檔 key | `tkm-save`(**凍結**);版本走 `SAVE_VERSION`,舊 `tkm-save-vN` 由 fallback 掃出 | saveMigration |
+| 存檔寫入 | 同步提交批合併成 **1 次/旬**(原 1.9);macrotask 窗口 + `visibilitychange`/`pagehide` flush | saveWriteCoalescer |
+| 存檔體積上限 | 十年戰役 **< 1.5 MB**(現約 690 KB);契約測試釘住,防無界陣列進 `partialize` | persistCost.contract |
 
 ### 城市・經濟
 
@@ -3695,6 +3697,28 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 **拆檔**:`historicalBiographies` 5,139 → 92 + 五部;`objectives` 5,431 → 28 + 五個盤面檔(沿 `scn-ws-`/`scn-ch-`/`scn-st-`/`scn-whatif-` 的既有界線切,日後加劇本才知道放哪)。兩者都配了防重測試 —— **spread 對重複 key 是靜默保留最後一個**,同一個 id 出現在兩個 part 會讓其中一份永久讀不到而毫無警告(即 items.ts 那個 bug 的形狀)。objectives 另加雙向的劇本覆蓋檢查,其中「每個劇本都要有 objectives」才是會咬人的那條:沒有目標的劇本開得起來、跑得動,只是永遠不告訴玩家怎樣算贏。
 
 **e2e**:上次「訪賢勝算 spec 抓不到區塊是因為沉浸 chrome 收起側欄」的判斷**是錯的** —— `uiPrefs` 每個 chrome 旗標預設都是 false。真正的限制是:**大部分 modal 是 `React.lazy`,而 `DiplomacyModal` 是靜態 import**,lazy chunk 在 headless 下 resolve 不可靠。要進 CI 的面板 spec 應挑靜態 import 的面板。
+
+#### 11.4.8 存檔寫入合併 —— 一旬只存一次(saveWriteCoalescer.ts,2026-07-28)
+
+`endSeason` 是**同步**的,內部提交約 27 次(每個 `set()` 都是一次 zustand commit),而 persist 在每次 commit 後都寫一次存檔。實測開局劇本跑 240 旬:
+
+| | 合併前 | 合併後 |
+|---|---|---|
+| 存檔寫入次數 | 468(**1.9 次/旬**) | 240(**1.0 次/旬**) |
+| 序列化總量 | 248 MB(平均 542 KB/次) | 118 MB |
+| 佔季結算總耗時 | **17%** | **9%** |
+
+那 1.9 次裡除了最後一次,寫的全是**存活數微秒、誰也載不到的中間態世界**。桌面上只是浪費;但十遊戲年後存檔約 690 KB,而真正的目標平台是 iOS —— 每次寫入是一次 stringify 加一次 IndexedDB 交易。
+
+**修在 storage 層,不在 27 個呼叫點**:每個 `set()` 都是正當的狀態變更,把「先別存」旗標穿進所有呼叫點等於把持久化的顧慮塞進遊戲邏輯,而且下一個人加第 28 個 `set()` 時就會失效。storage 是所有寫入本來就必經的**唯一接縫**,包一層即可覆蓋現在與未來的寫入方 —— 與 §11.4.5 的 `legacyKeyFallback` 同一手法。
+
+三個踩過的坑:
+
+1. **必須用 macrotask 而非 `queueMicrotask`**。呼叫方可能 `await` 每一次 `setItem`,而每個 await 都會排空 microtask 佇列 —— flush 於是插在同一批的兩次寫入之間,一次也合併不掉(實測 27 次只併成 9 次)。timer 的窗口在這一切之外,無論呼叫方怎麼 await,整個同步提交串都會塌成一次。代價是一個事件循環回合的延遲,由 `visibilitychange`/`pagehide` 的 flush 兜底(iOS 切後台兩者都會觸發)。
+2. **緩衝區不准說謊**。`getItem` 必須讀得到還在緩衝或**正在寫入途中**的值 —— 前者漏了會讓「同一個同步塊內存檔後再讀」讀到上一個世界;後者是更隱蔽的版本:條目已離開 pending、尚未抵達 storage,那個窗口內的讀會穿透到過期值。所以另備一份 `inflight`,寫入確認後才移除(且用**引用比對**移除,否則會誤刪較新批次的條目)。
+3. **`removeItem` 必須取消同 key 的待寫入**,否則刪除先執行、緩衝的舊值後落地,被刪的存檔就復活了。
+
+順帶用契約測試(`persistCost.contract.test.ts`)釘住第二個數字:**十年戰役的存檔須小於 1.5 MB**。目前約 690 KB,累積型日誌(chronicle/annals)已有裁剪、戰報不持久化逐回合軌跡 —— 但那是當前 `partialize` 的性質而非定律,往裡面加一個無界陣列就足以讓後期戰役在手機上存不下,而這種退化在開發時看不見(沒人會跑 240 旬)。量測本身也要防呆:契約測試每旬之間讓出一個完整事件循環,因為連續同步跑 240 旬會把全部寫入合併成**一次**,量出的是遊戲中不存在的假收益。
 
 ### 11.5 大地圖呈現與資訊層(3D,`StrategicMap3D.tsx`)
 
