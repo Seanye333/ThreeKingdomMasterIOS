@@ -106,7 +106,7 @@ export function CareerModal({ onClose }: Props) {
               {lang === 'en' ? `Career: ${officer?.name.en ?? '?'}` : `主角 ${officer?.name.zh ?? '?'}`}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
 
         <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>

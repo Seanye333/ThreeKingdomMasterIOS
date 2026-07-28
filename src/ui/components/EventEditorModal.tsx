@@ -103,7 +103,7 @@ export function EventEditorModal({ scenario, onClose }: Props) {
               {lang === 'en' ? scenario.name.en : scenario.name.zh} · {t('自製事件於遊戲中觸發', 'Authored events fire during play')}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
 
         <div style={{ padding: '1rem 1.5rem', overflowY: 'auto', flex: 1 }}>

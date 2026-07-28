@@ -76,7 +76,7 @@ export function SchemesModal({ onClose }: { onClose: () => void }) {
               {strategist ? t(`${strategist.name.zh} 運籌(智${strategist.stats.intelligence})`, `${strategist.name.en} plans`) : t('無人運籌', 'No strategist')}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>

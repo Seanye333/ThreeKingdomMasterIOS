@@ -137,7 +137,7 @@ export function Modal({
         <div className={styles.headerRight}>
           {headerRight}
           {!hideClose && (
-            <button type="button" className={styles.closeBtn} onClick={requestClose} aria-label="Close">
+            <button type="button" className={styles.closeBtn} onClick={requestClose} aria-label="關閉 Close">
               ×
             </button>
           )}

@@ -102,7 +102,7 @@ export function LegionsModal({ onClose }: { onClose: () => void }) {
               {t('劃城設督,授以方略 — 軍團每旬自行募兵發兵(內政請配合委任太守)', 'Assign cities to a marshal with a directive — the legion recruits and marches itself each tick')}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>
 
         {/* Active legions */}

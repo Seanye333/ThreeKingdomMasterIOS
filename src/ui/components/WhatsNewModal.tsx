@@ -52,7 +52,7 @@ export function WhatsNewModal() {
           <div style={{ fontSize: '1.2rem', color: '#e6c473', letterSpacing: '0.07rem' }}>
             📯 {t('本次更新', "What's new")} <span style={{ fontSize: '0.75rem', color: '#7a8893' }}>v{GAME_VERSION}</span>
           </div>
-          <button onClick={dismiss} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.3rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={dismiss} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.3rem', cursor: 'pointer' }}>×</button>
         </div>
         {entries.map((e) => (
           <div key={e.version} style={{ marginTop: '0.8rem' }}>

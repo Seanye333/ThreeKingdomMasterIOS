@@ -144,7 +144,7 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
               {t(`與 ${targetForce?.name.zh ?? ''} 聯姻`, `Marriage Diplomacy with ${targetForce?.name.en ?? ''}`)}
             </div>
           </div>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>
             ×
           </button>
         </header>

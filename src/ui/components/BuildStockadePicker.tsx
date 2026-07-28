@@ -76,7 +76,7 @@ export function BuildStockadePicker({ onClose }: Props) {
               {lang === 'en' ? `${sel.en} · ${sel.cost}g` : `${sel.zh} · ${sel.cost}金`}
             </div>
           </div>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>×</button>
         </header>
 
         <div className={styles.meta}>

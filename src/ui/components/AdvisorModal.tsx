@@ -129,7 +129,7 @@ export function AdvisorModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>
 
         {actionable.length > 1 && (

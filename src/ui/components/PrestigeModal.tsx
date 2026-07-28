@@ -59,7 +59,7 @@ export function PrestigeModal({ onClose }: Props) {
               {t('憑天資與功業而得的名望階層', 'Reputation ranks earned through talent and deeds')}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
 
         <div style={{ padding: '0.8rem 1.2rem', overflowY: 'auto', flex: 1, display: 'grid', gap: '0.6rem' }}>

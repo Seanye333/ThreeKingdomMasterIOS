@@ -124,7 +124,7 @@ export function FortPanel({ fortId, onClose }: Props) {
               {fort.name.en} · {fac ? t(fac.name.zh, fac.name.en) : fort.subtype === 'stockade' ? t('壘', 'Stockade') : t('砦', 'Fort')}
             </div>
           </div>
-          <button onClick={onClose} style={{
+          <button aria-label="關閉 Close" onClick={onClose} style={{
             background: 'transparent', border: 'none', color: '#97a4ae',
             fontSize: '1.4rem', cursor: 'pointer', padding: 0,
           }}>×</button>

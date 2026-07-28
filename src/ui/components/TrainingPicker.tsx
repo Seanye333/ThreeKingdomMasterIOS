@@ -58,7 +58,7 @@ export function TrainingPicker({ cityId, onClose }: Props) {
         <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
           <header className={styles.header}>
             <div className={styles.titleZh}>{t('武將培訓', 'Officer Training')}</div>
-            <button className={styles.closeButton} onClick={onClose}>×</button>
+            <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>×</button>
           </header>
           <div style={{ padding: '1rem 1.25rem', color: '#aab6c0' }}>
             {t('此城尚無書院,也無可任教武將。', 'No academy in this city, and no officer here can teach.')}
@@ -117,7 +117,7 @@ export function TrainingPicker({ cityId, onClose }: Props) {
               )}
             </div>
           </div>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>×</button>
         </header>
 
         <div style={{ padding: '0.5rem 1.25rem', background: '#10161e', borderBottom: '1px solid #2b3845' }}>

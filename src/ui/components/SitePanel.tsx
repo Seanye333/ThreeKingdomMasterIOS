@@ -97,7 +97,7 @@ export function SitePanel({ siteId, onClose }: Props) {
               {site.name.en} · {t(meta.zh, meta.en)}
             </div>
           </div>
-          <button onClick={onClose} style={{
+          <button aria-label="關閉 Close" onClick={onClose} style={{
             background: 'transparent', border: 'none', color: '#97a4ae',
             fontSize: '1.4rem', cursor: 'pointer', padding: 0,
           }}>×</button>

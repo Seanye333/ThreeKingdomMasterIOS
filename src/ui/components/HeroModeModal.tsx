@@ -75,7 +75,7 @@ export function HeroModeModal({ onClose }: Props) {
               <div>{t('已通關', 'Cleared')} <b style={{ color: '#e6c473' }}>{doneCount}/{CHALLENGES.length}</b></div>
               <div style={{ color: '#d96a4a' }}>★ {earned}<span style={{ color: '#6a5238' }}>/{maxStars}</span></div>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+            <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
           </div>
         </header>
 

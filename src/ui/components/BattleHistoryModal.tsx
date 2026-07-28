@@ -84,7 +84,7 @@ export function BattleHistoryModal({ onClose }: Props) {
               Battle History — {battles.length} battle{battles.length === 1 ? '' : 's'} recorded
             </div>}
           </div>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>
             ×
           </button>
         </header>

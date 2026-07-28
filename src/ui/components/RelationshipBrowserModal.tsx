@@ -129,7 +129,7 @@ export function RelationshipBrowserModal({ onClose, officersOverride }: Props) {
               {filtered.length} / {allEntries.length} {t('條因緣', 'entries')}
             </div>
           </div>
-          <button onClick={onClose} style={{
+          <button aria-label="關閉 Close" onClick={onClose} style={{
             background: 'transparent', border: 'none', color: '#e6c473',
             fontSize: '1.5rem', cursor: 'pointer', padding: '0 0.5rem',
           }}>×</button>

@@ -80,7 +80,7 @@ export function AttackPortPicker({ portId, onClose, onCommit }: Props) {
             <div className={styles.titleZh}>{t('攻港', 'Attack Port')}</div>
             <div className={styles.titleEn}>{t(`攻擊 ${port.name.zh}`, `Attack ${port.name.zh}`)}</div>
           </div>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>×</button>
         </header>
 
         <div className={styles.meta}>

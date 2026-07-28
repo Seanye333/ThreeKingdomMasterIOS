@@ -96,7 +96,7 @@ export function CatalogModal({ onClose, title, items, categories = [] }: Props) 
           }}>
             {lang === 'zh' ? `${items.length} 種` : lang === 'en' ? `${title.en.toUpperCase()} · ${items.length}` : `${title.en.toUpperCase()} · ${items.length} 種`}
           </div>
-          <button
+          <button aria-label="關閉 Close"
             onClick={onClose}
             style={{
               background: 'transparent', border: 'none',

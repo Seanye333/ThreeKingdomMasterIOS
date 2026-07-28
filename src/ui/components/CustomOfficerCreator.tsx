@@ -103,7 +103,7 @@ export function CustomOfficerCreator({ scenario, onClose, onCreate }: Props) {
             {lang !== 'en' && <div className={styles.titleZh}>自定義武將</div>}
             {lang !== 'zh' && <div className={styles.titleEn}>Create Your Officer</div>}
           </div>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>×</button>
         </header>
 
         <div className={styles.body}>

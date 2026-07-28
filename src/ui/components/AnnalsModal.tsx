@@ -49,7 +49,7 @@ export function AnnalsModal({ onClose }: { onClose: () => void }) {
               {t('本朝史事・天象・災異・邊患・亂事・祭禮之編年', 'Events, omens, disasters, frontier alarms, risings & rites')}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>

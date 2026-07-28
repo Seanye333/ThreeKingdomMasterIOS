@@ -97,7 +97,7 @@ export function DeedsModal({ onClose }: Props) {
             <div style={{ fontSize: '1.4rem', color: '#e6c473', letterSpacing: '0.07rem' }}>{t('武功榜', 'Heroic Deeds')}</div>
             {lang === 'both' && <div style={{ fontSize: '0.85rem', color: '#7a8893', fontStyle: 'italic' }}>Heroic Deeds Leaderboard</div>}
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
 
         {/* Force filter chip row */}

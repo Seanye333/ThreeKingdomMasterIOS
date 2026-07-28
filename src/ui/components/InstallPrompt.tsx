@@ -89,7 +89,7 @@ export function InstallPrompt() {
           }}
         >{t('安裝', 'Install')}</button>
       )}
-      <button
+      <button aria-label="關閉 Close"
         onClick={dismiss}
         style={{ background: 'transparent', border: 'none', color: '#7a8893', fontSize: '1.1rem', cursor: 'pointer', padding: '0 0.2rem' }}
       >✕</button>

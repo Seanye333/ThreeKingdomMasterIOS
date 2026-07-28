@@ -130,7 +130,7 @@ export function FormationsModal({ onClose }: Props) {
           <div style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted, #7a8893)', letterSpacing: '0.07rem', flex: 1 }}>
             {t(`${FORMATIONS.length} 種`, `FORMATIONS · ${FORMATIONS.length}`)}
           </div>
-          <button
+          <button aria-label="關閉 Close"
             onClick={onClose}
             style={{
               background: 'transparent', border: 'none',

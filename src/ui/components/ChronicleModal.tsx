@@ -77,7 +77,7 @@ export function ChronicleModal({ onClose }: { onClose: () => void }) {
               {' · '}{chronicle.length} {t('條', 'entries')}
             </span>
           </div>
-          <button onClick={onClose} style={{
+          <button aria-label="關閉 Close" onClick={onClose} style={{
             background: 'transparent', border: 'none', color: '#97a4ae',
             fontSize: '1.5rem', cursor: 'pointer',
           }}>×</button>

@@ -105,7 +105,7 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
                 <option value="label">{t('名稱', 'Label')}</option>
               </select>
             </label>
-            <button className={styles.closeButton} onClick={onClose}>×</button>
+            <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>×</button>
           </div>
         </header>
 

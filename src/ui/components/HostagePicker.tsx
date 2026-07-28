@@ -55,7 +55,7 @@ export function HostagePicker({ targetForceId, onClose }: Props) {
               {t(`送往 ${targetForce?.name.zh ?? ''}`, `Send Hostage to ${targetForce?.name.en ?? ''}`)}
             </div>
           </div>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>×</button>
         </header>
 
         <div className={styles.meta}>

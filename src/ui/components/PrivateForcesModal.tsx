@@ -67,7 +67,7 @@ export function PrivateForcesModal({ onClose }: Props) {
               {t('募養家兵 — 增強麾下武將領軍之威（攻守皆然，上限 統率×100）', 'Fund a personal guard — strengthens the officer in battle (attack & defence), cap = leadership×100')}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
 
         <div style={{ padding: '0.6rem 1.2rem', flex: 1, overflowY: 'auto' }}>

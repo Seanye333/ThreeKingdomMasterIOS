@@ -194,7 +194,7 @@ export function ItemsBrowser({ onClose }: Props) {
               )}
             </div>
           </div>
-          <button
+          <button aria-label="關閉 Close"
             onClick={onClose}
             style={{
               background: 'none', border: 'none',

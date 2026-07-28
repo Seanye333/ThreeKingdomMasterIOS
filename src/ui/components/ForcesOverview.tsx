@@ -86,7 +86,7 @@ export function ForcesOverview({ onClose }: Props) {
             {lang !== 'en' && <div className={styles.titleZh}>群雄</div>}
             {lang !== 'zh' && <div className={styles.titleEn}>Forces of the Realm</div>}
           </div>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>
             ×
           </button>
         </header>

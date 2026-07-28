@@ -328,7 +328,7 @@ export function MarchPicker({ cityId, onClose }: Props) {
             <div className={styles.titleZh}>{def.label.zh}</div>
             <div className={styles.titleEn}>{def.label.en}</div>
           </div>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>
             ×
           </button>
         </header>

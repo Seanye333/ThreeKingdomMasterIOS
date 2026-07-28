@@ -56,7 +56,7 @@ export function HallOfFameModal({ onClose }: { onClose: () => void }) {
             <div style={{ fontSize: '1.4rem', color: '#e6c473', letterSpacing: '0.1rem' }}>{t('名將榜', 'Hall of Fame')}</div>
             <div style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('按品階評分排名', 'Ranked by grade score')}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
 
         <div style={{ display: 'flex', gap: '0.4rem', padding: '0.7rem 1.5rem 0' }}>

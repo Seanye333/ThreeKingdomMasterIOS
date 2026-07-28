@@ -44,7 +44,7 @@ export function ReliefModal({ onClose }: { onClose: () => void }) {
               {t('災報既至,郡縣待命 — 主公示下。', 'The disaster reports are in. The prefects await your word.')}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#f0c078', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#f0c078', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>
 
         {pendingRelief.length === 0 && (

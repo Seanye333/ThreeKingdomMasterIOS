@@ -52,7 +52,7 @@ export function BattleDetailModal({ battle, onClose }: Props) {
               }}
             >⏵ {t('演義重現', 'Dramatize')}</button>
           )}
-          <button className={styles.closeButton} onClick={onClose}>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>
             ×
           </button>
         </header>

@@ -119,7 +119,7 @@ export function CourtModal({ onClose }: Props) {
             <div className={styles.titleZh}>{lang === 'en' ? 'Imperial Court' : '朝廷'}</div>
             <div className={styles.titleEn}>Imperial Court</div>
           </div>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>×</button>
         </header>
 
         {/* 奉迎天子 — where the Son of Heaven sits, and who holds him. */}

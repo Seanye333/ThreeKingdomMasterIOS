@@ -177,7 +177,7 @@ export function ArmouryModal({ onClose }: Props) {
               Armoury — {ITEMS.length} items
             </div>
           </div>
-          <button className={styles.closeButton} onClick={onClose}>
+          <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>
             ×
           </button>
         </header>

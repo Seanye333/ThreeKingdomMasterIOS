@@ -87,7 +87,7 @@ export function ScenicPanel({ siteId, onClose }: Props) {
             <div style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>⛰ {pickName(site.name, lang)}</div>
             <div style={{ fontSize: '0.72rem', color: '#97a4ae' }}>{t('名所', 'Scenic Site')}</div>
           </div>
-          <button onClick={onClose} style={{
+          <button aria-label="關閉 Close" onClick={onClose} style={{
             background: 'transparent', border: 'none', color: '#97a4ae',
             fontSize: '1.4rem', cursor: 'pointer', padding: 0,
           }}>×</button>

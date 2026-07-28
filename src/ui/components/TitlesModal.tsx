@@ -216,7 +216,7 @@ export function TitlesModal({ onClose }: Props) {
             >
               {lang === 'en' ? 'Auto-appoint' : '一鍵任官'}
             </button>
-            <button className={styles.closeButton} onClick={onClose}>×</button>
+            <button aria-label="關閉 Close" className={styles.closeButton} onClick={onClose}>×</button>
           </div>
         </header>
         <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', padding: '0 1rem 0.4rem', flexWrap: 'wrap' }}>

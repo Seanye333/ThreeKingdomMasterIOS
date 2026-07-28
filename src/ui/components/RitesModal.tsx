@@ -111,7 +111,7 @@ export function RitesModal({ onClose }: { onClose: () => void }) {
               {t(`當前天命 ${mandateVal}(${label.zh})`, `Mandate ${mandateVal} (${label.en})`)}
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>
 
         {/* §8.5 郊祀 */}

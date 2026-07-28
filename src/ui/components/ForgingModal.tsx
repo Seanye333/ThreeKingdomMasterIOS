@@ -177,7 +177,7 @@ export function ForgingModal({ onClose }: Props) {
             <div style={{ fontSize: '1.4rem', color: '#e6c473', letterSpacing: '0.07rem' }}>鍛造</div>
             <div style={{ fontSize: '0.85rem', color: '#7a8893', fontStyle: 'italic' }}>Forge & Smithy</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
         </header>
 
         <div style={{ padding: '0.75rem 1.5rem', borderBottom: '1px solid #2b3845' }}>

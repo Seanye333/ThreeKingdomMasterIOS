@@ -74,7 +74,7 @@ export function RelationsModal({ onClose }: { onClose: () => void }) {
               <span style={{ color: '#e6c473' }}>善</span>/<span style={{ color: '#7a8893' }}>中</span>/<span style={{ color: '#e08070' }}>惡</span>
             </span>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#97a4ae', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#97a4ae', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </header>
 
         <table style={{ borderCollapse: 'collapse', fontSize: '0.78rem' }}>

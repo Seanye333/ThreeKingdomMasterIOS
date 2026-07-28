@@ -80,7 +80,7 @@ export function GovernorEvalModal({ onClose }: { onClose: () => void }) {
             <div style={{ fontSize: '1.15rem', color: '#e6c473', letterSpacing: '0.07rem' }}>📋 {t('考課・殿最', 'Governor Review')}</div>
             <div style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('冬末考課前的預估;可即時親裁恩威', 'Live projection before the winter review — 親裁 at will')}</div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
+          <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#e6c473', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>
 
         {seats.length === 0 && (
