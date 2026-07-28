@@ -27,6 +27,7 @@ import { useGameStore } from './store';
 import { SCENARIOS } from '../data/scenarios';
 import { getRelation } from '../types/diplomacy';
 import { ITEMS_BY_ID } from '../data/items';
+import { CIVIC_TITLES_BY_ID } from '../data/titles';
 
 const TURNS = 48;
 /**
@@ -225,7 +226,93 @@ function assertInvariants(turn: number): void {
     if (!o.locationCityId) continue;
     expect(s.cities[o.locationCityId], `t${turn} captive ${o.id} held in a real city`).toBeTruthy();
   }
+
+  // ── 死者了無牽掛 ── A dead officer must hold no office and command no
+  // troops. The engine removes them from most paths on death, but a corpse
+  // left holding a governorship or a legion command is a slot the living can
+  // never be given — the city keeps "having" an administrator forever. (A
+  // previous soak round found a corpse still leading an army; this pins the
+  // wider class.) Equipment and location deliberately survive death: that is
+  // how a fallen officer's 神兵 stays findable and how burial reads.
+  //
+  // ⚠ COVERAGE: measured over 240 ticks of the passive soak, `deadIds` stays
+  // EMPTY, so these three assertions do not currently bite. That is correct
+  // behaviour, not a gap in the soak: every scenario opens at game year 178
+  // and deathChance() returns 0 for an officer before their historical 卒年,
+  // so 178–188 genuinely buries almost nobody. The assertions are here for
+  // the campaigns that DO reach the death years (the long soak's later half,
+  // and every real player save). Do not "fix" them by loosening — check
+  // whether the run reaches a year where anyone dies.
+  const deadIds = new Set(Object.values(s.officers).filter((o) => o.status === 'dead').map((o) => o.id));
+  for (const [cityId, govId] of Object.entries(s.cityDelegations ?? {})) {
+    expect(deadIds.has(govId), `t${turn} city ${cityId} delegated to dead officer ${govId}`).toBe(false);
+  }
+  for (const [pid, govId] of Object.entries(s.provinceGovernors ?? {})) {
+    expect(deadIds.has(govId), `t${turn} province ${pid} governed by dead officer ${govId}`).toBe(false);
+  }
+  for (const lg of s.legions ?? []) {
+    if (lg.commanderId) {
+      expect(deadIds.has(lg.commanderId), `t${turn} legion ${lg.id} commanded by dead officer ${lg.commanderId}`).toBe(false);
+    }
+  }
+
+  // ── 官爵不相沖 ── A CivicTitle declares `excludes`: posts that cannot be
+  // held at once (you are not both 丞相 and 大將軍). Nothing in the grant path
+  // re-checks it after the fact, so a title handed out by one system while
+  // another had already granted its exclusion goes unnoticed — and the UI
+  // shows a rank nobody can explain.
+  //
+  // COVERAGE: the passive soak reaches 76 live appointments and 5 province
+  // governors, so this one and 一職一人 below are genuinely exercised.
+  // (cityDelegations and legions stay empty — a spectator never delegates or
+  // raises a legion — so the two assertions above that read them are, like
+  // the death checks, waiting for a campaign that uses them.)
+  const titlesByOfficer = new Map<string, string[]>();
+  for (const ap of s.appointments ?? []) {
+    titlesByOfficer.set(ap.officerId, [...(titlesByOfficer.get(ap.officerId) ?? []), ap.titleId]);
+  }
+  for (const [officerId, titles] of titlesByOfficer) {
+    for (const titleId of titles) {
+      const def = CIVIC_TITLES_BY_ID[titleId];
+      if (!def?.excludes) continue;
+      const clashing = def.excludes.filter((x) => titles.includes(x));
+      expect(clashing, `t${turn} officer ${officerId} holds ${titleId} plus its exclusion(s) ${clashing.join(',')}`).toEqual([]);
+    }
+    // 一人一職 — the same post twice on one officer is a bookkeeping leak.
+    expect(new Set(titles).size, `t${turn} officer ${officerId} holds a duplicated post: ${titles.join(',')}`).toBe(titles.length);
+  }
+  // 一職一人 — and a non-prefect post is held by at most one officer per force
+  // (a realm does not have two 丞相). Prefect is per-city, so it is exempt.
+  const seatHolders = new Map<string, string[]>();
+  for (const ap of s.appointments ?? []) {
+    if (ap.titleId === 'prefect') continue;
+    const key = `${ap.forceId}|${ap.titleId}`;
+    seatHolders.set(key, [...(seatHolders.get(key) ?? []), ap.officerId]);
+  }
+  for (const [key, holders] of seatHolders) {
+    expect(holders.length, `t${turn} ${key} held by ${holders.length} officers: ${holders.join(',')}`).toBe(1);
+  }
+
+  // ── 兵籍不憑空生滅 ── Troops are the single most-moved number in the game
+  // (recruit, march, garrison, rout, disband, siege losses), and several
+  // systems write them independently. A total that leaps between adjacent
+  // ticks means somebody is adding troops without paying, or losing an army
+  // into the void — both invisible in play until a battle goes strangely.
+  // A band rather than exact conservation: recruitment and casualties are
+  // legitimate, mass teleportation is not.
+  const troopTotal = Object.values(s.cities).reduce((n, c) => n + c.troops, 0)
+    + Object.values(s.armies ?? {}).reduce((n, a) => n + (a.troops ?? 0), 0);
+  expect(Number.isFinite(troopTotal), `t${turn} troop total finite`).toBe(true);
+  if (lastTroopTotal != null && lastTroopTotal > 0) {
+    const ratio = troopTotal / lastTroopTotal;
+    expect(ratio, `t${turn} troop total leapt ${lastTroopTotal}→${troopTotal}`).toBeGreaterThan(0.5);
+    expect(ratio, `t${turn} troop total leapt ${lastTroopTotal}→${troopTotal}`).toBeLessThan(2);
+  }
+  lastTroopTotal = troopTotal;
 }
+
+/** Previous tick's army total — see the 兵籍 invariant above. */
+let lastTroopTotal: number | null = null;
 
 describe('長跑浸泡 — 48 旬被動戰役', () => {
   it('grinds 48 turns without breaking a single invariant, and save/load round-trips', () => {

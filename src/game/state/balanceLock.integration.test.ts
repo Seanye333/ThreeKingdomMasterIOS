@@ -55,6 +55,7 @@ interface Shape {
   unemployedOfficers: number;
   totalGold: number;
   totalFood: number;
+  totalTroops: number;
   avgLoyalty: number;
 }
 
@@ -77,6 +78,8 @@ function measure(): Shape {
     unemployedOfficers: living.filter((o) => !o.forceId).length,
     totalGold: cities.reduce((n, c) => n + c.gold, 0),
     totalFood: cities.reduce((n, c) => n + c.food, 0),
+    totalTroops: cities.reduce((n, c) => n + c.troops, 0)
+      + Object.values(s.armies ?? {}).reduce((n, a) => n + (a.troops ?? 0), 0),
     avgLoyalty: owned.length ? owned.reduce((n, c) => n + c.loyalty, 0) / owned.length : 0,
   };
 }
@@ -127,7 +130,22 @@ describe('平衡護欄 — 240 旬(約十年)後世界仍成立', () => {
         expect(end.totalPopulation).toBeLessThan(start.totalPopulation * 3);
       });
 
-      it('人事流轉 — officers age, die, and take service', () => {
+      it('兵籍消長在區間內 — the realm neither disarms nor mobilises absurdly', () => {
+        // Measured baseline at the time of writing: ~1.04M troops at start,
+        // ~0.70M after ten years of war (a ~33% net drain, arriving smoothly —
+        // no single tick moved it more than ~4%). The band is deliberately
+        // wider than that: it is here to catch a change that makes armies
+        // evaporate or multiply, not to freeze today's attrition rate.
+        expect(end.totalTroops).toBeGreaterThan(start.totalTroops * 0.3);
+        expect(end.totalTroops).toBeLessThan(start.totalTroops * 2);
+      });
+
+      it('人事流轉 — the roster is worked, not frozen', () => {
+        // NOTE: deaths are NOT asserted to occur. Every scenario opens at game
+        // year 178 and deathChance() is 0 before an officer's historical 卒年,
+        // so ten years buries essentially nobody — that is the design, not a
+        // stalled aging system. Asserting deaths here would be asserting a
+        // falsehood; what IS checked is that nobody comes back from the dead.
         expect(end.deadOfficers).toBeGreaterThanOrEqual(start.deadOfficers);
         expect(end.livingOfficers).toBeGreaterThan(0);
         // A realm where nobody is ever recruited means the hiring path is dead.
