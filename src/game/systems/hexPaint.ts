@@ -127,6 +127,19 @@ export function prunePaint(
 }
 
 /**
+ * 亡國褪色 — drop every cell painted by forces that no longer exist.
+ *
+ * Separate from {@link prunePaint}, which ages paint out by TTL: this one is
+ * about realms that were wiped out or absorbed mid-season, whose colours would
+ * otherwise linger on the map for the remaining TTL seasons.
+ */
+export function stripPaint(paint: HexPaint, forceIds: EntityId[]): HexPaint {
+  if (forceIds.length === 0) return paint;
+  const drop = new Set(forceIds);
+  return Object.fromEntries(Object.entries(paint).filter(([, v]) => !drop.has(v.f)));
+}
+
+/**
  * 補給線 — is a column's cell connected, through ITS OWN paint, back to any
  * friendly city? BFS over painted cells only (the dictionary stays small);
  * a trail always starts at the origin city, so a healthy march is connected
