@@ -615,10 +615,20 @@ export function DiplomacyModal({ onClose }: Props) {
                     </>;
                   })()}
                   {(() => {
-                    const married = marriageAlliances.some(
+                    const alliance = marriageAlliances.find(
                       (m) => m.forceA === row.id || m.forceB === row.id,
                     );
-                    if (married) {
+                    if (alliance) {
+                      // 質子之盟 — breaking a HOSTAGE union does not merely cost
+                      // face: marriageAlliance.ts puts your own wedded officer
+                      // to the sword. The button used to warn only about
+                      // relations, so the player learned the real price by
+                      // reading an obituary. Name the officer who dies.
+                      const ourId = alliance.forceA === row.id ? alliance.officerB : alliance.officerA;
+                      const ours = officers[ourId];
+                      const lethal = !!alliance.hostage && !!ours && ours.status !== 'dead';
+                      const whoZh = ours?.name.zh ?? '質子';
+                      const whoEn = ours?.name.en ?? 'the hostage';
                       return (
                         <button
                           className={styles.breakBtn}
@@ -632,9 +642,13 @@ export function DiplomacyModal({ onClose }: Props) {
                               accepted: false,
                             });
                           }}
-                          title={t('背信棄義 — 撕毀聯姻同盟（與該國及他國好感俱崩）', 'Renounce the marriage alliance (relation crash with them AND all others)')}
+                          title={lethal
+                            ? t(`背信棄義 — 撕毀聯姻同盟。⚠ 此為質子之盟:${whoZh}將被對方處死。與該國及他國好感俱崩。`,
+                                `Renounce the marriage alliance. ⚠ This is a HOSTAGE union — ${whoEn} will be put to the sword. Relation crash with them AND all others.`)
+                            : t('背信棄義 — 撕毀聯姻同盟（與該國及他國好感俱崩,聯姻武將忠誠 −25）',
+                                'Renounce the marriage alliance (relation crash with them AND all others; the wedded officer loses 25 loyalty)')}
                         >
-                          {t('背盟', 'Renounce')}
+                          {lethal ? t('背盟 ⚠', 'Renounce ⚠') : t('背盟', 'Renounce')}
                         </button>
                       );
                     }

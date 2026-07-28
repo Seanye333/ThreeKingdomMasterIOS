@@ -259,6 +259,63 @@ export interface ExpeditionStepResult {
   realmsPatronClaimed: Record<string, EntityId>;
 }
 
+const STAT_LABEL: Record<string, { zh: string; en: string }> = {
+  leadership: { zh: '統', en: 'LDR' },
+  war: { zh: '武', en: 'WAR' },
+  intelligence: { zh: '智', en: 'INT' },
+  politics: { zh: '政', en: 'POL' },
+  charisma: { zh: '魅', en: 'CHR' },
+};
+
+/**
+ * 歸來所得 — a structured summary of everything a haul actually did.
+ *
+ * The homecoming report used to print only `haul.note`, a free-text line each
+ * errand mode writes by hand. That means a mode which forgets to mention a
+ * result simply never tells the player about it — and three results were going
+ * unmentioned even though each one is a real, permanent change: `statGain`
+ * raises the officer's stats, `recruitOfficerId` brings a whole officer into
+ * the force, and `homeLoyaltyDelta` moves the home city's 民心.
+ *
+ * Generating this from the haul FIELDS rather than trusting each mode's prose
+ * is the same single-seam move as everywhere else: nothing can be forgotten,
+ * because nothing is written twice. `note` stays for the flavour that gives
+ * the errand its character.
+ */
+export function haulSummary(
+  haul: ExpeditionHaul,
+  officers: Record<EntityId, Officer>,
+): { zh: string; en: string } {
+  const zh: string[] = [];
+  const en: string[] = [];
+  if (haul.gold) { zh.push(`金 +${haul.gold}`); en.push(`+${haul.gold} gold`); }
+  if (haul.food) { zh.push(`糧 +${haul.food}`); en.push(`+${haul.food} grain`); }
+  if (haul.auxTroops) { zh.push(`義從 +${haul.auxTroops}`); en.push(`+${haul.auxTroops} auxiliaries`); }
+  if (haul.prestige) { zh.push(`天命 +${haul.prestige}`); en.push(`+${haul.prestige} prestige`); }
+  if (haul.homeLoyaltyDelta) {
+    const d = haul.homeLoyaltyDelta;
+    zh.push(`民心 ${d > 0 ? '+' : ''}${d}`);
+    en.push(`${d > 0 ? '+' : ''}${d} loyalty`);
+  }
+  if (haul.statGain) {
+    const l = STAT_LABEL[haul.statGain.stat] ?? { zh: haul.statGain.stat, en: haul.statGain.stat };
+    zh.push(`${l.zh} +${haul.statGain.amount}`);
+    en.push(`${l.en} +${haul.statGain.amount}`);
+  }
+  if (haul.itemId) {
+    const it = ITEMS.find((i) => i.id === haul.itemId);
+    zh.push(`獲「${it?.name.zh ?? haul.itemId}」`);
+    en.push(`found ${it?.name.en ?? haul.itemId}`);
+  }
+  if (haul.recruitOfficerId) {
+    const rec = officers[haul.recruitOfficerId];
+    zh.push(`${rec?.name.zh ?? haul.recruitOfficerId} 來歸`);
+    en.push(`${rec?.name.en ?? haul.recruitOfficerId} joins`);
+  }
+  if (haul.wounded) { zh.push('負傷而返'); en.push('returns wounded'); }
+  return { zh: zh.join(' · '), en: en.join(' · ') };
+}
+
 /**
  * Advance every expedition by one season. An officer who completes his OUTBOUND
  * leg resolves his errand at the destination (intel/relations/sabotage land
@@ -501,11 +558,15 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
       task: null,
       ...(item ? { equipment: [...xpRes.officer.equipment, item] } : {}),
     };
+    // 所得須言明 — the flavour note first, then the ledger of what actually
+    // changed. See haulSummary: relying on each mode's prose meant three real
+    // results (stat gains, recruits, home loyalty) went unreported entirely.
+    const sum = haulSummary(haul, officers);
     report(exp, {
       cityId: exp.fromCityId,
       kind: 'expedition',
-      text: `${officer.name.en} returned to ${home.name.en}.${haul.note ? ' ' + haul.note : ''}`,
-      textZh: `${officer.name.zh}游历归来 · ${home.name.zh}。${haul.noteZh ?? ''}`,
+      text: `${officer.name.en} returned to ${home.name.en}.${haul.note ? ' ' + haul.note : ''}${sum.en ? ` [${sum.en}]` : ''}`,
+      textZh: `${officer.name.zh}游历归来 · ${home.name.zh}。${haul.noteZh ?? ''}${sum.zh ? `(${sum.zh})` : ''}`,
     });
     for (const e of xpRes.entries) report(exp, e); // 升級 notices
     // 護衛歸來 — the guard comes home too, seasoned by the road (shared 歷練).
