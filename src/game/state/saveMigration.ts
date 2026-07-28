@@ -29,6 +29,7 @@
  * default (rebuilding ports from templates, backfilling family lineage) —
  * those are genuine logic, not defaults.
  */
+import type { StateStorage } from 'zustand/middleware';
 import { EMPTY_STATE } from './gameState';
 
 /**
@@ -94,11 +95,7 @@ export function migrateSave(persisted: unknown, fromVersion: number): PersistedS
  * The scan only ever runs when the live key is empty, so it costs one pass on
  * the first load after updating and nothing thereafter.
  */
-export function legacyKeyFallback(inner: {
-  getItem(name: string): string | null | Promise<string | null>;
-  setItem(name: string, value: string): void | Promise<void>;
-  removeItem(name: string): void | Promise<void>;
-}): typeof inner {
+export function legacyKeyFallback(inner: StateStorage): StateStorage {
   return {
     async getItem(name) {
       const live = await inner.getItem(name);

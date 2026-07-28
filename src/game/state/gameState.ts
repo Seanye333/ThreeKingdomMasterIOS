@@ -35,6 +35,7 @@ import type { Relation } from '../types/diplomacy';
 import { generateFictionalOfficer } from '../systems/officerGen';
 import type { MonthPhase } from '../types';
 import { createInitialTribeState } from '../systems/tribes';
+import { newCampaignSeed } from './campaignRng';
 import { loadLegacy } from '../systems/legacy';
 import { emptyTribeDiplomacy } from '../systems/tribesDiplomacy';
 import { rollWeather, type Weather } from '../systems/weather';
@@ -660,6 +661,14 @@ export interface GameState {
   emperorCityId: EntityId | null;
   /** 每日挑戰 — the seed date of the run in progress (null outside one). */
   dailyChallengeDate: string | null;
+  /**
+   * 戰役隨機種子 — the root seed every SIMULATION roll derives from, so a
+   * campaign replays identically (see state/campaignRng.ts). Set once when a
+   * scenario loads and then persisted; player-triggered rolls deliberately do
+   * NOT use it. Undefined on saves written before seeding existed — those fall
+   * back to a constant rather than crashing.
+   */
+  rngSeed?: number;
   /** 勢力消長 — one power snapshot per season, capped, for the graph. */
   powerHistory: import('../systems/powerHistory').PowerSnapshot[];
   /** 訪賢招攬 — per free-agent recruit state, keyed by season:
@@ -1044,6 +1053,10 @@ export const EMPTY_STATE: GameState = {
   legions: [],
   emperorCityId: 'luoyang',
   dailyChallengeDate: null,
+  // Deliberately absent from the empty state — loadScenario mints a fresh one.
+  // A campaign that somehow reaches the resolver without it falls back to a
+  // constant, which is deterministic (if shared) rather than broken.
+  rngSeed: undefined,
   powerHistory: [],
   recruitState: {},
   commandTemplates: [],
@@ -1409,6 +1422,9 @@ export function loadScenario(
     legions: [],
     // emperorCityId set above from scenarioEmperorCity() — 洛陽/長安/許都 by era.
     dailyChallengeDate: null,
+    // 戰役隨機種子 — minted once here so every season of THIS campaign draws
+    // from one lineage and the run can be replayed. See campaignRng.ts.
+    rngSeed: newCampaignSeed(),
     powerHistory: [],
     recruitState: {},
     edictHistory: [],

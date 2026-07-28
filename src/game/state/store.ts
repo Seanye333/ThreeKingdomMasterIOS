@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { idbStorage } from './idbStorage';
+import { campaignRng } from './campaignRng';
 import { LIVE_SAVE_KEY, SAVE_VERSION, migrateSave, legacyKeyFallback } from './saveMigration';
 import type {
   Building,
@@ -3166,6 +3167,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
 
       endSeason: () => {
+        // 戰役隨機源 — every SIMULATION roll below this line draws from here
+        // instead of bare randomness, so the same campaign state resolves the
+        // same season twice. That is what lets an all-AI observation run be
+        // compared against itself, and what makes a "seeded" balance lock
+        // actually seeded. Player-triggered actions keep the bare draw on
+        // purpose — see campaignRng.ts. Derived once here so the whole closure
+        // (including every nested helper below) shares one stream.
+        const rng = campaignRng(get());
         // 委任太守 — delegated cities file their governor's order first,
         // through the ordinary command pipeline (costs, report and all).
         {
@@ -3377,7 +3386,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           mandate: state.mandate,
           date: state.date,
           playerForceId: state.playerForceId,
-          rng: Math.random,
+          rng,
         });
         const forcesAfterCourt = aiCourt.forces;
         const officersAfterCourt = aiCourt.officers;
@@ -3392,6 +3401,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
 
         const planned = planAITurn({
+          // AI 決策吃戰役隨機源 — same story as resolveSeason below: ai.ts
+          // exposes `input.rng` and defaults to bare randomness when the
+          // caller skips it, which this call did. That put every AI decision
+          // (whom to attack, what to build, whether to scheme) outside the
+          // seed, which is precisely what an all-AI observation run needs
+          // inside it.
+          rng,
           cities: citiesAfterCourt,
           officers: officersAfterCourt,
           forces: forcesAfterCourt,
@@ -3433,6 +3449,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           (state.date.phase ?? 'lower') === 'lower' && isLastMonthOfSeason;
 
         const result = resolveSeason({
+          // 季結算吃戰役隨機源 — resolution.ts has had an `input.rng` seam all
+          // along and every roll inside it falls back to bare randomness when
+          // the caller omits one. This call omitted it, so the entire season
+          // resolver — population growth, income, field battles, captures,
+          // sieges — sat outside the seed no matter what endSeason did.
+          rng,
           date: state.date,
           scenarioId: state.scenarioId,
           foughtPairs: state.foughtPairs ?? undefined,
@@ -3640,7 +3662,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           cities: result.cities,
           officers: result.officers,
           playerForceId: state.playerForceId,
-          rng: Math.random,
+          rng,
           buildings: state.buildings,
           family: state.family,
           lordRapport: state.lordRapport,
@@ -3688,7 +3710,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             cities: espResult.cities,
             officers: espResult.officers,
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           Object.assign(espResult.cities, spyTick.cities);
           Object.assign(espResult.officers, spyTick.officers);
@@ -3709,7 +3731,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             embeddedSpies: embeddedSpiesNext, playerForceId: state.playerForceId,
             buildings: state.buildings, family: state.family, lordRapport: state.lordRapport,
             counterIntelActive: (state.counterIntelSeasons ?? 0) > 0,
-            date: { year: result.date.year, season: result.date.season }, rng: Math.random,
+            date: { year: result.date.year, season: result.date.season }, rng,
           });
           Object.assign(espResult.cities, aiEsp.cities);
           Object.assign(espResult.officers, aiEsp.officers);
@@ -3740,7 +3762,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           state: state.tribeState,
           cities: espResult.cities,
           date: result.date,
-          rng: Math.random,
+          rng,
           diplo: state.tribeDiplomacy ?? emptyTribeDiplomacy(),
           playerForceId: state.playerForceId,
           officers: espResult.officers,
@@ -3769,7 +3791,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           const siteTick = tickWildSites({
             sites: state.sites,
             cities: tribeResult.cities,
-            rng: Math.random,
+            rng,
           });
           siteCities = siteTick.cities;
           if (siteTick.entries.length > 0) {
@@ -3780,7 +3802,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           const merc = tickTribeMercenaries({
             aggression: nextAggression,
             cities: siteCities,
-            rng: Math.random,
+            rng,
             submitted: nextTribeDiplomacy.submitted,
           });
           siteCities = merc.cities;
@@ -3793,7 +3815,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             aggression: nextAggression,
             cities: siteCities,
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           siteCities = tribeMarket.cities;
           nextAggression = tribeMarket.aggression;
@@ -3805,7 +3827,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             aggression: nextAggression,
             officers: espResult.officers,
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           nextAggression = hostageTick.aggression;
           hostageFledIds = hostageTick.fledOfficerIds;
@@ -3818,7 +3840,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             forces: state.forces,
             playerForceId: state.playerForceId,
             relationOf: (a, b) => getRelation(state.diplomacy, a, b).score,
-            rng: Math.random,
+            rng,
           });
           if (aiIncite.entry) result.report.entries.push(aiIncite.entry);
 
@@ -3946,7 +3968,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             eventFlags: state.eventFlags,
             emperorHeldByForceId: emperorCustodian(postCities, state.emperorCityId ?? null),
             lawCode: state.lawCode,
-            rng: Math.random,
+            rng,
           }) ??
           // 動態事件 — emergent beats from how the player governs (treasury,
           // taxation, idle talent). Behind scripted history, ahead of custom.
@@ -3964,7 +3986,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             grainPolicy: state.grainPolicy,
             coinStandard: state.coinStandard,
             serviceSystem: state.serviceSystem,
-            rng: Math.random,
+            rng,
           }) ??
           (state.customEvents.length > 0
             ? findFiringEventIn(state.customEvents, eventCtx, { alwaysFire: true })
@@ -4107,7 +4129,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           buildings: bld.buildings,
           cities: postCities,
           playerForceId: state.playerForceId,
-          rng: Math.random,
+          rng,
         });
         if (bldEvt.entries.length > 0) result.report.entries.push(...bldEvt.entries);
         // 建築成就 — milestones from the player's completed buildings.
@@ -4122,7 +4144,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             family: state.family,
             playerForceId: state.playerForceId,
             year: result.date.year,
-            rng: Math.random,
+            rng,
           });
           familyForTick = aiMar.family;
           if (aiMar.entries.length > 0) result.report.entries.push(...aiMar.entries);
@@ -4134,7 +4156,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           officers: postOfficers,
           family: familyForTick,
           pendingHeirs: state.pendingHeirs,
-          rng: Math.random,
+          rng,
         });
         postOfficers = fam.officers;
         if (fam.entries.length > 0) result.report.entries.push(...fam.entries);
@@ -4151,10 +4173,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           playerForceId: state.playerForceId,
           existing: expireOut.wishes,
           date: result.date,
-          rng: Math.random,
+          rng,
         });
         // 怨氣漸消 — content officers with no pending petition let old grudges fade.
-        postOfficers = decayGrievances(postOfficers, newWishes, Math.random);
+        postOfficers = decayGrievances(postOfficers, newWishes, rng);
 
         // Ship build orders tick.
         const newOrders = state.shipOrders.map((o) => ({
@@ -4253,7 +4275,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               officers: postOfficers,
               eventFlags: postFlags,
               playerForceId: state.playerForceId,
-              rng: Math.random,
+              rng,
             });
           }
         }
@@ -4305,7 +4327,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const grew = (() => {
               let changed = false;
               for (const fid of Object.keys(postForces)) {
-                if (fid === state.playerForceId || Math.random() > 0.2) continue;
+                if (fid === state.playerForceId || rng() > 0.2) continue;
                 const ctrl = specOf(fid);
                 if (!ctrl) continue;
                 const role = (Object.keys(ctrl.strength) as SpecialtyRole[]).find((r) => canEmbargo(ctrl, r));
@@ -4337,7 +4359,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             cities: postCities,
             officers: postOfficers,
             currentYear: result.date.year,
-            rng: Math.random,
+            rng,
             plagueResist: plagueResistByForce,
           });
           postCities = plagueOut.cities;
@@ -4348,7 +4370,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // good (馬瘟/珠枯/蝗災/豐年). Makes the specialty map dynamic; AI too.
           const specEvt = rollSpecialtyEvents({
             cities: postCities,
-            rng: Math.random,
+            rng,
             season: result.date.season,
             calamityMul: state.disasterFrequency === 'low' ? 0.5 : state.disasterFrequency === 'high' ? 1.7 : 1,
           });
@@ -4370,9 +4392,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 if (CITY_SPECIALTY[c.id] !== 'horse') continue;
                 const dev = c.specialtyDev ?? 0;
                 if (dev < 2) continue;                       // only a built-up stud farm
-                if (Math.random() >= 0.04 + dev * 0.03) continue; // dev2 ≈10% … dev5 ≈19%
+                if (rng() >= 0.04 + dev * 0.03) continue; // dev2 ≈10% … dev5 ≈19%
                 const foal = available.find((m) => (m as { originCityId?: string }).originCityId === c.id)
-                  ?? available[Math.floor(Math.random() * available.length)];
+                  ?? available[Math.floor(rng() * available.length)];
                 result.lostItems = [...result.lostItems, { itemId: foal.id, cityId: c.id }];
                 result.report.entries.push({
                   cityId: c.id, kind: 'note',
@@ -4388,13 +4410,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             officers: postOfficers,
             forces: postForces,
             date: result.date,
-            rng: Math.random,
+            rng,
           });
           postOfficers = intrigueOut.officers;
           if (intrigueOut.entries.length > 0) result.report.entries.push(...intrigueOut.entries);
 
           // Re-roll weather for the new season. 借東風 flag overrides.
-          nextWeather = rollWeather(result.date.season, Math.random);
+          nextWeather = rollWeather(result.date.season, rng);
           if (postFlags['east-wind-borrowed']) {
             nextWeather = { kind: 'wind', wind: 'east', windPower: 3 };
             postFlags = { ...postFlags, 'east-wind-borrowed': false };
@@ -4417,7 +4439,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             forces: postForces,
             mandate: nextMandate,
             date: result.date,
-            rng: Math.random,
+            rng,
             cities: postCities, // 善政招祥瑞 — well-governed realms draw auspicious omens
 
             // 靈台禳星 — the player's best Star Terrace may deflect an ill omen.
@@ -4445,12 +4467,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
           // §8.5 AI 造讖 — a rival court with a sharp mind forges portents
           // against the mightiest mandate on the board (often yours).
-          if (Math.random() < 0.05) {
+          if (rng() < 0.05) {
             const rivals = Object.values(postForces).filter(
               (f) => f.id !== state.playerForceId && !f.id.startsWith('cult-') && !f.id.startsWith('tribe-state-'),
             );
             if (rivals.length > 0) {
-              const schemer = rivals[Math.floor(Math.random() * rivals.length)];
+              const schemer = rivals[Math.floor(rng() * rivals.length)];
               const iq = Object.values(postOfficers).reduce(
                 (best, o) => (o.forceId === schemer.id && o.status !== 'dead' ? Math.max(best, o.stats.intelligence) : best),
                 0,
@@ -4458,8 +4480,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const target = Object.values(postForces)
                 .filter((f) => f.id !== schemer.id && !f.id.startsWith('cult-') && !f.id.startsWith('tribe-state-'))
                 .sort((a, b) => (nextMandate.byForce[b.id] ?? 50) - (nextMandate.byForce[a.id] ?? 50))[0];
-              if (target && iq >= 80 && Math.random() < 0.35 + iq / 280) {
-                const drop = 6 + Math.floor(Math.random() * 8);
+              if (target && iq >= 80 && rng() < 0.35 + iq / 280) {
+                const drop = 6 + Math.floor(rng() * 8);
                 const byForce = { ...nextMandate.byForce };
                 byForce[target.id] = Math.max(0, (byForce[target.id] ?? 50) - drop);
                 byForce[schemer.id] = Math.min(100, (byForce[schemer.id] ?? 50) + 3);
@@ -4490,14 +4512,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           for (const f of Object.values(postForces)) {
             if (f.id === state.playerForceId || f.id.startsWith('cult-') || f.id.startsWith('tribe-state-')) continue;
             const m = nextMandate.byForce[f.id] ?? 50;
-            if (m >= 40 || Math.random() > 0.10) continue;
+            if (m >= 40 || rng() > 0.10) continue;
             const cap = postCities[f.capitalCityId];
             if (!cap || cap.ownerForceId !== f.id || cap.gold < SUBURBAN_RITE_GOLD) continue;
             postCities = { ...postCities, [cap.id]: { ...cap, gold: cap.gold - SUBURBAN_RITE_GOLD } };
             nextMandate = {
               byForce: {
                 ...nextMandate.byForce,
-                [f.id]: Math.min(100, m + 6 + Math.floor(Math.random() * 5)),
+                [f.id]: Math.min(100, m + 6 + Math.floor(rng() * 5)),
               },
             };
           }
@@ -4508,7 +4530,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             cities: postCities,
             mandate: nextMandate,
             clanStandings: state.clanStandings,
-            rng: Math.random,
+            rng,
           });
           postOfficers = facOut.officers;
           postCities = facOut.cities;
@@ -4533,7 +4555,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           {
             const custodian = emperorCustodian(postCities, state.emperorCityId ?? null);
             const cm = custodian ? (nextMandate.byForce[custodian] ?? 50) : 0;
-            if (custodian && cm < 85 && Math.random() < 0.12) {
+            if (custodian && cm < 85 && rng() < 0.12) {
               const lr = state.lordRapport ?? {};
               const ruler = postForces[custodian]?.rulerOfficerId;
               const courtiers = Object.values(postOfficers).filter((o) => o.forceId === custodian && o.status !== 'dead' && o.id !== ruler);
@@ -4544,7 +4566,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const rivals = Object.values(postForces).filter((f) => f.id !== custodian && f.vassalOfForceId !== custodian
                 && Object.values(postCities).some((c) => c.ownerForceId === f.id) && isHostilePermitted(postDiplomacy, f.id, custodian));
               if (rivals.length > 0) {
-                const champion = rivals[Math.floor(Math.random() * rivals.length)];
+                const champion = rivals[Math.floor(rng() * rivals.length)];
                 aiSchemeMarks.push({ byForceId: champion.id, targetForceId: custodian, expiresYear: result.date.year + 2, expiresSeason: result.date.season as 'spring' | 'summer' | 'autumn' | 'winter' });
                 result.report.entries.push({
                   cityId: null, kind: 'note',
@@ -4595,14 +4617,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             diplomacy: postDiplomacy,
             playerForceId: state.playerForceId,
             date: { year: result.date.year, season: result.date.season as 'spring' | 'summer' | 'autumn' | 'winter' },
-            rng: Math.random,
+            rng,
           });
           postDiplomacy = schemeOut.diplomacy;
           postCities = schemeOut.cities;
           aiSchemeMarks.push(...schemeOut.marks);
           if (schemeOut.entries.length > 0) result.report.entries.push(...schemeOut.entries);
           // AI court wish flavor: 0-2 random AI petitions resolved per season.
-          const aiWishFlavor = rollAIWishFlavor(postOfficers, postForces, state.playerForceId, Math.random);
+          const aiWishFlavor = rollAIWishFlavor(postOfficers, postForces, state.playerForceId, rng);
           postOfficers = aiWishFlavor.officers;
           if (aiWishFlavor.entries.length > 0) result.report.entries.push(...aiWishFlavor.entries);
         }
@@ -4641,7 +4663,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (o.woundSeverity === 'critical' && !(state.noBattleDeath ?? false)) {
               const age = result.date.year - o.birthYear;
               const mortal = (0.05 + Math.max(0, age - 45) * 0.004) / recoveryMul;
-              if (Math.random() < mortal) {
+              if (rng() < mortal) {
                 tickedOfficers[o.id] = { ...o, status: 'dead', task: null, woundedSeasons: undefined, woundSeverity: undefined };
                 result.report.entries.push({
                   cityId: o.locationCityId,
@@ -4656,7 +4678,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             // extra period of convalescence in one go (spending medicine when it
             // does). Gated to the season boundary so it fires once, not per period.
             let dec = 1;
-            if (seasonBoundary && o.forceId && Math.random() < Math.min(0.85, recoveryMul - 1)) {
+            if (seasonBoundary && o.forceId && rng() < Math.min(0.85, recoveryMul - 1)) {
               dec = 2;
               medicineSpend[o.forceId] = (medicineSpend[o.forceId] ?? 0) + 60;
             }
@@ -4668,8 +4690,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const chronicChance = o.woundSeverity === 'critical'
                 ? Math.min(0.4, (0.22 + Math.max(0, (result.date.year - o.birthYear) - 45) * 0.005) / recoveryMul)
                 : 0;
-              if (chronicChance > 0 && !hasChronicAilment(healed) && Math.random() < chronicChance) {
-                const ailment = rollChronicAilment(Math.random);
+              if (chronicChance > 0 && !hasChronicAilment(healed) && rng() < chronicChance) {
+                const ailment = rollChronicAilment(rng);
                 healed = withAffliction(healed, ailment);
                 result.report.entries.push({
                   cityId: o.locationCityId, kind: 'note',
@@ -4692,7 +4714,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 left > 0 &&
                 !newWishes.some((w) => w.officerId === o.id)
               ) {
-                const retire = maybeWoundedRetireWish(o, result.date, Math.random);
+                const retire = maybeWoundedRetireWish(o, result.date, rng);
                 if (retire) woundedRetireWishes.push(retire);
               }
             }
@@ -4722,7 +4744,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // (名醫義診) whose skill widens the odds. Either may mend a 宿疾 over time.
           if (hasChronicAilment(ofc) && ofc.locationCityId) {
             const chance = (heal > 0 ? 0.06 + heal * 0.05 : 0) + (treats ? 0.12 + medicalCureBonus(treats) : 0);
-            if (chance > 0 && Math.random() < Math.min(0.40, chance)) {
+            if (chance > 0 && rng() < Math.min(0.40, chance)) {
               const ail = chronicAilmentOf(ofc);
               ofc = cureChronicAilments(ofc);
               if (treats) curedPhysicianIds.add(treats.id);
@@ -4802,7 +4824,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             forces: postForces,
             officers: postOfficers,
             date: result.date,
-            rng: Math.random,
+            rng,
             eventFlags: postFlags,
           });
           if (yt.flagSet) {
@@ -4829,7 +4851,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             date: result.date,
             buildings: state.buildings,
             eventFlags: postFlags,
-            rng: Math.random,
+            rng,
           });
           if (greatPlague.flagSet) {
             postCities = greatPlague.cities;
@@ -4852,7 +4874,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             forces: postForces,
             officers: postOfficers,
             date: result.date,
-            rng: Math.random,
+            rng,
             // 漢季之盤 — the Warring States / Chu-Han / Sui-Tang boards share
             // this calendar, so risings there must not take a Han sect banner.
             sectsAvailable: isLaterHanBoard(state.scenarioId),
@@ -4868,7 +4890,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             forces: postForces,
             officers: postOfficers,
             date: result.date,
-            rng: Math.random,
+            rng,
             buildings: state.buildings,
             pacifyMissions: nextPacifyMissions,
           });
@@ -4899,7 +4921,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             family: state.family,
             runtimeBonds: state.runtimeBonds ?? [],
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           postOfficers = captiveFate.officers;
           if (captiveFate.entries.length > 0) result.report.entries.push(...captiveFate.entries);
@@ -4918,7 +4940,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             officers: postOfficers,
             cities: postCities,
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           postOfficers = ransom.officers;
           postCities = ransom.cities;
@@ -4969,7 +4991,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           for (const o of Object.values(postOfficers)) {
             if (o.status === 'dead' || !o.forceId) continue;
             const chance = defectionChance(o);
-            if (chance === 0 || Math.random() >= chance) continue;
+            if (chance === 0 || rng() >= chance) continue;
             // Defect — become a free agent in the current city.
             defectedOfficers[o.id] = {
               ...o,
@@ -4998,7 +5020,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           let anyEvolve = false;
           for (const o of Object.values(postOfficers)) {
             if (o.status === 'dead' || !o.forceId) continue;
-            const ev = rollFlavorEvent(o, Math.random);
+            const ev = rollFlavorEvent(o, rng);
             if (!ev) continue;
             const newLoyalty = Math.max(0, Math.min(100, o.loyalty + ev.loyaltyDelta));
             const nextStats = { ...o.stats };
@@ -5033,7 +5055,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             for (const mentorId of mentorsOf(o.id)) {
               const m = postOfficers[mentorId];
               if (!m) continue;
-              const transferred = rollMentorPolicyTransfer(o, m, Math.random);
+              const transferred = rollMentorPolicyTransfer(o, m, rng);
               if (transferred) {
                 const cur = learned[o.id].policies ?? [];
                 if (!cur.includes(transferred)) {
@@ -5069,7 +5091,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (o.status === 'dead' || !o.forceId) continue;
             // C — item resonance ~1.5% per season per held resonant item
             const itemTrait = itemResonanceCandidate(o);
-            if (itemTrait && Math.random() < 0.015) {
+            if (itemTrait && rng() < 0.015) {
               const cur = (resonated[o.id].traits ?? []) as string[];
               if (!cur.includes(itemTrait)) {
                 resonated[o.id] = {
@@ -5091,7 +5113,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
             // T9 — item tactic grant ~0.8% per season per held tactic-item
             const itemTactic = itemTacticCandidate(o);
-            if (itemTactic && Math.random() < 0.008) {
+            if (itemTactic && rng() < 0.008) {
               const curT = (resonated[o.id].tactics ?? []) as string[];
               if (!curT.includes(itemTactic)) {
                 resonated[o.id] = {
@@ -5113,7 +5135,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             }
             // H — policy resonance ~1% per season per known resonant policy
             const polTrait = policyResonanceCandidate(o);
-            if (polTrait && Math.random() < 0.01) {
+            if (polTrait && rng() < 0.01) {
               const cur = (resonated[o.id].traits ?? []) as string[];
               if (!cur.includes(polTrait)) {
                 resonated[o.id] = {
@@ -5149,7 +5171,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (!a || !b || a.status === 'dead' || b.status === 'dead') continue;
             const comp = maritalCompatibility(a, b);
             if (comp === 'neutral') continue;
-            if (Math.random() > 0.04) continue; // 4% per season per couple
+            if (rng() > 0.04) continue; // 4% per season per couple
             anyCouple = true;
             if (comp === 'discordant') {
               updated[a.id] = { ...a, loyalty: Math.max(0, a.loyalty - 2) };
@@ -5177,7 +5199,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               }
               // E — marriage assimilation: small chance one spouse absorbs
               // a bondable trait from the other.
-              const assim = rollMarriageAssimilation(updated[a.id], updated[b.id], Math.random);
+              const assim = rollMarriageAssimilation(updated[a.id], updated[b.id], rng);
               if (assim) {
                 const target = assim.recipient === 'a' ? updated[a.id] : updated[b.id];
                 const cur = (target.traits ?? []) as string[];
@@ -5268,7 +5290,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 if (existing.has(key)) continue;
                 const shared = sharedBondableTrait(a, b);
                 if (!shared) continue;
-                if (Math.random() > 0.02) continue; // 2% per season per shared pair
+                if (rng() > 0.02) continue; // 2% per season per shared pair
                 newBonds.push({
                   officerA: a.id,
                   officerB: b.id,
@@ -5383,13 +5405,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   o.loyalty < 24 && getLordRapport(lordRapportAfter, o.id) < 80 &&
                   (hasT(o, 'ambitious') || hasT(o, 'arrogant') || (o.grievanceCount ?? 0) >= 2))
                 .sort((a, b) => a.loyalty - b.loyalty)[0];
-              if (risk && Math.random() < 0.5) {
+              if (risk && rng() < 0.5) {
                 result.report.entries.push({
                   cityId: confidant.locationCityId, kind: 'note',
                   text: `${confidant.name.en} (心腹) warns the throne: ${risk.name.en} harbours disloyal designs (loyalty ${risk.loyalty}).`,
                   textZh: `心腹${confidant.name.zh}密奏:${risk.name.zh}心懷異志,主公宜早為之備(忠誠 ${risk.loyalty})。`,
                 });
-              } else if (!risk && Math.random() < 0.2) {
+              } else if (!risk && rng() < 0.2) {
                 const talent = Object.values(postOfficers)
                   .filter((o) => o.forceId === null && o.status !== 'dead' && o.status !== 'unsearched' && o.locationCityId &&
                     (o.stats.war + o.stats.leadership + o.stats.intelligence + o.stats.politics) >= 320)
@@ -5617,7 +5639,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               cities: owned,
               own: projectsNow,
               forceId: force.id,
-              rng: Math.random,
+              rng,
             });
             if (!choice) continue;
             const host = postCities[choice.cityId];
@@ -5766,7 +5788,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             forts: nextForts,
             diplomacy: planned.diplomacy,
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           postCities = aiFac.cities;
           Object.assign(nextForts, aiFac.newForts);
@@ -5781,7 +5803,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             forts: nextForts,
             diplomacy: planned.diplomacy,
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           postCities = aiPerim.cities;
           if (aiPerim.entries.length > 0) result.report.entries.push(...aiPerim.entries);
@@ -5794,7 +5816,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             forts: nextForts,
             diplomacy: planned.diplomacy,
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           postCities = assault.cities;
           for (const k of Object.keys(nextForts)) delete nextForts[k];
@@ -5811,7 +5833,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               && !isLand(a.x, a.y, 0)
               && isHostilePermitted(planned.diplomacy, a.forceId, state.playerForceId!)
               && Math.hypot(a.x - bx, a.y - by) <= FACILITY_DEFS.boom.range + 12 * WORLD_SCALE);
-            if (burner && Math.random() < 0.3) {
+            if (burner && rng() < 0.3) {
               delete nextForts[f.id];
               const bo = result.officers[burner.commanderId];
               result.report.entries.push({
@@ -5829,7 +5851,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             forces: postForces,
             sites: nextSites,
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           postCities = aiSeize.cities;
           nextSites = aiSeize.sites;
@@ -5845,7 +5867,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             aggression: nextAggression,
             scenicLooted: nextScenicLooted,
             playerForceId: state.playerForceId,
-            rng: Math.random,
+            rng,
           });
           postCities = fx.cities;
           postOfficers = fx.officers;
@@ -5967,7 +5989,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 const mentor = officersUpd[t.mentorOfficerId];
                 if (mentor && mentor.status !== 'dead' && isParentMentor(mentor, o, state.family)) {
                   const mTraits = mentor.traits ?? [];
-                  if (!mTraits.includes('erudite') && Math.random() < 0.15) {
+                  if (!mTraits.includes('erudite') && rng() < 0.15) {
                     officersUpd[t.mentorOfficerId] = {
                       ...mentor,
                       traits: [...mTraits, 'erudite'],
@@ -6309,15 +6331,15 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   cityCount,
                 }),
               rectifierOf(selOfficers));
-            if (Math.random() >= commonerArrivalChance(draw) * selEff.commonerMul) continue;
-            const arrivalCity = commonerArrivalCity(postCities, fid, Math.random);
+            if (rng() >= commonerArrivalChance(draw) * selEff.commonerMul) continue;
+            const arrivalCity = commonerArrivalCity(postCities, fid, rng);
             if (!arrivalCity) continue;
             const newcomer = generateCommonerOfficer({
               year: result.date.year,
               forceId: fid,
               cityId: arrivalCity.id,
               takenIds: new Set(Object.keys(officersWithMarchTask)),
-              rng: Math.random,
+              rng,
               quality: Math.max(0, Math.min(1, draw + selEff.commonerQuality)),
             });
             officersWithMarchTask[newcomer.id] = newcomer;
@@ -6360,7 +6382,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               };
             }
             for (const r of rollRecommendations({
-              officers: officersWithMarchTask, forceId: force.id, rng: Math.random,
+              officers: officersWithMarchTask, forceId: force.id, rng,
               chanceMul: selEffRec.recommendMul, discernBonus: selEffRec.discernBonus,
             })) {
               const rec = officersWithMarchTask[r.recommenderId];
@@ -6425,7 +6447,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           // cities; dither too long and a talent slips into an enemy's service.
           for (const force of Object.values(state.forces)) {
             if (force.id === state.playerForceId) continue;
-            if (Math.random() >= 0.5) continue; // not every court every season
+            if (rng() >= 0.5) continue; // not every court every season
             const aiRuler = officersWithMarchTask[force.rulerOfficerId];
             if (!aiRuler) continue;
             const candidates = Object.values(officersWithMarchTask).filter(
@@ -6443,7 +6465,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const aiCities = Object.values(postCities).filter((c) => c.ownerForceId === force.id).length;
             const r = attemptFreeAgentRecruit({
               officer: prospect, city: pCity, recruiterForce: force, recruiterRuler: aiRuler,
-              recruiterReputation: { citiesOwned: aiCities }, family: state.family, free: true, rng: Math.random,
+              recruiterReputation: { citiesOwned: aiCities }, family: state.family, free: true, rng,
             });
             if (r.ok && r.recruitedOfficer) {
               // 門生故吏 — clear the courtship flag, keep the 舉主 tie.
@@ -6557,10 +6579,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const env = postOfficers[nextResidentEnvoys[realmId].officerId];
               const comp = env ? envoyCompetence(env) : 40;
               nextRealmRelations[realmId] = Math.max(0, Math.min(100, (nextRealmRelations[realmId] ?? 0) + 2 + Math.round(comp / 40)));
-              if (Math.random() < 0.12 + comp / 500) {
+              if (rng() < 0.12 + comp / 500) {
                 const foreign = Object.values(postCities).filter((fc) => fc.ownerForceId && fc.ownerForceId !== pfid7);
                 if (foreign.length > 0) {
-                  const mark = foreign[Math.floor(Math.random() * foreign.length)];
+                  const mark = foreign[Math.floor(rng() * foreign.length)];
                   espionageRevealsNext[mark.id] = Math.max(espionageRevealsNext[mark.id] ?? 0, 4);
                   result.report.entries.push({
                     cityId: cid, kind: 'expedition',
@@ -6596,8 +6618,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               } else nextRealmRouteDisruption[realmId] = left;
             } else if (playerHolds) {
               const chance = routeDisruptionChance(realmId, { protectorate: protectorateActive, resident });
-              if (Math.random() < chance) {
-                nextRealmRouteDisruption[realmId] = 2 + Math.floor(Math.random() * 2); // 2–3 seasons
+              if (rng() < chance) {
+                nextRealmRouteDisruption[realmId] = 2 + Math.floor(rng() * 2); // 2–3 seasons
                 const xiyu = realm.region === 'xiyu';
                 result.report.entries.push({
                   cityId: cid, kind: 'expedition',
@@ -6638,12 +6660,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               if ((nextRealmRouteDisruption[realmId] ?? 0) > 0) h += 2;
               if (resident || isPatronNow || rel >= 60) h -= 8;
               h = Math.max(0, Math.min(100, h));
-              if (playerHolds && h >= 55 && Math.random() < Math.min(0.4, (h - 50) / 120)) {
+              if (playerHolds && h >= 55 && rng() < Math.min(0.4, (h - 50) / 120)) {
                 const cc = postCities[cid];
-                const raid = Math.floor(1500 + Math.random() * 3000);
+                const raid = Math.floor(1500 + rng() * 3000);
                 const defWins = cc.troops > raid * 0.7;
                 const defLoss = Math.floor(raid * (defWins ? 0.35 : 0.6));
-                const goldLoot = defWins ? 0 : Math.floor(cc.gold * (0.12 + Math.random() * 0.18));
+                const goldLoot = defWins ? 0 : Math.floor(cc.gold * (0.12 + rng() * 0.18));
                 postCities = { ...postCities, [cid]: { ...cc, troops: Math.max(0, cc.troops - defLoss), gold: Math.max(0, cc.gold - goldLoot), loyalty: Math.max(0, cc.loyalty - (defWins ? 3 : 10)) } };
                 result.report.entries.push({
                   cityId: cid, kind: 'tribe-raid',
@@ -6670,8 +6692,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (!c || !realm || c.ownerForceId !== pfid7) continue;
             if (nextRealmRouteDisruption[realmId] > 0) continue; // a severed road carries no tribute
             const rel = nextRealmRelations[realmId] ?? 0;
-            if (Math.random() >= 0.06 + rel / 500) continue; // ~6–26%/season
-            const tribute = realmTradeIncome(realmId, { protectorate: protectorateActive }) * 2 + Math.floor(Math.random() * 400);
+            if (rng() >= 0.06 + rel / 500) continue; // ~6–26%/season
+            const tribute = realmTradeIncome(realmId, { protectorate: protectorateActive }) * 2 + Math.floor(rng() * 400);
             postCities = { ...postCities, [cid]: { ...c, gold: c.gold + tribute } };
             const parts: string[] = [`金 ${tribute.toLocaleString()}`];
             const partsEn: string[] = [`${tribute.toLocaleString()} gold`];
@@ -6700,12 +6722,12 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (!c || !realm || c.ownerForceId !== pfid7) continue;
             if ((nextRealmRouteDisruption[realmId] ?? 0) > 0) continue;
             const rel = nextRealmRelations[realmId] ?? 0;
-            if (rel < 70 || Math.random() >= 0.05 + (rel - 70) / 400) continue; // ~5–12%/season once warm
-            if (Math.random() < 0.5) {
+            if (rel < 70 || rng() >= 0.05 + (rel - 70) / 400) continue; // ~5–12%/season once warm
+            if (rng() < 0.5) {
               // 歸化武將 — a foreign notable enters service at the frontier city.
               const existing = new Set([...Object.keys(postOfficers), ...Object.keys(naturalizedArrivals)]);
-              const gen = generateFictionalOfficer(result.date.year, Math.random, existing);
-              const nm = naturalizedName(realm.region, Math.random);
+              const gen = generateFictionalOfficer(result.date.year, rng, existing);
+              const nm = naturalizedName(realm.region, rng);
               const s = gen.stats;
               // Tilt toward the region's gift: 西域/大宛 horse → war/leadership;
               // 極遠/天竺 → wits/politics; others a touch of charisma.
@@ -6727,7 +6749,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             } else {
               // 文物之利 — a standing boon of the realm's culture.
               if (realm.region === 'jiyuan' || realm.region === 'nanhai') {
-                const gift = 800 + Math.floor(Math.random() * 1200); // 大秦奇器/南海珍寶 — coin
+                const gift = 800 + Math.floor(rng() * 1200); // 大秦奇器/南海珍寶 — coin
                 postCities = { ...postCities, [cid]: { ...postCities[cid], gold: postCities[cid].gold + gift } };
                 result.report.entries.push({
                   cityId: cid, kind: 'expedition',
@@ -6735,7 +6757,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                   textZh: `${realm.name.zh}傳奇技珍玩於${c.name.zh}(+金 ${gift})。`,
                 });
               } else {
-                const lift = 6 + Math.floor(Math.random() * 6); // 佛法/樂舞 — settles the city
+                const lift = 6 + Math.floor(rng() * 6); // 佛法/樂舞 — settles the city
                 postCities = { ...postCities, [cid]: { ...postCities[cid], loyalty: Math.min(100, postCities[cid].loyalty + lift) } };
                 result.report.entries.push({
                   cityId: cid, kind: 'expedition',
@@ -6767,7 +6789,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (scions.length > 0) {
               const tierMul = tier === 'great' ? 2 : tier === 'gentry' ? 1.4 : 0.7;
               const stanceMul = playerStance === 'aristocratic' ? 1.6 : playerStance === 'meritocratic' ? 0.4 : 1;
-              if (Math.random() < 0.04 * tierMul * stanceMul) {
+              if (rng() < 0.04 * tierMul * stanceMul) {
                 const strongman = [...scions].sort((a, b) => b.stats.leadership - a.stats.leadership)[0];
                 const seat = strongman.locationCityId && postCities[strongman.locationCityId]?.ownerForceId === pfid7
                   ? strongman.locationCityId
@@ -6775,7 +6797,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 const seatCity = seat ? postCities[seat] : undefined;
                 if (seatCity) {
                   const existing = new Set([...Object.keys(postOfficers), ...Object.keys(clanOfficerPatches)]);
-                  const gen = generateFictionalOfficer(result.date.year, Math.random, existing);
+                  const gen = generateFictionalOfficer(result.date.year, rng, existing);
                   const officer: Officer = { ...gen, clanId: clan.id, forceId: pfid7, locationCityId: seat!, status: 'idle', task: null, loyalty: 60 };
                   clanOfficerPatches[officer.id] = officer;
                   result.report.entries.push({
@@ -6789,7 +6811,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
 
             // H 舉族叛附 — a disaffected, unbound clan defects to your strongest rival.
             const defChance = clanDefectionChance(scions, bound);
-            if (defChance > 0 && strongestRival && Math.random() < defChance) {
+            if (defChance > 0 && strongestRival && rng() < defChance) {
               const toCap = strongestRival.capitalCityId;
               for (const s of scions) clanOfficerPatches[s.id] = { ...s, forceId: strongestRival.id, locationCityId: toCap ?? s.locationCityId, status: 'idle', task: null, loyalty: 50 };
               // pull any private levy this clan fielded
@@ -6845,17 +6867,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               for (const o of Object.values(postOfficers)) {
                 if (o.forceId !== pfid7 || o.locationCityId !== b.cityId || o.status === 'dead' || o.status === 'imprisoned') continue;
                 const cur = statecraftPatches[o.id] ?? o;
-                if (Math.random() < (grand ? 0.25 : 0.12)) {
+                if (rng() < (grand ? 0.25 : 0.12)) {
                   const st = { ...cur.stats }; st[def.trainStat] = Math.min(100, st[def.trainStat] + 1);
                   statecraftPatches[o.id] = { ...cur, stats: st };
                 }
-                if (!favored.has(doctrineOf(statecraftPatches[o.id] ?? cur)) && Math.random() < (grand ? 0.06 : 0.03)) {
+                if (!favored.has(doctrineOf(statecraftPatches[o.id] ?? cur)) && rng() < (grand ? 0.06 : 0.03)) {
                   statecraftPatches[o.id] = { ...(statecraftPatches[o.id] ?? cur), doctrine: def.favoredDoctrines[0] };
                 }
               }
-              if (Math.random() < (grand ? 0.10 : 0.05)) {
+              if (rng() < (grand ? 0.10 : 0.05)) {
                 const existing = new Set([...Object.keys(postOfficers), ...Object.keys(statecraftPatches), ...Object.keys(clanOfficerPatches), ...Object.keys(naturalizedArrivals)]);
-                const gen = generateFictionalOfficer(result.date.year, Math.random, existing);
+                const gen = generateFictionalOfficer(result.date.year, rng, existing);
                 const st = { ...gen.stats }; st[def.trainStat] = Math.min(100, st[def.trainStat] + 10);
                 const officer: Officer = { ...gen, doctrine: def.favoredDoctrines[0], stats: st, forceId: pfid7, locationCityId: b.cityId, status: 'idle', task: null, loyalty: 62 };
                 statecraftPatches[officer.id] = officer;
@@ -6869,7 +6891,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               if (o.id === rulerId || statecraftPatches[o.id]?.forceId === null) continue;
               if (!opposed.has(doctrineOf(o)) || o.loyalty >= 18) continue;
               if ((state.appointments ?? []).some((a) => a.officerId === o.id)) continue; // a title-holder stays
-              if (Math.random() < 0.12) {
+              if (rng() < 0.12) {
                 statecraftPatches[o.id] = { ...o, forceId: null, status: 'idle', task: null };
                 result.report.entries.push({ cityId: o.locationCityId ?? null, kind: 'note', text: `${o.name.en}, at odds with the realm's ${def.name.en}, resigns and departs.`, textZh: `${o.name.zh}不容於${def.name.zh}之政,拂袖去職而隱。` });
               }
@@ -6910,7 +6932,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (active && force.id === pfid7) {
               const regent = postOfficers[active.regentId];
               const boost = regentAmbitionBoost(regent);
-              if (boost > 0.02 && Math.random() < 0.25) result.report.entries.push({ cityId: force.capitalCityId, kind: 'note', text: `Regent ${regent?.name.en} eclipses the young throne — the court murmurs of a 權臣.`, textZh: `輔政${regent?.name.zh}權傾幼主,朝野側目,恐成權臣。` });
+              if (boost > 0.02 && rng() < 0.25) result.report.entries.push({ cityId: force.capitalCityId, kind: 'note', text: `Regent ${regent?.name.en} eclipses the young throne — the court murmurs of a 權臣.`, textZh: `輔政${regent?.name.zh}權傾幼主,朝野側目,恐成權臣。` });
             }
           }
 
@@ -6921,7 +6943,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (fid !== pfid7) continue;
             const cap = postForces[fid]?.capitalCityId;
             if (cap && postCities[cap]?.ownerForceId === fid) postCities = { ...postCities, [cap]: { ...postCities[cap], gold: postCities[cap].gold + 120 } };
-            if (consortAmbitionBoost(anchor) > 0.02 && Math.random() < 0.2) result.report.entries.push({ cityId: cap ?? null, kind: 'note', text: `The consort-kin ${anchor.name.en} grows over-mighty (外戚專權).`, textZh: `國舅${anchor.name.zh}權勢日盛,外戚干政之患漸起。` });
+            if (consortAmbitionBoost(anchor) > 0.02 && rng() < 0.2) result.report.entries.push({ cityId: cap ?? null, kind: 'note', text: `The consort-kin ${anchor.name.en} grows over-mighty (外戚專權).`, textZh: `國舅${anchor.name.zh}權勢日盛,外戚干政之患漸起。` });
           }
 
           // O 學官專權 — in the realm that holds the 天子, the inner court waxes/wanes.
@@ -6957,7 +6979,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               m[f.id] = Math.max(0, Math.min(100, (m[f.id] ?? 50) + delta));
             }
             nextMandate = { ...nextMandate, byForce: m };
-            if (top.f.id === pfid7 && Math.random() < 0.25) result.report.entries.push({ cityId: postForces[pfid7]?.capitalCityId ?? null, kind: 'note', text: `Your line is held the orthodox succession — Heaven's favour flows to you over the pretenders.`, textZh: `正朔在我,天命歸心,僭偽之君莫能與爭。` });
+            if (top.f.id === pfid7 && rng() < 0.25) result.report.entries.push({ cityId: postForces[pfid7]?.capitalCityId ?? null, kind: 'note', text: `Your line is held the orthodox succession — Heaven's favour flows to you over the pretenders.`, textZh: `正朔在我,天命歸心,僭偽之君莫能與爭。` });
           }
         }
 
@@ -6978,7 +7000,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (existing && (!minister || existing.officerId !== minister.id)) delete nextUsurpLadder[force.id];
             if (!minister) continue;
             const cur = nextUsurpLadder[force.id] ?? { officerId: minister.id, stage: 0, sinceYear: yr, cabal: [] as string[] };
-            if (cur.cabal.length < 4 && Math.random() < 0.5) {
+            if (cur.cabal.length < 4 && rng() < 0.5) {
               const cands = cabalCandidates(minister, postOfficers, 4).filter((id) => !cur.cabal.includes(id));
               if (cands[0]) cur.cabal = [...cur.cabal, cands[0]];
             }
@@ -6986,7 +7008,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             // AI courts climb a touch slower, so the abdication doesn't sweep the map.
             const climb = ladderAdvanceChance(minister, ruler, cur.cabal.length) * (isP ? 1 : 0.7);
             const wasStage = cur.stage;
-            if (Math.random() < climb) cur.stage = Math.min(LADDER_TOP, cur.stage + 1);
+            if (rng() < climb) cur.stage = Math.min(LADDER_TOP, cur.stage + 1);
             nextUsurpLadder[force.id] = cur;
             // Only the player is warned rung-by-rung (he alone can act — 翦除肘腋).
             if (isP && cur.stage > wasStage) {
@@ -7048,7 +7070,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             const ambitious = !!g.traits?.includes('ambitious' as never) || g.loyalty < 22;
             const homeCity = g.locationCityId ? postCities[g.locationCityId] : undefined;
             const notCapital = homeCity && homeCity.id !== postForces[pfid7]?.capitalCityId && homeCity.ownerForceId === pfid7;
-            if (able && ambitious && g.loyalty < 30 && notCapital && Math.random() < 0.1 + (30 - g.loyalty) * 0.01) {
+            if (able && ambitious && g.loyalty < 30 && notCapital && rng() < 0.1 + (30 - g.loyalty) * 0.01) {
               const nf = `guest-${gid}`;
               if (!postForces[nf]) {
                 const color = seizePalette[Math.abs(gid.split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % seizePalette.length];
@@ -7061,7 +7083,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               }
             }
             // AG 去留 — a bitterly discontented guest simply takes his leave.
-            if (g.loyalty < 22 && Math.random() < 0.15) {
+            if (g.loyalty < 22 && rng() < 0.15) {
               courtPatches[gid] = { ...g, forceId: null, status: 'idle', task: null };
               nextExiledLords[gid] = { formerForceId: guest.formerForceId, formerNameZh: guest.formerNameZh, formerNameEn: guest.formerNameEn, sinceYear: guest.sinceYear };
               delete nextGuestGenerals[gid];
@@ -7073,7 +7095,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             for (const [eid] of Object.entries(nextExiledLords)) {
               const e = postOfficers[eid];
               if (!e || e.status === 'dead' || e.forceId != null || nextGuestGenerals[eid]) continue;
-              if (Math.random() < 0.2) { result.report.entries.push({ cityId: null, kind: 'note', text: `${e.name.en}, a lord in exile, looks to your name and would take shelter with you.`, textZh: `流亡之主${e.name.zh}慕汝仁德高名,有意來投 —— 可納為客將。` }); break; }
+              if (rng() < 0.2) { result.report.entries.push({ cityId: null, kind: 'note', text: `${e.name.en}, a lord in exile, looks to your name and would take shelter with you.`, textZh: `流亡之主${e.name.zh}慕汝仁德高名,有意來投 —— 可納為客將。` }); break; }
             }
           }
         }
@@ -7098,10 +7120,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             spyBureauActive = true;
             const rivals = Object.values(postForces).filter((f) => f.id !== pfid7 && Object.values(postCities).some((c) => c.ownerForceId === f.id));
             if (rivals.length > 0) {
-              const rf = rivals[Math.floor(Math.random() * rivals.length)];
+              const rf = rivals[Math.floor(rng() * rivals.length)];
               const rc = Object.values(postCities).filter((c) => c.ownerForceId === rf.id);
               if (rc.length > 0) {
-                const c = rc[Math.floor(Math.random() * rc.length)];
+                const c = rc[Math.floor(rng() * rc.length)];
                 espionageRevealsNext[c.id] = Math.max(espionageRevealsNext[c.id] ?? 0, 6);
                 nextSpyNetwork[rf.id] = Math.min(100, (nextSpyNetwork[rf.id] ?? 0) + 2);
               }
@@ -7113,9 +7135,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (!alive) { delete nextSpyNetwork[fid]; continue; }
             nextSpyNetwork[fid] = Math.max(0, nextSpyNetwork[fid] - 1);
             if (nextSpyNetwork[fid] <= 0) { delete nextSpyNetwork[fid]; continue; }
-            if (nextSpyNetwork[fid] >= 40 && Math.random() < nextSpyNetwork[fid] / 150) {
+            if (nextSpyNetwork[fid] >= 40 && rng() < nextSpyNetwork[fid] / 150) {
               const rc = Object.values(postCities).filter((c) => c.ownerForceId === fid);
-              if (rc.length > 0) espionageRevealsNext[rc[Math.floor(Math.random() * rc.length)].id] = Math.max(espionageRevealsNext[rc[Math.floor(Math.random() * rc.length)].id] ?? 0, 4);
+              if (rc.length > 0) espionageRevealsNext[rc[Math.floor(rng() * rc.length)].id] = Math.max(espionageRevealsNext[rc[Math.floor(rng() * rc.length)].id] ?? 0, 4);
             }
           }
 
@@ -7131,7 +7153,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             // gnaws the victim's — so an AI rumour spreads on the player's land.
             if (!c || !c.ownerForceId || c.ownerForceId === rum.byForceId) { delete nextRumorCities[cid]; continue; }
             postCities = { ...postCities, [cid]: { ...c, loyalty: Math.max(0, c.loyalty - 3) } };
-            if (Math.random() < 0.35) {
+            if (rng() < 0.35) {
               const adj = (c.adjacentCityIds ?? []).map((a) => postCities[a]).find((a) => a && a.ownerForceId === c.ownerForceId && !nextRumorCities[a.id]);
               if (adj) nextRumorCities[adj.id] = { seasonsLeft: 2, byForceId: rum.byForceId };
             }
@@ -7213,7 +7235,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (cap) postCities = { ...postCities, [cap.id]: { ...cap, gold: cap.gold + gold } };
           }
           // ① 叛附 — vassals that have outgrown or come to resent their lords break free.
-          const vrTick = tickVassalRevolt({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, discontent: state.vassalDiscontent, playerForceId: state.playerForceId });
+          const vrTick = tickVassalRevolt({ rng, forces: postForces, cities: postCities, diplomacy: postDiplomacy, discontent: state.vassalDiscontent, playerForceId: state.playerForceId });
           postForces = vrTick.forces;
           postDiplomacy = vrTick.diplomacy;
           nextVassalDiscontent = vrTick.discontent;
@@ -7224,7 +7246,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             grudgesAfterPacts = g;
           }
           // ① 弱者求附 — a cornered AI realm may sue to become a stronger neighbour's vassal.
-          const avTick = tickAIVassalage({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, grudges: grudgesAfterPacts, playerForceId: state.playerForceId });
+          const avTick = tickAIVassalage({ rng, forces: postForces, cities: postCities, diplomacy: postDiplomacy, grudges: grudgesAfterPacts, playerForceId: state.playerForceId });
           postForces = avTick.forces;
           postDiplomacy = avTick.diplomacy;
           result.report.entries.push(...avTick.entries);
@@ -7236,7 +7258,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           const livingDemands = (nextPendingDemands ?? []).filter(
             (d) => isOnOrAfter(d.expiresAt, result.date) && postForces[d.fromForceId] && pactForceCityCount(d.fromForceId, postCities) > 0,
           );
-          const freshDemands = tickAIDemands({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, playerForceId: state.playerForceId, existing: livingDemands, date: result.date });
+          const freshDemands = tickAIDemands({ rng, forces: postForces, cities: postCities, diplomacy: postDiplomacy, playerForceId: state.playerForceId, existing: livingDemands, date: result.date });
           nextPendingDemands = [...livingDemands, ...freshDemands];
           for (const d of freshDemands) {
             const from = postForces[d.fromForceId];
@@ -7247,7 +7269,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             });
           }
           // ② A dominant player may find the free realms banding against them.
-          const aiLeague = tickAICoalitionVsPlayer({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, grudges: grudgesAfterPacts, credibility: credibilityAfterPacts, coalitions: nextCoalitions, playerForceId: state.playerForceId, date: result.date, year: result.date.year });
+          const aiLeague = tickAICoalitionVsPlayer({ rng, forces: postForces, cities: postCities, diplomacy: postDiplomacy, grudges: grudgesAfterPacts, credibility: credibilityAfterPacts, coalitions: nextCoalitions, playerForceId: state.playerForceId, date: result.date, year: result.date.year });
           if (aiLeague) {
             postDiplomacy = aiLeague.diplomacy;
             nextCoalitions = [...nextCoalitions, aiLeague.coalition];
@@ -7259,13 +7281,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             });
           }
           // ④ The mirror of the call-to-arms: AI allies rally to a hard-pressed player.
-          const rally = tickAllyRally({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, playerForceId: state.playerForceId });
+          const rally = tickAllyRally({ rng, forces: postForces, cities: postCities, diplomacy: postDiplomacy, playerForceId: state.playerForceId });
           postDiplomacy = rally.diplomacy;
           result.report.entries.push(...rally.entries);
 
           // D 質子 upkeep — frees on a realm's fall, the odd escape home (越獄);
           // betrayal-death fires at the betraying march, not here.
-          const hoTick = tickHostages({ officers: officersWithMarchTask, forces: postForces, cities: postCities });
+          const hoTick = tickHostages({ rng, officers: officersWithMarchTask, forces: postForces, cities: postCities });
           officersWithMarchTask = hoTick.officers;
           result.report.entries.push(...hoTick.entries);
 
@@ -7282,7 +7304,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           const livingOffers = (nextPendingPeace ?? []).filter(
             (o) => isOnOrAfter(o.expiresAt, result.date) && postForces[o.fromForceId] && pactForceCityCount(o.fromForceId, postCities) > 0,
           );
-          const freshOffers = tickAIPeaceOffers({ forces: postForces, cities: postCities, diplomacy: postDiplomacy, grudges: grudgesAfterPacts, playerForceId: state.playerForceId, existing: livingOffers, date: result.date });
+          const freshOffers = tickAIPeaceOffers({ rng, forces: postForces, cities: postCities, diplomacy: postDiplomacy, grudges: grudgesAfterPacts, playerForceId: state.playerForceId, existing: livingOffers, date: result.date });
           nextPendingPeace = [...livingOffers, ...freshOffers];
           for (const o of freshOffers) {
             const from = postForces[o.fromForceId];
@@ -7355,9 +7377,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (!env || env.status === 'dead' || !alive7.has(tid)) { delete nextCourtEnvoys[tid]; continue; }
             relWarm(pfid7, tid, 25, 3);
             const tcs = Object.values(postCities).filter((c) => c.ownerForceId === tid);
-            if (tcs.length > 0 && Math.random() < 0.4) { const c = tcs[Math.floor(Math.random() * tcs.length)]; espionageRevealsNext[c.id] = Math.max(espionageRevealsNext[c.id] ?? 0, 4); }
+            if (tcs.length > 0 && rng() < 0.4) { const c = tcs[Math.floor(rng() * tcs.length)]; espionageRevealsNext[c.id] = Math.max(espionageRevealsNext[c.id] ?? 0, 4); }
             const threat = casusBelliAfterCourt.some((m) => m.byForceId === tid && m.targetForceId === pfid7) || (grudgesAfterPacts[tid] ?? 0) >= 40;
-            if (threat && Math.random() < 0.5) result.report.entries.push({ cityId: null, kind: 'note', text: `Your envoy at ${postForces[tid]?.name.en ?? 'a rival court'} warns: they mean you harm.`, textZh: `常駐${postForces[tid]?.name.zh ?? '敵'}之使密報:其有圖我之意,宜備之。` });
+            if (threat && rng() < 0.5) result.report.entries.push({ cityId: null, kind: 'note', text: `Your envoy at ${postForces[tid]?.name.en ?? 'a rival court'} warns: they mean you harm.`, textZh: `常駐${postForces[tid]?.name.zh ?? '敵'}之使密報:其有圖我之意,宜備之。` });
           }
           // AD 秦晉之好 — an enduring in-law bond firms; a fallen in-law realm's
           // succession passes a claim (承其統之名 → 天命).
@@ -7389,8 +7411,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const theirTroops = Object.values(postCities).filter((c) => c.ownerForceId === force.id).reduce((s, c) => s + c.troops, 0);
               const dislikes = rel.score < -10 || (grudgesAfterPacts[force.id] ?? 0) >= 30;
               if (theirTroops < myTroops * 1.8 || !dislikes) continue;
-              if (Math.random() < 0.06) {
-                const amt = 200 + Math.floor(Math.random() * 300);
+              if (rng() < 0.06) {
+                const amt = 200 + Math.floor(rng() * 300);
                 nextTributePacts = [...nextTributePacts, { payerForceId: pfid7, payeeForceId: force.id, amount: amt, sinceYear: result.date.year }];
                 result.report.entries.push({ cityId: null, kind: 'note', text: `${force.name.en} — far the stronger — demands ${amt} gold/season in tribute. Pay, or refuse it (and harden the enmity).`, textZh: `${force.name.zh}恃強索歲幣 ${amt} 金/季。納之buy安,或斷貢以硬其怨(外交面板可拒)。` });
               }
@@ -7608,8 +7630,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
                 && o.status !== 'dead' && (o.traits ?? []).includes('inventive'),
             );
             if (!smith) continue;
-            if (Math.random() >= 0.22 + 0.04 * foundry.level) continue;
-            const id = discoverableRecipe(known, foundry.level, Math.random);
+            if (rng() >= 0.22 + 0.04 * foundry.level) continue;
+            const id = discoverableRecipe(known, foundry.level, rng);
             if (!id) continue;
             known.add(id);
             learned.push(id);
@@ -7642,7 +7664,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (seasonBoundary) {
           const starActs = planAiStarInvestments({
             officers: officersWithMarchTask, cities: postCities,
-            playerForceId: state.playerForceId, rng: Math.random,
+            playerForceId: state.playerForceId, rng,
           });
           if (starActs.length > 0) {
             postCities = { ...postCities };
@@ -7662,7 +7684,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (seasonBoundary) {
           const forgeActions = planAiForging({
             officers: officersWithMarchTask, cities: postCities, buildings: state.buildings,
-            lostItems: result.lostItems, playerForceId: state.playerForceId, rng: Math.random,
+            lostItems: result.lostItems, playerForceId: state.playerForceId, rng,
           });
           if (forgeActions.length > 0) {
             postCities = { ...postCities };
@@ -8382,7 +8404,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
           if (get().date.season === 'spring' || bountiesNext.length !== (cur.bounties ?? []).length) {
             if (get().date.season === 'spring') {
-              const rolled = rollBounties(get().officers, cur.playerForceId, get().date.year, Math.random, bountiesNext);
+              const rolled = rollBounties(get().officers, cur.playerForceId, get().date.year, rng, bountiesNext);
               for (const b of rolled) {
                 if (!bountiesNext.some((x) => x.officerId === b.officerId)) {
                   const o = get().officers[b.officerId];
@@ -8414,14 +8436,14 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           let told = 0;
           for (const [cityId, pool] of byCity) {
             const sameForce = pool.filter((o) => o.forceId === pool[0].forceId);
-            if (sameForce.length < 2 || Math.random() >= 0.2) continue;
-            const [a, b] = sameForce.sort(() => Math.random() - 0.5).slice(0, 2);
-            let ga = grantXp(a, 12, Math.random).officer;
-            let gb = grantXp(b, 12, Math.random).officer;
+            if (sameForce.length < 2 || rng() >= 0.2) continue;
+            const [a, b] = sameForce.sort(() => rng() - 0.5).slice(0, 2);
+            let ga = grantXp(a, 12, rng).officer;
+            let gb = grantXp(b, 12, rng).officer;
             // 偷師 — outmatched by 15+ war, the weaker gleans a technique (20%).
             const [hi, lo] = ga.stats.war >= gb.stats.war ? [ga, gb] : [gb, ga];
             let stole: string | null = null;
-            if (hi.stats.war - lo.stats.war >= 15 && Math.random() < 0.2) {
+            if (hi.stats.war - lo.stats.war >= 15 && rng() < 0.2) {
               stole = hi.skills.find((sk) => !lo.skills.includes(sk)) ?? null;
               if (stole) {
                 const loNext = { ...lo, skills: [...lo.skills, stole] };
@@ -8530,7 +8552,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 隨季之事 (§6.10–§6.18) — the standing seats, the world's own bouts,
         // AI cultivation, tongue-diplomacy and the slow accruals of character.
         // Lifted to seasonBouts.ts; every block inside gates on seasonBoundary.
-        tickBoutSeason(get, set, seasonBoundary, state);
+        tickBoutSeason(get, set, seasonBoundary, state, rng);
 
         // 自動存檔 — every season boundary writes one of three rolling
         // autosave slots, so a bad turn (or a crash) costs at most a season.
@@ -17813,6 +17835,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         legions: state.legions,
         emperorCityId: state.emperorCityId,
         dailyChallengeDate: state.dailyChallengeDate,
+        // 戰役隨機種子 — must persist, or reloading a campaign hands it a new
+        // stream and the run stops being replayable across sessions.
+        rngSeed: state.rngSeed,
         powerHistory: state.powerHistory,
         recruitState: state.recruitState,
         commandTemplates: state.commandTemplates,

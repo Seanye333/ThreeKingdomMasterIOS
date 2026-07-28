@@ -32,6 +32,10 @@ export function tickBoutSeason(
   set: (patch: Partial<GameState>) => void,
   seasonBoundary: boolean,
   state: GameState,
+  /** 戰役隨機源 — the seasonal bouts are simulation, not player action, so
+   *  they draw from the campaign stream. endSeason passes its own rng in;
+   *  the default keeps standalone callers (and tests) working. */
+  rng: () => number = Math.random,
 ): void {
   // 打擂隨季 (§6.12) — the arena seat lives its own life: while an AI (or no
   // one from your force) holds it, the realm's fighters keep contesting it
@@ -42,10 +46,10 @@ export function tickBoutSeason(
     const seat = cur.arenaChampion;
     const holder = seat ? cur.officers[seat.officerId] : null;
     const holderIsPlayers = !!holder && holder.forceId === cur.playerForceId;
-    if (seat && holder && holder.status !== 'dead' && holder.status !== 'imprisoned' && !holderIsPlayers && Math.random() < 0.45) {
-      const contender = pickArenaChallenger(cur.officers, holder.id, Math.random);
+    if (seat && holder && holder.status !== 'dead' && holder.status !== 'imprisoned' && !holderIsPlayers && rng() < 0.45) {
+      const contender = pickArenaChallenger(cur.officers, holder.id, rng);
       if (contender) {
-        const bout = resolveDuel({ attacker: contender, defender: holder });
+        const bout = resolveDuel({ attacker: contender, defender: holder, rng });
         if (bout.winner === 'attacker') {
           set({ arenaChampion: { officerId: contender.id, sinceYear: cur.date.year, defenses: 0 } });
           get().recordAnnal({
@@ -73,10 +77,10 @@ export function tickBoutSeason(
     const seat = cur.moonLaurel;
     const holder = seat ? cur.officers[seat.officerId] : null;
     const holderIsPlayers = !!holder && holder.forceId === cur.playerForceId;
-    if (seat && holder && holder.status !== 'dead' && holder.status !== 'imprisoned' && !holderIsPlayers && Math.random() < 0.45) {
-      const contender = pickMoonChallenger(cur.officers, holder.id, Math.random);
+    if (seat && holder && holder.status !== 'dead' && holder.status !== 'imprisoned' && !holderIsPlayers && rng() < 0.45) {
+      const contender = pickMoonChallenger(cur.officers, holder.id, rng);
       if (contender) {
-        const bout = resolveWordWar(contender, holder, [], []);
+        const bout = resolveWordWar(contender, holder, [], [], rng);
         if (bout.winnerSide === 'attacker') {
           set({ moonLaurel: { officerId: contender.id, sinceYear: cur.date.year, defenses: 0 } });
           get().recordAnnal({
@@ -103,18 +107,18 @@ export function tickBoutSeason(
   // 修為, and a marquee upset is chronicle material.
   if (seasonBoundary) {
     const cur = get();
-    if (Math.random() < 0.35) {
+    if (rng() < 0.35) {
       const pool = Object.values(cur.officers).filter((o) =>
         o.forceId && o.forceId !== cur.playerForceId
         && o.status !== 'dead' && o.status !== 'imprisoned' && o.status !== 'unsearched'
         && o.stats.war >= 70 && canDuel(o).ok);
       if (pool.length >= 2) {
-        const i = Math.floor(Math.random() * pool.length);
-        let j = Math.floor(Math.random() * (pool.length - 1));
+        const i = Math.floor(rng() * pool.length);
+        let j = Math.floor(rng() * (pool.length - 1));
         if (j >= i) j++;
         const A = pool[i], B = pool[j];
         if (A.forceId !== B.forceId) { // champions of different realms cross paths
-          const res = resolveDuel({ attacker: A, defender: B });
+          const res = resolveDuel({ attacker: A, defender: B, rng });
           const outcome = res.winner === 'attacker' ? 'win' : res.winner === 'defender' ? 'loss' : 'draw';
           get().recordDuelRating(A.id, B.id, outcome);
           // 敵亦精進 — both arms learn from a real test (§6.10).
@@ -143,7 +147,7 @@ export function tickBoutSeason(
   // master (宗師/名士) drills a junior of the same court, exactly as the
   // player's 傳藝/傳道 does — so lineages, 同門 bonds and deep benches grow
   // across the whole map instead of only in your house.
-  if (seasonBoundary && Math.random() < 0.4) {
+  if (seasonBoundary && rng() < 0.4) {
     const cur = get();
     const teach = (art: 'martial' | 'debate') => {
       const tierOf = (o: Officer) => (art === 'martial' ? martialTier(o).tier : debateArtsTier(o).tier);
@@ -152,14 +156,14 @@ export function tickBoutSeason(
         && o.status !== 'dead' && o.status !== 'imprisoned' && o.status !== 'unsearched' && !!o.locationCityId;
       const masters = Object.values(cur.officers).filter((o) => usable(o) && tierOf(o) >= 4);
       if (!masters.length) return false;
-      const master = masters[Math.floor(Math.random() * masters.length)];
+      const master = masters[Math.floor(rng() * masters.length)];
       // 同城同袍 — a master drills whoever shares their posting.
       const pupils = Object.values(cur.officers).filter((o) =>
         usable(o) && o.id !== master.id && o.forceId === master.forceId
         && o.locationCityId === master.locationCityId
         && xwOf(o) < xwOf(master) - 10);
       if (!pupils.length) return false;
-      const pupil = pupils[Math.floor(Math.random() * pupils.length)];
+      const pupil = pupils[Math.floor(rng() * pupils.length)];
       const gained = Math.min(8, Math.max(0, xwOf(master) - 5 - xwOf(pupil)));
       if (gained <= 0) return false;
       const next = xwOf(pupil) + gained;
@@ -173,7 +177,7 @@ export function tickBoutSeason(
       return true;
     };
     // One teaching a season, martial or literary — whichever the coin falls.
-    if (!teach(Math.random() < 0.5 ? 'martial' : 'debate')) teach(Math.random() < 0.5 ? 'debate' : 'martial');
+    if (!teach(rng() < 0.5 ? 'martial' : 'debate')) teach(rng() < 0.5 ? 'debate' : 'martial');
   }
 
   // 世間論辯 (§6.15) — the 月旦榜 lives beyond the player's bouts too: between
@@ -182,18 +186,18 @@ export function tickBoutSeason(
   // meeting of two great names is chronicle material. Mirrors 世間鬥將.
   if (seasonBoundary) {
     const cur = get();
-    if (Math.random() < 0.3) {
+    if (rng() < 0.3) {
       const pool = Object.values(cur.officers).filter((o) =>
         o.forceId && o.forceId !== cur.playerForceId
         && o.status !== 'dead' && o.status !== 'imprisoned' && o.status !== 'unsearched'
         && moonScore(o) >= 70);
       if (pool.length >= 2) {
-        const i = Math.floor(Math.random() * pool.length);
-        let j = Math.floor(Math.random() * (pool.length - 1));
+        const i = Math.floor(rng() * pool.length);
+        let j = Math.floor(rng() * (pool.length - 1));
         if (j >= i) j++;
         const A = pool[i], B = pool[j];
         if (A.forceId !== B.forceId) { // tongues of different courts cross
-          const bout = resolveWordWar(A, B, [], []);
+          const bout = resolveWordWar(A, B, [], [], rng);
           const winner = bout.winnerSide === 'attacker' ? A : bout.winnerSide === 'defender' ? B : null;
           const loser = winner ? (winner.id === A.id ? B : A) : null;
           // 清談亦長學 — both sharpen; the one who carried it more so.
@@ -233,7 +237,7 @@ export function tickBoutSeason(
       const envoy = cur.officers[lapsed.envoyId];
       const defender = cur.officers[lapsed.defenderId];
       set({ pendingPersuasions: [lapsed] }); // settle reads the head entry
-      const bout = resolveWordWar(envoy, defender, [], []);
+      const bout = resolveWordWar(envoy, defender, [], [], rng);
       const last = bout.rounds[bout.rounds.length - 1];
       const margin = last ? Math.abs(last.attackerTotal - last.defenderTotal) : 0;
       const outcome = bout.winnerSide === 'attacker' ? 'loss' : bout.winnerSide === 'defender' ? 'win' : 'draw';
@@ -242,7 +246,7 @@ export function tickBoutSeason(
       set({ pendingPersuasions: standing });
     }
     const cur2 = get();
-    const fresh = tickAIPersuasions({
+    const fresh = tickAIPersuasions({ rng,
       forces: cur2.forces, cities: cur2.cities, officers: cur2.officers,
       diplomacy: cur2.diplomacy, playerForceId: cur2.playerForceId,
       existing: cur2.pendingPersuasions ?? [],
@@ -273,7 +277,7 @@ export function tickBoutSeason(
     } else if (writ && !isOnOrAfter(writ.expiresAt, cur.date)) {
       get().duckMoonWrit(); // 置帖不答,即為避辯
     } else if (!writ && holderIsMine) {
-      const freshWrit = tickMoonWrit({
+      const freshWrit = tickMoonWrit({ rng,
         officers: cur.officers, holderId, playerForceId: cur.playerForceId,
         existing: undefined, expiresAt: addDiploSeasons(cur.date, 2),
         debateRivalries: cur.debateRivalries ?? {}, // 文敵先至
