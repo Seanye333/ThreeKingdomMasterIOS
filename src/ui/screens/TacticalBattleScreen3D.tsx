@@ -258,17 +258,26 @@ function ArrowVolley({ fx, fz, tx, tz, spawnedAt }: {
     stagger: Math.abs(Math.sin(i * 78.233)) * 0.13,
     peak: 1.5 + Math.abs(Math.sin(i * 4.1)) * 0.7,
   })), [N]);
+  // 每幀不再配置 — a volley allocated five THREE objects EVERY frame (Matrix4,
+  // Quaternion, three Vector3). At 60fps that is 300 allocations a second per
+  // volley, purely to be thrown away; arrows fire constantly in a ranged
+  // battle. They are scratch values, never read between frames, so they live
+  // in a ref and get overwritten in place.
+  const scratch = useRef({
+    m: new THREE.Matrix4(),
+    q: new THREE.Quaternion(),
+    pos: new THREE.Vector3(),
+    sc: new THREE.Vector3(),
+    dir: new THREE.Vector3(),
+  });
+
   useFrame(() => {
     if (!ref.current) return;
     const age = (Date.now() - spawnedAt) / 1000;
     const dx = tx - fx, dz = tz - fz;
     const len = Math.hypot(dx, dz) || 1;
     const px = -dz / len, pz = dx / len;   // perpendicular for the spread
-    const m = new THREE.Matrix4();
-    const q = new THREE.Quaternion();
-    const pos = new THREE.Vector3();
-    const sc = new THREE.Vector3();
-    const dir = new THREE.Vector3();
+    const { m, q, pos, sc, dir } = scratch.current;
     for (let i = 0; i < N; i++) {
       const a = arrows[i];
       const t = Math.min(1, Math.max(0, (age - a.stagger) / 0.55));

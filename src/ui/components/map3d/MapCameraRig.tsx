@@ -141,6 +141,9 @@ export function MapCamApi({ apiRef, controlsRef, panInputRef }: {
     return () => { apiRef.current = null; };
   }, [camera, apiRef, controlsRef]);
 
+  /** Reused pan vectors — see the allocation note in the pan branch below. */
+  const panScratch = useRef({ fwd: new THREE.Vector3(), right: new THREE.Vector3() });
+
   useFrame((_, delta) => {
     const ctrl = controlsRef.current;
     if (!ctrl) return;
@@ -164,12 +167,15 @@ export function MapCamApi({ apiRef, controlsRef, panInputRef }: {
     const inp = panInputRef.current;
     if (inp && (inp.x !== 0 || inp.z !== 0)) {
       const speed = camera.position.distanceTo(ctrl.target) * 0.6 * dt;
-      const fwd = new THREE.Vector3();
+      // 每幀不再配置 — panning holds for as long as a key is down, so these two
+      // vectors were being minted and discarded 60× a second for the whole
+      // gesture. Scratch values, never read across frames.
+      const fwd = panScratch.current.fwd;
       camera.getWorldDirection(fwd);
       fwd.y = 0;
       if (fwd.lengthSq() > 1e-6) {
         fwd.normalize();
-        const right = new THREE.Vector3().crossVectors(fwd, GROUND_UP).normalize();
+        const right = panScratch.current.right.crossVectors(fwd, GROUND_UP).normalize();
         const move = right.multiplyScalar(inp.x * speed).add(fwd.multiplyScalar(inp.z * speed));
         camera.position.add(move);
         ctrl.target.add(move);
