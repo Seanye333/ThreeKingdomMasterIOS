@@ -3676,6 +3676,20 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 2. `legacyKeyFallback` 包一層 storage:live key 查無時依序掃 `tkm-save-v26` → `v1`,找到就採用,舊的留著當備份。掃描只在 live key 為空時發生(即更新後第一次載入),之後不再付這個成本。
 3. `migrate` 的通用步驟**從 `EMPTY_STATE` 推導**,而不是手列。原本 `onRehydrateStorage` 有一長串手寫的 `if (!state.foo) state.foo = []`,每加一個持久化欄位就得記得補一行 —— 漏一行的後果是「舊存檔載入即崩」,而這種 bug 開發時碰不到,因為自己的存檔永遠有那個欄位。手寫的只留給真正有邏輯的情況(從模板重建 ports、回填家族世系)。
 
+#### 11.4.7 可及性、拆檔與每幀預算(2026-07-27 後半)
+
+三件事,共同的教訓是**原始計數幾乎都具誤導性,分類之後才知道要修什麼**。
+
+**關閉鈕可及性**:全庫 88 個「內容純圖示、無 `aria-label`」的按鈕,其中 55 個是各面板的關閉鈕 ×。讀屏原本只會念「button」,而那是看不見 × 的使用者唯一的出口。補了 50 處(標籤用固定雙語字串「關閉 Close」,不必為一個屬性把 `t` 引進 50 個 scope)。五個當時在未提交工作區的檔案沒動,但**明列成 `PENDING_UNLABELLED` 寫進測試**而不是靜靜放寬 —— 清單只准縮短。
+
+**`<div onClick>`**:原始清單寫「69 處鍵盤走不到」。分類後 —— 62 處是 `stopPropagation`(阻止冒泡,根本不是互動元素,加 `role`/`tabIndex` 反而製造假的 tab 停留點)、3 處是背景遮罩(有 Esc)、**真正只有 4 處**。
+
+**每幀預算**:掃 126 個 `useFrame`。修掉兩處每幀配置 THREE 物件(箭雨 5 個、鏡頭平移 2 個 —— 都是純暫存值,改 `useRef` 原地覆寫)。而「每幀 setState」那一整類**全是誤報**:我的 `set[A-Z]\w*\(` 正則命中的是 THREE 的 `setMatrixAt`/`setScalar`/`setFromUnitVectors`。逐項看過後,真正每幀呼叫 React setter 的只有 `Traffic3D` 的 `setFar`,而**那是刻意且正確的**(functional update + ±10 遲滯區間,回傳同值時 React 自己 bail out)。
+
+**拆檔**:`historicalBiographies` 5,139 → 92 + 五部;`objectives` 5,431 → 28 + 五個盤面檔(沿 `scn-ws-`/`scn-ch-`/`scn-st-`/`scn-whatif-` 的既有界線切,日後加劇本才知道放哪)。兩者都配了防重測試 —— **spread 對重複 key 是靜默保留最後一個**,同一個 id 出現在兩個 part 會讓其中一份永久讀不到而毫無警告(即 items.ts 那個 bug 的形狀)。objectives 另加雙向的劇本覆蓋檢查,其中「每個劇本都要有 objectives」才是會咬人的那條:沒有目標的劇本開得起來、跑得動,只是永遠不告訴玩家怎樣算贏。
+
+**e2e**:上次「訪賢勝算 spec 抓不到區塊是因為沉浸 chrome 收起側欄」的判斷**是錯的** —— `uiPrefs` 每個 chrome 旗標預設都是 false。真正的限制是:**大部分 modal 是 `React.lazy`,而 `DiplomacyModal` 是靜態 import**,lazy chunk 在 headless 下 resolve 不可靠。要進 CI 的面板 spec 應挑靜態 import 的面板。
+
 ### 11.5 大地圖呈現與資訊層(3D,`StrategicMap3D.tsx`)
 
 大地圖的呈現與資訊層,讓「天下大勢」一眼可讀:
