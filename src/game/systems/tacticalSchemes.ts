@@ -310,6 +310,10 @@ export function applyBattlePrep(
   kind: BattlePrepKind,
   /** Officer table — lets a wary defender 看破 a 地道, and gates nothing else. */
   officers?: Record<EntityId, Officer>,
+  /** Injectable randomness — the AI path threads its seeded rng through here
+   *  so an all-AI harness replays identically. Defaults to Math.random for the
+   *  human path, where the player's own click is the source of the draw. */
+  rng: () => number = Math.random,
 ): { battle: TacticalBattle; ok: boolean; reason?: string } {
   if (b.turn !== 1) return { battle: b, ok: false, reason: 'the battle is already joined' };
   if (b.prepUsed?.[side]) return { battle: b, ok: false, reason: 'already prepared' };
@@ -428,7 +432,7 @@ export function applyBattlePrep(
   // 地道破解 — a wary, sharp-witted defender hears the digging and is ready: the
   // tunnellers still surface inside the walls, but into a counter-ambush — they
   // arrive shaken (−30 morale) and in disarray (陣腳大亂), not at full poise.
-  const detected = Math.random() < Math.max(0, Math.min(0.6, (foeCommanderInt() - 70) / 60));
+  const detected = rng() < Math.max(0, Math.min(0.6, (foeCommanderInt() - 70) / 60));
   const surfaced = b.units.map((u) => {
     if (u.id !== movers[0].id) return u;
     const moved = { ...u, coord: exit.coord };
@@ -459,13 +463,14 @@ export function pickAiBattlePrep(
   b: TacticalBattle,
   side: 'attacker' | 'defender',
   officers: Record<EntityId, Officer>,
+  rng: () => number = Math.random,
 ): BattlePrepKind[] {
   const commander = b.units.find((u) => u.side === side && u.isCommander && u.troops > 0);
   const o = commander ? officers[commander.officerId] : undefined;
   const int = o?.stats.intelligence ?? 55;
   const traits = (o?.traits as string[] | undefined) ?? [];
   // Dullards rarely scheme; a 智將 almost always does.
-  if (Math.random() > Math.max(0.12, Math.min(0.9, (int - 35) / 75))) return [];
+  if (rng() > Math.max(0.12, Math.min(0.9, (int - 35) / 75))) return [];
   const hasForest = b.tiles.some((t) => t.terrain === 'forest');
   const hasWalls = b.tiles.some((t) => t.terrain === 'wall' || t.terrain === 'gate');
   const foe: 'attacker' | 'defender' = side === 'attacker' ? 'defender' : 'attacker';
@@ -499,6 +504,7 @@ export function applyAiBattlePreps(
   b: TacticalBattle,
   playerForceId: EntityId | null,
   officers: Record<EntityId, Officer>,
+  rng: () => number = Math.random,
 ): TacticalBattle {
   if (b.practice || b.turn !== 1) return b;
   let battle = b;
@@ -506,8 +512,8 @@ export function applyAiBattlePreps(
     const forceId = side === 'attacker' ? battle.attackerForceId : battle.defenderForceId;
     if (forceId == null || forceId === playerForceId) continue; // neutral or human-controlled
     if (battle.prepUsed?.[side]) continue;                       // a scheme already set one
-    for (const kind of pickAiBattlePrep(battle, side, officers)) {
-      const r = applyBattlePrep(battle, side, kind, officers);
+    for (const kind of pickAiBattlePrep(battle, side, officers, rng)) {
+      const r = applyBattlePrep(battle, side, kind, officers, rng);
       if (r.ok) { battle = r.battle; break; }
     }
   }
@@ -522,6 +528,9 @@ export function applyStratagem(
   officers: Record<EntityId, Officer>,
   /** Signature tactic riding this cast — 借東風 literally turns the sky. */
   tacticId?: string,
+  /** Injectable randomness — see applyBattlePrep. The AI casts through this
+   *  so 看破 rolls and 落雷 confusion replay identically in a seeded harness. */
+  rng: () => number = Math.random,
 ): { battle: TacticalBattle; ok: boolean; reason?: string } {
   const unit = b.units.find((u) => u.id === unitId);
   if (!unit) return { battle: b, ok: false, reason: 'no unit' };
@@ -550,7 +559,7 @@ export function applyStratagem(
     const resist = foeSage > casterInt ? Math.min(0.6, (foeSage - casterInt) / 55) : 0;
     const success = Math.max(0.2, Math.min(0.97, 0.82 + (casterInt - 85) / 110)) * (1 - resist);
     const nameZh = caster?.name.zh ?? '';
-    if (foes.length > 0 && Math.random() < success) {
+    if (foes.length > 0 && rng() < success) {
       const avgCol = foes.reduce((sum, u) => sum + u.coord.col, 0) / foes.length;
       const avgRow = foes.reduce((sum, u) => sum + u.coord.row, 0) / foes.length;
       const dCol = avgCol - unit.coord.col;
@@ -607,7 +616,7 @@ export function applyStratagem(
       // (the formation veils the gambit): the enemy's 看破 chance drops 40%.
       const sevenStar = (unit.side === 'attacker' ? b.attackerFormation : b.defenderFormation) === 'seven-star';
       const chance = Math.max(0, Math.min(0.5, (seer.stats.intelligence - (off?.stats.intelligence ?? 60) + 18) / 100)) * (sevenStar ? 0.6 : 1);
-      if (Math.random() < chance) {
+      if (rng() < chance) {
         return {
           battle: {
             ...b,
@@ -855,7 +864,7 @@ export function applyStratagem(
       // 戰法情境 — a brewing storm feeds the bolt; fog/snow damps it.
       const ltSit = battleStratagemSituation(b, unit.coord, targetCoord, stratagem);
       const damage = Math.floor(target.troops * 0.15 * ltSit.mult * (off ? stratagemDamageMul(off, stratagem) : 1));
-      const confuse = Math.random() < 0.3;
+      const confuse = rng() < 0.3;
       let next: TacticalBattle = {
         ...b,
         units: b.units.map((u) =>

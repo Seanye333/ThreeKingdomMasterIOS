@@ -156,7 +156,7 @@ function aiTryStratagem(
   }
 
   for (const c of candidates) {
-    const r = applyStratagem(b, unit.id, c.id, c.target, officers);
+    const r = applyStratagem(b, unit.id, c.id, c.target, officers, undefined, rng);
     if (r.ok) return r.battle;
   }
   return null;
@@ -772,7 +772,7 @@ function aiActOnce(
       // turn too late — the wall must already be set when the charge starts.
       const defending = unit.effects.some((e) => e.kind === 'defending');
       if (!defending && nearestRider <= 6 && unit.ap >= 1) {
-        const r = applyStratagem(b, unit.id, 'defend', unit.coord, officers);
+        const r = applyStratagem(b, unit.id, 'defend', unit.coord, officers, undefined, rng);
         if (r.ok) return { battle: r.battle, acted: true, signatures: [] };
       }
       return hold;
