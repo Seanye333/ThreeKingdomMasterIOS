@@ -311,11 +311,24 @@ function assertInvariants(turn: number): void {
   lastTroopTotal = troopTotal;
 }
 
-/** Previous tick's army total — see the 兵籍 invariant above. */
+/**
+ * Previous tick's army total — see the 兵籍 invariant above.
+ *
+ * Module-level, so it MUST be reset by each test that starts a fresh campaign
+ * (resetTroopTracking below). Without that, the second soak compares its opening
+ * muster against the first soak's final one and reports a bogus leap — which is
+ * exactly what it did on the first run of this invariant.
+ */
 let lastTroopTotal: number | null = null;
+
+/** Call at the top of any test that boots a new campaign. */
+function resetTroopTracking(): void {
+  lastTroopTotal = null;
+}
 
 describe('長跑浸泡 — 48 旬被動戰役', () => {
   it('grinds 48 turns without breaking a single invariant, and save/load round-trips', () => {
+    resetTroopTracking();
     const st = useGameStore;
     st.getState().loadScenario(SCENARIOS[0], SCENARIOS[0].forces[0].id, 'normal');
 
@@ -353,6 +366,7 @@ describe('長跑浸泡 — 48 旬被動戰役', () => {
    * which cannot produce the cross-system states that break invariants.
    */
   it('grinds 240 turns of the late game without breaking an invariant', () => {
+    resetTroopTracking();
     const st = useGameStore;
     st.getState().loadScenario(SCENARIOS[0], SCENARIOS[0].forces[0].id, 'normal');
 

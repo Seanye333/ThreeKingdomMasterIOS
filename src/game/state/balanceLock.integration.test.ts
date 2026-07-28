@@ -93,11 +93,25 @@ function runSeed(seed: number): { start: Shape; end: Shape } {
   return { start, end: measure() };
 }
 
+/**
+ * Every seed is ground EXACTLY ONCE, up front, and all the assertions read the
+ * result. The first cut ran each seed in a per-describe beforeAll and then had
+ * the final case re-run all three — 1,440 ticks instead of 720. Under the full
+ * suite that tipped past the default 5s timeout, which vitest reports as one
+ * failure plus a whole describe's worth of SKIPPED tests. Skipped assertions in
+ * a green-looking run are worse than a red one, so the work happens once here.
+ */
+const runs = new Map<number, { start: Shape; end: Shape }>();
+
 describe('平衡護欄 — 240 旬(約十年)後世界仍成立', () => {
+  beforeAll(() => {
+    for (const seed of SEEDS) runs.set(seed, runSeed(seed));
+  }, 300_000);
+
   for (const seed of SEEDS) {
     describe(`seed ${seed}`, () => {
       let start: Shape, end: Shape;
-      beforeAll(() => { ({ start, end } = runSeed(seed)); });
+      beforeAll(() => { ({ start, end } = runs.get(seed)!); });
 
       it('天下未定 — no single force has swallowed the map', () => {
         // A runaway conqueror by year 10 means the AI aggression or the combat
@@ -168,8 +182,9 @@ describe('平衡護欄 — 240 旬(約十年)後世界仍成立', () => {
 
   it('不同種子產生不同世界(護欄不是在鎖常數)', () => {
     // If every seed produced the same world, all the bands above would be
-    // vacuous. This proves they are constraining a real distribution.
-    const shapes = SEEDS.map((s) => JSON.stringify(runSeed(s).end));
+    // vacuous. This proves they are constraining a real distribution. Reads
+    // the runs already ground above rather than re-running them.
+    const shapes = SEEDS.map((s) => JSON.stringify(runs.get(s)!.end));
     expect(new Set(shapes).size).toBeGreaterThan(1);
   });
 });

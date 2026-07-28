@@ -2241,6 +2241,67 @@ export function TacticalBattleScreen3D() {
             </HudChip>
           );
         })()}
+        {/* 戰場印記 — what this battle has permanently done to the ground.
+            terrainScars and fieldworksBurned were both written by the engine
+            (fire stratagems burn woods and bridges; a raid burns entrenchments)
+            and read by nobody: 火計 changed the map under the player's feet and
+            the only evidence was the tile art. A burned bridge in particular
+            re-routes movement, so it is tactical information, not flavour. */}
+        {(() => {
+          const scars = battle.terrainScars ?? [];
+          const forest = scars.filter((s) => s.kind === 'burned-forest').length;
+          const bridge = scars.filter((s) => s.kind === 'burned-bridge').length;
+          const works = battle.fieldworksBurned ?? 0;
+          if (forest + bridge + works === 0) return null;
+          const parts: string[] = [];
+          if (forest) parts.push(t(`焚林 ${forest}`, `${forest} wood${forest > 1 ? 's' : ''} burned`));
+          if (bridge) parts.push(t(`斷橋 ${bridge}`, `${bridge} bridge${bridge > 1 ? 's' : ''} down`));
+          if (works) parts.push(t(`焚壘 ${works}`, `${works} works burned`));
+          return (
+            <HudChip
+              tone="gold"
+              title={t('本戰已改變的地形 —— 焚毀的林地不再遮蔽,斷橋不可通行,焚壘失其防護。',
+                'Ground this battle has already changed: burned woods no longer screen, downed bridges block movement, burned works give no cover.')}
+            >
+              🔥 {parts.join(' · ')}
+            </HudChip>
+          );
+        })()}
+        {/* 援軍將至 — the battle carries a full schedule of who arrives on
+            which turn from which edge, and showed none of it. That is pure
+            deployment information: knowing relief reaches the west edge on
+            turn 5 is the difference between holding the line and pulling back
+            to meet it. Enemy arrivals are announced too — they were already
+            visible the moment they spawned, so hiding the warning only made
+            the ambush feel arbitrary. */}
+        {(() => {
+          const pending = (battle.reinforcements ?? [])
+            .filter((r) => r.arriveTurn > battle.turn)
+            .sort((a, z) => a.arriveTurn - z.arriveTurn);
+          if (pending.length === 0) return null;
+          const EDGE: Record<string, [string, string]> = {
+            north: ['北', 'N'], south: ['南', 'S'], east: ['東', 'E'], west: ['西', 'W'],
+          };
+          const next = pending[0];
+          const mine = next.side === playerSide;
+          const [ez, ee] = EDGE[next.edge] ?? ['?', '?'];
+          const inTurns = next.arriveTurn - battle.turn;
+          return (
+            <HudChip
+              tone={mine ? 'green' : 'red'}
+              title={pending
+                .map((r) => t(
+                  `第 ${r.arriveTurn} 回合 · ${r.side === playerSide ? '我軍' : '敵軍'} ${r.troops.toLocaleString()} 自${EDGE[r.edge]?.[0] ?? '?'}邊入場`,
+                  `Turn ${r.arriveTurn} · ${r.side === playerSide ? 'friendly' : 'enemy'} ${r.troops.toLocaleString()} enters from the ${r.edge}`))
+                .join('\n')}
+            >
+              {mine ? '🏳' : '⚑'} {t(
+                `${inTurns} 回合後${mine ? '援軍' : '敵援'} ${ez}邊 ${next.troops.toLocaleString()}`,
+                `${mine ? 'Relief' : 'Enemy relief'} in ${inTurns}t · ${ee} · ${next.troops.toLocaleString()}`)}
+              {pending.length > 1 && ` (+${pending.length - 1})`}
+            </HudChip>
+          );
+        })()}
         {myTurn && (() => {
           const live = battle.units.filter((u) => u.side === playerSide && u.troops > 0);
           const ready = live.filter((u) => u.ap > 0).length;

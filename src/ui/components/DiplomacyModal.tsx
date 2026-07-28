@@ -111,6 +111,7 @@ export function DiplomacyModal({ onClose }: Props) {
   const answerPeaceOffer = useGameStore((s) => s.answerPeaceOffer);
   const pendingPeaceOffers = useGameStore((s) => s.pendingPeaceOffers);
   const officers = useGameStore((s) => s.officers);
+  const warCoalitions = useGameStore((s) => s.warCoalitions);
 
   const [feedback, setFeedback] = useState<{
     forceId: EntityId;
@@ -281,6 +282,49 @@ export function DiplomacyModal({ onClose }: Props) {
             })}
           </div>
         )}
+
+        {/* 討伐會盟 — the standing leagues. The engine forms them (共討會盟),
+            ticks them every season and disbands them on expiry, and NOTHING in
+            the UI ever showed one: a player could be the sworn target of a
+            four-realm league, or the 盟主 of one they raised twenty seasons
+            ago, and read nothing about it anywhere. Only leagues the player is
+            party to are listed — a distant league is not their business. */}
+        {(() => {
+          const mine = warCoalitions.filter(
+            (c) => c.memberForceIds.includes(playerForceId ?? '') || c.targetForceId === playerForceId,
+          );
+          if (mine.length === 0) return null;
+          return (
+            <div className={styles.callsToArms}>
+              <div className={styles.callsTitle}>{t('討伐會盟', 'War Leagues')}</div>
+              {mine.map((c) => {
+                const target = forces[c.targetForceId];
+                const leader = forces[c.leaderForceId];
+                const against = c.targetForceId === playerForceId;
+                const iLead = c.leaderForceId === playerForceId;
+                const others = c.memberForceIds.filter((m) => m !== playerForceId);
+                const alliesZh = others.map((m) => forces[m]?.name.zh ?? m).join('、');
+                const alliesEn = others.map((m) => forces[m]?.name.en ?? m).join(', ');
+                return (
+                  <div key={`${c.leaderForceId}-${c.targetForceId}-${c.startedYear}`} className={styles.callRow}>
+                    <span className={styles.callText} style={against ? { color: '#e0707a' } : undefined}>
+                      {against
+                        ? t(`⚠ ${leader?.name.zh ?? '?'} 為盟主,率 ${c.memberForceIds.length} 家共討於你 — ${c.expiresAt.year} 年散盟`,
+                            `⚠ ${leader?.name.en ?? '?'} leads a league of ${c.memberForceIds.length} against YOU — disbands ${c.expiresAt.year}`)
+                        : t(`${iLead ? '你為盟主' : `盟主 ${leader?.name.zh ?? '?'}`},共討 ${target?.name.zh ?? '?'} — ${c.expiresAt.year} 年散盟`,
+                            `${iLead ? 'You lead' : `${leader?.name.en ?? '?'} leads`} the league against ${target?.name.en ?? '?'} — disbands ${c.expiresAt.year}`)}
+                      {others.length > 0 && (
+                        <span style={{ color: '#7a8893' }}>
+                          {' · '}{t(`盟軍: ${alliesZh}`, `with: ${alliesEn}`)}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {pendingPeaceOffers.length > 0 && (
           <div className={styles.callsToArms}>
