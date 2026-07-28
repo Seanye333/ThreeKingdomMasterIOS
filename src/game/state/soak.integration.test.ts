@@ -235,14 +235,18 @@ function assertInvariants(turn: number): void {
   // wider class.) Equipment and location deliberately survive death: that is
   // how a fallen officer's 神兵 stays findable and how burial reads.
   //
-  // ⚠ COVERAGE: measured over 240 ticks of the passive soak, `deadIds` stays
-  // EMPTY, so these three assertions do not currently bite. That is correct
-  // behaviour, not a gap in the soak: every scenario opens at game year 178
-  // and deathChance() returns 0 for an officer before their historical 卒年,
-  // so 178–188 genuinely buries almost nobody. The assertions are here for
-  // the campaigns that DO reach the death years (the long soak's later half,
-  // and every real player save). Do not "fix" them by loosening — check
-  // whether the run reaches a year where anyone dies.
+  // COVERAGE: these DO bite, and the governor check caught a real bug on its
+  // first run (t25, 徐州 still held by a fallen 蘇定方 — provinceGovernors had
+  // no counterpart to pruneStaleAppointments, so a dead governor kept the seat
+  // forever).
+  //
+  // Worth recording because I first measured this wrong: a coverage probe that
+  // counted only officers dying of AGE reported zero deaths across 240 ticks
+  // (correctly — every scenario opens at year 178 and deathChance() returns 0
+  // before an officer's historical 卒年), and I concluded the assertions were
+  // dead letters. They are not: officers die in BATTLE, which the probe never
+  // looked at. **When measuring whether an assertion can fire, enumerate every
+  // path that satisfies it, not the first one that comes to mind.**
   const deadIds = new Set(Object.values(s.officers).filter((o) => o.status === 'dead').map((o) => o.id));
   for (const [cityId, govId] of Object.entries(s.cityDelegations ?? {})) {
     expect(deadIds.has(govId), `t${turn} city ${cityId} delegated to dead officer ${govId}`).toBe(false);
