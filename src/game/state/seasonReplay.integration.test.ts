@@ -1,5 +1,5 @@
 /**
- * 一季須可重播 — the end-to-end proof for the campaign rng seam.
+ * 一局須可重播 — the end-to-end proof for the campaign rng seam.
  *
  * The unit tests in campaignRng.test.ts show the generator is deterministic.
  * That is necessary but not sufficient: the season resolver used to roll bare
@@ -8,7 +8,7 @@
  * is enough to make a run unrepeatable.
  *
  * So this test does the only thing that actually settles the question: boots
- * the same scenario twice, resolves the same seasons, and compares the worlds.
+ * the same scenario twice, resolves the same ticks, and compares the worlds.
  * If any roll anywhere under endSeason still escapes the seam, these diverge.
  */
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -31,7 +31,7 @@ beforeAll(() => {
 import { useGameStore } from './store';
 import { SCENARIOS } from '../data/scenarios';
 
-const TURNS = 24;
+const TURNS = 72; // 一旬一次,72 旬 = 8 季
 
 /**
  * The parts of the world worth comparing: everything the season resolver
@@ -116,7 +116,7 @@ describe('戰役重播 — 同種子同世界', () => {
    * This is the check that actually found the last four leaks — resolveSeason
    * and planAITurn were never handed an rng despite both exposing the seam,
    * and seasonBouts called resolveDuel/resolveWordWar/tickAIPersuasions bare.
-   * A fingerprint test can miss those (a rare event may not fire in 24 turns);
+   * A fingerprint test can miss those (a rare event may not fire in the ticks a run happens to cover);
    * the interceptor cannot.
    */
   it('nothing under endSeason reaches for bare Math.random', () => {
