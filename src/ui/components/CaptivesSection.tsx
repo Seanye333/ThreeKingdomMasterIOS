@@ -94,7 +94,19 @@ export function CaptivesSection({ cityId }: Props) {
         {captives.map((o) => (
           <li key={o.id} className={styles.row}>
             <OfficerHoverCard officer={o}>
-              <div className={styles.head} onClick={() => setCardId(o.id)} title={t('武將卡', 'Officer card')} style={{ cursor: 'pointer' }}>
+              {/* 鍵盤可達 — see ArmouryModal: an onClick div cannot be tabbed
+                  to and announces as nothing. */}
+              <div
+                className={styles.head}
+                role="button"
+                tabIndex={0}
+                onClick={() => setCardId(o.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setCardId(o.id); }
+                }}
+                title={t('武將卡', 'Officer card')}
+                style={{ cursor: 'pointer' }}
+              >
                 {lang !== 'en' && <span className={styles.nameZh}>🎴 {o.name.zh}</span>}
                 {lang !== 'zh' && <span className={styles.nameEn}>{o.name.en}</span>}
                 <span className={styles.stats}>

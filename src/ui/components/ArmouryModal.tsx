@@ -232,7 +232,19 @@ export function ArmouryModal({ onClose }: Props) {
         {wallView && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(108px, 1fr))', gap: 8, overflowY: 'auto', padding: '0.6rem' }}>
             {visibleItems.map((item) => (
-              <div key={item.id} style={{ cursor: 'pointer' }} onClick={() => setItemCardId(item.id)}>
+              // 鍵盤可達 — a bare onClick div is unreachable without a mouse
+              // and invisible to a screen reader. role+tabIndex+key handler is
+              // the minimal fix that keeps the tile's layout untouched.
+              <div
+                key={item.id}
+                role="button"
+                tabIndex={0}
+                style={{ cursor: 'pointer' }}
+                onClick={() => setItemCardId(item.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setItemCardId(item.id); }
+                }}
+              >
                 <ItemTile itemId={item.id} />
               </div>
             ))}
