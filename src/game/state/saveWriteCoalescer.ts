@@ -5,17 +5,26 @@
  *
  * `endSeason` is synchronous and commits ~27 times (each `set()` is a separate
  * zustand commit, and persist writes after every one). Measured over 240 ticks
- * of the opening scenario:
- *
- *   - 468 storage writes — 1.9 per tick
- *   - 248 MB serialized in total, averaging 542 KB a write
- *   - 17% of the whole season-resolution cost was JSON.stringify alone
+ * of the opening scenario: 468 storage writes — 1.9 per tick — each carrying
+ * the whole ~690-KB save.
  *
  * Every one of those writes except the last is a world that existed for
  * microseconds. Nobody can load them; the next commit overwrites them. On a
- * desktop that is merely wasteful, but the save is ~690 KB by year ten and the
- * real target is iOS, where each write is a stringify plus an IndexedDB
- * transaction.
+ * desktop that is merely wasteful, but the real target is iOS, where each
+ * write is a `JSON.stringify` of the whole save plus an IndexedDB transaction.
+ *
+ * ## Why this replaces `createJSONStorage` rather than wrapping it
+ *
+ * The first version of this module wrapped a `StateStorage` — the string-level
+ * interface — and sat UNDER `createJSONStorage`. That halved the IndexedDB
+ * writes and nothing else: persist serialized on every single commit and only
+ * the final string reached the buffer. Measured, it was plain — 60 ticks gave
+ * 60 storage writes but **121 `JSON.stringify` calls**. The expensive half was
+ * never coalesced at all.
+ *
+ * So this is a `PersistStorage` instead: it buffers the state OBJECT and
+ * serializes once, at drain time. It absorbs `createJSONStorage`'s job (the
+ * stringify/parse pair) precisely so that job can be deferred.
  *
  * ## Why the fix belongs here and not at the 27 call sites
  *
@@ -40,9 +49,9 @@
  *     page (`visibilitychange` → hidden, `pagehide`) flushes first. On iOS the
  *     app being backgrounded fires both.
  */
-import type { StateStorage } from 'zustand/middleware';
+import type { PersistStorage, StateStorage, StorageValue } from 'zustand/middleware';
 
-type Pending = { kind: 'set'; value: string } | { kind: 'remove' };
+type Pending<S> = { kind: 'set'; value: StorageValue<S> } | { kind: 'remove' };
 
 /** Every live coalescer's flush, so page-lifecycle events can drain them all. */
 const registry = new Set<() => Promise<void>>();
@@ -73,23 +82,24 @@ function bindLifecycle(): void {
 }
 
 /**
- * Wrap a StateStorage so writes issued in the same synchronous block collapse
- * into a single write of the final value, flushed on the next microtask.
+ * A `PersistStorage` that collapses a synchronous burst of commits into one
+ * serialize-and-write of the final state.
  *
- * A microtask — not a timer — is deliberate. It is the shortest delay that
- * still spans a whole synchronous commit run, so `endSeason` collapses to one
- * write while a save is never more than a tick of the event loop behind the
- * store. A longer window would coalesce more and risk more.
+ * Drop-in for `createJSONStorage(() => inner)` — it does the same JSON work,
+ * just deferred to the moment the write actually happens, which is the entire
+ * point (see the module header).
  *
- * The returned storage carries `flush()` for callers that need the write on
- * disk right now (tests, and the save-slot code that copies the live blob).
+ * The returned storage carries `flush()` for callers that need the save on
+ * disk right now (tests, and anything copying the live blob to a slot).
  */
-export function coalesceWrites(inner: StateStorage): StateStorage & { flush(): Promise<void> } {
-  const pending = new Map<string, Pending>();
+export function coalesceWrites<S>(
+  inner: StateStorage,
+): PersistStorage<S> & { flush(): Promise<void> } {
+  const pending = new Map<string, Pending<S>>();
   // Entries handed to the backing store but not yet confirmed written. They
   // have left `pending` and have not arrived in `inner`, so without this a
   // read in that window falls through to the stale stored value.
-  const inflight = new Map<string, Pending>();
+  const inflight = new Map<string, Pending<S>>();
   let timer: ReturnType<typeof setTimeout> | null = null;
   // Serializes the actual writes so two flushes cannot interleave and land a
   // stale value last. Every drain chains onto this.
@@ -104,8 +114,10 @@ export function coalesceWrites(inner: StateStorage): StateStorage & { flush(): P
     chain = chain.then(async () => {
       for (const [key, p] of batch) {
         try {
+          // 序列化只發生在這裡 — once per drain, not once per commit. This
+          // line is the whole reason the module owns the JSON layer.
           if (p.kind === 'remove') await inner.removeItem(key);
-          else await inner.setItem(key, p.value);
+          else await inner.setItem(key, JSON.stringify(p.value));
         } catch {
           // A failed write must not poison the chain for later saves; the
           // underlying storage already has its own quota/IDB fallbacks.
@@ -139,10 +151,20 @@ export function coalesceWrites(inner: StateStorage): StateStorage & { flush(): P
   return {
     async getItem(name) {
       // Read-through the buffer: a pending (or still-landing) write is the
-      // truth, not what the backing store happens to hold right now.
+      // truth, not what the backing store happens to hold right now. It is
+      // also still an object here, so a save-then-load inside one block skips
+      // the round trip through JSON entirely.
       const p = pending.get(name) ?? inflight.get(name);
       if (p) return p.kind === 'remove' ? null : p.value;
-      return inner.getItem(name);
+      const raw = await inner.getItem(name);
+      if (raw == null) return null;
+      try {
+        return JSON.parse(raw) as StorageValue<S>;
+      } catch {
+        // A corrupt blob must read as "no save", not throw on boot — that
+        // would take the whole app down before the title screen.
+        return null;
+      }
     },
     setItem(name, value) {
       pending.set(name, { kind: 'set', value });

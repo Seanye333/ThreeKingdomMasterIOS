@@ -9,6 +9,10 @@ import { describe, it, expect } from 'vitest';
 import type { StateStorage } from 'zustand/middleware';
 import { coalesceWrites, flushPendingSaves } from './saveWriteCoalescer';
 
+/** persist hands the storage a {state, version} pair, not a string. */
+const V = (x: unknown) => ({ state: x, version: 1 });
+const J = (x: unknown) => JSON.stringify(V(x));
+
 /** An inner storage that records every call it actually receives. */
 function recorder() {
   const data = new Map<string, string>();
@@ -27,31 +31,31 @@ describe('coalesceWrites 合併', () => {
   it('collapses a synchronous burst into a single write of the last value', async () => {
     const r = recorder();
     const s = coalesceWrites(r.storage);
-    for (let i = 0; i < 27; i++) await s.setItem('tkm-save', `v${i}`);
+    for (let i = 0; i < 27; i++) await s.setItem('tkm-save', V(`v${i}`));
     // Nothing has reached the backing store yet — the burst is still buffered.
     expect(r.calls.filter((c) => c.startsWith('set:'))).toHaveLength(0);
     await s.flush();
-    expect(r.calls.filter((c) => c.startsWith('set:'))).toEqual(['set:tkm-save=v26']);
-    expect(r.data.get('tkm-save')).toBe('v26');
+    expect(r.calls.filter((c) => c.startsWith('set:'))).toEqual([`set:tkm-save=${J('v26')}`]);
+    expect(r.data.get('tkm-save')).toBe(J('v26'));
   });
 
   it('flushes on its own within one microtask — no flush() call needed', async () => {
     const r = recorder();
     const s = coalesceWrites(r.storage);
-    await s.setItem('k', 'v');
+    await s.setItem('k', V('v'));
     await tick();
-    expect(r.data.get('k')).toBe('v');
+    expect(r.data.get('k')).toBe(J('v'));
   });
 
   it('writes to different keys all land', async () => {
     const r = recorder();
     const s = coalesceWrites(r.storage);
-    await s.setItem('a', '1');
-    await s.setItem('b', '2');
-    await s.setItem('a', '3');
+    await s.setItem('a', V('1'));
+    await s.setItem('b', V('2'));
+    await s.setItem('a', V('3'));
     await s.flush();
-    expect(r.data.get('a')).toBe('3');
-    expect(r.data.get('b')).toBe('2');
+    expect(r.data.get('a')).toBe(J('3'));
+    expect(r.data.get('b')).toBe(J('2'));
   });
 });
 
@@ -59,23 +63,23 @@ describe('coalesceWrites 誠實性', () => {
   it('getItem sees a pending write — save-then-load in one block reads the new world', async () => {
     const r = recorder();
     const s = coalesceWrites(r.storage);
-    await s.setItem('tkm-save', 'NEW');
+    await s.setItem('tkm-save', V('NEW'));
     // Not yet in the backing store...
     expect(r.data.has('tkm-save')).toBe(false);
     // ...but the buffer must still answer with it.
-    expect(await s.getItem('tkm-save')).toBe('NEW');
+    expect(await s.getItem('tkm-save')).toEqual(V('NEW'));
   });
 
   it('getItem falls through to the store when nothing is pending', async () => {
     const r = recorder();
-    r.data.set('tkm-save', 'OLD');
+    r.data.set('tkm-save', J('OLD'));
     const s = coalesceWrites(r.storage);
-    expect(await s.getItem('tkm-save')).toBe('OLD');
+    expect(await s.getItem('tkm-save')).toEqual(V('OLD'));
   });
 
   it('a pending remove reads as absent, not as the stale stored value', async () => {
     const r = recorder();
-    r.data.set('tkm-save', 'OLD');
+    r.data.set('tkm-save', J('OLD'));
     const s = coalesceWrites(r.storage);
     await s.removeItem('tkm-save');
     expect(await s.getItem('tkm-save')).toBeNull();
@@ -86,7 +90,7 @@ describe('coalesceWrites 誠實性', () => {
     // the buffered set lands on top and the deleted save is back.
     const r = recorder();
     const s = coalesceWrites(r.storage);
-    await s.setItem('tkm-save', 'DOOMED');
+    await s.setItem('tkm-save', V('DOOMED'));
     await s.removeItem('tkm-save');
     await s.flush();
     expect(r.data.has('tkm-save')).toBe(false);
@@ -95,12 +99,12 @@ describe('coalesceWrites 誠實性', () => {
 
   it('a write after a remove wins', async () => {
     const r = recorder();
-    r.data.set('k', 'OLD');
+    r.data.set('k', J('OLD'));
     const s = coalesceWrites(r.storage);
     await s.removeItem('k');
-    await s.setItem('k', 'NEW');
+    await s.setItem('k', V('NEW'));
     await s.flush();
-    expect(r.data.get('k')).toBe('NEW');
+    expect(r.data.get('k')).toBe(J('NEW'));
   });
 });
 
@@ -117,18 +121,18 @@ describe('coalesceWrites 韌性', () => {
       removeItem: async (k) => void data.delete(k),
     };
     const s = coalesceWrites(inner);
-    await s.setItem('k', 'lost');
+    await s.setItem('k', V('lost'));
     await s.flush();
-    await s.setItem('k', 'kept');
+    await s.setItem('k', V('kept'));
     await s.flush();
-    expect(data.get('k')).toBe('kept');
+    expect(data.get('k')).toBe(J('kept'));
   });
 
   it('flushPendingSaves drains a coalescer that nobody holds a handle to', async () => {
     const r = recorder();
-    coalesceWrites(r.storage).setItem('k', 'v');
+    coalesceWrites(r.storage).setItem('k', V('v'));
     await flushPendingSaves();
-    expect(r.data.get('k')).toBe('v');
+    expect(r.data.get('k')).toBe(J('v'));
   });
 
   it('flush on an empty buffer is a no-op, not a spurious write', async () => {

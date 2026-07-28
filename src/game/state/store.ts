@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 import { idbStorage } from './idbStorage';
 import { campaignRng } from './campaignRng';
 import { LIVE_SAVE_KEY, SAVE_VERSION, migrateSave, legacyKeyFallback } from './saveMigration';
@@ -17357,11 +17357,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       // 存檔遷移 IndexedDB — the live campaign blob leaves the 5MB
       // localStorage budget to the save slots; transparent fallback +
       // one-time migration live in idbStorage.
-      // 寫入合併 — endSeason commits ~27 times synchronously and persist used
-      // to write after every one (measured: 1.9 writes/tick, 542 KB each, 17%
-      // of season cost). All but the last are worlds nobody can load, so they
-      // collapse into one write a microtask later. See saveWriteCoalescer.ts.
-      storage: createJSONStorage(() => coalesceWrites(legacyKeyFallback(idbStorage))),
+      // 寫入合併 — endSeason commits ~27 times synchronously and persist wrote
+      // (and serialized) the whole ~690 KB save after every one. All but the
+      // last are worlds nobody can load, so they collapse into ONE serialize
+      // and one write. This replaces `createJSONStorage` rather than wrapping
+      // it: wrapping only deferred the IndexedDB write, leaving the stringify
+      // on every commit. See saveWriteCoalescer.ts.
+      storage: coalesceWrites(legacyKeyFallback(idbStorage)),
       partialize: (state) => ({
         chronicle: state.chronicle,
         date: state.date,
