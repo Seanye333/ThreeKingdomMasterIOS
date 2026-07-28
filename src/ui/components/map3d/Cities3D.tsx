@@ -3,7 +3,7 @@
  * banner, razed-city rubble, plus the City3D marker with its name pill and
  * strength bars. Extracted verbatim from StrategicMap3D.tsx (pure mechanical
  * split). */
-import { useRef } from 'react';
+import { useContext, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -13,6 +13,29 @@ import type { City } from '../../../game/types';
 import { SelectionRing3D } from '../SelectionRing3D';
 import { useLanguage, pickName } from '../../i18n';
 import { IS_MOBILE, PIXEL_TO_WORLD, MARKER_SCALE, pxToWorld } from './shared';
+import { ZoomLODCtx } from './MapCameraRig';
+
+/**
+ * 我方城池光環 — the pulsing beacon on your own cities.
+ *
+ * Its own component on purpose. The pulse lived in `City3D` as an
+ * unconditional `useFrame` whose body began `if (isOwn)` — so all ~120 cities
+ * registered a per-frame callback to animate the handful that are yours.
+ * Hooks cannot be called conditionally, but a component can be rendered
+ * conditionally, so the callback now exists only where it does something.
+ */
+function OwnCityBeacon({ radius }: { radius: number }) {
+  const ref = useRef<THREE.MeshBasicMaterial>(null);
+  useFrame(({ clock }) => {
+    if (ref.current) ref.current.opacity = 0.55 + Math.sin(clock.elapsedTime * 2.2) * 0.25;
+  });
+  return (
+    <mesh position={[0, 0.035, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <ringGeometry args={[radius + 0.18, radius + 0.30, 36]} />
+      <meshBasicMaterial ref={ref} color="#86f29a" side={THREE.DoubleSide} transparent opacity={0.6} depthWrite={false} />
+    </mesh>
+  );
+}
 
 /* ─── A single city: 3D pillar + label + capital marker ──────── */
 /* ─── Chinese-style city model — picks variant by tier + pass check ─
@@ -51,12 +74,14 @@ function CitySuburb({ radius, count }: { radius: number; count: number }) {
   );
 }
 
-function ChineseCity({ city, radius, height, forceColor, development = 0, onClick }: {
+function ChineseCity({ city, radius, height, forceColor, development = 0, far = false, onClick }: {
   city: City;
   radius: number;
   height: number;
   forceColor: string;
   development?: number;
+  /** 遠景 — camera pulled out; drop detail that is sub-pixel at this zoom. */
+  far?: boolean;
   onClick: () => void;
 }) {
   const isPass = city.name.zh.includes('關');
@@ -67,13 +92,16 @@ function ChineseCity({ city, radius, height, forceColor, development = 0, onClic
   if (tier === 'hamlet') return (
     <>
       <HamletVillage radius={radius} height={height} forceColor={forceColor} onClick={click} />
-      <CitySuburb radius={radius} count={development} />
+      {!far && <CitySuburb radius={radius} count={development} />}
     </>
   );
 
   // Walled-city variants — pagoda story count + tower count scale with tier
-  const stories  = tier === 'town' ? 1 : tier === 'city' ? 2 : tier === 'large' ? 3 : 5;
-  const towers   = tier === 'town' ? 0 : tier === 'city' ? 2 : 4;
+  // 遠景減層 — a five-storey pagoda and a one-storey pagoda are the same
+  // handful of pixels once the camera is out; the silhouette (wall + a tower)
+  // is what reads at that distance, and that is what survives.
+  const stories  = far ? 1 : tier === 'town' ? 1 : tier === 'city' ? 2 : tier === 'large' ? 3 : 5;
+  const towers   = far ? 0 : tier === 'town' ? 0 : tier === 'city' ? 2 : 4;
   const wallHigh = tier === 'town' ? 0.40 : tier === 'city' ? 0.55 : tier === 'large' ? 0.65 : 0.75;
   // 城壁強化 — the upgrade-wall command's tiers show on the map: tier 2 raises
   // an inner-city wall ring (內城), tier 3 rings the works with a moat (三重
@@ -116,7 +144,7 @@ function ChineseCity({ city, radius, height, forceColor, development = 0, onClic
         bodyColor="#c8a878"
         roofColor="#3a3a4a"
       />
-      {tier === 'capital' && (
+      {tier === 'capital' && !far && (
         // Two side halls flanking the central pagoda
         <>
           <SideHall x={-radius * 0.7} z={0} radius={radius * 0.3}
@@ -125,7 +153,7 @@ function ChineseCity({ city, radius, height, forceColor, development = 0, onClic
             baseY={height * wallHigh + 0.02} h={height * 0.35} />
         </>
       )}
-      <CitySuburb radius={radius} count={development} />
+      {!far && <CitySuburb radius={radius} count={development} />}
     </>
   );
 }
@@ -500,14 +528,13 @@ export function City3D({
   // dense clusters (Luoyang basin, Shu passes, Xiangyang/Fancheng) without
   // moving any city off its real-geography position.
   const worldScale = PIXEL_TO_WORLD * 50 * 0.6 * MARKER_SCALE;   // 0.5→0.6: cities ~20% larger to read as proper cities under the name pills (still de-crowded enough for the dense clusters)
-  // Own-city beacon pulse (selection pulse lives in SelectionRing3D)
-  const ownRingRef = useRef<THREE.MeshBasicMaterial>(null);
   const lang = useLanguage();
-  useFrame(({ clock }) => {
-    if (ownRingRef.current && isOwn) {
-      ownRingRef.current.opacity = 0.55 + Math.sin(clock.elapsedTime * 2.2) * 0.25;
-    }
-  });
+  // 遠景略去細部 — anything past the `near` tier renders the silhouette only.
+  // At the DEFAULT camera height a large city is under four pixels across, so
+  // the full model (wall + gate tower + 5 pagoda storeys + 4 corner towers +
+  // side halls + 10 suburb huts, each its own draw call) is spent on nothing.
+  // See ZoomLODCtx for the measurement behind the thresholds.
+  const far = useContext(ZoomLODCtx) !== 'near';
 
   return (
     <group position={[x, terrainY, z]} scale={worldScale}>
@@ -517,18 +544,14 @@ export function City3D({
         <meshBasicMaterial color={forceColor} transparent opacity={0.45} />
       </mesh>
       {/* 我方城池 — a glowing beacon ring so your own cities pop from afar. */}
-      {isOwn && (
-        <mesh position={[0, 0.035, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[radius + 0.18, radius + 0.30, 36]} />
-          <meshBasicMaterial ref={ownRingRef} color="#86f29a" side={THREE.DoubleSide} transparent opacity={0.6} depthWrite={false} />
-        </mesh>
-      )}
+      {isOwn && <OwnCityBeacon radius={radius} />}
       <ChineseCity
         city={city}
         radius={radius}
         height={height}
         forceColor={forceColor}
         development={development}
+        far={far}
         onClick={onClick}
       />
       {/* Force banner — every owned city flies its colours so ownership

@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Html, Line, OrbitControls, SoftShadows } from '@react-three/drei';
 import { ScenePostFx } from './ScenePostFx';
@@ -223,6 +223,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   const weatherPreset = WEATHER_PRESETS[weather.kind];
   // 自適應降級 — set by FrameRateWatch on the host; the heavy dressing reads it.
   const degraded = useGfxDegraded();
+  // 縮放分級 — also gates the shadow pass; see the directionalLight below.
+  const zoomLod = useContext(ZoomLODCtx);
   const season = useGameStore((s) => s.date.season) as Season;
   // 米市商旅 (§1.16) — last season's caravans, drawn under the 米價 overlay.
   const grainFlows = useGameStore((s) => s.lastGrainFlows);
@@ -353,7 +355,14 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         position={todP.sunPos}
         intensity={seasonPreset.sun.intensity * todP.sunMul}
         color={todP.sunColor ?? seasonPreset.sun.color}
-        castShadow
+        // 遠景無影 — the shadow pass re-draws every caster into the shadow map,
+        // so it MULTIPLIES draw-call count rather than adding to it: profiled
+        // at rest, 5,633 scene drawables became 17,279 draw calls a frame
+        // (×3.07) and ~19 FPS. The same scene at 5,785 calls runs at 60. Past
+        // the `near` tier a city is a few pixels across and its shadow is not
+        // resolvable at all, so the pass buys nothing there. Shadows return
+        // the moment you zoom in, which is the only place they read.
+        castShadow={zoomLod === 'near'}
         // 2048 halves shadow VRAM/fill on weak GPUs; at map scale the
         // difference is invisible.
         shadow-mapSize-width={2048}
@@ -892,8 +901,9 @@ export function StrategicMap3D() {
   const [orbitTarget, setOrbitTarget] = useState<[number, number, number]>([0, 0, 0]);
   // While a battle diorama is on the map, let the camera dive much closer.
   const battleActive = useGameStore((s) => !!s.tacticalBattle);
-  // 標籤分級 — quantized camera distance, provided to City3D labels.
-  const [zoomLod, setZoomLod] = useState<'near' | 'far'>('near');
+  // 縮放分級 — quantized camera height. `mid` drops city detail meshes (the
+  // default view sits here); `far` is the label threshold. See ZoomLODCtx.
+  const [zoomLod, setZoomLod] = useState<'near' | 'mid' | 'far'>('near');
   const tod = phaseToTOD(useGameStore((s) => s.date.phase));
 
   // 畫面復原 — WebGL context-loss guard. On a long session iOS WKWebView can

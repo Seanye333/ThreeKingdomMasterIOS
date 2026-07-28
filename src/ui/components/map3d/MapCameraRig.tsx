@@ -10,25 +10,48 @@ export const MAP_FOV_DEG = 45;     // matches the <Canvas camera fov>
 export const MAP_MAX_DIST =
   (Math.hypot(MAP_W / 2, MAP_D / 2) / Math.sin((MAP_FOV_DEG / 2) * Math.PI / 180)) * 1.15;
 
-/* ─── 標籤分級 — when the camera is pulled far out, the ~120 city name+bar
-   labels turn into noise (and DOM cost). A tiny in-canvas tracker quantizes
-   camera distance into near/far; far hides labels of ordinary cities, keeping
-   capitals and the selection readable. */
-export const ZoomLODCtx = createContext<'near' | 'far'>('near');
+/* ─── 縮放分級 — one quantized camera height, two very different jobs.
+ *
+ * `far` is about LABELS: pulled right out, ~120 city name+bar pills are noise
+ * and DOM cost.
+ *
+ * `mid` is about GEOMETRY, and it is the one that decides whether the map is
+ * playable. Each city is a couple of dozen separate meshes (wall, gate tower,
+ * pagoda storeys, corner towers, side halls, a ring of suburb huts), and the
+ * map draws them for every city on the board. At the DEFAULT camera height of
+ * MAP_D×0.9 ≈ 135 a large city measures **under four pixels across** — every
+ * one of those meshes is a draw call spent on something nobody can see. The
+ * profile said so plainly: 10,514 draw calls a frame at rest, ~30 FPS, with
+ * the CPU sitting in renderBufferDirect/uniformMatrix4fv — the signature of
+ * draw-call count, not triangle count (the whole map is only ~1.3M tris).
+ *
+ * So the tiers are gauged by what a city is WORTH at that height:
+ *
+ *   near (< 45)  city ≳ 11 px — you deliberately zoomed in; render it all
+ *   mid  (45+)   city ≲ 11 px — silhouette only: wall, one pagoda, banner
+ *   far  (220+)  labels start costing more than they inform
+ *
+ * The default view sits in `mid`, which is the point: the expensive tier is
+ * the one you opt into, not the one you land in.
+ */
+export const ZoomLODCtx = createContext<'near' | 'mid' | 'far'>('near');
 // Zoom gauged by camera HEIGHT (pan-independent — distance-from-origin flips
-// erratically once you pan off-centre). City names show below this height.
+// erratically once you pan off-centre).
 const LOD_FAR_DIST = 220;
-export function ZoomLODTracker({ onChange }: { onChange: (lod: 'near' | 'far') => void }) {
+const LOD_MID_DIST = 45;
+export function ZoomLODTracker({ onChange }: { onChange: (lod: 'near' | 'mid' | 'far') => void }) {
   const { camera } = useThree();
-  const last = useRef<'near' | 'far'>('near');
+  const last = useRef<'near' | 'mid' | 'far'>('near');
   useFrame(() => {
-    // Camera height = clean zoom proxy (independent of panning). Wide
-    // hysteresis band so labels don't flicker right on the threshold.
+    // Hysteresis on both thresholds so detail doesn't strobe when the camera
+    // drifts across a boundary — a rebuild of ~120 cities' meshes per flip
+    // would cost far more than the detail is worth.
     const d = camera.position.y;
-    const next = last.current === 'far'
-      ? (d < LOD_FAR_DIST - 14 ? 'near' : 'far')
-      : (d > LOD_FAR_DIST + 14 ? 'far' : 'near');
-    if (next !== last.current) {
+    const cur = last.current;
+    const farOn = cur === 'far' ? LOD_FAR_DIST - 14 : LOD_FAR_DIST + 14;
+    const midOn = cur === 'near' ? LOD_MID_DIST + 6 : LOD_MID_DIST - 6;
+    const next: 'near' | 'mid' | 'far' = d > farOn ? 'far' : d > midOn ? 'mid' : 'near';
+    if (next !== cur) {
       last.current = next;
       onChange(next);
     }
