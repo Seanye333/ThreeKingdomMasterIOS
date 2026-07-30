@@ -3,6 +3,7 @@ import { STRATAGEM_RANGE } from '../../game/data/stratagemRanges';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Html, OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ScenePostFx } from '../components/ScenePostFx';
+import { Selection } from '@react-three/postprocessing';
 import { SkyEnvironment } from '../components/SkyEnvironment';
 import * as THREE from 'three';
 import {RENDER_HI, GFX } from '../renderQuality';
@@ -787,12 +788,13 @@ function DuelClash3D({ pos, big = false }: { pos: [number, number, number]; big?
 
 /** 日月 — a glowing sun (day/dawn/dusk) or pale moon (night) hung in the sky at
  *  the light's direction; Bloom gives it a halo. */
-function SkyBody({ position, color, night }: { position: [number, number, number]; color: string; night: boolean }) {
+function SkyBody({ position, color, night, onMesh }: { position: [number, number, number]; color: string; night: boolean; onMesh?: (m: THREE.Mesh | null) => void }) {
   const p: [number, number, number] = [position[0] * 4, position[1] * 3 + 12, position[2] * 4];
   const core = night ? 2.6 : 4;
   return (
     <group position={p} raycast={() => null}>
-      <mesh><sphereGeometry args={[core, 20, 20]} /><meshBasicMaterial color={color} toneMapped={false} /></mesh>
+      {/* 核心圓盤 — the god-rays pass needs this exact mesh as its light source. */}
+      <mesh ref={onMesh}><sphereGeometry args={[core, 20, 20]} /><meshBasicMaterial color={color} toneMapped={false} /></mesh>
       <mesh><sphereGeometry args={[core * 1.7, 20, 20]} /><meshBasicMaterial color={color} transparent opacity={0.16} toneMapped={false} depthWrite={false} /></mesh>
     </group>
   );
@@ -1019,6 +1021,7 @@ export function BattleScene({
   battle, playerSide, actionMode,
   selectedId, hovered, setHovered, onTileClick,
   attackArcs, stratagemFx, officers, embedded = false, duelFocus = null, duelClashKey = 0, duelClashBig = false,
+  onSunMesh,
 }: {
   battle: TacticalBattle;
   playerSide: 'attacker' | 'defender' | null;
@@ -1039,6 +1042,8 @@ export function BattleScene({
   duelClashKey?: number;
   /** The killing blow gets a bigger, redder clash. */
   duelClashBig?: boolean;
+  /** 體積光 — hands the sun disc mesh up to the host's ScenePostFx. */
+  onSunMesh?: (m: THREE.Mesh | null) => void;
 }) {
   const { tiles, units } = battle;
   const tileByCoord = useMemo(() => {
@@ -1194,7 +1199,7 @@ export function BattleScene({
           />
           <BattleSurround width={battle.width} height={battle.height} timeOfDay={battle.timeOfDay} weather={battle.weather} />
           {lighting.showStars && <Stars radius={80} depth={50} count={2500} factor={3} fade speed={0.5} />}
-          <SkyBody position={lighting.sun.position} color={lighting.sun.color} night={lighting.showStars} />
+          <SkyBody position={lighting.sun.position} color={lighting.sun.color} night={lighting.showStars} onMesh={onSunMesh} />
           <CameraFollow battle={battle} playerSide={playerSide} home={[hexWorld(battle.width / 2, battle.height / 2)[0], hexWorld(battle.width / 2, battle.height / 2)[1]]} focus={duelFocus} />
 
           {/* 柔影 — REMOVED. See the note in CityMapScreen3D: drei's PCSS patch
@@ -1270,7 +1275,7 @@ export function BattleScene({
 
       {/* All tiles — prisms batched into one InstancedMesh, per-tile
           overlays/interaction rendered on top. */}
-      <InstancedTilePrisms tiles={tiles} hovered={hovered} />
+      <InstancedTilePrisms tiles={tiles} hovered={hovered} skin={battle.weather === 'rain' ? 'wet' : battle.weather === 'snow' ? 'snow' : 'dry'} />
       <BoardSkirt tiles={tiles} />
       {/* 控制區紅網 — where the enemy line grips (ZoC +1 AP to break away). */}
       <ZocOverlay battle={battle} selectedUnit={selectedUnit ?? null} playerSide={playerSide} />
@@ -1700,6 +1705,8 @@ export function TacticalBattleScreen3D() {
   const [signatureBanner, setSignatureBanner] = useState<{ zh: string; en: string; key: number } | null>(null);
   // FPS 自適應 — once the frame rate stays low, shed the post stack for good.
   const [fxDegraded, setFxDegraded] = useState(false);
+  // 太陽圓盤 — SkyBody 的核心 mesh,交給 GodRays 當光源(callback-ref 提升)。
+  const [sunMesh, setSunMesh] = useState<THREE.Mesh | null>(null);
   // WebGL 上下文丟失恢復 — see useGLRecovery; without it a dropped context
   // leaves the battle permanently black.
   const { glEpoch, attachGLRecovery } = useGLRecovery('TacticalBattleScreen3D');
@@ -2574,6 +2581,10 @@ export function TacticalBattleScreen3D() {
             toneMapping: RENDER_HI ? THREE.NoToneMapping : THREE.AgXToneMapping,
           }}
         >
+          {/* 描邊高亮的作用域 —— <Selection> must enclose BOTH the composer and
+              every <Select> subtree (it is the context that carries the picked
+              meshes between them). */}
+          <Selection>
           <BattleCinematics trigger={cine} />
           {/* Swoop down onto the field from overhead when the battle opens. */}
           <IntroDive
@@ -2597,6 +2608,7 @@ export function TacticalBattleScreen3D() {
               duelFocus={duelFocus}
               duelClashKey={duelClashKey}
               duelClashBig={duelClashBig.current}
+              onSunMesh={setSunMesh}
             />
             <OrbitControls
               makeDefault
@@ -2629,10 +2641,21 @@ export function TacticalBattleScreen3D() {
                   ? { target: [duelFocus[0], 1.0, duelFocus[1]], focalLength: 0.04, bokehScale: 5 }
                   : null}
                 grade={{ saturation: 0.12, contrast: 0.12 }}
+                // 描邊 — the unit in hand, readable through the ranks in front.
+                outline={{ visibleColor: '#ffe08a', hiddenColor: '#c8912f', strength: 4.5 }}
+                // 火場熱浪 — ground fires bend the air over the field.
+                heatHaze={battle.groundFires && battle.groundFires.length > 0
+                  ? Math.min(0.6, 0.18 + battle.groundFires.length * 0.08)
+                  : 0}
+                // 體積光 — shafts from the sun disc; dawn/dusk sit low enough
+                // that units and hills genuinely occlude them. Skipped at
+                // night (the moon is the disc then — moonbeams looked wrong).
+                godRaysSun={battle.timeOfDay !== 'night' ? sunMesh : null}
                 vignette={{ offset: 0.25, darkness: 0.62 }}
               />
             )}
           </Suspense>
+          </Selection>
         </Canvas>
        </div>
 

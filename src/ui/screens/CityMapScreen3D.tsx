@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef, useContext } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { ScenePostFx } from '../components/ScenePostFx';
-import { seasonGrade } from '../sceneGrade';
+import { seasonGrade, seasonTone } from '../sceneGrade';
 import { SkyEnvironment } from '../components/SkyEnvironment';
 import { OrbitControls, Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
@@ -378,7 +378,11 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       {avenue.map((a) => (
         <mesh key={`av-${a.key}`} position={[a.x, 0.045, a.z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <boxGeometry args={[1.46, 1.46, 0.07]} />
-          <meshStandardMaterial color="#a89c84" roughness={0.97} />
+          {/* 雨濕石板 — wet flagstones darken and pick up the sky. */}
+          <meshStandardMaterial
+            color={weatherKind === 'rain' ? '#7e7a70' : '#a89c84'}
+            roughness={weatherKind === 'rain' ? 0.38 : 0.97}
+          />
         </mesh>
       ))}
       {/* Bare-earth patches + puddles break up the green ground */}
@@ -1200,7 +1204,7 @@ function CityScene({
       ]}>
       {/* Terrain tiles — prisms batched into one InstancedMesh (same as the
           battle board); per-tile groups keep hover/click. */}
-      <InstancedTilePrisms tiles={preview.tiles} hovered={hovered} />
+      <InstancedTilePrisms tiles={preview.tiles} hovered={hovered} skin={weatherKind === 'rain' ? 'wet' : weatherKind === 'snow' || season === 'winter' ? 'snow' : 'dry'} />
       {preview.tiles.map((tile) => {
         const isHovered = !!hovered && hovered.col === tile.coord.col && hovered.row === tile.coord.row;
         return (
@@ -1293,6 +1297,15 @@ function CityScene({
             {/* Water gate + wharf on the east wall */}
             <WaterGate3D x={wx} z={wz} bannerColor={bannerColor} />
             <Dock3D x={wx} z={wz} />
+            {/* 碼頭夜燈 — a real point light at the wharf when the lamps are lit,
+                so the water actually catches the glow (the other lanterns are
+                emissive fakes; three真燈已在府衙/城門,這是第四盞)。 */}
+            {/* 碼頭夜燈 — a real point light at the wharf when the lamps are lit,
+                so the water actually catches the glow (the other lanterns are
+                emissive fakes; 府衙/城門/市集 already have真燈,這是第四盞)。 */}
+            {RENDER_HI && light.nightGlow > 0.3 && (
+              <pointLight position={[wx + 1.2, 2.2, wz]} intensity={0.5 + light.nightGlow * 1.2} color="#ffb060" distance={11} decay={2} />
+            )}
           </>
         );
       })()}
@@ -2382,6 +2395,8 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
                 intensity: phase === 'lower' ? 0.7 : 0.35,
               }}
               grade={seasonGrade(season, phase === 'lower')}
+              tone={seasonTone(season, phase === 'lower')}
+              heatHaze={weatherKind === 'drought' ? 0.55 : 0}
               vignette={{ offset: 0.3, darkness: 0.5 }}
             />
           )}

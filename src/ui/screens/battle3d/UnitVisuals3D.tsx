@@ -17,6 +17,7 @@ import { hexWorld } from './battleGrid';
 import { facingRotationY } from './facing';
 import { plateBadges, derivedBadges, FATIGUE_BADGE_AT, type StatusBadge } from './statusBadges';
 import { EmbeddedSceneCtx, IS_MOBILE, UNIT_GLYPH } from './shared';
+import { Select } from '@react-three/postprocessing';
 
 /** Subtler grain for armour plate so it catches light without looking pitted. */
 const ARMOR_NORMAL_SCALE = new THREE.Vector2(0.35, 0.35);
@@ -822,6 +823,11 @@ export function UnitMesh({
   // Mount lifts the rider/driver/sailor above the ground feature
 
   return (
+    // 描邊高亮 — the unit in hand gets a glowing outline (ScenePostFx `outline`).
+    // The foot ring alone loses the argument in a packed line: it is at ground
+    // level and the ranks in front cover it. <Select> only registers meshes,
+    // so wrapping is free when nothing is selected.
+    <Select enabled={selected}>
     <group ref={groupRef} position={[tx, terrainH + 0.02, tz]}>
       {/* 受擊紅光 — flares on every troop loss (opacity driven in useFrame). */}
       <mesh position={[0, 0.55 + yLift, 0]} raycast={() => null}>
@@ -985,6 +991,7 @@ export function UnitMesh({
         </div>
       </Html>}
     </group>
+    </Select>
   );
 }
 

@@ -2,7 +2,7 @@ import { Suspense, useContext, useEffect, useMemo, useRef, useState } from 'reac
 import { Canvas } from '@react-three/fiber';
 import { Html, Line, OrbitControls } from '@react-three/drei';
 import { ScenePostFx } from './ScenePostFx';
-import { seasonGrade } from '../sceneGrade';
+import { seasonGrade, seasonTone } from '../sceneGrade';
 import { SkyEnvironment } from './SkyEnvironment';
 import {RENDER_HI, GFX } from '../renderQuality';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
@@ -70,6 +70,7 @@ export { computeBeaconAlerts };
 
 import { MAP_FOV_DEG, MAP_MAX_DIST, ZoomLODCtx, ZoomLODTracker, MiniNavRig, MapCamApi, type CamApi } from './map3d/MapCameraRig';
 import { SEASON_PRESETS, TOD_PRESETS, WEATHER_PRESETS } from './map3d/mapPresets';
+import { skySunWorldPos } from './map3d/AtmosphereTrade3D';
 import { phaseToTOD } from './map3d/mapPresets';
 import { CityQuickRing, CitySearchBox, OVERLAY_OPTIONS, WEATHER_ZH, WEATHER_EN, ArmyOrdersHint, MapHelpPanel } from './map3d/MapHudWidgets';
 // Preserve the public surface — phaseToTOD/TimeOfDay lived here before the split.
@@ -1846,6 +1847,14 @@ export function StrategicMap3D() {
                 intensity: tod === 'night' ? 0.9 : 0.35,
               }}
               grade={seasonGrade(season, tod === 'night')}
+              tone={seasonTone(season, tod === 'night')}
+              heatHaze={weather.kind === 'drought' ? 0.45 : 0}
+              // 鏡頭光暈 — ghost polygons + halo on the sun disc the dome
+              // draws; dusk warms it. Off at night (the moon glares, it does
+              // not flare) and on phones (the pass is real fill rate).
+              flare={tod !== 'night'
+                ? { position: skySunWorldPos(TOD_PRESETS[tod].sunPos), color: tod === 'dusk' ? '#ffb070' : '#fff2d0' }
+                : null}
               vignette={{ offset: 0.32, darkness: 0.42 }}
             />
           )}

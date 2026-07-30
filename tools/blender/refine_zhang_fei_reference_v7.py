@@ -138,7 +138,7 @@ def build_guarded_battle_pose(rig):
     rotate_pose_bone(rig, "head", "X", 1.8)
 
 
-def bind_left_forearm_bridge(rig):
+def bridge_left_forearm_in_final_pose(rig):
     # The original bracers are one combined two-arm mesh.  Once the upper body
     # turns, that object cannot follow the left forearm independently and a
     # skin-colored tube becomes exposed.  A bone-parented fitted bracer closes
@@ -150,8 +150,7 @@ def bind_left_forearm_bridge(rig):
     end = head.lerp(tail, 0.94)
     cloth = bpy.data.materials["Zhang Fei charcoal battle cloth"]
 
-    bracer = cone_between("ZhangFeiV7_Left_Forearm_Bracer", start, end, 0.041, 0.030, cloth, 48)
-    parent_to_bone(bracer, rig, "lowerarm_l")
+    cone_between("ZhangFeiV7_Left_Forearm_Bracer", start, end, 0.041, 0.030, cloth, 48)
 
 
 def render(scene, camera, path, resolution, location, target, lens):
@@ -167,8 +166,8 @@ def render(scene, camera, path, resolution, location, target, lens):
 def main():
     bpy.ops.wm.open_mainfile(filepath=str(INPUT_BLEND))
     rig = assign_static_costume_to_bones()
-    bind_left_forearm_bridge(rig)
     build_guarded_battle_pose(rig)
+    bridge_left_forearm_in_final_pose(rig)
 
     scene = bpy.context.scene
     scene.render.engine = "BLENDER_EEVEE"

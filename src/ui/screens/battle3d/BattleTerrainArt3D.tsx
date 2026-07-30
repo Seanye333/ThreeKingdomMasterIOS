@@ -721,7 +721,11 @@ export function DefenseStructure({
  *  Per-instance color carries the terrain tint (same jitter hash as
  *  HexTile) and the hover flash; interaction stays on each tile's
  *  invisible hit disk, so clicks/hover behave exactly as before. */
-export function InstancedTilePrisms({ tiles, hovered }: { tiles: TacticalTile[]; hovered: HexCoord | null }) {
+export function InstancedTilePrisms({ tiles, hovered, skin = 'dry' }: { tiles: TacticalTile[]; hovered: HexCoord | null;
+  /** 地表天候 — 'wet' 雨後濕潤(暗+反光), 'snow' 積雪(白+柔). The base colour
+   *  multiplies the per-instance terrain colours, so one material tints the
+   *  whole board without touching the instance data. */
+  skin?: 'dry' | 'wet' | 'snow' }) {
   const ref = useRef<THREE.InstancedMesh>(null);
   const surf = useMemo(() => ({ normal: groundNormalTexture(), rough: groundRoughnessTexture() }), []);
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -770,11 +774,14 @@ export function InstancedTilePrisms({ tiles, hovered }: { tiles: TacticalTile[];
     >
       <cylinderGeometry args={[R * 0.98, R * 0.98, 1, 6]} />
       <meshStandardMaterial
-        color="#ffffff"
+        // 雨濕 — wet earth is darker and reflective where dry earth eats light.
+        // 積雪 — snow lifts everything toward white and softens the specular.
+        // (Both ride the base colour, which multiplies the instance colours.)
+        color={skin === 'wet' ? '#c2c9d2' : skin === 'snow' ? '#e6ecf2' : '#ffffff'}
         normalMap={surf.normal ?? undefined}
         normalScale={SURFACE_NORMAL_SCALE}
         roughnessMap={surf.rough ?? undefined}
-        roughness={0.92}
+        roughness={skin === 'wet' ? 0.5 : skin === 'snow' ? 0.82 : 0.92}
         metalness={0.05}
       />
     </instancedMesh>

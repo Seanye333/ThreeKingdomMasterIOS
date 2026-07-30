@@ -13,6 +13,14 @@ import { geoToPixel } from '../../../game/data/geography';
 import { citySize } from '../../../game/systems/citySize';
 import { IS_MOBILE, pxToWorld, sampleTerrainHeight, cityElevation, MAP_W, MAP_D } from './shared';
 
+
+/** 太陽的世界座標 — same maths the dome uses (dir × R·0.9), exported so the
+ *  outer map can aim the lens-flare pass at the disc it actually draws. */
+export function skySunWorldPos(sunPos: [number, number, number]): [number, number, number] {
+  const v = new THREE.Vector3(...sunPos).normalize().multiplyScalar(1500 * 0.9);
+  return [v.x, v.y, v.z];
+}
+
 /* ─── 天穹 — a gradient sky dome + sun, the void above the horizon filled ──
  *  An inverted sphere parented to the camera so its edge is never reached;
  *  zenith blue → horizon haze (matched to the fog colour so land melts into

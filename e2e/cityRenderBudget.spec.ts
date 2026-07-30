@@ -59,6 +59,10 @@ const PROBE = `
 test('the city scene links every shader, and parks the world map behind it', async ({ page }) => {
   test.setTimeout(180_000);
   await page.addInitScript(PROBE);
+  // StaticBatch reports its own census on every bake — the only FPS-independent
+  // handle on whether batching actually happened (see the assertion below).
+  const batchLogs: string[] = [];
+  page.on('console', (msg) => { if (msg.text().includes('[StaticBatch]')) batchLogs.push(msg.text()); });
 
   await startCampaign(page);
   await expect(page.locator('canvas').first()).toBeVisible({ timeout: 60_000 });
@@ -121,12 +125,31 @@ test('the city scene links every shader, and parks the world map behind it', asy
   ).toBe(0);
   expect(cityPerFrame, '城邑地圖沒有在畫 —— 進城後是空的').toBeGreaterThan(100);
 
-  // 靜態合批的守門 — StaticBatch 把 ~2,500 個標記 mesh 摺成 ~28 個 draw,實測
-  // 城內 4,144 → 1,598/幀。合批**設計上**靜默降級(merge 失敗就回退原樣,畫面
-  // 不會壞),所以必須有數字鎖著,否則它哪天壞了沒有任何測試會叫。上限 3,500
-  // 給足環境浮動(並行 worker 會觸發 FrameRateWatch 降級,單跑不會 —— 見
-  // mapDrawCalls.spec 的教訓),但擋得住「合批整個沒生效」的 4,144。
-  expect(cityPerFrame, `城內每幀 ${cityPerFrame} 次 draw call —— 靜態合批(StaticBatch)大概失效了`).toBeLessThan(3500);
+  /**
+   * 靜態合批的守門 —— 斷言在**合批自己報的數**上,不在每幀 draw call 上。
+   *
+   * 這條我先寫成 `cityPerFrame < 3500` 然後自己踩了 mapDrawCalls.spec 早就
+   * 記過的坑:城內每幀 draw call 會落在兩個相差一倍的穩定值上,取決於
+   * FrameRateWatch 有沒有降級 —— 降級時後處理整棧卸掉(~1,600),沒降級時
+   * N8AO 還在(~2,300)。而「合批失效 + 已降級」是 4,147,「合批生效 +
+   * 未降級」是 2,296:任何單一門檻都同時被兩種狀態橫跨,收緊就是穩定誤報。
+   *
+   * StaticBatch 的那行 log 沒有這個問題:它報的是「藏了幾個 mesh、產出幾個
+   * 合併 draw」,與畫質檔、幀率、降級都無關。合批**設計上**靜默回退(merge
+   * 失敗就當沒合過,畫面不壞),所以它壞掉時只有這條會叫。
+   */
+  const batchLine = batchLogs.at(-1);
+  expect(batchLine, 'StaticBatch 一次都沒跑 —— 城內合批沒有掛上去').toBeTruthy();
+  const m = /\[StaticBatch\] (\d+) meshes → (\d+) draws/.exec(batchLine!);
+  expect(m, `StaticBatch 的量測行格式變了:${batchLine}`).not.toBeNull();
+  const [swallowed, mergedDraws] = [Number(m![1]), Number(m![2])];
+  console.log(`靜態合批:${swallowed} 個 mesh → ${mergedDraws} 個 draw`);
+  expect(swallowed, `合批只吃到 ${swallowed} 個 mesh —— 標記(batchStatic)大概掉了`).toBeGreaterThan(1500);
+  expect(mergedDraws, `合批產出 ${mergedDraws} 個 draw —— 材質分組炸開了`).toBeLessThan(60);
+
+  // 粗放的煙霧測試:兩種降級狀態、合批生效時都遠低於此;純粹擋「整個場景
+  // 重新變成每個 mesh 一次 draw」這種災難級回歸。
+  expect(cityPerFrame, `城內每幀 ${cityPerFrame} 次 draw call —— 遠超任何正常狀態`).toBeLessThan(5000);
 
   // 出城要復原 — parking is only safe if it un-parks.
   await page.getByRole('button', { name: '離開城內' }).click();
