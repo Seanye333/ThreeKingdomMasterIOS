@@ -167,8 +167,8 @@ export function Duel3DStage(props: ComponentProps<typeof DuelGameModal>) {
     const winner = ended.winner === 'attacker' ? leftName : ended.winner === 'defender' ? rightName : t('平手', 'a draw');
     const verb = ended.killed ? t('斬', 'slew') : ended.winner === 'draw' ? t('戰平', 'fought to a draw with') : t('力克', 'bested');
     const text = ended.winner === 'draw'
-      ? t(`⚔ ${leftName} 與 ${rightName} ${verb}！(${history.current.length} 回合) #三國志大師`, `⚔ ${leftName} ${verb} ${rightName}! (${history.current.length} rounds) #ThreeKingdomMasters`)
-      : t(`⚔ ${winner} ${verb} ${winner === leftName ? rightName : leftName}！(${history.current.length} 回合) #三國志大師`, `⚔ ${winner} ${verb} ${winner === leftName ? rightName : leftName}! (${history.current.length} rounds) #ThreeKingdomMasters`);
+      ? t(`⚔ ${leftName} 與 ${rightName} ${verb}！(${history.current.length} 回合) #千古群英傳`, `⚔ ${leftName} ${verb} ${rightName}! (${history.current.length} rounds) #WarlordsEternal`)
+      : t(`⚔ ${winner} ${verb} ${winner === leftName ? rightName : leftName}！(${history.current.length} 回合) #千古群英傳`, `⚔ ${winner} ${verb} ${winner === leftName ? rightName : leftName}! (${history.current.length} rounds) #WarlordsEternal`);
     const nav = navigator as Navigator & { share?: (d: { text: string }) => Promise<void> };
     if (nav.share) { nav.share({ text }).catch(() => undefined); return; }
     navigator.clipboard?.writeText(text).then(() => {

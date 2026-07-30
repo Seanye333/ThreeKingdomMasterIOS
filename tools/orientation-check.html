@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- TEMPORARY: FBX vs GLB orientation A/B after the 2026-07 Draco conversion.
+     Delete once the duel/debate arenas are confirmed. -->
+<html>
+<head><meta charset="utf-8"><title>FBX vs GLB orientation</title>
+<style>
+  body { margin:0; background:#141118; color:#e6c473; font:13px/1.5 ui-monospace,monospace; }
+  #wrap { display:flex; }
+  .pane { width:50vw; height:100vh; position:relative; }
+  .pane + .pane { border-left:1px solid #3a2d20; }
+  .tag { position:absolute; top:8px; left:10px; z-index:2; background:rgba(0,0,0,.6); padding:3px 8px; }
+  #log { position:fixed; bottom:0; left:0; right:0; background:rgba(0,0,0,.8); padding:6px 10px;
+         max-height:26vh; overflow:auto; white-space:pre-wrap; font-size:12px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="pane" id="p0"><div class="tag">FBX (原始 · 基準)</div></div>
+  <div class="pane" id="p1"><div class="tag">GLB (Draco · 轉換後)</div></div>
+</div>
+<div id="log">loading…</div>
+<script type="module">
+import * as THREE from 'three';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+
+const logEl = document.getElementById('log');
+const lines = [];
+const log = (s) => { lines.push(s); logEl.textContent = lines.join('\n'); };
+
+// Same clip the duel plays on the sword pack, plus the character mesh.
+const FREEZE_T = 0.60;  // seconds into the slash
+const MESH = '/models/duel/X Bot';
+const CLIP = '/models/duel/Sword and Shield Pack/sword and shield slash';
+
+function scene(el) {
+  const s = new THREE.Scene();
+  s.background = new THREE.Color(0x141118);
+  const cam = new THREE.PerspectiveCamera(38, el.clientWidth / el.clientHeight, 0.1, 4000);
+  // Camera off to the +X side so a rig facing +X shows us its FRONT.
+  cam.position.set(320, 165, 245); cam.lookAt(0, 90, 0);
+  s.add(new THREE.HemisphereLight(0xf0e0c0, 0x201810, 2.2));
+  const d = new THREE.DirectionalLight(0xffffff, 1.5); d.position.set(180, 260, 160); s.add(d);
+  const grid = new THREE.GridHelper(400, 8, 0x8a6a3a, 0x3a2d20); s.add(grid);
+  // +X axis marker — the direction a fighter should face.
+  const arrow = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(0,4,0), 150, 0x66d06a, 30, 18);
+  s.add(arrow);
+  const r = new THREE.WebGLRenderer({ antialias: true });
+  r.setSize(el.clientWidth, el.clientHeight); r.setPixelRatio(1);
+  el.appendChild(r.domElement);
+  return { s, cam, r };
+}
+
+function report(tag, root, clips) {
+  const box = new THREE.Box3().setFromObject(root);
+  const sz = box.getSize(new THREE.Vector3());
+  log(`${tag}  height=${sz.y.toFixed(1)}  depth(Z)=${sz.z.toFixed(1)}  width(X)=${sz.x.toFixed(1)}`);
+  log(`${tag}  bboxMinY=${box.min.y.toFixed(1)}  bboxMaxY=${box.max.y.toFixed(1)}  originY=${root.position.y.toFixed(1)}`);
+  log(`${tag}  rootScale=${root.scale.x.toFixed(3)}  rootRotY=${THREE.MathUtils.radToDeg(root.rotation.y).toFixed(1)}°  clips=${clips.length}`);
+  if (clips[0]) log(`${tag}  clip0="${clips[0].name}" dur=${clips[0].duration.toFixed(2)}s tracks=${clips[0].tracks.length}`);
+}
+
+async function build(paneId, kind) {
+  const el = document.getElementById(paneId);
+  const { s, cam, r } = scene(el);
+  const ext = kind === 'fbx' ? '.fbx' : '.glb';
+  let mesh, clipSrc;
+  try {
+    if (kind === 'fbx') {
+      const L = new FBXLoader();
+      mesh = await L.loadAsync(encodeURI(MESH + ext));
+      clipSrc = await L.loadAsync(encodeURI(CLIP + ext));
+      s.add(mesh);
+      report('FBX', mesh, clipSrc.animations ?? []);
+      var clips = clipSrc.animations ?? [];
+    } else {
+      const L = new GLTFLoader();
+      const dl = new DRACOLoader(); dl.setDecoderPath('/draco/'); L.setDRACOLoader(dl);
+      const g = await L.loadAsync(encodeURI(MESH + ext));
+      const gc = await L.loadAsync(encodeURI(CLIP + ext));
+      mesh = g.scene; s.add(mesh);
+      report('GLB', mesh, gc.animations ?? []);
+      var clips = gc.animations ?? [];
+    }
+  } catch (e) { log(`${kind.toUpperCase()} ERROR: ${e.message}`); return; }
+
+  // Retarget by bone name, exactly like the arenas do — then FREEZE both panes
+  // on the same clip time. A free-running mixer puts the two figures at
+  // different frames, and any pose difference then looks like an orientation
+  // bug when it is only a timing difference.
+  const mixer = new THREE.AnimationMixer(mesh);
+  if (clips[0]) { const a = mixer.clipAction(clips[0]); a.play(); a.paused = true; }
+  mixer.setTime(FREEZE_T);
+  r.render(s, cam);
+  window.__ready = (window.__ready || 0) + 1;
+}
+
+await build('p0', 'fbx');
+await build('p1', 'glb');
+log('--- both panes built; green arrow = +X, the direction a fighter should face ---');
+</script>
+</body>
+</html>

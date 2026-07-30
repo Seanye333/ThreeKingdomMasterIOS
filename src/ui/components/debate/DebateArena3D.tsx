@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import type { Group } from 'three';
 import type { Officer } from '../../../game/types';
 import type { DebateRoundFx } from '../DebateGameModal';
@@ -163,6 +164,18 @@ function ProceduralScholar({ robe, action }: { robe: string; action: ScholarActi
 // ─────────────────────────── realistic Mixamo scholar ──────────────────────
 
 const ASSET_LOADER = (DEBATE_FORMAT === 'fbx' ? FBXLoader : GLTFLoader) as unknown as new () => THREE.Loader;
+
+// The GLB pack is Draco-compressed — GLTFLoader needs the decoder or loads fail.
+// Shared with the duel arena's identical setup; see DuelArena3D's attachDraco.
+let dracoLoader: DRACOLoader | null = null;
+function attachDraco(loader: THREE.Loader): void {
+  if (DEBATE_FORMAT !== 'glb') return;
+  if (!dracoLoader) {
+    dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('/draco/');
+  }
+  (loader as GLTFLoader).setDRACOLoader(dracoLoader);
+}
 // Mixamo rigs face +Z; turn the model to face +X (toward the opponent).
 const MODEL_FACE_OFFSET = Math.PI / 2;
 
@@ -206,7 +219,7 @@ function assetParts(loaded: unknown): { root: THREE.Object3D; clips: THREE.Anima
 
 function RealScholar({ action, tint, timeScale }: { action: ScholarAction; tint: string; timeScale: number }) {
   const group = useRef<Group>(null);
-  const loaded = useLoader(ASSET_LOADER, DEBATE_PACK.urls) as unknown[];
+  const loaded = useLoader(ASSET_LOADER, DEBATE_PACK.urls, attachDraco) as unknown[];
 
   // Clone the mesh so two scholars never share one skeleton, then tint the robe.
   const scene = useMemo(() => {
@@ -812,7 +825,7 @@ export function DebateArena3D({
       const blob = dataUrlToBlob(url);
       const file = blob ? new File([blob], `debate-${stamp}.png`, { type: 'image/png' }) : null;
       if (file && nav.canShare?.({ files: [file] }) && nav.share) {
-        nav.share({ files: [file], title: 'Three Kingdom Masters' }).catch(() => undefined);
+        nav.share({ files: [file], title: 'Warlords Eternal' }).catch(() => undefined);
       } else {
         const a = document.createElement('a');
         a.href = url; a.download = `debate-${stamp}.png`; a.click();
@@ -857,5 +870,5 @@ export function DebateArena3D({
 
 // Preload the pack when enabled so the first debate opens smoothly.
 if (DEBATE_ASSETS_READY) {
-  useLoader.preload(ASSET_LOADER, DEBATE_PACK.urls);
+  useLoader.preload(ASSET_LOADER, DEBATE_PACK.urls, attachDraco);
 }

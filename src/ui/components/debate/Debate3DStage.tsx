@@ -135,8 +135,8 @@ export function Debate3DStage(props: ComponentProps<typeof DebateGameModal>) {
     const winner = ended.winner === 'a' ? leftName : ended.winner === 'd' ? rightName : t('平手', 'a draw');
     const verb = ended.routed ? t('罵倒', 'shouted down') : ended.winner === 'draw' ? t('舌戰平手', 'debated to a draw with') : t('辯勝', 'out-argued');
     const text = ended.winner === 'draw'
-      ? t(`💬 ${leftName} 與 ${rightName} ${verb}！(${history.current.length} 回合) #三國志大師`, `💬 ${leftName} ${verb} ${rightName}! (${history.current.length} rounds) #ThreeKingdomMasters`)
-      : t(`💬 ${winner} ${verb} ${winner === leftName ? rightName : leftName}！(${history.current.length} 回合) #三國志大師`, `💬 ${winner} ${verb} ${winner === leftName ? rightName : leftName}! (${history.current.length} rounds) #ThreeKingdomMasters`);
+      ? t(`💬 ${leftName} 與 ${rightName} ${verb}！(${history.current.length} 回合) #千古群英傳`, `💬 ${leftName} ${verb} ${rightName}! (${history.current.length} rounds) #WarlordsEternal`)
+      : t(`💬 ${winner} ${verb} ${winner === leftName ? rightName : leftName}！(${history.current.length} 回合) #千古群英傳`, `💬 ${winner} ${verb} ${winner === leftName ? rightName : leftName}! (${history.current.length} rounds) #WarlordsEternal`);
     const nav = navigator as Navigator & { share?: (d: { text: string }) => Promise<void> };
     if (nav.share) { nav.share({ text }).catch(() => undefined); return; }
     navigator.clipboard?.writeText(text).then(() => {

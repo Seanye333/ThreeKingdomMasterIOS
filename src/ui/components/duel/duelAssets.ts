@@ -32,8 +32,13 @@ export type DuelAnim =
   | 'death'   // 倒地 — cut down
   | 'victory';// 得勝 — battle-cry flourish
 
-/** 'fbx' (current Mixamo export) or 'glb' if you later convert for iOS perf. */
-export const DUEL_FORMAT: 'fbx' | 'glb' = 'fbx';
+/** 'fbx' (raw Mixamo export) or 'glb' (Draco-compressed, what we ship).
+ *  Converted 2026-07 for App Store size: the shipped rig+clips went from
+ *  123.6 MiB of FBX to 28.5 MiB of GLB (−77%). The .fbx files stay in the repo
+ *  as the source of truth — `tools/fbx2glb.py` regenerates the .glb beside them,
+ *  and the vite prune step keeps .fbx out of the build output.
+ *  Flip back to 'fbx' only to A/B a conversion problem. */
+export const DUEL_FORMAT: 'fbx' | 'glb' = 'glb';
 
 const DIR = '/models/duel/';
 const EXT = '.' + DUEL_FORMAT;

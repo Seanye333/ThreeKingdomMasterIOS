@@ -30,8 +30,10 @@ export type DebateAnim =
   | 'rout'     // 罵倒 — composure broken; stagger back, undone
   | 'win';     // 折服 — won the exchange; a flourish (persona picks which)
 
-/** 'fbx' (current Mixamo export) or 'glb' if you later convert for iOS perf. */
-export const DEBATE_FORMAT: 'fbx' | 'glb' = 'fbx';
+/** 'fbx' (raw Mixamo export) or 'glb' (Draco-compressed, what we ship).
+ *  See DUEL_FORMAT in ../duel/duelAssets.ts — same 2026-07 conversion, and the
+ *  two must move together since both read from /models/duel/. */
+export const DEBATE_FORMAT: 'fbx' | 'glb' = 'glb';
 
 const DIR = '/models/duel/';
 const EXT = '.' + DEBATE_FORMAT;

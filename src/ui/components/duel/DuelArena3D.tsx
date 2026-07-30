@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import type { Group } from 'three';
 import type { Officer } from '../../../game/types';
 import type { DuelRoundFx } from '../DuelGameModal';
@@ -15,6 +16,7 @@ import { playSfx } from '../../../game/systems/sound';
 import {
   DUEL_ASSETS_READY, DUEL_FORMAT, DUEL_PACKS, type DuelAnim, type DuelPackId,
 } from './duelAssets';
+import { applyOfficerAppearance } from './duelOfficerAppearance';
 
 const packForClass = (c: WeaponClass): DuelPackId =>
   c === 'bow' ? 'long' : c === 'axe' ? 'axe' : weaponIsTwoHanded(c) ? 'great' : 'sword';
@@ -255,6 +257,21 @@ function ProceduralFighter({
 // rig so clips retarget by bone name. Works for FBX (current) or GLB.
 
 const ASSET_LOADER = (DUEL_FORMAT === 'fbx' ? FBXLoader : GLTFLoader) as unknown as new () => THREE.Loader;
+
+// The GLB pack is Draco-compressed, so GLTFLoader needs a decoder wired in or
+// every load fails. Only the character mesh actually carries Draco geometry —
+// X Bot is 232 KB with it vs 1794 KB without (an uncompressed GLB is *larger*
+// than the source FBX) — the pure-animation clips never engage the decoder.
+// One shared instance: each DRACOLoader spins up its own worker pool.
+let dracoLoader: DRACOLoader | null = null;
+function attachDraco(loader: THREE.Loader): void {
+  if (DUEL_FORMAT !== 'glb') return;
+  if (!dracoLoader) {
+    dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('/draco/');
+  }
+  (loader as GLTFLoader).setDRACOLoader(dracoLoader);
+}
 // Mixamo rigs face +Z; turn the model to face +X (toward the opponent), like
 // the procedural fighter. (+PI/2 — the X Bot rig faces the opponent this way.)
 const MODEL_FACE_OFFSET = Math.PI / 2;
@@ -333,11 +350,33 @@ function buildWeapon(cls: WeaponClass, H: number): THREE.Group {
       const tip = new THREE.Mesh(new THREE.ConeGeometry(len * 0.03, len * 0.16, 8), MAT.steel());
       tip.position.y = top + len * 0.06; g.add(tip);
     } else if (cls === 'glaive') {
-      // 青龍偃月刀 — a broad curved crescent blade.
-      const blade = new THREE.Mesh(new THREE.BoxGeometry(len * 0.13, len * 0.26, len * 0.02), MAT.steel());
-      blade.position.set(len * 0.05, top + len * 0.04, 0); blade.rotation.z = -0.35;
-      const collar = new THREE.Mesh(new THREE.SphereGeometry(len * 0.03, 8, 8), MAT.gold()); collar.position.y = top - len * 0.08;
-      g.add(blade, collar);
+      // 青龍偃月刀 — a true crescent silhouette instead of the old rectangular
+      // placeholder. The inner edge hugs the pole while the outer cutting edge
+      // swells forward and hooks back at the tip.
+      const bladeShape = new THREE.Shape();
+      bladeShape.moveTo(-len * 0.018, -len * 0.13);
+      bladeShape.bezierCurveTo(len * 0.055, -len * 0.09, len * 0.12, len * 0.02, len * 0.125, len * 0.12);
+      bladeShape.bezierCurveTo(len * 0.07, len * 0.085, len * 0.025, len * 0.075, -len * 0.015, len * 0.13);
+      bladeShape.lineTo(len * 0.018, len * 0.01);
+      bladeShape.lineTo(-len * 0.018, -len * 0.13);
+      const depth = len * 0.018;
+      const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, {
+        depth,
+        bevelEnabled: true,
+        bevelSegments: 2,
+        bevelSize: len * 0.004,
+        bevelThickness: len * 0.003,
+      });
+      bladeGeo.translate(0, 0, -depth * 0.5);
+      const blade = new THREE.Mesh(bladeGeo, MAT.steel());
+      blade.position.set(len * 0.035, top, 0);
+      blade.rotation.z = -0.12;
+      const collar = new THREE.Mesh(new THREE.TorusKnotGeometry(len * 0.029, len * 0.009, 40, 7, 2, 3), MAT.gold());
+      collar.position.y = top - len * 0.14;
+      collar.scale.set(1, 1, 0.55);
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(len * 0.022, len * 0.13, 10), MAT.steel());
+      spike.position.y = top + len * 0.14;
+      g.add(blade, collar, spike);
     } else { // halberd — 方天畫戟: spear tip + side crescent(s)
       const tip = new THREE.Mesh(new THREE.ConeGeometry(len * 0.028, len * 0.16, 8), MAT.steel()); tip.position.y = top + len * 0.07;
       const moon = new THREE.Mesh(new THREE.TorusGeometry(len * 0.07, len * 0.014, 6, 12, Math.PI), MAT.steel());
@@ -435,19 +474,20 @@ function assetParts(loaded: unknown): { root: THREE.Object3D; clips: THREE.Anima
   return { root: g, clips: g.animations ?? [] };
 }
 
-function RealFighter({ action, pack, weaponClass, tint, timeScale }: { action: FighterAction; pack: DuelPackId; weaponClass: WeaponClass; tint: string; timeScale: number }) {
+function RealFighter({ action, pack, weaponClass, tint, timeScale, officerId }: { action: FighterAction; pack: DuelPackId; weaponClass: WeaponClass; tint: string; timeScale: number; officerId: string }) {
   const group = useRef<Group>(null);
   const packDef = DUEL_PACKS[pack];
-  const loaded = useLoader(ASSET_LOADER, packDef.urls) as unknown[];
+  const loaded = useLoader(ASSET_LOADER, packDef.urls, attachDraco) as unknown[];
 
   // Clone the mesh so two fighters never share one skeleton, tint it, then arm it.
   const scene = useMemo(() => {
     const s = cloneSkeleton(assetParts(loaded[0]).root);
     s.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; } });
-    applyFaction(s, tint);
+    const hasOfficerLook = applyOfficerAppearance(s, officerId);
+    if (!hasOfficerLook) applyFaction(s, tint);
     attachWeapons(s, weaponClass);
     return s;
-  }, [loaded, weaponClass, tint]);
+  }, [loaded, officerId, weaponClass, tint]);
   const fit = useMemo(() => {
     const box = new THREE.Box3().setFromObject(scene);
     const h = box.max.y - box.min.y || 1;
@@ -497,8 +537,8 @@ function RealFighter({ action, pack, weaponClass, tint, timeScale }: { action: F
 // ─────────────────────────── one positioned fighter ────────────────────────
 
 function Fighter({
-  side, tunic, action, name, weaponClass, timeScale, pos,
-}: { side: 'left' | 'right'; tunic: string; action: FighterAction; name: string; weaponClass: WeaponClass; timeScale: number;
+  side, tunic, action, name, weaponClass, timeScale, officerId, pos,
+}: { side: 'left' | 'right'; tunic: string; action: FighterAction; name: string; weaponClass: WeaponClass; timeScale: number; officerId: string;
   /** 團戰站位 — optional (x, z) override so several fighters share the ring. */
   pos?: [number, number] }) {
   const x = pos ? pos[0] : side === 'left' ? -0.95 : 0.95;
@@ -508,7 +548,7 @@ function Fighter({
   return (
     <group position={[x, 0, z]} rotation={[0, rotY, 0]}>
       {DUEL_ASSETS_READY
-        ? <RealFighter action={action} pack={packForClass(weaponClass)} weaponClass={weaponClass} tint={tunic} timeScale={timeScale} />
+        ? <RealFighter action={action} pack={packForClass(weaponClass)} weaponClass={weaponClass} tint={tunic} timeScale={timeScale} officerId={officerId} />
         : <ProceduralFighter tunic={tunic} action={action} weaponClass={weaponClass} />}
       {/* faction ring underfoot */}
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -1123,11 +1163,11 @@ class ArenaErrorBoundary extends Component<{ children: ReactNode }, { failed: bo
 }
 
 function Scene({
-  left, right, leftName, rightName, leftClass, rightClass, shakeKey, big, timeScale, spark, killKey, killX,
+  left, right, leftName, rightName, leftOfficerId, rightOfficerId, leftClass, rightClass, shakeKey, big, timeScale, spark, killKey, killX,
   look, terrain, blood, leftWounds, rightWounds, finisher, photo, leftMount, rightMount, exploitFx, leftGone, rightGone,
   leftExtras, rightExtras,
 }: {
-  left: FighterAction; right: FighterAction; leftName: string; rightName: string;
+  left: FighterAction; right: FighterAction; leftName: string; rightName: string; leftOfficerId: string; rightOfficerId: string;
   leftClass: WeaponClass; rightClass: WeaponClass; shakeKey: number; big: boolean;
   timeScale: number; spark: { key: number; x: number; killed: boolean; heavy: boolean } | null; killKey: number; killX: number;
   look: TerrainLook; terrain: DuelTerrain; blood: { key: number; x: number; big: boolean } | null;
@@ -1188,18 +1228,18 @@ function Scene({
       {leftMount && <WarHorse x={-2.15} faceRight body={leftMount.body} cloth={RED} />}
       {rightMount && <WarHorse x={2.15} faceRight={false} body={rightMount.body} cloth={BLUE} />}
 
-      {!leftGone && <Fighter side="left" tunic={RED} action={left} name={leftName} weaponClass={leftClass} timeScale={timeScale} />}
-      {!rightGone && <Fighter side="right" tunic={BLUE} action={right} name={rightName} weaponClass={rightClass} timeScale={timeScale} />}
+      {!leftGone && <Fighter side="left" tunic={RED} action={left} name={leftName} officerId={leftOfficerId} weaponClass={leftClass} timeScale={timeScale} />}
+      {!rightGone && <Fighter side="right" tunic={BLUE} action={right} name={rightName} officerId={rightOfficerId} weaponClass={rightClass} timeScale={timeScale} />}
       {/* 團戰同場 — teammates hold the flank slots and fall where they stand. */}
       {(leftExtras ?? []).map((e, i) => !e.gone && (
         <Fighter key={`le-${e.officer.id}`} side="left" tunic={RED} pos={extraSlot('left', i)}
           action={{ anim: e.anim ?? 'idle', rot: i + 1, stamp: e.stamp ?? 0 }}
-          name={e.name} weaponClass={weaponClassFor(e.officer)} timeScale={timeScale} />
+          name={e.name} officerId={e.officer.id} weaponClass={weaponClassFor(e.officer)} timeScale={timeScale} />
       ))}
       {(rightExtras ?? []).map((e, i) => !e.gone && (
         <Fighter key={`re-${e.officer.id}`} side="right" tunic={BLUE} pos={extraSlot('right', i)}
           action={{ anim: e.anim ?? 'idle', rot: i + 3, stamp: e.stamp ?? 0 }}
-          name={e.name} weaponClass={weaponClassFor(e.officer)} timeScale={timeScale} />
+          name={e.name} officerId={e.officer.id} weaponClass={weaponClassFor(e.officer)} timeScale={timeScale} />
       ))}
       {spark && <HitSpark key={spark.key} position={[spark.x, 1.15, 0]} killed={spark.killed} heavy={spark.heavy} />}
       {blood && <BloodSpray key={`b${blood.key}`} position={[blood.x, 1.05, 0.1]} big={blood.big} />}
@@ -1413,7 +1453,7 @@ export function DuelArena3D({
       const blob = dataUrlToBlob(url);
       const file = blob ? new File([blob], `duel-${stamp}.png`, { type: 'image/png' }) : null;
       if (file && nav.canShare?.({ files: [file] }) && nav.share) {
-        nav.share({ files: [file], title: 'Three Kingdom Masters' }).catch(() => undefined);
+        nav.share({ files: [file], title: 'Warlords Eternal' }).catch(() => undefined);
       } else {
         const a = document.createElement('a');
         a.href = url; a.download = `duel-${stamp}.png`; a.click();
@@ -1438,6 +1478,7 @@ export function DuelArena3D({
             <Scene
               left={left} right={right}
               leftName={leftName} rightName={rightName}
+              leftOfficerId={attacker.id} rightOfficerId={defender.id}
               leftClass={leftClass} rightClass={rightClass}
               timeScale={photo ? 0 : timeScale} spark={spark} killKey={killKey} killX={killX}
               shakeKey={shakeKey} big={big}
@@ -1484,5 +1525,5 @@ function dataUrlToBlob(url: string): Blob | null {
 
 // Preload both packs when enabled so the first bout opens smoothly.
 if (DUEL_ASSETS_READY) {
-  for (const p of Object.values(DUEL_PACKS)) useLoader.preload(ASSET_LOADER, p.urls);
+  for (const p of Object.values(DUEL_PACKS)) useLoader.preload(ASSET_LOADER, p.urls, attachDraco);
 }

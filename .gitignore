@@ -33,6 +33,8 @@ public/popups/_src/
 public/duel-campaigns/_src/
 public/scenarios/_src/
 public/endings/_src/
+public/events/_src/
+public/models/duel/_src/
 
 # Editor / OS
 .DS_Store
