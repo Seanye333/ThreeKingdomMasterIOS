@@ -24,6 +24,31 @@ import { ZoomLODCtx } from './MapCameraRig';
  * Hooks cannot be called conditionally, but a component can be rendered
  * conditionally, so the callback now exists only where it does something.
  */
+/**
+ * 遠景不投影 — at the default camera height a city measures under four pixels
+ * across, and its walls and eaves shadowing each other is invisible at that
+ * size. The shadow pass does not care: it re-draws every caster, and a census
+ * of the map found 4,488 of its 5,634 visible drawables casting, the cities
+ * being the bulk. So the silhouette that survives the `mid`/`far` LOD cut stops
+ * casting too, and only the tier you deliberately zoom into pays. Measured:
+ * casters 4,488 → 1,163, 遠景靜置 36 → 45 FPS. (The default view's draw-call
+ * count is unchanged, because the light's own shadow camera already culls
+ * those cities — the win shows up once you pull out far enough that they fall
+ * back inside it.)
+ *
+ * `receiveShadow` stays on throughout: receiving costs nothing extra, and the
+ * terrain's shadow falling across a city is what sells the relief.
+ *
+ * ⚠ 只砍投影,**不要**順手砍網格。同一批試過在 mid/far 略去雉堞/城門洞/飛檐
+ * (每座城少 ~20 個次像素網格,draw call 5,020 → 3,138、靜置 52 → 60 FPS),
+ * 結果地形上冒出整片純黑的六角格。固定鏡頭 A/B 三組確認過:只開投影門控 →
+ * 乾淨;只開細節裁減 → 黑格;兩個都開 → 黑格。原因未明(城市網格與那些地形格
+ * 沒有明顯關聯),但因果是穩定可重現的,所以細節裁減整批回退。
+ */
+function useCityCastShadow(): boolean {
+  return useContext(ZoomLODCtx) === 'near';
+}
+
 function OwnCityBeacon({ radius }: { radius: number }) {
   const ref = useRef<THREE.MeshBasicMaterial>(null);
   useFrame(({ clock }) => {
@@ -48,6 +73,7 @@ function OwnCityBeacon({ radius }: { radius: number }) {
 /** 市坊 — a ring of suburb roofs that grows with the city's built structures,
  *  so a heavily-developed city visibly sprawls beyond its wall (RTK/TW). */
 function CitySuburb({ radius, count }: { radius: number; count: number }) {
+  const cast = useCityCastShadow();
   if (count <= 0) return null;
   const n = Math.min(10, count);
   return (
@@ -59,11 +85,11 @@ function CitySuburb({ radius, count }: { radius: number; count: number }) {
         const w = radius * 0.34, h = radius * (0.4 + (i % 3) * 0.12);
         return (
           <group key={i} position={[x, 0, z]} rotation={[0, -a, 0]}>
-            <mesh position={[0, h * 0.4, 0]} castShadow receiveShadow>
+            <mesh position={[0, h * 0.4, 0]} castShadow={cast} receiveShadow>
               <boxGeometry args={[w, h * 0.8, w * 0.8]} />
               <meshStandardMaterial color="#b09a78" roughness={0.92} />
             </mesh>
-            <mesh position={[0, h * 0.9, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+            <mesh position={[0, h * 0.9, 0]} rotation={[0, Math.PI / 4, 0]} castShadow={cast}>
               <coneGeometry args={[w * 0.62, h * 0.4, 4]} />
               <meshStandardMaterial color="#4a4540" roughness={0.85} />
             </mesh>
@@ -84,6 +110,7 @@ function ChineseCity({ city, radius, height, forceColor, development = 0, far = 
   far?: boolean;
   onClick: () => void;
 }) {
+  const cast = useCityCastShadow();
   const isPass = city.name.zh.includes('關');
   const tier = isPass ? 'pass' : citySize(city).id;
   const click = (e: { stopPropagation: () => void }) => { e.stopPropagation(); onClick(); };
@@ -119,11 +146,11 @@ function ChineseCity({ city, radius, height, forceColor, development = 0, far = 
       />
       {wallTier >= 2 && (
         <group>
-          <mesh position={[0, height * (wallHigh + 0.10) / 2, 0]} castShadow receiveShadow>
+          <mesh position={[0, height * (wallHigh + 0.10) / 2, 0]} castShadow={cast} receiveShadow>
             <boxGeometry args={[radius * 1.5, height * (wallHigh + 0.10), radius * 1.5]} />
             <meshStandardMaterial color="#8a6a56" roughness={0.9} />
           </mesh>
-          <mesh position={[0, height * (wallHigh + 0.10) + 0.004, 0]} castShadow>
+          <mesh position={[0, height * (wallHigh + 0.10) + 0.004, 0]} castShadow={cast}>
             <boxGeometry args={[radius * 1.58, height * 0.035, radius * 1.58]} />
             <meshStandardMaterial color="#32323f" roughness={0.7} />
           </mesh>
@@ -161,18 +188,19 @@ function ChineseCity({ city, radius, height, forceColor, development = 0, far = 
 /** A flared Chinese eave — wide tile slab, raised ridge, four upturned
  *  corner tips (戧脊). The silhouette that says "Chinese roof" at a glance. */
 function SweptEave({ y, w, d, h }: { y: number; w: number; d: number; h: number }) {
+  const cast = useCityCastShadow();
   return (
     <group position={[0, y, 0]}>
-      <mesh castShadow>
+      <mesh castShadow={cast}>
         <boxGeometry args={[w, h, d]} />
         <meshStandardMaterial color="#2a2a35" roughness={0.72} />
       </mesh>
-      <mesh position={[0, h * 0.7, 0]} castShadow>
+      <mesh position={[0, h * 0.7, 0]} castShadow={cast}>
         <boxGeometry args={[w * 0.62, h * 0.5, d * 0.16]} />
         <meshStandardMaterial color="#1d1d27" roughness={0.6} />
       </mesh>
       {([[-1, -1], [1, -1], [-1, 1], [1, 1]] as const).map(([sx, sz], i) => (
-        <mesh key={i} position={[sx * w * 0.46, h * 0.32, sz * d * 0.4]} rotation={[sz * 0.45, 0, -sx * 0.45]} castShadow>
+        <mesh key={i} position={[sx * w * 0.46, h * 0.32, sz * d * 0.4]} rotation={[sz * 0.45, 0, -sx * 0.45]} castShadow={cast}>
           <coneGeometry args={[h * 0.5, h * 1.3, 4]} />
           <meshStandardMaterial color="#2a2a35" roughness={0.7} />
         </mesh>
@@ -186,6 +214,7 @@ function SweptEave({ y, w, d, h }: { y: number; w: number; d: number; h: number 
 function GateTower({ radius: r, height, wallH, grand }: {
   radius: number; height: number; wallH: number; grand: boolean;
 }) {
+  const cast = useCityCastShadow();
   const hallH = height * 0.17;
   const hallY = wallH + height * 0.045 + hallH / 2;
   return (
@@ -196,19 +225,19 @@ function GateTower({ radius: r, height, wallH, grand }: {
         <meshStandardMaterial color="#140f09" roughness={0.95} />
       </mesh>
       {/* Stone platform crowning the wall over the gate */}
-      <mesh position={[0, wallH + height * 0.02, 0]} castShadow>
+      <mesh position={[0, wallH + height * 0.02, 0]} castShadow={cast}>
         <boxGeometry args={[r * 1.02, height * 0.045, r * 0.52]} />
         <meshStandardMaterial color="#4a4a56" roughness={0.7} />
       </mesh>
       {/* Wooden gatehouse hall */}
-      <mesh position={[0, hallY, 0]} castShadow>
+      <mesh position={[0, hallY, 0]} castShadow={cast}>
         <boxGeometry args={[r * 0.8, hallH, r * 0.4]} />
         <meshStandardMaterial color="#8a5630" roughness={0.78} />
       </mesh>
       <SweptEave y={wallH + height * 0.045 + hallH} w={r * 1.06} d={r * 0.6} h={height * 0.05} />
       {grand && (
         <>
-          <mesh position={[0, wallH + height * 0.045 + hallH + height * 0.08, 0]} castShadow>
+          <mesh position={[0, wallH + height * 0.045 + hallH + height * 0.08, 0]} castShadow={cast}>
             <boxGeometry args={[r * 0.52, height * 0.1, r * 0.3]} />
             <meshStandardMaterial color="#8a5630" roughness={0.78} />
           </mesh>
@@ -228,6 +257,7 @@ function ChineseBrickWall({ radius, height, wallHigh, towers, forceColor, onClic
   forceColor: string;
   onClick: (e: { stopPropagation: () => void }) => void;
 }) {
+  const cast = useCityCastShadow();
   const wallH = height * wallHigh;
   const cornerPositions: ReadonlyArray<readonly [number, number]> =
     towers === 0 ? []
@@ -239,7 +269,7 @@ function ChineseBrickWall({ radius, height, wallHigh, towers, forceColor, onClic
       {/* Outer wall — terracotta brick */}
       <mesh
         position={[0, wallH / 2, 0]}
-        castShadow receiveShadow
+        castShadow={cast} receiveShadow
         onClick={onClick}
         onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { document.body.style.cursor = ''; }}
@@ -248,7 +278,7 @@ function ChineseBrickWall({ radius, height, wallHigh, towers, forceColor, onClic
         <meshStandardMaterial color="#9a7560" roughness={0.92} />
       </mesh>
       {/* Wall cap — dark tile band along the top */}
-      <mesh position={[0, wallH + 0.005, 0]} castShadow>
+      <mesh position={[0, wallH + 0.005, 0]} castShadow={cast}>
         <boxGeometry args={[radius * 2.3, height * 0.04, radius * 2.3]} />
         <meshStandardMaterial color="#3a3a4a" roughness={0.7} />
       </mesh>
@@ -259,7 +289,7 @@ function ChineseBrickWall({ radius, height, wallHigh, towers, forceColor, onClic
         [1.1, -0.7], [1.1, 0], [1.1, 0.7],
         [-1.1, -0.7], [-1.1, 0], [-1.1, 0.7],
       ] as const).map(([sx, sz], i) => (
-        <mesh key={`b${i}`} position={[radius * sx, wallH + 0.045, radius * sz]} castShadow>
+        <mesh key={`b${i}`} position={[radius * sx, wallH + 0.045, radius * sz]} castShadow={cast}>
           <boxGeometry args={[radius * 0.18, height * 0.08, radius * 0.18]} />
           <meshStandardMaterial color="#7a6550" roughness={0.85} />
         </mesh>
@@ -268,18 +298,18 @@ function ChineseBrickWall({ radius, height, wallHigh, towers, forceColor, onClic
       {cornerPositions.map(([sx, sz], i) => (
         <group key={`tw${i}`} position={[radius * 1.1 * sx, 0, radius * 1.1 * sz]}>
           {/* Tower body */}
-          <mesh position={[0, wallH * 0.85, 0]} castShadow>
+          <mesh position={[0, wallH * 0.85, 0]} castShadow={cast}>
             <boxGeometry args={[radius * 0.4, wallH * 1.5, radius * 0.4]} />
             <meshStandardMaterial color={forceColor} roughness={0.7} />
           </mesh>
           {/* Eave — flat wide disc */}
-          <mesh position={[0, wallH * 1.62, 0]} castShadow>
+          <mesh position={[0, wallH * 1.62, 0]} castShadow={cast}>
             <boxGeometry args={[radius * 0.62, height * 0.025, radius * 0.62]} />
             <meshStandardMaterial color="#2a2a3a" roughness={0.7} />
           </mesh>
           {/* Pyramidal roof — rotated 45° so the square cone aligns with the
            *  square tower below */}
-          <mesh position={[0, wallH * 1.74, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
+          <mesh position={[0, wallH * 1.74, 0]} rotation={[0, Math.PI / 4, 0]} castShadow={cast}>
             <coneGeometry args={[radius * 0.32, height * 0.20, 4]} />
             <meshStandardMaterial color="#3a3a4a" roughness={0.8} />
           </mesh>
@@ -303,6 +333,7 @@ function Pagoda({
   bodyColor: string;
   roofColor: string;
 }) {
+  const cast = useCityCastShadow();
   const meshes: React.ReactNode[] = [];
   let y = baseY;
   for (let s = 0; s < stories; s++) {
@@ -310,7 +341,7 @@ function Pagoda({
     const r = radius * Math.pow(0.85, s);
     // Story body
     meshes.push(
-      <mesh key={`b${s}`} position={[x, y + storyH / 2, z]} castShadow receiveShadow>
+      <mesh key={`b${s}`} position={[x, y + storyH / 2, z]} castShadow={cast} receiveShadow>
         <cylinderGeometry args={[r * 0.92, r, storyH, 8]} />
         <meshStandardMaterial color={bodyColor} roughness={0.78} />
       </mesh>,
@@ -319,7 +350,7 @@ function Pagoda({
     const eaveR = r * 1.35;
     const eaveH = storyH * 0.13;
     meshes.push(
-      <mesh key={`e${s}`} position={[x, y + storyH + eaveH / 2, z]} castShadow>
+      <mesh key={`e${s}`} position={[x, y + storyH + eaveH / 2, z]} castShadow={cast}>
         <cylinderGeometry args={[eaveR, eaveR * 1.10, eaveH, 8]} />
         <meshStandardMaterial color={roofColor} roughness={0.75} />
       </mesh>,
@@ -328,7 +359,7 @@ function Pagoda({
   }
   // Spire — small final cone
   meshes.push(
-    <mesh key="spire" position={[x, y + storyH * 0.6, z]} castShadow>
+    <mesh key="spire" position={[x, y + storyH * 0.6, z]} castShadow={cast}>
       <coneGeometry args={[radius * 0.10, storyH * 1.2, 6]} />
       <meshStandardMaterial color="#d4a84a" roughness={0.4} metalness={0.4} />
     </mesh>,
@@ -341,12 +372,13 @@ function HamletVillage({ radius, height, forceColor, onClick }: {
   radius: number; height: number; forceColor: string;
   onClick: (e: { stopPropagation: () => void }) => void;
 }) {
+  const cast = useCityCastShadow();
   return (
     <>
       {/* Wood palisade ring */}
       <mesh
         position={[0, height * 0.18, 0]}
-        castShadow receiveShadow
+        castShadow={cast} receiveShadow
         onClick={onClick}
         onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { document.body.style.cursor = ''; }}
@@ -357,11 +389,11 @@ function HamletVillage({ radius, height, forceColor, onClick }: {
       {/* 3 small huts inside */}
       {([[-0.4, -0.3], [0.4, -0.3], [0, 0.4]] as const).map(([sx, sz], i) => (
         <group key={i} position={[radius * sx, 0, radius * sz]}>
-          <mesh position={[0, height * 0.18, 0]} castShadow>
+          <mesh position={[0, height * 0.18, 0]} castShadow={cast}>
             <boxGeometry args={[radius * 0.45, height * 0.30, radius * 0.45]} />
             <meshStandardMaterial color="#a89070" roughness={0.85} />
           </mesh>
-          <mesh position={[0, height * 0.42, 0]} castShadow>
+          <mesh position={[0, height * 0.42, 0]} castShadow={cast}>
             <coneGeometry args={[radius * 0.36, height * 0.18, 4]} />
             <meshStandardMaterial color={forceColor} roughness={0.8} />
           </mesh>
@@ -377,30 +409,31 @@ function PassGate({ radius, height, forceColor, onClick }: {
   radius: number; height: number; forceColor: string;
   onClick: (e: { stopPropagation: () => void }) => void;
 }) {
+  const cast = useCityCastShadow();
   return (
     <>
       {/* Cliff flanks — rock-grey, slightly skewed so they read as crags */}
-      <mesh position={[-radius * 1.05, height * 0.55, 0]} rotation={[0, 0.28, 0.06]} castShadow>
+      <mesh position={[-radius * 1.05, height * 0.55, 0]} rotation={[0, 0.28, 0.06]} castShadow={cast}>
         <boxGeometry args={[radius * 0.60, height * 1.20, radius * 1.9]} />
         <meshStandardMaterial color="#6e6354" roughness={0.97} />
       </mesh>
-      <mesh position={[radius * 1.05, height * 0.50, 0]} rotation={[0, -0.22, -0.05]} castShadow>
+      <mesh position={[radius * 1.05, height * 0.50, 0]} rotation={[0, -0.22, -0.05]} castShadow={cast}>
         <boxGeometry args={[radius * 0.60, height * 1.05, radius * 1.9]} />
         <meshStandardMaterial color="#75695a" roughness={0.97} />
       </mesh>
       {/* Wall stubs tying the gate into both cliffs */}
-      <mesh position={[-radius * 0.62, height * 0.30, 0]} castShadow receiveShadow>
+      <mesh position={[-radius * 0.62, height * 0.30, 0]} castShadow={cast} receiveShadow>
         <boxGeometry args={[radius * 0.55, height * 0.60, radius * 0.45]} />
         <meshStandardMaterial color="#8a7560" roughness={0.92} />
       </mesh>
-      <mesh position={[radius * 0.62, height * 0.30, 0]} castShadow receiveShadow>
+      <mesh position={[radius * 0.62, height * 0.30, 0]} castShadow={cast} receiveShadow>
         <boxGeometry args={[radius * 0.55, height * 0.60, radius * 0.45]} />
         <meshStandardMaterial color="#8a7560" roughness={0.92} />
       </mesh>
       {/* Central gate base — stone — click target */}
       <mesh
         position={[0, height * 0.35, 0]}
-        castShadow receiveShadow
+        castShadow={cast} receiveShadow
         onClick={onClick}
         onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
         onPointerOut={() => { document.body.style.cursor = ''; }}
@@ -415,30 +448,30 @@ function PassGate({ radius, height, forceColor, onClick }: {
       </mesh>
       {/* Battlements along the gate top */}
       {[-0.36, -0.12, 0.12, 0.36].map((sx, i) => (
-        <mesh key={i} position={[radius * sx, height * 0.745, radius * 0.30]} castShadow>
+        <mesh key={i} position={[radius * sx, height * 0.745, radius * 0.30]} castShadow={cast}>
           <boxGeometry args={[radius * 0.13, height * 0.09, radius * 0.08]} />
           <meshStandardMaterial color="#9c8870" roughness={0.9} />
         </mesh>
       ))}
       {/* Gatehouse — force-coloured hall with double swept eaves */}
-      <mesh position={[0, height * 0.92, 0]} castShadow>
+      <mesh position={[0, height * 0.92, 0]} castShadow={cast}>
         <boxGeometry args={[radius * 1.0, height * 0.36, radius * 0.78]} />
         <meshStandardMaterial color={forceColor} roughness={0.75} />
       </mesh>
-      <mesh position={[0, height * 1.12, 0]} castShadow>
+      <mesh position={[0, height * 1.12, 0]} castShadow={cast}>
         <boxGeometry args={[radius * 1.42, height * 0.06, radius * 1.08]} />
         <meshStandardMaterial color="#2a2a3a" roughness={0.7} />
       </mesh>
       {/* Upper storey + second eave + crown roof */}
-      <mesh position={[0, height * 1.26, 0]} castShadow>
+      <mesh position={[0, height * 1.26, 0]} castShadow={cast}>
         <boxGeometry args={[radius * 0.72, height * 0.22, radius * 0.58]} />
         <meshStandardMaterial color="#7a4a3a" roughness={0.8} />
       </mesh>
-      <mesh position={[0, height * 1.40, 0]} castShadow>
+      <mesh position={[0, height * 1.40, 0]} castShadow={cast}>
         <boxGeometry args={[radius * 1.05, height * 0.05, radius * 0.82]} />
         <meshStandardMaterial color="#2a2a3a" roughness={0.7} />
       </mesh>
-      <mesh position={[0, height * 1.52, 0]} castShadow>
+      <mesh position={[0, height * 1.52, 0]} castShadow={cast}>
         <coneGeometry args={[radius * 0.55, height * 0.26, 4]} />
         <meshStandardMaterial color="#3a3a4a" roughness={0.8} />
       </mesh>
@@ -451,14 +484,15 @@ function SideHall({ x, z, radius, baseY, h }: {
   x: number; z: number;
   radius: number; baseY: number; h: number;
 }) {
+  const cast = useCityCastShadow();
   return (
     <>
-      <mesh position={[x, baseY + h / 2, z]} castShadow receiveShadow>
+      <mesh position={[x, baseY + h / 2, z]} castShadow={cast} receiveShadow>
         <boxGeometry args={[radius * 1.3, h, radius * 1.0]} />
         <meshStandardMaterial color="#a85040" roughness={0.78} />
       </mesh>
       {/* Curved roof — using cone with 4 sides */}
-      <mesh position={[x, baseY + h + h * 0.18, z]} castShadow>
+      <mesh position={[x, baseY + h + h * 0.18, z]} castShadow={cast}>
         <coneGeometry args={[radius * 0.95, h * 0.45, 4]} />
         <meshStandardMaterial color="#3a3a4a" roughness={0.78} />
       </mesh>
@@ -470,6 +504,7 @@ function SideHall({ x, z, radius, baseY, h }: {
 function CityBanner({ color, baseY, isCapital }: {
   color: string; baseY: number; isCapital: boolean;
 }) {
+  const cast = useCityCastShadow();
   const flagRef = useRef<THREE.Mesh>(null);
   const poleH = isCapital ? 0.55 : 0.38;
   const flagW = isCapital ? 0.22 : 0.15;
@@ -482,18 +517,18 @@ function CityBanner({ color, baseY, isCapital }: {
   });
   return (
     <group>
-      <mesh position={[0, baseY + poleH / 2, 0]} castShadow>
+      <mesh position={[0, baseY + poleH / 2, 0]} castShadow={cast}>
         <cylinderGeometry args={[0.012, 0.012, poleH, 5]} />
         <meshStandardMaterial color="#1a1410" />
       </mesh>
       {/* Gold finial on capital poles. */}
       {isCapital && (
-        <mesh position={[0, baseY + poleH + 0.02, 0]} castShadow>
+        <mesh position={[0, baseY + poleH + 0.02, 0]} castShadow={cast}>
           <sphereGeometry args={[0.022, 8, 8]} />
           <meshStandardMaterial color="#f0d878" metalness={0.5} roughness={0.4} />
         </mesh>
       )}
-      <mesh ref={flagRef} position={[flagW / 2, flagY, 0]} castShadow>
+      <mesh ref={flagRef} position={[flagW / 2, flagY, 0]} castShadow={cast}>
         <planeGeometry args={[flagW, flagH]} />
         <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.6} />
       </mesh>
@@ -516,6 +551,7 @@ export function City3D({
   isOwn?: boolean;
   onClick: () => void;
 }) {
+  const cast = useCityCastShadow();
   const [px, py] = cityPixel(city.id, city.coords.x, city.coords.y);
   const [x, z] = pxToWorld(px, py);
   // Scale by city size (population or troops) — bigger cities, taller towers.
@@ -563,7 +599,7 @@ export function City3D({
       {/* 焦土 — a charred rubble heap + drifting smoke marks a razed city. */}
       {city.ruined && (
         <group>
-          <mesh position={[0, 0.06, 0]} castShadow>
+          <mesh position={[0, 0.06, 0]} castShadow={cast}>
             <coneGeometry args={[radius * 1.1, 0.16, 6]} />
             <meshStandardMaterial color="#3a3128" roughness={1} />
           </mesh>

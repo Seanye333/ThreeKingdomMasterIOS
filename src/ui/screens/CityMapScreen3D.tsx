@@ -3,7 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { ScenePostFx } from '../components/ScenePostFx';
 import { seasonGrade } from '../sceneGrade';
 import { SkyEnvironment } from '../components/SkyEnvironment';
-import { OrbitControls, Html, Instances, Instance, SoftShadows } from '@react-three/drei';
+import { OrbitControls, Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
 import { RENDER_HI } from '../renderQuality';
 import { useGLRecovery } from '../hooks/useGLRecovery';
@@ -2261,14 +2261,26 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           key={glEpoch}
           onCreated={({ gl }) => attachGLRecovery(gl)}
           camera={{ position: [centerX, camHeight * 2.6, centerZ + camOffset * 0.18], fov: 50 }}
-          shadows={RENDER_HI}
+          // 'percentage'(PCFShadowMap)寫明,不吃 r3f 的預設 —— 預設是
+          // PCFSoftShadowMap,three 0.184 已棄用它。兩者**不完全等價**(大地圖
+          // 上換型別會出事,見那邊的註解),所以這裡是量過才換的:城內同一個
+          // 釘死視角,暗部 7.42% → 7.11%、平均亮度 101.0 → 101.6,肉眼看不出來。
+          // VSM('variance')也量過,**否決** —— 漏光把地面陰影沖平(暗部 7.35%、
+          // 中間調 46.11%,牆的內側整片變亮)。
+          shadows={RENDER_HI ? 'percentage' : false}
           dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
           style={{ background: light.sky }}
         >
           {/* Shed the post stack if the frame rate stays down. */}
           {!gfxDegraded && <FrameRateWatch onDegrade={() => setGfxDegraded(true)} />}
-          {/* 柔影 — eaves and walls cast a shadow that softens with distance. */}
-          {RENDER_HI && !IS_MOBILE && !gfxDegraded && <SoftShadows size={18} samples={12} focus={0.85} />}
+          {/* 柔影 — REMOVED, and it must stay removed until drei catches up.
+              drei's <SoftShadows> rewrites three's shadowmap chunk with PCSS
+              that does `unpackRGBAToDepth(texture2D(shadowMap, uv))`. three
+              0.184 declares shadow maps as `sampler2DShadow`, so that overload
+              does not exist and the fragment shader fails to link. The city
+              scene lost 27 programs and 3,366 draw calls a frame to it: you
+              entered a city and saw an empty sky with the build plots floating
+              in it. drei 10.7.7 is the latest release and still ships this. */}
           {/* Swoop down into the city on entry; rise back up on exit. Distinct
               keys so the exit dive mounts fresh (a reused instance would keep
               its finished state and never animate). The close itself is owned

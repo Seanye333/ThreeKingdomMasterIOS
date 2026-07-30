@@ -1,6 +1,6 @@
 import { Suspense, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { Html, Line, OrbitControls, SoftShadows } from '@react-three/drei';
+import { Html, Line, OrbitControls } from '@react-three/drei';
 import { ScenePostFx } from './ScenePostFx';
 import { seasonGrade } from '../sceneGrade';
 import { SkyEnvironment } from './SkyEnvironment';
@@ -360,8 +360,22 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         // at rest, 5,633 scene drawables became 17,279 draw calls a frame
         // (×3.07) and ~19 FPS. The same scene at 5,785 calls runs at 60. Past
         // the `near` tier a city is a few pixels across and its shadow is not
-        // resolvable at all, so the pass buys nothing there. Shadows return
-        // the moment you zoom in, which is the only place they read.
+        // resolvable at all, so the pass buys nothing there.
+        //
+        // 而近景也暫時關掉(2026-07-29) —— 這張圖的陰影本身是壞的。
+        //
+        // 拿掉 drei <SoftShadows> 之後(它的 PCSS 對不上 three 0.184 的
+        // sampler2DShadow,每次開局賠掉 11 個著色器程式),近景的陰影**第一次
+        // 真的畫出來**,結果是整片六角格變成純黑。固定鏡頭量過:近黑像素從
+        // 0.15% 跳到 4.01%。逐項排除 —— normalBias 0.06 無效、shadow-intensity
+        // 0.45 無效、把這行改成 false 則黑格立刻消失。也就是說壞的是陰影 pass
+        // 自己,多半是整張地圖(±MAP_W × ±MAP_D)硬塞進一張 2048 shadow map,
+        // texel 大到深度比較整片失準。
+        //
+        // 換句話說:這張圖的陰影從來沒有正確渲染過,只是被 SoftShadows 的著色器
+        // 失敗一路蓋著。要真的修得重做陰影相機分割(CSM 或跟著鏡頭走的緊縮
+        // frustum),不是調參數。在那之前關掉 —— 畫面與玩家一直看到的完全一致,
+        // 只是不再賠上那 11 個死掉的程式。
         castShadow={zoomLod === 'near'}
         // 2048 halves shadow VRAM/fill on weak GPUs; at map scale the
         // difference is invisible.
@@ -918,6 +932,20 @@ export function StrategicMap3D() {
 
   // 自適應降級 — the runtime half of render quality. See GfxDegradedCtx.
   const [gfxDegraded, setGfxDegraded] = useState(false);
+
+  // 進城時停止繪製 — the 城邑地圖 covers the whole screen, but this Canvas kept
+  // running behind it: measured 5,019 draw calls a frame on a scene nobody can
+  // see, against the city's own 4,147. More than half the cost of standing in
+  // a city was the world map redrawing itself into an invisible buffer, and it
+  // is why the city view sat at 25 FPS.
+  //
+  // The battle screen already dodges this by unmounting the map outright
+  // (MapScreen: `!battleScreenUp && <StrategicMap3D/>`), but that is too blunt
+  // here — players hop in and out of cities constantly, and a remount rebuilds
+  // the entire scene and loses the camera. Parking the frameloop keeps the
+  // scene, the textures and the camera exactly where they were and resumes on
+  // the next frame.
+  const cityMapOpen = useGameStore((s) => s.cityMapOpen);
 
   // 鏡頭按鈕橋接 — an in-Canvas rig (MapCamApi) publishes imperative zoom /
   // recenter / flyTo helpers here, so the DOM corner buttons (which live
@@ -1710,7 +1738,12 @@ export function StrategicMap3D() {
         // restored (see glEpoch / onCreated below).
         key={glEpoch}
         // Shadow maps are the single biggest GPU cost on this scene — high tier only.
+        // r3f 預設(PCFSoftShadowMap)。城內與戰場已改寫成 'percentage'(three
+        // 0.184 棄用了這個型別),大地圖維持原樣 —— 這張圖的陰影只在 near 檔開,
+        // 動它的收益最小、風險最大,留給日後一併整理。
         shadows={RENDER_HI}
+        // See cityMapOpen above: 'never' while the city view is on top.
+        frameloop={cityMapOpen ? 'never' : 'always'}
         dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
         camera={{ position: [0, MAP_D * 0.9, MAP_D * 0.7], fov: 45, near: 0.5, far: 400 * WORLD_SCALE }}
         // preserveDrawingBuffer lets the 📷 button read the frame back.
@@ -1718,10 +1751,16 @@ export function StrategicMap3D() {
         // Recover from WebGL context loss instead of going black forever.
         onCreated={({ gl }) => attachGLRecovery(gl)}
       >
-        {/* 柔影 — PCSS: a wall's shadow is crisp at its foot and softens as it
-            runs out across the fields. Heavy enough to want the same !mobile
-            gate as AO. */}
-        {RENDER_HI && !IS_MOBILE && !gfxDegraded && <SoftShadows size={24} samples={12} focus={0.8} />}
+        {/* 柔影 — 已移除(三張圖一致)。drei 的 <SoftShadows> 用
+            `unpackRGBAToDepth(texture2D(shadowMap, uv))` 改寫 three 的
+            shadowmap chunk,而 three 0.184 的陰影圖宣告為 `sampler2DShadow`
+            —— 沒有這個多載,片段著色器連結失敗。它是**全域**改寫
+            THREE.ShaderChunk,所以只要任何一張圖掛了它,整個 app 的著色器一起
+            壞:城內因此每幀 3,336 次 draw 畫不出來,**進城只看得到一片天空**。
+            它從來沒有柔化過任何一道影子,拿掉純賺 —— 順帶讓拉近/近景平移從
+            35/33 FPS 回到 53/55(不再有著色器重編譯的抖動)。
+            drei 10.7.7(當前最新)仍帶著這段,**升 drei 前不要加回來**。
+            守衛:e2e/cityRenderBudget.spec.ts 斷言 LINK_STATUS 全數成功。 */}
         <BattleCinematics trigger={cine} />
         {/* Shed the expensive layers if the frame rate stays down, rather
             than riding it into a context loss. */}

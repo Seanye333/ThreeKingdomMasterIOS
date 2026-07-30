@@ -89,7 +89,14 @@ export function SkyEnvironment({
     sunMesh.position.set(18, 26, 12);
     envScene.add(sunMesh);
 
-    const rt = pmrem.fromScene(envScene, 0.06);
+    // 0.035, not 0.06 — three caps the blur at 20 taps, and 0.06 asked for 30,
+    // so every launch logged `THREE.sigmaRadians, 0.06, is too large and will
+    // clip` and then silently gave us the 20-tap blur anyway. This is the
+    // largest sigma that lands inside the cap, so the result is what we were
+    // already getting, minus the warning. (The env scene is a smooth gradient
+    // dome plus one sun disc; PMREM's own mip chain does most of the work and
+    // this sigma only softens the disc's edge.)
+    const rt = pmrem.fromScene(envScene, 0.035);
     const prevEnv = scene.environment;
     const prevIntensity = scene.environmentIntensity;
     // Mutating the three.js Scene is how this API works — `scene.environment`

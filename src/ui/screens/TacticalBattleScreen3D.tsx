@@ -1,7 +1,7 @@
 import { Suspense, useContext, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { STRATAGEM_RANGE } from '../../game/data/stratagemRanges';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Html, OrbitControls, Stars, SoftShadows, Sparkles } from '@react-three/drei';
+import { Html, OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ScenePostFx } from '../components/ScenePostFx';
 import { SkyEnvironment } from '../components/SkyEnvironment';
 import * as THREE from 'three';
@@ -1197,10 +1197,10 @@ export function BattleScene({
           <SkyBody position={lighting.sun.position} color={lighting.sun.color} night={lighting.showStars} />
           <CameraFollow battle={battle} playerSide={playerSide} home={[hexWorld(battle.width / 2, battle.height / 2)[0], hexWorld(battle.width / 2, battle.height / 2)[1]]} focus={duelFocus} />
 
-          {/* Percentage-closer soft shadows — contact-tight near the feet,
-              softening with distance so units sit IN the field, not on it.
-              High tier only — shadows are off entirely on the 流暢 tier. */}
-          {RENDER_HI && <SoftShadows size={26} samples={16} focus={0.7} />}
+          {/* 柔影 — REMOVED. See the note in CityMapScreen3D: drei's PCSS patch
+              fails to link against three 0.184's `sampler2DShadow` shadow maps.
+              This scene had it ungated by IS_MOBILE, so iPhones took the hit
+              too. Units still sit in the field — PCF shadows survive. */}
 
           {/* Lighting per time-of-day */}
           <ambientLight intensity={lighting.ambient} />
@@ -2558,7 +2558,9 @@ export function TacticalBattleScreen3D() {
           // = ~4× the fragments) and drop shadow maps — both are pure GPU-memory
           // wins that keep the battle scene from tipping the tab into an
           // out-of-memory reload while the strategic map context is also alive.
-          shadows={RENDER_HI}
+          // 'percentage' — see StrategicMap3D: the r3f default (PCFSoftShadowMap)
+          // is deprecated in three 0.184 and downgrades to exactly this anyway.
+          shadows={RENDER_HI ? 'percentage' : false}
           dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
           camera={{ position: [target[0] - 8, 40, target[2] + 6], fov: 45 }}
           gl={{

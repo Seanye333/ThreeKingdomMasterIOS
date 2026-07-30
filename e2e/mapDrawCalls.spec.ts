@@ -53,8 +53,10 @@ test('the default map view stays inside its draw-call budget', async ({ page }) 
   const perFrame = Math.round((after.draws - before.draws) / frames);
 
   console.log(`預設視角每幀 draw call: ${perFrame}(修復前 17,279,上限 9,000)`);
-  // Generous headroom over the measured ~5,000 so this fails on a real
-  // regression (a new always-on layer, or shadows creeping back into the
-  // default view) rather than on scene-content drift.
+  // ⚠ 這個數字**跟著執行環境走**,別照著某一次的量測收緊上限(2026-07-29 踩過)。
+  // 同一份 build:五個 worker 並行時約 3,100,單獨跑時約 6,600,兩者都穩定重現。
+  // 差別在 FrameRateWatch —— 並行時 SwiftShader 掉到 26 FPS 以下觸發降級、卸掉
+  // 水面鏡面/Bloom/雲影,單獨跑則不觸發。9,000 之所以站得住,正是因為它**同時**
+  // 容得下降級與未降級兩種狀態;要收緊就得先讓場景在測試裡進入確定的品質檔。
   expect(perFrame, `每幀 draw call ${perFrame} 超出預算 —— 大地圖預設視角會掉幀`).toBeLessThan(9000);
 });
