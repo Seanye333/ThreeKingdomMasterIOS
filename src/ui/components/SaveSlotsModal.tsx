@@ -6,6 +6,7 @@ import styles from './SaveSlotsModal.module.css';
 import { useT, useLanguage, pickName } from '../i18n';
 import { usePanelNotice } from './usePanelNotice';
 import { EmptyState } from './EmptyState';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   onClose: () => void;
@@ -16,6 +17,8 @@ interface Props {
 type SortKey = 'date' | 'year' | 'label';
 
 export function SaveSlotsModal({ onClose, mode }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const saveSlot = useGameStore((s) => s.saveSlot);
   const loadSlot = useGameStore((s) => s.loadSlot);
   const deleteSlotAction = useGameStore((s) => s.deleteSlot);
@@ -78,7 +81,16 @@ export function SaveSlotsModal({ onClose, mode }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="存檔 Save Slots"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             <div className={styles.titleZh}>

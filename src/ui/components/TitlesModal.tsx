@@ -14,6 +14,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { HONORIFICS, honorificById, honorificTier, HONORIFIC_THEME_ZH, bestFitHonorific, honorificThemeFit } from '../../game/data/honorifics';
 import { CLANS } from '../../game/data/clans';
 import { clanScions, clanCohesion, clanDefectionChance } from '../../game/systems/clans';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 function pickBestFit(
   officers: Officer[],
@@ -36,6 +37,8 @@ interface Props {
 type Tab = 'civic' | 'military' | 'peerage' | 'honorific' | 'history';
 
 export function TitlesModal({ onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   useEscapeKey(onClose);
   const lang = useLanguage();
   // 提示 / 抉擇 — in-panel styled feedback replacing jarring native alert()/
@@ -137,7 +140,16 @@ export function TitlesModal({ onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="封賞 Titles"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* 提示 toast — 綠=成功、赭=失敗;取代原生 alert() */}
         {toast && (
           <div style={{

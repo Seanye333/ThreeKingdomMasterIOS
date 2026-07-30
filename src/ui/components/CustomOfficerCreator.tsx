@@ -8,6 +8,7 @@ import type {
 import { Name } from './Name';
 import styles from './CustomOfficerCreator.module.css';
 import { useDesc, useLanguage } from '../i18n';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   scenario: Scenario;
@@ -33,6 +34,8 @@ const STAT_MAX = 150;
 const MAX_SKILLS = 3;
 
 export function CustomOfficerCreator({ scenario, onClose, onCreate }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const desc = useDesc();
   const lang = useLanguage();
   const [zhName, setZhName] = useState('我君');
@@ -97,7 +100,16 @@ export function CustomOfficerCreator({ scenario, onClose, onCreate }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="自創武將 Create Officer"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             {lang !== 'en' && <div className={styles.titleZh}>自定義武將</div>}

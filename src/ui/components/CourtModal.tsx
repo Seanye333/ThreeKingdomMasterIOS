@@ -13,12 +13,15 @@ import { deriveCourtFactions, FACTION_LABEL } from '../../game/systems/courtFact
 import { clanGentryWeight } from '../../game/systems/clans';
 import { LADDER_STAGES } from '../../game/systems/usurpation';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   onClose: () => void;
 }
 
 export function CourtModal({ onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   useEscapeKey(onClose);
   const forces = useGameStore((s) => s.forces);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -113,7 +116,16 @@ export function CourtModal({ onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="朝堂 Imperial Court"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             <div className={styles.titleZh}>{lang === 'en' ? 'Imperial Court' : '朝廷'}</div>

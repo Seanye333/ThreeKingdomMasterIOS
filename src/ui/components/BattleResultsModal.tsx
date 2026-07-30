@@ -12,6 +12,7 @@ import { OfficerPortrait } from './OfficerPortrait';
 import { Seal } from './Seal';
 import { AnimatedNumber } from './AnimatedNumber';
 import { useLanguage, pickName, useT } from '../i18n';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   battle: TacticalBattle;
@@ -20,6 +21,8 @@ interface Props {
 }
 
 export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const t = useT();
   useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
@@ -62,7 +65,15 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
 
   return (
     <div className={styles.backdrop}>
-      <div className={styles.modal}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="戰果 Battle Results"
+      >
         <div className={styles.headerBanner}>
           {battleArtKey && (
             <>

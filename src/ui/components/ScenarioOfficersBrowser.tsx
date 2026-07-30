@@ -9,6 +9,7 @@ import { buildHistoricalOfficers } from '../../game/data/officers';
 import { OfficerDetail } from './OfficerDetail';
 import styles from './OfficersTab.module.css';
 import { useT, useLanguage } from '../i18n';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 function topStatKey(s: OfficerStats): keyof OfficerStats {
   let key: keyof OfficerStats = 'leadership';
@@ -58,6 +59,8 @@ const SORT_LABEL_EN: Record<SortKey, string> = {
 type FilterKey = 'all' | 'unsearched' | 'free-agent' | 'elite' | string; // string = forceId
 
 export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const enabledDynasties = useGameStore((s) => s.enabledDynasties);
   const [sortKey, setSortKey] = useState<SortKey>('total');
   const [sortDir, setSortDir] = useState<'desc' | 'asc'>('desc');
@@ -171,7 +174,16 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="武將一覽 Officers"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             <div className={styles.titleZh}>{t('武將一覽', 'Officers')}</div>
@@ -249,11 +261,11 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
               }}
             >
               <option value="any">{t('任一', 'any')}</option>
-              <option value="leadership">統率</option>
-              <option value="war">武力</option>
-              <option value="intelligence">知力</option>
-              <option value="politics">政治</option>
-              <option value="charisma">魅力</option>
+              <option value="leadership">{t('統率', 'Leadership')}</option>
+              <option value="war">{t('武力', 'War')}</option>
+              <option value="intelligence">{t('知力', 'Intelligence')}</option>
+              <option value="politics">{t('政治', 'Politics')}</option>
+              <option value="charisma">{t('魅力', 'Charisma')}</option>
             </select>
             <input
               type="number"
@@ -317,7 +329,7 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
           <SortHeader label={SORT_LABEL.intelligence} col="intelligence" sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
           <SortHeader label={SORT_LABEL.politics}     col="politics"     sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
           <SortHeader label={SORT_LABEL.charisma}     col="charisma"     sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
-          <span className={styles.h2meta} title={t('戰法 · 陣形 · 政策', 'Tactics · Formations · Policies')}>戰·陣·政</span>
+          <span className={styles.h2meta} title={t('戰法 · 陣形 · 政策', 'Tactics · Formations · Policies')}>{t('戰·陣·政', 'Tac·Frm·Pol')}</span>
           <SortHeader label={SORT_LABEL.age}          col="age"          sortKey={sortKey} sortDir={sortDir} onClick={handleSort} />
         </div>
 

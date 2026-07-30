@@ -3,10 +3,13 @@ import { SEASON_LABEL, type Season } from '../../game/types';
 import { Seal } from './Seal';
 import { useLanguage, useT, pickName } from '../i18n';
 import styles from './VictoryModal.module.css';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 const MOTES = Array.from({ length: 14 }, (_, i) => i);
 
 export function VictoryModal() {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const victoryStatus = useGameStore((s) => s.victoryStatus);
   const date = useGameStore((s) => s.date);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -27,7 +30,15 @@ export function VictoryModal() {
 
   return (
     <div className={styles.backdrop}>
-      <div className={`${styles.modal} ${isVictory ? styles.victory : styles.defeat}`}>
+      <div
+        className={`${styles.modal} ${isVictory ? styles.victory : styles.defeat}`}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="結局 Ending"
+      >
         {/* 凱旋光芒 + 金粉 — only triumph gets the rotating rays and rising motes. */}
         {isVictory && (
           <>

@@ -9,6 +9,7 @@ import { playSfx } from '../../game/systems/sound';
 import styles from './BondsModal.module.css';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useT, useLanguage } from '../i18n';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   onClose: () => void;
@@ -27,6 +28,8 @@ interface BondRow {
 }
 
 export function BondsModal({ onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
@@ -164,7 +167,16 @@ export function BondsModal({ onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="絆 Bonds"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             <div className={styles.titleZh}>{t('絆', 'Bonds')}</div>

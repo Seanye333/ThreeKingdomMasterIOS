@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 import { OfficerCardModal } from './OfficerCardModal';
 import { useGameStore } from '../../game/state/store';
 import { COMMAND_DEFS } from '../../game/systems/commands';
@@ -151,6 +153,12 @@ export function OfficerDetail({
   yearOverride,
   officersOverride,
 }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
+  // Esc 關閉 — this sheet stacks on top of OfficersTab, so it has to be on the
+  // escape stack too or Escape would skip past it and tear down the whole
+  // roster underneath. The stack peels one layer per press: detail, then list.
+  useEscapeKey(onClose);
   const storeForces = useGameStore((s) => s.forces);
   const storeCities = useGameStore((s) => s.cities);
   const storeYear = useGameStore((s) => s.date.year);
@@ -245,7 +253,16 @@ export function OfficerDetail({
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="武將詳情 Officer Detail"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* 🎴 武將卡 — the trading-card view (full art + grade frame + BP). */}
         <button
           onClick={() => setShowCard(true)}

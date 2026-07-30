@@ -11,8 +11,11 @@ import { useT, useLanguage } from '../i18n';
 import { POLICY_DEFS } from '../../game/data/officerAttributes';
 import { BUILDING_DEFS_BY_ID } from '../../game/data/buildings';
 import { COMMAND_DEFS } from '../../game/systems/commands';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 export function SeasonReportModal() {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const report = useGameStore((s) => s.lastReport);
   const dismiss = useGameStore((s) => s.dismissReport);
   const selectCity = useGameStore((s) => s.selectCity);
@@ -109,6 +112,12 @@ export function SeasonReportModal() {
     <div className={styles.backdrop} onClick={dismiss}>
       <div
         className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="季報 Season Report"
         onClick={(e) => e.stopPropagation()}
         style={{ ['--season-accent' as string]: tint.accent, ['--season-glow' as string]: tint.glow }}
       >

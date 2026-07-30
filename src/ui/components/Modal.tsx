@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 import { playSfx } from '../../game/systems/sound';
 import styles from './Modal.module.css';
 
@@ -37,9 +38,6 @@ export interface ModalProps {
 }
 
 /** Elements that can hold keyboard focus, for the focus trap. */
-const FOCUSABLE_SEL =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
 /**
  * The shared modal shell. Renders the canonical ink-panel frame, a dimmed
  * backdrop, a header row (icon · title · badge … headerRight × close), and the
@@ -90,32 +88,10 @@ export function Modal({
   // 弹窗開合 — a soft sting on open; whoosh on close (in requestClose).
   useEffect(() => { playSfx('open-modal'); }, []);
 
-  // Focus management — move focus into the dialog on open (unless a child
-  // already grabbed it via autoFocus), and return it to the trigger on close.
-  const frameRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const restoreTo = (typeof document !== 'undefined' ? document.activeElement : null) as HTMLElement | null;
-    const frame = frameRef.current;
-    if (frame && !frame.contains(document.activeElement)) frame.focus();
-    return () => {
-      if (restoreTo && typeof restoreTo.focus === 'function' && document.contains(restoreTo)) {
-        restoreTo.focus();
-      }
-    };
-  }, []);
-  // Trap Tab within the frame so keyboard focus can't wander behind the modal.
-  const onFrameKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== 'Tab') return;
-    const frame = frameRef.current;
-    if (!frame) return;
-    const items = Array.from(frame.querySelectorAll<HTMLElement>(FOCUSABLE_SEL))
-      .filter((el) => el.offsetParent !== null || el === document.activeElement);
-    if (items.length === 0) { e.preventDefault(); frame.focus(); return; }
-    const first = items[0], last = items[items.length - 1];
-    const active = document.activeElement;
-    if (e.shiftKey && (active === first || active === frame)) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
-  }, []);
+  // Focus management — move focus in on open, trap Tab, hand it back on close.
+  // Lives in useDialogFocus so the two panels that hand-roll their own backdrop
+  // (OfficersTab / ForcesOverview) share this exact behaviour.
+  const { frameRef, onKeyDown: onFrameKeyDown } = useDialogFocus<HTMLDivElement>();
 
   useEscapeKey(requestClose, closeOnEsc);
 

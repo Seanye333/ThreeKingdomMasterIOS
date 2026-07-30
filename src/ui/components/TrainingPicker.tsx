@@ -6,6 +6,7 @@ import type { EntityId, Officer, PolicyId } from '../../game/types';
 import { useT, useLanguage } from '../i18n';
 import { EmptyState } from './EmptyState';
 import styles from './OfficerPicker.module.css';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   cityId: EntityId;
@@ -18,6 +19,8 @@ interface Props {
  * player can plan ahead) but greyed out with the missing-prereq listed.
  */
 export function TrainingPicker({ cityId, onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const city = useGameStore((s) => s.cities[cityId]);
   const officers = useGameStore((s) => s.officers);
   const buildings = useGameStore((s) => s.buildings);
@@ -106,7 +109,16 @@ export function TrainingPicker({ cityId, onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="武將培訓 Officer Training"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             <div className={styles.titleZh}>{hasAcademy ? t('書院培訓', 'Academy Training') : t('師徒傳授', 'Mentor Teaching')}</div>

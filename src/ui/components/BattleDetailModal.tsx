@@ -6,6 +6,7 @@ import { OfficerPortrait } from './OfficerPortrait';
 import { Name } from './Name';
 import { useLanguage, useT } from '../i18n';
 import styles from './BattleDetailModal.module.css';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   battle: BattleDetail;
@@ -13,6 +14,8 @@ interface Props {
 }
 
 export function BattleDetailModal({ battle, onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
@@ -31,7 +34,16 @@ export function BattleDetailModal({ battle, onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="戰報詳情 Battle Detail"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             {lang !== 'en' && <div className={styles.titleZh}>{battle.ambush ? '伏擊' : battle.campAssault ? '拔寨' : battle.field ? '野戰' : '戰況'}</div>}

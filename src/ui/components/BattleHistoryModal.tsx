@@ -7,6 +7,7 @@ import { BattleDetailModal } from './BattleDetailModal';
 import { Name } from './Name';
 import { useLanguage } from '../i18n';
 import styles from './BattleHistoryModal.module.css';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   onClose: () => void;
@@ -15,6 +16,8 @@ interface Props {
 type OutcomeFilter = 'all' | 'won' | 'lost' | 'conquest';
 
 export function BattleHistoryModal({ onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   useEscapeKey(onClose);
   const lang = useLanguage();
   const battles = useGameStore((s) => s.battleHistory);
@@ -76,7 +79,16 @@ export function BattleHistoryModal({ onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="戰史 Battle History"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             {lang !== 'en' && <div className={styles.titleZh}>戰史</div>}

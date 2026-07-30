@@ -8,6 +8,7 @@ import { Name } from './Name';
 import styles from './MarriagePicker.module.css';
 import { useT } from '../i18n';
 import { EmptyState } from './EmptyState';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   targetForceId: EntityId;
@@ -80,6 +81,8 @@ function WeddingReveal({ a, b, year, onDone }: { a: Officer; b: Officer; year: n
 }
 
 export function MarriagePicker({ targetForceId, onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const playerForceId = useGameStore((s) => s.playerForceId);
   const forces = useGameStore((s) => s.forces);
   const officers = useGameStore((s) => s.officers);
@@ -136,7 +139,16 @@ export function MarriagePicker({ targetForceId, onClose }: Props) {
   return (
     <>
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="婚姻外交 Marriage Diplomacy"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             <div className={styles.titleZh}>{t('婚姻外交', 'Marriage Diplomacy')}</div>

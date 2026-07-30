@@ -5,6 +5,8 @@ import { AnimatedNumber } from './AnimatedNumber';
 import { OfficerStats } from './OfficerStats';
 import { realmEthos, ethosLine, type RealmEthos } from '../../game/systems/realmEthos';
 import { useT, useLanguage } from '../i18n';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 import styles from './ForcesOverview.module.css';
 
 interface Props {
@@ -30,6 +32,11 @@ interface ForceSummary {
 }
 
 export function ForcesOverview({ onClose }: Props) {
+  // Esc 關閉 — see OfficersTab: these two hand-rolled backdrops were the only
+  // panels in the game that Escape did not close.
+  useEscapeKey(onClose);
+  // 焦點收束 — see OfficersTab; this panel hand-rolls its backdrop too.
+  const { frameRef, onKeyDown } = useDialogFocus<HTMLDivElement>();
   const forces = useGameStore((s) => s.forces);
   const cities = useGameStore((s) => s.cities);
   const t = useT();
@@ -80,7 +87,16 @@ export function ForcesOverview({ onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={lang === 'en' ? 'Forces of the Realm' : '群雄'}
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             {lang !== 'en' && <div className={styles.titleZh}>群雄</div>}

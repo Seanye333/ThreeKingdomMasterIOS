@@ -6,14 +6,18 @@ import type { EntityId, EspionageKind, Officer } from '../../game/types';
 import { OfficerStats } from './OfficerStats';
 import { Name } from './Name';
 import styles from './EspionageModal.module.css';
-import { useLanguage, useDesc } from '../i18n';
+import { useLanguage, useDesc, useT } from '../i18n';
 import { usePanelNotice } from './usePanelNotice';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   onClose: () => void;
 }
 
 export function EspionageModal({ onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
+  const t = useT();
   useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
@@ -176,7 +180,16 @@ export function EspionageModal({ onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="諜報 Espionage"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             <div className={styles.titleZh}>{lang === 'en' ? 'Espionage' : '密偵'}</div>
@@ -404,7 +417,7 @@ export function EspionageModal({ onClose }: Props) {
               minWidth: '160px',
             }}>
               <span style={{ fontSize: '0.7rem', color: '#7a8893', letterSpacing: '0.05rem' }}>
-                估算
+                {t('估算', 'Estimate')}
               </span>
               <div style={{
                 flex: 1, height: '8px', minWidth: '70px',

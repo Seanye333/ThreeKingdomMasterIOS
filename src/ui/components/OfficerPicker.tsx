@@ -10,6 +10,7 @@ import { commandFitMultiplier } from '../../game/systems/traitEffects';
 import { appointmentBonusFor } from '../../game/systems/appointmentEffects';
 import { getRapport } from '../../game/systems/rapport';
 import { playSfx } from '../../game/systems/sound';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   cityId: EntityId;
@@ -18,6 +19,8 @@ interface Props {
 }
 
 export function OfficerPicker({ cityId, commandType, onClose }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const def = COMMAND_DEFS[commandType];
   const issueCommand = useGameStore((s) => s.issueCommand);
   // 兵制 (§4.8) — the 徵兵 preview must match what the levy will actually yield.
@@ -132,7 +135,16 @@ export function OfficerPicker({ cityId, commandType, onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="選擇武將 Choose an Officer"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             {lang !== 'en' && <div className={styles.titleZh}>{def.label.zh}</div>}

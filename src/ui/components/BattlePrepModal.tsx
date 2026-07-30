@@ -20,7 +20,8 @@ import type {
 import { OfficerStats } from './OfficerStats';
 import { Name } from './Name';
 import styles from './BattlePrepModal.module.css';
-import { useLanguage, useDesc, pickName } from '../i18n';
+import { useLanguage, useDesc, pickName, useT } from '../i18n';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 interface Props {
   sourceCityId: EntityId;
@@ -108,6 +109,9 @@ export function BattlePrepModal({
   totalTroops,
   onClose,
 }: Props) {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
+  const t = useT();
   useEscapeKey(onClose);
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
@@ -336,7 +340,16 @@ export function BattlePrepModal({
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="出陣準備 Battle Preparation"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             {lang !== 'en' && <div className={styles.titleZh}>戰鬥準備{source && target ? `:${source.name.zh} → ${target.name.zh}` : ''}</div>}
@@ -445,7 +458,7 @@ export function BattlePrepModal({
                 marginTop: '0.5rem',
               }}>
                 <span style={{ color: '#7a8893', letterSpacing: '0.07rem', marginRight: '0.3rem' }}>
-                  地形組成
+                  {t('地形組成', 'Terrain mix')}
                 </span>
                 {entries.map(([k, n]) => (
                   <span key={k} style={{

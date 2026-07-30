@@ -13,7 +13,13 @@ export function YearbookModal() {
   const t = useT();
   const chronicle = useGameStore((s) => s.pendingChronicle);
   const dismiss = () => useGameStore.setState({ pendingChronicle: null });
-  useEscapeKey(chronicle ? dismiss : () => {});
+  // 用 enabled 關掉,不要註冊一個空函式 —— 這個元件永遠掛在 MapScreen 上(沒有年鑑
+  // 時 render null),所以 `chronicle ? dismiss : () => {}` 等於在沒有年鑑的整場
+  // 遊戲裡,都往 escape stack 塞一個什麼都不做的處理器。而且 `() => {}` 每次 render
+  // 都是新的身分,effect 因此每次重跑、把這個空處理器重新推回**堆疊頂端** ——
+  // Esc 只呼叫最上層,於是任何在它底下的面板都關不掉。實測:開「武將」後堆疊是
+  // ["onClose", "()=>{}"],按 Esc 叫到的是那個空函式。
+  useEscapeKey(dismiss, !!chronicle);
   if (!chronicle) return null;
   return (
     <div

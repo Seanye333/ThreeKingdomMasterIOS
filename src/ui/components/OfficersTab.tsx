@@ -9,7 +9,9 @@ import { officerGrade, officerLevel } from '../../game/systems/officerGrade';
 import type { EntityId, Officer, OfficerStats } from '../../game/types';
 import { OfficerDetail } from './OfficerDetail';
 import { OfficerHoverCard } from './OfficerHoverCard';
-import { useLanguage, pickName } from '../i18n';
+import { useLanguage, pickName, useT } from '../i18n';
+import { useEscapeKey } from '../hooks/useEscapeKey';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 import styles from './OfficersTab.module.css';
 
 function topStatKey(s: OfficerStats): keyof OfficerStats {
@@ -49,6 +51,16 @@ const SORT_LABEL: Record<SortKey, string> = {
 type FilterKey = 'all' | 'mine' | 'free-agent' | 'captive' | 'elite' | string; // string = forceId
 
 export function OfficersTab({ onClose }: Props) {
+  // Esc 關閉 — this panel and ForcesOverview are the only two of the 53 that
+  // MapScreen/CityPanel hand an `onClose` to that never reached the escape
+  // stack: they predate the shared <Modal> wrapper and hand-roll their own
+  // backdrop, so neither route registered them. Every other panel in the game
+  // closes on Escape, which is exactly what makes these two feel broken.
+  useEscapeKey(onClose);
+  // 焦點收束 — same as every <Modal>: focus moves in, Tab stays inside, and it
+  // goes back to the 武將 button on close. This panel hand-rolls its backdrop,
+  // so none of that came for free.
+  const { frameRef, onKeyDown } = useDialogFocus<HTMLDivElement>();
   const officers = useGameStore((s) => s.officers);
   const forces = useGameStore((s) => s.forces);
   const cities = useGameStore((s) => s.cities);
@@ -167,7 +179,16 @@ export function OfficersTab({ onClose }: Props) {
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={lang === 'en' ? 'Officers' : '武將'}
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className={styles.header}>
           <div>
             <div className={styles.titleZh}>{lang === 'en' ? 'Officers' : '武将'}</div>
@@ -402,6 +423,7 @@ function OfficerRow({
   const task = o.task ? (lang === 'en' ? COMMAND_DEFS[o.task]?.label.en : COMMAND_DEFS[o.task]?.label.zh) : null;
   const top = topStatKey(o.stats);
   const grade = officerGrade(o);
+  const t = useT();
   const lvl = officerLevel(o);
   const tacticsCount = deriveTactics(o.stats, o.id).length;
   const formationsCount = deriveFormations(o.stats, o.id).length;
@@ -444,7 +466,7 @@ function OfficerRow({
           <span className={styles.rowLocation}>· {locationName}</span>
           {task && <span className={styles.rowTask}> · {task}</span>}
           {o.status === 'imprisoned' && (
-            <span className={styles.rowCaptive}> · 捕虜</span>
+            <span className={styles.rowCaptive}> · {t('捕虜', 'captive')}</span>
           )}
         </span>
       </span>
