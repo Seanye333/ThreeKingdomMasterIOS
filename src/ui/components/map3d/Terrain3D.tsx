@@ -3,10 +3,11 @@
    warmStrategicAssets prewarm), the territory tint layer, and the ground
    mesh. Pure world-floor concerns; no HUD. */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { getTerritoryCanvas, getTerritorySignature } from '../territoryOverlay';
 import { MAP_W as PX_W, MAP_H as PX_H, WORLD_SCALE } from '../../../game/data/geography';
-import type { City, Force } from '../../../game/types';
+import type { City, Force, Season as SeasonName } from '../../../game/types';
 import { warmHexWorldTiles } from './HexWorld3D';
 import { IS_MOBILE, PIXEL_TO_WORLD, MAP_W, MAP_D, landSDF, distToPolyline, RIVERS, LAKES, valueNoise, sampleTerrain } from './shared';
 
@@ -346,9 +347,99 @@ export function TerritoryGroundLayer({
   );
 }
 
+/* ─── 四時之地 — season/weather written into the ground itself ──────
+ *
+ * The terrain sheet is baked ONCE per session (millions of sampleTerrain
+ * calls — see the builder above), so it cannot be repainted when the season
+ * turns: for twelve in-game months the land wore exactly one coat of paint
+ * while the sky, the trees and the grade all moved around it.
+ *
+ * This patches the standard material's shader instead, which costs **zero
+ * extra draw calls and zero rebake**:
+ *
+ *  • 雪線 — above `uSnowLo` the ground fades to snow, fully white by
+ *    `uSnowHi`. In winter the line drops to the hills; the rest of the year
+ *    only the true peaks keep their caps.
+ *  • 秋色 / 旱土 — a warm amber wash over the lowlands in autumn, a bleached
+ *    dusty one during a drought (the drought weather already yellows farms;
+ *    this makes the whole country look thirsty).
+ *  • Everything is driven off the WORLD-SPACE height that the displacement
+ *    already put in the geometry, so the snowline follows the real mountains
+ *    rather than a painted mask.
+ */
+function useTerrainSkin(season: SeasonName, drought: boolean) {
+  const uniforms = useRef({
+    uSnowLo: { value: 3.2 }, uSnowHi: { value: 5.6 }, uSnow: { value: 0 },
+    uWarm: { value: 0 }, uDust: { value: 0 },
+  });
+
+  // Winter drags the snowline down to the hilltops and turns it opaque;
+  // summer pushes it above all but the highest peaks.
+  const target = useMemo(() => {
+    switch (season) {
+      case 'winter': return { lo: 1.1, hi: 3.0, snow: 1.0, warm: 0.0 };
+      case 'autumn': return { lo: 3.0, hi: 5.4, snow: 0.55, warm: 0.5 };
+      case 'spring': return { lo: 2.6, hi: 5.0, snow: 0.7, warm: 0.12 };
+      case 'summer': return { lo: 4.0, hi: 6.2, snow: 0.45, warm: 0.0 };
+    }
+  }, [season]);
+
+  // Ease between seasons rather than snapping — a season change is a fade,
+  // and the same tween covers a drought arriving mid-season.
+  useFrame((_, dt) => {
+    const u = uniforms.current;
+    const k = Math.min(1, dt * 1.6);
+    u.uSnowLo.value += (target.lo - u.uSnowLo.value) * k;
+    u.uSnowHi.value += (target.hi - u.uSnowHi.value) * k;
+    u.uSnow.value += (target.snow - u.uSnow.value) * k;
+    u.uWarm.value += (target.warm - u.uWarm.value) * k;
+    u.uDust.value += ((drought ? 0.55 : 0) - u.uDust.value) * k;
+  });
+
+  const onBeforeCompile = useMemo(() => (shader: { vertexShader: string; fragmentShader: string; uniforms: Record<string, { value: number }> }) => {
+    Object.assign(shader.uniforms, uniforms.current);
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying float vGroundY;')
+      .replace(
+        '#include <begin_vertex>',
+        '#include <begin_vertex>\nvGroundY = (modelMatrix * vec4(transformed, 1.0)).y;',
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        '#include <common>',
+        `#include <common>
+         varying float vGroundY;
+         uniform float uSnowLo; uniform float uSnowHi; uniform float uSnow;
+         uniform float uWarm; uniform float uDust;`,
+      )
+      .replace(
+        '#include <map_fragment>',
+        `#include <map_fragment>
+         {
+           // 秋色 / 旱土 — a wash over the low country, fading out with height
+           // so the peaks keep their own colour.
+           float low = 1.0 - smoothstep(0.6, 3.2, vGroundY);
+           diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.16, 1.02, 0.72), uWarm * low);
+           diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.14, 1.08, 0.86) + vec3(0.05, 0.04, 0.01), uDust * low);
+           // 雪線 — white above the line, and the higher the whiter.
+           float snowT = smoothstep(uSnowLo, uSnowHi, vGroundY) * uSnow;
+           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.90, 0.93, 0.97), snowT);
+         }`,
+      );
+  }, []);
+
+  return onBeforeCompile;
+}
+
 /* ─── Procedural China terrain ───────────────────────────────────── */
-export function MapTerrain({ onGroundClick }: { onGroundClick?: (px: number, py: number) => void } = {}) {
+export function MapTerrain({ onGroundClick, season = 'spring', drought = false }: {
+  onGroundClick?: (px: number, py: number) => void;
+  season?: SeasonName;
+  /** 旱魃 — the whole country bleaches during a drought. */
+  drought?: boolean;
+} = {}) {
   // Both textures are EXPENSIVE — module-cached, see the builders above.
+  const skin = useTerrainSkin(season, drought);
   const texture = useMemo(() => buildTerrainTexture(), []);
   const normalMap = useMemo(() => buildNormalMap(), []);
   const geom = useMemo(() => {
@@ -388,11 +479,21 @@ export function MapTerrain({ onGroundClick }: { onGroundClick?: (px: number, py:
       <meshStandardMaterial
         map={texture}
         normalMap={normalMap}
-        normalScale={new THREE.Vector2(1.15, 1.15)}
+        normalScale={TERRAIN_NORMAL_SCALE}
         roughness={0.9}
         metalness={0.02}
+        onBeforeCompile={skin}
+        // Without a distinct cache key three reuses a program compiled from
+        // the unpatched source for any other material with the same feature
+        // set, and the season skin silently does nothing.
+        customProgramCacheKey={TERRAIN_SKIN_KEY}
       />
     </mesh>
   );
 }
+
+/** One Vector2 for the terrain's normal scale — a fresh one per render would
+ *  churn a uniform every frame. */
+const TERRAIN_NORMAL_SCALE = new THREE.Vector2(1.15, 1.15);
+const TERRAIN_SKIN_KEY = () => 'terrain-season-skin';
 

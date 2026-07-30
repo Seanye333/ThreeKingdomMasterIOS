@@ -71,6 +71,7 @@ export { computeBeaconAlerts };
 import { MAP_FOV_DEG, MAP_MAX_DIST, ZoomLODCtx, ZoomLODTracker, MiniNavRig, MapCamApi, type CamApi } from './map3d/MapCameraRig';
 import { SEASON_PRESETS, TOD_PRESETS, WEATHER_PRESETS } from './map3d/mapPresets';
 import { skySunWorldPos } from './map3d/AtmosphereTrade3D';
+import { MapSunShadow } from './map3d/MapSunShadow';
 import { phaseToTOD } from './map3d/mapPresets';
 import { CityQuickRing, CitySearchBox, OVERLAY_OPTIONS, WEATHER_ZH, WEATHER_EN, ArmyOrdersHint, MapHelpPanel } from './map3d/MapHudWidgets';
 // Preserve the public surface — phaseToTOD/TimeOfDay lived here before the split.
@@ -352,41 +353,11 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
 
       {/* Per-season lighting, dimmed and recoloured by time of day */}
       <ambientLight intensity={seasonPreset.ambient * todP.ambientMul} color={todP.ambientColor ?? seasonPreset.ambientColor} />
-      <directionalLight
-        position={todP.sunPos}
+      <MapSunShadow
+        sunPos={todP.sunPos}
         intensity={seasonPreset.sun.intensity * todP.sunMul}
         color={todP.sunColor ?? seasonPreset.sun.color}
-        // 遠景無影 — the shadow pass re-draws every caster into the shadow map,
-        // so it MULTIPLIES draw-call count rather than adding to it: profiled
-        // at rest, 5,633 scene drawables became 17,279 draw calls a frame
-        // (×3.07) and ~19 FPS. The same scene at 5,785 calls runs at 60. Past
-        // the `near` tier a city is a few pixels across and its shadow is not
-        // resolvable at all, so the pass buys nothing there.
-        //
-        // 而近景也暫時關掉(2026-07-29) —— 這張圖的陰影本身是壞的。
-        //
-        // 拿掉 drei <SoftShadows> 之後(它的 PCSS 對不上 three 0.184 的
-        // sampler2DShadow,每次開局賠掉 11 個著色器程式),近景的陰影**第一次
-        // 真的畫出來**,結果是整片六角格變成純黑。固定鏡頭量過:近黑像素從
-        // 0.15% 跳到 4.01%。逐項排除 —— normalBias 0.06 無效、shadow-intensity
-        // 0.45 無效、把這行改成 false 則黑格立刻消失。也就是說壞的是陰影 pass
-        // 自己,多半是整張地圖(±MAP_W × ±MAP_D)硬塞進一張 2048 shadow map,
-        // texel 大到深度比較整片失準。
-        //
-        // 換句話說:這張圖的陰影從來沒有正確渲染過,只是被 SoftShadows 的著色器
-        // 失敗一路蓋著。要真的修得重做陰影相機分割(CSM 或跟著鏡頭走的緊縮
-        // frustum),不是調參數。在那之前關掉 —— 畫面與玩家一直看到的完全一致,
-        // 只是不再賠上那 11 個死掉的程式。
         castShadow={zoomLod === 'near'}
-        // 2048 halves shadow VRAM/fill on weak GPUs; at map scale the
-        // difference is invisible.
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-left={-MAP_W}
-        shadow-camera-right={MAP_W}
-        shadow-camera-top={MAP_D}
-        shadow-camera-bottom={-MAP_D}
-        shadow-bias={-0.0005}
       />
       <directionalLight position={[-4, 5, -10]} intensity={0.45} color={seasonPreset.fillColor} />
       <hemisphereLight args={[seasonPreset.hemiSky, seasonPreset.hemiGround, seasonPreset.hemiIntensity]} />
@@ -423,7 +394,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         />
       ) : (
         <Suspense fallback={null}>
-          <MapTerrain onGroundClick={(px, py) => {
+          <MapTerrain season={season} drought={weather.kind === 'drought'} onGroundClick={(px, py) => {
             // With an army selected, clicking open land marches it to that
             // cell and digs in — coords are geo-pixels, the same space the
             // whole simulation runs in (the old 2D path fed painted-map
@@ -1742,7 +1713,7 @@ export function StrategicMap3D() {
         // r3f 預設(PCFSoftShadowMap)。城內與戰場已改寫成 'percentage'(three
         // 0.184 棄用了這個型別),大地圖維持原樣 —— 這張圖的陰影只在 near 檔開,
         // 動它的收益最小、風險最大,留給日後一併整理。
-        shadows={RENDER_HI && GFX.shadows}
+        shadows={RENDER_HI && GFX.shadows ? 'percentage' : false}
         // See cityMapOpen above: 'never' while the city view is on top.
         frameloop={cityMapOpen ? 'never' : 'always'}
         dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
