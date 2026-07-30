@@ -1089,3 +1089,88 @@ export function WindStreaks({ bounds, dir }: { bounds: { x: number; z: number };
     </instancedMesh>
   );
 }
+
+/* ─── 戰場遺留 — the litter a fight leaves behind ─────────────────────
+ *
+ * The board already keeps corpses where units die and scorch where fire
+ * passed, but the ground between them stayed pristine all battle: no spent
+ * arrows, no dropped gear, nothing to say a volley had landed here or that a
+ * company broke and ran through. This is the cheap half of that — two
+ * InstancedMeshes fed by events the screen already tracks, so it costs two
+ * draws no matter how long the battle runs.
+ *
+ * 插地之矢 — every ranged volley leaves a few shafts standing in the target
+ * hex, angled along the shot. 棄甲 — a routed or wiped-out company scatters
+ * helmets where it stood (旗靡輜重委地).
+ *
+ * Both lists are capped and drop their oldest entries: a long battle would
+ * otherwise accumulate thousands of instances for decoration nobody reads.
+ */
+export interface LitterMark { x: number; z: number; y: number; a: number; s: number }
+
+export function SpentArrows3D({ marks }: { marks: LitterMark[] }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  useLayoutEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    marks.forEach((k, i) => {
+      dummy.position.set(k.x, k.y + 0.09, k.z);
+      // Leaning along the flight path, with the per-mark jitter baked into `a`.
+      dummy.rotation.set(0.9 + (i % 3) * 0.08, k.a, 0);
+      dummy.scale.setScalar(k.s);
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    m.count = marks.length;
+    m.computeBoundingSphere();
+  }, [marks, dummy]);
+  if (marks.length === 0) return null;
+  return (
+    <instancedMesh
+      key={`arrows-${marks.length}`}
+      ref={ref}
+      args={[undefined, undefined, Math.max(1, marks.length)]}
+      castShadow
+      raycast={() => null}
+    >
+      <cylinderGeometry args={[0.012, 0.012, 0.34, 4]} />
+      <meshStandardMaterial color="#6b5636" roughness={0.9} />
+    </instancedMesh>
+  );
+}
+
+export function DroppedGear3D({ marks }: { marks: LitterMark[] }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  useLayoutEffect(() => {
+    const m = ref.current;
+    if (!m) return;
+    marks.forEach((k, i) => {
+      dummy.position.set(k.x, k.y + 0.04, k.z);
+      dummy.rotation.set(Math.PI * 0.5 + (i % 5) * 0.12, k.a, (i % 3) * 0.2);
+      dummy.scale.setScalar(k.s);
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    });
+    m.instanceMatrix.needsUpdate = true;
+    m.count = marks.length;
+    m.computeBoundingSphere();
+  }, [marks, dummy]);
+  if (marks.length === 0) return null;
+  return (
+    <instancedMesh
+      key={`gear-${marks.length}`}
+      ref={ref}
+      args={[undefined, undefined, Math.max(1, marks.length)]}
+      castShadow
+      raycast={() => null}
+    >
+      {/* An upturned helmet bowl — reads at battle-camera distance, and one
+          shared geometry keeps this to a single draw. */}
+      <sphereGeometry args={[0.085, 6, 4, 0, Math.PI * 2, 0, Math.PI / 2]} />
+      <meshStandardMaterial color="#6a6258" metalness={0.45} roughness={0.6} side={THREE.DoubleSide} />
+    </instancedMesh>
+  );
+}

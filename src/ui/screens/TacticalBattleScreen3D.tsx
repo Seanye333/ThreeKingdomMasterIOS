@@ -157,7 +157,7 @@ export { hexWorld, HEX_R, HEX_COL_STEP, HEX_ROW_STEP, TERRAIN_HEIGHT, TERRAIN_CO
 import {
   HexTile, FieldworksArt, FireArt, BridgeArt, ForestArt, MountainArt, RiverArt,
   SweptRoof3D, TownHouse, CityWall, WallGate3D, DefenseStructure,
-  InstancedTilePrisms, BoardSkirt, ZocOverlay,
+  InstancedTilePrisms, BoardSkirt, ZocOverlay, SpentArrows3D, DroppedGear3D, type LitterMark,
   RainParticles, StormLightning, BattleHaze, SnowParticles, WindStreaks,
   LIGHTING, WEATHER_FOG_MUL,
 } from './battle3d/BattleTerrainArt3D';
@@ -1078,6 +1078,49 @@ export function BattleScene({
     if (add.length) setFallen((f) => [...f, ...add].slice(-50));
   }, [units, playerSide]);
 
+  /* 戰場遺留 — spent arrows where volleys land, dropped helmets where a
+     company is wiped out or breaks. Accumulated from events the screen
+     already raises (attackArcs / troops hitting zero), capped so a long
+     battle cannot grow an unbounded instance buffer. */
+  const [litter, setLitter] = useState<{ arrows: LitterMark[]; gear: LitterMark[] }>({ arrows: [], gear: [] });
+  useEffect(() => { setLitter({ arrows: [], gear: [] }); }, [battle.id]);
+  const seenArcs = useRef(new Set<number>());
+  useEffect(() => { seenArcs.current = new Set(); }, [battle.id]);
+  useEffect(() => {
+    const add: LitterMark[] = [];
+    for (const arc of attackArcs) {
+      if (arc.kind !== 'ranged' || seenArcs.current.has(arc.id)) continue;
+      seenArcs.current.add(arc.id);
+      const [fx, fz] = hexWorld(arc.from.col, arc.from.row);
+      const [tx, tz] = hexWorld(arc.to.col, arc.to.row);
+      const bearing = Math.atan2(tx - fx, tz - fz);
+      const th = TERRAIN_HEIGHT[tileByCoord.get(`${arc.to.col},${arc.to.row}`)?.terrain ?? 'plain'];
+      for (let k = 0; k < 4; k++) {
+        const a = arc.id * 1.7 + k * 2.3;
+        add.push({
+          x: tx + Math.cos(a) * 0.34, z: tz + Math.sin(a * 1.3) * 0.34,
+          y: th, a: bearing + ((k % 3) - 1) * 0.25, s: 0.85 + (k % 3) * 0.12,
+        });
+      }
+    }
+    if (add.length) setLitter((l) => ({ ...l, arrows: [...l.arrows, ...add].slice(-160) }));
+  }, [attackArcs, tileByCoord]);
+  useEffect(() => {
+    const add: LitterMark[] = [];
+    for (const f of fallen) {
+      const [fx, fz] = hexWorld(f.coord.col, f.coord.row);
+      const th = TERRAIN_HEIGHT[tileByCoord.get(`${f.coord.col},${f.coord.row}`)?.terrain ?? 'plain'];
+      for (let k = 0; k < 3; k++) {
+        const a = f.coord.col * 3.1 + f.coord.row * 1.7 + k * 2.1;
+        add.push({
+          x: fx + Math.cos(a) * 0.42, z: fz + Math.sin(a * 1.7) * 0.42,
+          y: th, a, s: 0.9 + (k % 2) * 0.2,
+        });
+      }
+    }
+    setLitter((l) => (add.length === l.gear.length ? l : { ...l, gear: add.slice(-90) }));
+  }, [fallen, tileByCoord]);
+
   // 焦土 — once a hex has burned, leave a charred scorch that lingers after the
   // flames die, so fire leaves a lasting mark on the land.
   const [scorched, setScorched] = useState<HexCoord[]>([]);
@@ -1363,6 +1406,9 @@ export function BattleScene({
       {/* 屍橫遍野 — the accumulated dead (skipped in the lightweight diorama). */}
       {!embedded && scorched.map((c, i) => <ScorchMark key={`scorch-${c.col}-${c.row}-${i}`} coord={c} />)}
       {!embedded && fallen.map((c) => <Corpse key={`corpse-${c.id}`} coord={c.coord} color={c.color} />)}
+      {/* 插地之矢 / 棄甲 — the litter a fight leaves behind (two draws total). */}
+      {!embedded && <SpentArrows3D marks={litter.arrows} />}
+      {!embedded && <DroppedGear3D marks={litter.gear} />}
       {/* 伏兵奇襲 — reveal bursts where ambushers sprang. */}
       {ambushFx.map((a) => <AmbushBurst key={a.id} coord={a.coord} at={a.at} />)}
       {/* 攻城 — wall defenders + assault ladders (siege battles only). */}

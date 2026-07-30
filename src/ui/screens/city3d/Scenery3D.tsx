@@ -1,4 +1,4 @@
-import { useRef, useContext } from 'react';
+import { useRef, useContext, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
@@ -10,7 +10,7 @@ import { shade, ChineseRoof3D, SeasonCtx, NightCtx } from './Folk3D';
 import { Banner3D, Smoke3D } from './Architecture3D';
 import type { SpecialtyDef } from '../../../game/data/specialties';
 import type { Officer } from '../../../game/types';
-import { BATCH_STATIC } from '../../components/StaticBatch';
+import { BATCH_STATIC, BATCH_SKIP } from '../../components/StaticBatch';
 
 /**
  * 城中景物 — the props that make a city read as a lived-in place rather than
@@ -481,24 +481,147 @@ export function GardenTree3D({ x, z, seed }: { x: number; z: number; seed: numbe
 /** A warm street lantern — post + glowing lamp + cap, with a soft flicker. */
 export function Lantern3D({ x, z }: { x: number; z: number }) {
   const lamp = useRef<THREE.MeshStandardMaterial>(null);
+  // 燈籠搖曳 — a paper lantern hangs; it should swing, not merely throb. The
+  // pivot group sits at the crossbar so the lantern arcs beneath it like a
+  // pendulum instead of rotating about its own middle.
+  const swing = useRef<THREE.Group>(null);
   const phase = x + z * 1.7;
   useFrame((s) => {
-    if (lamp.current) lamp.current.emissiveIntensity = 0.55 + Math.sin(s.clock.elapsedTime * 4 + phase) * 0.18;
+    const t = s.clock.elapsedTime;
+    if (lamp.current) lamp.current.emissiveIntensity = 0.55 + Math.sin(t * 4 + phase) * 0.18;
+    const g = swing.current;
+    if (g) {
+      g.rotation.z = Math.sin(t * 1.15 + phase) * 0.09;
+      g.rotation.x = Math.sin(t * 0.83 + phase * 1.3) * 0.055;
+    }
   });
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_SKIP}>
       <mesh position={[0, 0.4, 0]} castShadow>
         <cylinderGeometry args={[0.05, 0.06, 0.8, 6]} />
         <meshStandardMaterial color="#2a1d12" roughness={0.9} />
       </mesh>
-      <mesh position={[0, 0.92, 0]} castShadow>
-        <boxGeometry args={[0.2, 0.26, 0.2]} />
-        <meshStandardMaterial ref={lamp} color="#d4502a" emissive="#e07020" emissiveIntensity={0.6} roughness={0.6} />
-      </mesh>
-      <mesh position={[0, 1.08, 0]} rotation={[0, Math.PI / 4, 0]}>
-        <coneGeometry args={[0.18, 0.12, 4]} />
-        <meshStandardMaterial color="#2a1d12" />
-      </mesh>
+      <group ref={swing} position={[0, 1.14, 0]}>
+        <mesh position={[0, -0.22, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.26, 0.2]} />
+          <meshStandardMaterial ref={lamp} color="#d4502a" emissive="#e07020" emissiveIntensity={0.6} roughness={0.6} />
+        </mesh>
+        <mesh position={[0, -0.06, 0]} rotation={[0, Math.PI / 4, 0]}>
+          <coneGeometry args={[0.18, 0.12, 4]} />
+          <meshStandardMaterial color="#2a1d12" />
+        </mesh>
+        {/* 流蘇 — the tassel below, which is what sells the swing. */}
+        <mesh position={[0, -0.41, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.12, 4]} />
+          <meshStandardMaterial color="#c8a24a" roughness={0.7} />
+        </mesh>
+      </group>
+    </group>
+  );
+}
+
+/** 簷下滴水 — a thin curtain of drips off one eave while it rains. Instanced,
+ *  no transparency sorting (the drops are opaque slivers), and only mounted by
+ *  the caller when the weather actually calls for it. */
+export function EaveDrips3D({ spots }: { spots: Array<{ x: number; z: number }> }) {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const dummy = useMemo(() => new THREE.Object3D(), []);
+  const drops = useMemo(() => {
+    const out: Array<{ x: number; z: number; y0: number; sp: number; ph: number }> = [];
+    spots.forEach((s, i) => {
+      for (let k = 0; k < 5; k++) {
+        const a = (i * 2.1 + k * 1.7);
+        out.push({
+          x: s.x + Math.cos(a) * 0.42,
+          z: s.z + Math.sin(a) * 0.42,
+          y0: 0.92 + ((i + k) % 3) * 0.06,
+          sp: 1.5 + ((i * 7 + k * 3) % 5) * 0.28,
+          ph: ((i * 13 + k * 5) % 10) / 10,
+        });
+      }
+    });
+    return out;
+  }, [spots]);
+  useFrame(({ clock }) => {
+    const m = ref.current;
+    if (!m) return;
+    const t = clock.elapsedTime;
+    for (let i = 0; i < drops.length; i++) {
+      const d = drops[i];
+      const f = ((t * d.sp + d.ph) % 1);
+      dummy.position.set(d.x, d.y0 - f * d.y0, d.z);
+      dummy.scale.set(1, 0.5 + f * 0.9, 1);   // stretches as it falls
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    }
+    m.instanceMatrix.needsUpdate = true;
+  });
+  if (drops.length === 0) return null;
+  return (
+    <instancedMesh ref={ref} args={[undefined, undefined, drops.length]} userData={BATCH_SKIP} raycast={() => null}>
+      <boxGeometry args={[0.012, 0.09, 0.012]} />
+      <meshStandardMaterial color="#a8c4d4" emissive="#5a7a90" emissiveIntensity={0.35} roughness={0.25} metalness={0.3} />
+    </instancedMesh>
+  );
+}
+
+/** 六畜 — hens and a goat pottering about a farming ward. Cheap primitives with
+ *  a slow peck/graze bob; they read as life at ground level, which the city had
+ *  only at human scale. */
+export function Livestock3D({ x, z, seed }: { x: number; z: number; seed: number }) {
+  const grp = useRef<THREE.Group>(null);
+  useFrame(({ clock }) => {
+    const g = grp.current;
+    if (!g) return;
+    const t = clock.elapsedTime;
+    g.children.forEach((c, i) => {
+      // Peck: head-down dip on a staggered cycle, plus a slow turn in place.
+      c.rotation.x = Math.max(0, Math.sin(t * 1.6 + i * 2.1)) * 0.32;
+      c.rotation.y = Math.sin(t * 0.35 + i * 1.7) * 0.7;
+    });
+  });
+  const hens = 3 + (seed % 3);
+  return (
+    <group position={[x, 0, z]} ref={grp} userData={BATCH_SKIP}>
+      {Array.from({ length: hens }).map((_, i) => {
+        const a = (seed * 0.7 + i * 2.4);
+        const px = Math.cos(a) * (0.35 + (i % 3) * 0.18);
+        const pz = Math.sin(a * 1.3) * (0.35 + (i % 2) * 0.22);
+        const white = (seed + i) % 3 === 0;
+        return (
+          <group key={i} position={[px, 0.09, pz]}>
+            <mesh castShadow>
+              <sphereGeometry args={[0.075, 6, 5]} />
+              <meshStandardMaterial color={white ? '#e8e2d6' : '#8a5a34'} roughness={0.9} />
+            </mesh>
+            <mesh position={[0.07, 0.05, 0]}>
+              <sphereGeometry args={[0.035, 5, 4]} />
+              <meshStandardMaterial color={white ? '#e8e2d6' : '#8a5a34'} roughness={0.9} />
+            </mesh>
+            <mesh position={[0.1, 0.05, 0]}>
+              <coneGeometry args={[0.014, 0.04, 4]} />
+              <meshStandardMaterial color="#d8a038" roughness={0.6} />
+            </mesh>
+          </group>
+        );
+      })}
+      {/* 羊 — one goat, larger and paler, grazing off to the side. */}
+      <group position={[-0.55, 0.14, 0.4]}>
+        <mesh castShadow>
+          <sphereGeometry args={[0.13, 7, 6]} />
+          <meshStandardMaterial color="#ddd6c6" roughness={0.95} />
+        </mesh>
+        <mesh position={[0.13, 0.03, 0]}>
+          <boxGeometry args={[0.09, 0.07, 0.07]} />
+          <meshStandardMaterial color="#c9c0ad" roughness={0.95} />
+        </mesh>
+        {[[-0.06, -0.05], [0.06, -0.05], [-0.06, 0.05], [0.06, 0.05]].map(([lx, lz], i) => (
+          <mesh key={i} position={[lx, -0.11, lz]}>
+            <cylinderGeometry args={[0.016, 0.016, 0.14, 4]} />
+            <meshStandardMaterial color="#8a8172" roughness={0.95} />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 }

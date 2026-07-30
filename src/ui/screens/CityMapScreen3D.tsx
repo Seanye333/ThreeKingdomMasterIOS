@@ -102,6 +102,8 @@ import {
   Villager3D,
   Walker3D,
   WallBanner3D,
+  EaveDrips3D,
+  Livestock3D,
   WaterGate3D,
   Well3D,
 } from './city3d/Scenery3D';
@@ -440,11 +442,21 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
         const a0 = avZ2[0], b0 = avZ2[avZ2.length - 1];
         return <Watchman3D ax={a0.x} az={a0.z} bx={b0.x} bz={b0.z} />;
       })()}
-      {/* Chimney smoke from a scattering of homes (peaceful) — black pillars of
-          ruin smoke if the city has been razed. */}
-      {!ruined && houses.filter((_, i) => i % 8 === 0).slice(0, 5).map((h) => (
+      {/* 炊煙分時 — chimney smoke from a scattering of homes. Every hearth is
+          lit at meal times; deep in a moonlit night only a couple still are,
+          which is what makes a night city read as asleep rather than as a day
+          city with the lights turned down. Black pillars of ruin smoke if the
+          city has been razed. */}
+      {!ruined && houses.filter((_, i) => i % 8 === 0).slice(0, night ? 2 : 5).map((h) => (
         <Smoke3D key={`sm-${h.key}`} x={h.x} z={h.z} base={1.15} />
       ))}
+      {/* 簷下滴水 — rain runs off the eaves of the nearest few homes. */}
+      {!ruined && weatherKind === 'rain' && (
+        <EaveDrips3D spots={houses.filter((_, i) => i % 5 === 0).slice(0, 8).map((h) => ({ x: h.x, z: h.z }))} />
+      )}
+      {/* 六畜 — hens and a goat in the farming ward; a razed or plague-struck
+          city has none (the livestock is the first thing eaten or lost). */}
+      {!ruined && !plagued && <Livestock3D x={landmarks.farm.x - 1.5} z={landmarks.farm.z - 1.2} seed={preview.width * 7 + preview.height} />}
       {ruined && <RuinsOverlay houses={houses} />}
       {props.cart && !ruined && <Cart3D x={props.cart.x} z={props.cart.z} seed={props.cart.seed} />}
       <Well3D x={props.well.x} z={props.well.z} />
