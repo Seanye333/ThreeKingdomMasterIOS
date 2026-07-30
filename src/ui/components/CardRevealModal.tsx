@@ -58,7 +58,42 @@ export function CardRevealModal() {
     >
       <style>{`
         @keyframes tkmRevealDrop { from { transform: translateY(-40px) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
+        @keyframes tkmConfetti {
+          0%   { transform: translate3d(0, -8vh, 0) rotate(0deg); opacity: 0; }
+          12%  { opacity: 1; }
+          100% { transform: translate3d(var(--dx), 92vh, 0) rotate(var(--spin)); opacity: 0; }
+        }
       `}</style>
+      {/* 彩紙 — a gold or rainbow pull is the rarest thing the pack can do
+          (12% / 3%), and it announced itself with one small chip of text.
+          Silver and plain deliberately get nothing: confetti on every pull is
+          confetti on none. Pure CSS, unmounts with the modal. */}
+      {flipped && (officer.foil === 'gold' || officer.foil === 'rainbow') && (
+        <div aria-hidden style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+          {Array.from({ length: officer.foil === 'rainbow' ? 46 : 30 }).map((_, i) => {
+            const rainbow = ['#e05a6a', '#e0a83a', '#8ad06a', '#5aa8e0', '#b48ae0'];
+            const gold = ['#e6c473', '#f0dfa8', '#c8a24e'];
+            const palette = officer.foil === 'rainbow' ? rainbow : gold;
+            return (
+              <span
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: `${(i * 37) % 100}%`,
+                  top: '-6vh',
+                  width: 6 + (i % 3) * 3,
+                  height: 10 + (i % 4) * 4,
+                  background: palette[i % palette.length],
+                  borderRadius: i % 3 === 0 ? '50%' : 2,
+                  ['--dx' as string]: `${((i * 53) % 60) - 30}vw`,
+                  ['--spin' as string]: `${((i * 97) % 5 + 2) * 360}deg`,
+                  animation: `tkmConfetti ${2.2 + ((i * 13) % 9) * 0.16}s cubic-bezier(0.25,0.6,0.4,1) ${(i % 10) * 0.09}s forwards`,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
       <div style={{ fontSize: '1.05rem', color: accent, letterSpacing: '0.3rem', textShadow: `0 0 14px ${accent}66`, fontFamily: '"Ma Shan Zheng", "Songti SC", serif' }}>
         {awaken ? t('★ 將星覺醒 ★', '★ THE STAR AWAKENS ★') : festival ? t('🏮 求賢祭 · 賢士現身', '🏮 A HIDDEN TALENT STEPS FORWARD') : t('名將來投', 'A NAME JOINS YOUR BANNER')}
       </div>
