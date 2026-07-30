@@ -3,11 +3,11 @@ import {
   HueSaturation, BrightnessContrast, DepthOfField, Outline,
 } from '@react-three/postprocessing';
 import { ToneMappingMode, GodRaysEffect, KernelSize } from 'postprocessing';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { RENDER_HI, GFX } from '../renderQuality';
-import { ColorGradeEffect, HeatHazeEffect, SunFlareEffect, type ToneGrade } from './postfxEffects';
+import { RENDER_HI, GFX, getArtStyle, subscribeArtStyle, type ArtStyle } from '../renderQuality';
+import { ColorGradeEffect, HeatHazeEffect, SunFlareEffect, SilkPaintingEffect, type ToneGrade } from './postfxEffects';
 
 /**
  * 三圖共用的後處理棧 — ambient occlusion, bloom, grading, tone mapping and
@@ -77,6 +77,14 @@ export function ScenePostFx({
   // Hooks before the early return (rules of hooks) — all cheap to build.
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
+
+  /* 畫風 — a live pref (see renderQuality). Subscribed rather than read once
+     so switching to 絹本設色 in Settings takes effect on the open scene. */
+  const [artStyle, setArt] = useState<ArtStyle>(getArtStyle);
+  useEffect(() => subscribeArtStyle(setArt), []);
+  const silkFx = useMemo(() => new SilkPaintingEffect(), []);
+  useEffect(() => { silkFx.set(artStyle === 'silk' ? 1 : 0, 0.85); }, [silkFx, artStyle]);
+  useEffect(() => { silkFx.setSize(size.width, size.height); }, [silkFx, size.width, size.height]);
 
   const gradeFx = useMemo(() => new ColorGradeEffect(tone ?? { temperature: 0 }), []);
   useEffect(() => { if (tone) gradeFx.set(tone); }, [gradeFx, tone]);
@@ -174,6 +182,9 @@ export function ScenePostFx({
       {vignette ? (
         <Vignette eskil={false} offset={vignette.offset} darkness={vignette.darkness} />
       ) : <></>}
+      {/* 絹本設色 — after tone mapping so the ink lines are drawn over the
+          final image rather than being flattened by the tone curve. */}
+      {artStyle === 'silk' ? <primitive object={silkFx} dispose={null} /> : <></>}
       <ToneMapping mode={ToneMappingMode.AGX} />
       <SMAA />
     </EffectComposer>

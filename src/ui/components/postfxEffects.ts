@@ -176,3 +176,81 @@ export class SunFlareEffect extends Effect {
     c.r = r; c.g = g; c.b = b;
   }
 }
+
+/* ─── 畫風濾鏡 ─────────────────────────────────────────────────────────
+ *
+ * 絹本設色 — the whole frame read as a painting on silk: desaturated toward
+ * a warm ground, paper grain over the top, edges of things darkened into
+ * something like ink. It is deliberately a *post* effect rather than a
+ * different set of materials, so it costs one pass and works identically on
+ * all three 3D scenes plus every future one.
+ *
+ * The ink line is a cheap luminance Sobel on the colour buffer. That is not
+ * a real edge detector — it finds contrast, not silhouettes — but on this
+ * game's flat-shaded, high-contrast geometry it lands on the same lines a
+ * brush would, and it needs no depth/normal buffer (which is the whole point:
+ * see the NormalPass note in ScenePostFx — an extra scene pass would cost
+ * more than everything else in the frame).
+ */
+
+const SILK_FRAG = /* glsl */ `
+  uniform float uSilk;    // 0 off … 1 full
+  uniform float uInk;     // ink-line strength
+  uniform vec2  uTexel;
+
+  float luma(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
+
+  void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
+    vec3 c = inputColor.rgb;
+    if (uSilk > 0.001) {
+      // 墨線 — Sobel over luminance; only the strong edges survive.
+      float l00 = luma(texture(inputBuffer, uv + uTexel * vec2(-1.0, -1.0)).rgb);
+      float l10 = luma(texture(inputBuffer, uv + uTexel * vec2( 0.0, -1.0)).rgb);
+      float l20 = luma(texture(inputBuffer, uv + uTexel * vec2( 1.0, -1.0)).rgb);
+      float l01 = luma(texture(inputBuffer, uv + uTexel * vec2(-1.0,  0.0)).rgb);
+      float l21 = luma(texture(inputBuffer, uv + uTexel * vec2( 1.0,  0.0)).rgb);
+      float l02 = luma(texture(inputBuffer, uv + uTexel * vec2(-1.0,  1.0)).rgb);
+      float l12 = luma(texture(inputBuffer, uv + uTexel * vec2( 0.0,  1.0)).rgb);
+      float l22 = luma(texture(inputBuffer, uv + uTexel * vec2( 1.0,  1.0)).rgb);
+      float gx = (l20 + 2.0 * l21 + l22) - (l00 + 2.0 * l01 + l02);
+      float gy = (l02 + 2.0 * l12 + l22) - (l00 + 2.0 * l10 + l20);
+      float edge = smoothstep(0.16, 0.62, sqrt(gx * gx + gy * gy));
+
+      // 絹底 — pull toward a warm silk ground and flatten the palette.
+      vec3 silk = mix(vec3(luma(c)), c, 0.42) * vec3(1.06, 1.00, 0.86) + vec3(0.05, 0.04, 0.02);
+
+      // 紙紋 — a still, fine grain locked to screen space (a moving grain
+      // reads as video noise, not as paper).
+      float grain = fract(sin(dot(uv * vec2(1024.0, 768.0), vec2(12.9898, 78.233))) * 43758.5453);
+      silk *= 0.97 + grain * 0.06;
+
+      silk = mix(silk, vec3(0.13, 0.11, 0.10), edge * uInk);
+      c = mix(c, silk, uSilk);
+    }
+    outputColor = vec4(c, inputColor.a);
+  }
+`;
+
+export class SilkPaintingEffect extends Effect {
+  constructor(strength = 0, ink = 0.8) {
+    super('SilkPaintingEffect', SILK_FRAG, {
+      blendFunction: BlendFunction.SRC,
+      uniforms: new Map<string, Uniform>([
+        ['uSilk', new Uniform(strength)],
+        ['uInk', new Uniform(ink)],
+        ['uTexel', new Uniform({ x: 1 / 1280, y: 1 / 720 })],
+      ]),
+    });
+  }
+
+  set(strength: number, ink: number): void {
+    this.uniforms.get('uSilk')!.value = strength;
+    this.uniforms.get('uInk')!.value = ink;
+  }
+
+  setSize(w: number, h: number): void {
+    const t = this.uniforms.get('uTexel')!.value as { x: number; y: number };
+    t.x = 1 / Math.max(1, w);
+    t.y = 1 / Math.max(1, h);
+  }
+}

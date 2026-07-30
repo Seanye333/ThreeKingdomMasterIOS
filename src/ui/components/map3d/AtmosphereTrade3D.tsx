@@ -26,9 +26,11 @@ export function skySunWorldPos(sunPos: [number, number, number]): [number, numbe
  *  zenith blue → horizon haze (matched to the fog colour so land melts into
  *  sky). Shifts to a warm sunset at dusk. A bloom-haloed sun rides the
  *  sunlight direction. */
-export function SkyDome({ top, horizon, sunPos: sunPosArr, celestialColor, moon, stars }: {
+export function SkyDome({ top, horizon, sunPos: sunPosArr, celestialColor, moon, stars, moonPhase = 'middle' }: {
   top: string; horizon: string; sunPos: [number, number, number];
   celestialColor: string; moon: boolean; stars: boolean;
+  /** 月相 — 上旬 waxing / 中旬 full / 下旬 waning, straight off the calendar. */
+  moonPhase?: 'upper' | 'middle' | 'lower';
 }) {
   const ref = useRef<THREE.Group>(null);
   const { camera } = useThree();
@@ -82,6 +84,21 @@ export function SkyDome({ top, horizon, sunPos: sunPosArr, celestialColor, moon,
         <sphereGeometry args={[moon ? 26 : 34, 16, 12]} />
         <meshBasicMaterial color={celestialColor} toneMapped={false} fog={false} />
       </mesh>
+      {/* 月相 — the calendar already runs 上/中/下旬, and the night sky was
+          showing the same full disc through all of them. A dark sphere set
+          slightly in front of the moon and offset sideways carves the crescent
+          (a terminator drawn with geometry, not a texture): 上旬 waxing from
+          the left, 中旬 full, 下旬 waning to the right. Skipped for the sun. */}
+      {moon && moonPhase !== 'middle' && (
+        <mesh position={[
+          sunPos.x + (moonPhase === 'upper' ? -22 : 22),
+          sunPos.y,
+          sunPos.z + (moonPhase === 'upper' ? -14 : 14),
+        ]}>
+          <sphereGeometry args={[25, 16, 12]} />
+          <meshBasicMaterial color={top} toneMapped={false} fog={false} />
+        </mesh>
+      )}
       <mesh position={sunPos}>
         <sphereGeometry args={[moon ? 54 : 78, 16, 12]} />
         <meshBasicMaterial color={celestialColor} transparent opacity={moon ? 0.16 : 0.28} depthWrite={false} fog={false} />

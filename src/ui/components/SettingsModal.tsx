@@ -4,7 +4,7 @@ import { setVoiceEnabled, setAudioFilesEnabled, isAudioFilesEnabled } from '../.
 import { exportAllSaves, importAllSaves } from '../../game/state/saveTransfer';
 import { installMod, loadMods, parseModBundle, removeMod } from '../../game/systems/mods';
 import { applyUiPrefs, getStoredUiPrefs, type UiPrefs, type UiScale } from '../uiPrefs';
-import { getRenderQualityPref, setRenderQualityPref, type RenderQualityPref, getGfxPrefs, setGfxPref, type GfxPrefs, type GfxToggle } from '../renderQuality';
+import { getRenderQualityPref, setRenderQualityPref, type RenderQualityPref, getGfxPrefs, setGfxPref, type GfxPrefs, type GfxToggle, getArtStyle, setArtStyle, type ArtStyle } from '../renderQuality';
 import { useT } from '../i18n';
 import { Modal } from './Modal';
 
@@ -21,6 +21,9 @@ export function SettingsModal({ onClose }: Props) {
   const setSoundEnabled = useGameStore((s) => s.setSoundEnabled);
   // 3D 畫質 — frozen at module load (RENDER_HI), so changing it reloads to apply.
   const [renderQuality, setRenderQualityState] = useState<RenderQualityPref>(getRenderQualityPref);
+  // 畫風 — live, unlike the cost prefs: the open scene restyles immediately.
+  const [artStyle, setArtStyleState] = useState<ArtStyle>(getArtStyle);
+  const changeArt = (v: ArtStyle) => { setArtStyleState(v); setArtStyle(v); };
   // 畫質細項 — same frozen-at-load contract as the tier (reload applies).
   const [gfxPrefs, setGfxPrefsState] = useState<GfxPrefs>(getGfxPrefs);
   const changeGfx = <K extends keyof GfxPrefs>(key: K, v: GfxPrefs[K]) => {
@@ -172,6 +175,13 @@ export function SettingsModal({ onClose }: Props) {
                   <button key={q} onClick={() => changeGfx('particles', q)} style={segBtnStyle(gfxPrefs.particles === q)}>
                     {lbl}
                   </button>
+                ))}
+              </div>
+            </Row>
+            <Row label={t('畫風', 'Art style')} hint={t('絹本設色:水墨線條＋絹紙質感(即時生效)', 'Silk painting: ink edges + paper grain (applies at once)')}>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {([['realistic', t('寫實', 'Realistic')], ['silk', t('絹本設色', 'Silk')]] as Array<[ArtStyle, string]>).map(([q, lbl]) => (
+                  <button key={q} onClick={() => changeArt(q)} style={segBtnStyle(artStyle === q)}>{lbl}</button>
                 ))}
               </div>
             </Row>

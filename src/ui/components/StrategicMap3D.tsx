@@ -234,6 +234,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   // 晝夜隨旬 — the month rolls 上旬→day, 中旬→dusk, 下旬→a moonlit night, so
   // time visibly passes as each third of the month resolves.
   const tod = phaseToTOD(useGameStore((s) => s.date.phase));
+  const monthPhase = useGameStore((s) => s.date.phase) ?? 'upper';
   const todP = TOD_PRESETS[tod];
   // 行程測距 — with a city selected, hovering another shows the march time.
   const [hoverCityId, setHoverCityId] = useState<string | null>(null);
@@ -337,6 +338,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
         sunPos={todP.sunPos}
         celestialColor={todP.celestialColor}
         moon={todP.celestial === 'moon'}
+        moonPhase={monthPhase}
         stars={todP.stars}
       />
       {/* 天光 — the same three sky colours, turned into an environment map so

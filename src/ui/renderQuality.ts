@@ -129,3 +129,28 @@ function resolveGfx(p: GfxPrefs, hi: boolean): GfxFlags {
 
 /** Frozen at module load, like RENDER_HI. */
 export const GFX: GfxFlags = resolveGfx(getGfxPrefs(), RENDER_HI);
+
+/* ─── 畫風 — 寫實 / 絹本設色 ────────────────────────────────────────────
+ *
+ * Unlike the cost prefs above this one is NOT frozen at load: it changes how
+ * the game looks, not what it costs, and asking for a relaunch to preview a
+ * filter would be silly. The 3D screens read it through `useArtStyle()`.
+ */
+export type ArtStyle = 'realistic' | 'silk';
+const ART_KEY = 'tkm-art-style';
+const artListeners = new Set<(s: ArtStyle) => void>();
+let artStyle: ArtStyle = (() => {
+  try { return localStorage.getItem(ART_KEY) === 'silk' ? 'silk' : 'realistic'; } catch { return 'realistic'; }
+})();
+
+export function getArtStyle(): ArtStyle { return artStyle; }
+export function setArtStyle(v: ArtStyle): void {
+  if (v === artStyle) return;
+  artStyle = v;
+  try { localStorage.setItem(ART_KEY, v); } catch { /* ignore */ }
+  artListeners.forEach((fn) => fn(v));
+}
+export function subscribeArtStyle(fn: (s: ArtStyle) => void): () => void {
+  artListeners.add(fn);
+  return () => { artListeners.delete(fn); };
+}
