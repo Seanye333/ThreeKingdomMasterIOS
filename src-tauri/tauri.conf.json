@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "三國志大師",
-  "version": "0.1.0",
-  "identifier": "com.seanye.threekingdommasters",
+  "productName": "千古群英傳",
+  "version": "1.0.0",
+  "identifier": "com.seanye.warlordseternal",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "三國志大師 Three Kingdom Masters",
+        "title": "千古群英傳 Warlords Eternal",
         "width": 1440,
         "height": 900,
         "resizable": true,

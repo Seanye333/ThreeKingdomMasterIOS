@@ -2,7 +2,24 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>method</key>
-    <string>debugging</string>
+	<!--
+	  Export method for `npm run tauri ios build`.
+
+	  Was "debugging", which produces a device-install IPA that App Store
+	  Connect refuses. "app-store-connect" is the upload-ready form.
+
+	  Switch back to "debugging" (or pass `--export-method debugging`) when you
+	  just want a build to sideload onto your own device — that path works with
+	  a free Apple ID, whereas this one needs a paid Developer Program
+	  membership and a distribution certificate.
+	-->
+	<key>method</key>
+	<string>app-store-connect</string>
+	<!-- Let Xcode pull the distribution cert + provisioning profile itself. -->
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<!-- Symbols power the crash reports in Xcode Organizer; no user data. -->
+	<key>uploadSymbols</key>
+	<true/>
 </dict>
 </plist>
