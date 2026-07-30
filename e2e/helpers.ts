@@ -44,6 +44,29 @@ export async function dismissPrologue(page: Page): Promise<void> {
 }
 
 /**
+ * 頂欄選單 — open one of the six top-bar dropdowns (內政/軍務/外交/朝堂/人才/記錄)
+ * and pick an entry.
+ *
+ * Two things bite anyone who open-codes this:
+ *
+ * 1. **The top bar auto-hides.** 沉浸 chrome retracts it after a spell of no
+ *    pointer activity, and a spec that has been ticking the clock through the
+ *    keyboard has had none. Moving the mouse to the top edge brings it back.
+ * 2. **Entries are `menuitem`, not `button`.** They are still <button> elements,
+ *    but the dropdown carries proper menu semantics now, and an explicit
+ *    `role="menuitem"` replaces the implicit button role in the a11y tree — so
+ *    `getByRole('button', { name: '國政' })` matches nothing. Seven specs went
+ *    red on exactly this.
+ */
+export async function openMenu(page: Page, menu: string, item: string): Promise<void> {
+  await page.mouse.move(720, 300);
+  await page.mouse.move(720, 30);
+  await page.waitForTimeout(400);
+  await page.getByRole('button', { name: menu, exact: false }).first().click({ timeout: 20_000 });
+  await page.getByRole('menuitem', { name: item, exact: true }).first().click({ timeout: 20_000 });
+}
+
+/**
  * 過旬 — advance one half-month and clear whatever the tick puts on screen.
  *
  * Ticking twice in a row does not work naively: the season report drops a

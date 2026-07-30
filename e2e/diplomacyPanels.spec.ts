@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startCampaign, clearOverlays } from './helpers';
+import { startCampaign, clearOverlays, openMenu } from './helpers';
 
 /**
  * 外交面板 — the panel specs that were missing.
@@ -26,8 +26,7 @@ test.describe('外交面板', () => {
     await startCampaign(page);
     await clearOverlays(page);
 
-    await page.getByRole('button', { name: '外交', exact: false }).first().click();
-    await page.getByRole('button', { name: '邦交', exact: true }).first().click();
+    await openMenu(page, '外交', '邦交');
 
     // 信譽 is in the panel header (國庫金 · 信譽 N) and appears nowhere in the menu.
     await expect(page.getByText('信譽', { exact: false }).first()).toBeVisible({ timeout: 15_000 });
@@ -70,8 +69,7 @@ test.describe('外交面板', () => {
     });
     expect(planted, 'could not plant a coalition — store shape changed?').not.toBeNull();
 
-    await page.getByRole('button', { name: '外交', exact: false }).first().click();
-    await page.getByRole('button', { name: '邦交', exact: true }).first().click();
+    await openMenu(page, '外交', '邦交');
 
     // The section header, then the warning line naming the league's size.
     await expect(page.getByText('討伐會盟', { exact: false })).toBeVisible({ timeout: 15_000 });
@@ -112,8 +110,7 @@ test.describe('外交面板', () => {
     });
     expect(planted).toBe(true);
 
-    await page.getByRole('button', { name: '外交', exact: false }).first().click();
-    await page.getByRole('button', { name: '邦交', exact: true }).first().click();
+    await openMenu(page, '外交', '邦交');
 
     await expect(page.getByText('討伐會盟', { exact: false })).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('你為盟主', { exact: false })).toBeVisible();
@@ -129,8 +126,7 @@ test.describe('外交面板', () => {
         .__tkm?.setState({ warCoalitions: [] });
     });
 
-    await page.getByRole('button', { name: '外交', exact: false }).first().click();
-    await page.getByRole('button', { name: '邦交', exact: true }).first().click();
+    await openMenu(page, '外交', '邦交');
 
     await expect(page.getByText('信譽', { exact: false }).first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('討伐會盟', { exact: false })).toHaveCount(0);

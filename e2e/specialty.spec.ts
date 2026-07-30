@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startCampaign } from './helpers';
+import { startCampaign, openMenu } from './helpers';
 
 /**
  * 名產名物 overhaul — confirm the new UI mounts in a real browser without a
@@ -23,14 +23,11 @@ test('treasury shows the Specialty Dominion panel', async ({ page }) => {
   // (Specialty Dominion) panel is present inside the ledger. (The ledger moved
   // from 記錄 to 內政 when the top bar was re-cut by intent — this spec was
   // silently red until 2026-07-20.)
-  await page.getByRole('button', { name: '內政', exact: false }).first().click();
-  // Exact match on the menu BUTTON — a loose text match also hits the trigger's
+  // Exact match on the menu ITEM — a loose text match also hits the trigger's
   // own tooltip ("內政 — 郡縣、輜重、度支、賑災"), which cannot be clicked.
-  // Wait for the dropdown to settle before clicking: the menu animates open and
-  // gained an entry (國政) in 2026-07, which made a blind click flaky.
-  const ledger = page.getByRole('button', { name: '度支', exact: true }).first();
-  await expect(ledger).toBeVisible({ timeout: 10_000 });
-  await ledger.click();
+  // openMenu also wakes the auto-hiding top bar and uses the `menuitem` role
+  // the dropdown now carries.
+  await openMenu(page, '內政', '度支');
   await expect(page.getByText('名產版圖', { exact: false })).toBeVisible({ timeout: 10_000 });
 
   expect(errors, `uncaught page errors: ${errors.join(' | ')}`).toHaveLength(0);

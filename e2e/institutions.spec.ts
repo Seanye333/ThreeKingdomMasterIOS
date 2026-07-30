@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startCampaign } from './helpers';
+import { startCampaign, openMenu } from './helpers';
 
 /**
  * 2026-07-21 制度批 — the four new realm-level levers (糴政 / 錢法 / 兵制 /
@@ -14,8 +14,7 @@ test('the new institutions all set, and their consequences read back', async ({ 
   await startCampaign(page);
   await expect(page.getByText('武將', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
 
-  await page.getByRole('button', { name: '內政', exact: false }).first().click();
-  await page.getByRole('button', { name: '國政', exact: true }).first().click();
+  await openMenu(page, '內政', '國政');
   await expect(page.getByText('律令', { exact: false }).first()).toBeVisible({ timeout: 15_000 });
 
   // 糴政 (§1.16) — opening the roads must state the duty and the risk.

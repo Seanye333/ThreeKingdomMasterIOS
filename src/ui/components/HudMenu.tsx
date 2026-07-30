@@ -1,7 +1,8 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Tip } from './Tip';
 import { playSfx } from '../../game/systems/sound';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import { Z } from '../zIndex';
 
 interface MenuItem {
@@ -34,9 +35,23 @@ interface Props {
  *
  * The dropdown is rendered via React portal so a parent's `overflow: hidden`
  * (e.g. on the topBar) can never clip it.
+ *
+ * 鍵盤與讀屏(2026-07-29) — the six top-bar menus (內政/軍務/外交/朝堂/人才/記錄)
+ * are the main way into most of the game, and they were mouse-only: the trigger
+ * announced nothing about having a menu or being open, the list had no menu
+ * semantics, Escape did not close it, and focus never entered it. The items
+ * themselves were always real <button>s — an earlier audit claimed otherwise,
+ * having enumerated `document.querySelectorAll('button')` and truncated the
+ * list before reaching the portal at the end of <body>.
  */
 export function HudMenu({ label, items, title }: Props) {
   const [open, setOpen] = useState(false);
+  const menuId = useId();
+  // Index of the item the arrow keys have walked to; -1 = focus still on the
+  // trigger. Headers are skipped, so this indexes into `items` directly and
+  // the movement helper hops over them.
+  const [cursor, setCursor] = useState(-1);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   // 待辦加總 — surface the sum of item badges on the closed trigger, so a
   // pending 賑災/書信 still pings the player without opening the menu.
   const badgeSum = items.reduce((n, it) => n + (isHeader(it) ? 0 : it.badge ?? 0), 0);
@@ -51,6 +66,35 @@ export function HudMenu({ label, items, title }: Props) {
     const r = triggerRef.current.getBoundingClientRect();
     setPos({ left: r.left, top: r.bottom + 4, width: r.width });
   }, [open]);
+
+  const close = useCallback((restoreFocus: boolean) => {
+    setOpen(false);
+    setCursor(-1);
+    if (restoreFocus) triggerRef.current?.focus();
+  }, []);
+
+  // Esc 關閉 — goes on the shared escape stack rather than a local listener, so
+  // a menu left open over a modal peels in the right order, and the map's own
+  // Esc-to-deselect yields while it is up (StrategicMap3D checks hasEscapeLayers).
+  useEscapeKey(useCallback(() => close(true), [close]), open);
+
+  // Move the arrow-key cursor to the next selectable item, skipping headers.
+  const step = useCallback((dir: 1 | -1) => {
+    setCursor((cur) => {
+      const n = items.length;
+      for (let i = 1; i <= n; i++) {
+        const next = (cur + dir * i + n * 2) % n;
+        if (!isHeader(items[next])) return next;
+      }
+      return cur;
+    });
+  }, [items]);
+
+  // Focus follows the cursor so the reader announces each item as you walk.
+  useEffect(() => {
+    if (!open || cursor < 0) return;
+    itemRefs.current[cursor]?.focus();
+  }, [open, cursor]);
 
   useEffect(() => {
     if (!open) return;
@@ -80,7 +124,35 @@ export function HudMenu({ label, items, title }: Props) {
         <button
           ref={triggerRef}
           className="hud-menu-trigger"
-          onClick={() => setOpen((o) => { if (!o) playSfx('click'); return !o; })}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={open ? menuId : undefined}
+          onClick={(e) => {
+            // `detail === 0` means the click came from Enter/Space, not a mouse.
+            // Keyboard users expect to land inside the menu; mouse users would
+            // find focus jumping under the cursor jarring, so only the former
+            // gets the cursor pre-placed.
+            const viaKeyboard = e.detail === 0;
+            setOpen((o) => {
+              if (!o) playSfx('click');
+              setCursor(!o && viaKeyboard ? items.findIndex((it) => !isHeader(it)) : -1);
+              return !o;
+            });
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+            e.preventDefault();
+            if (!open) {
+              setOpen(true);
+              setCursor(
+                e.key === 'ArrowDown'
+                  ? items.findIndex((it) => !isHeader(it))
+                  : items.map(isHeader).lastIndexOf(false),
+              );
+            } else {
+              step(e.key === 'ArrowDown' ? 1 : -1);
+            }
+          }}
           style={{
             background: open ? 'var(--tkm-bg-raised)' : 'transparent',
             color: 'var(--tkm-text-h2)',
@@ -116,6 +188,16 @@ export function HudMenu({ label, items, title }: Props) {
       {open && createPortal(
         <div
           ref={dropRef}
+          id={menuId}
+          role="menu"
+          aria-label={typeof title === 'string' ? title : undefined}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown') { e.preventDefault(); step(1); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); step(-1); }
+            else if (e.key === 'Home') { e.preventDefault(); setCursor(items.findIndex((it) => !isHeader(it))); }
+            else if (e.key === 'End') { e.preventDefault(); setCursor(items.map(isHeader).lastIndexOf(false)); }
+            else if (e.key === 'Tab') { close(false); }
+          }}
           style={{
             position: 'fixed',
             top: pos.top,
@@ -133,6 +215,7 @@ export function HudMenu({ label, items, title }: Props) {
           {items.map((it, i) => isHeader(it) ? (
             <div
               key={i}
+              role="presentation"
               style={{
                 padding: '0.4rem 0.75rem 0.2rem',
                 fontSize: '0.64rem',
@@ -148,9 +231,14 @@ export function HudMenu({ label, items, title }: Props) {
           ) : (
             <button
               key={i}
+              ref={(el) => { itemRefs.current[i] = el; }}
+              role="menuitem"
+              // Roving tabindex: only the item the cursor is on is tabbable, so
+              // Tab leaves the menu instead of walking every entry in it.
+              tabIndex={cursor === i ? 0 : -1}
               onClick={() => {
                 it.onClick();
-                setOpen(false);
+                close(false);
               }}
               title={it.title}
               style={{

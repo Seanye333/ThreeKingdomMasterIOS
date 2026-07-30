@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { startCampaign } from './helpers';
+import { startCampaign, openMenu } from './helpers';
 
 /**
  * 國政 — the panel that consolidates §1.11–§1.15 + §3.6. A lazy modal full of
@@ -14,8 +14,7 @@ test('statecraft panel opens, sets a legal code, and lists the realm ledger', as
   await startCampaign(page);
   await expect(page.getByText('武將', { exact: false }).first()).toBeVisible({ timeout: 30_000 });
 
-  await page.getByRole('button', { name: '內政', exact: false }).first().click();
-  await page.getByRole('button', { name: '國政', exact: true }).first().click();
+  await openMenu(page, '內政', '國政');
 
   // The four institution blocks and the ledger header.
   await expect(page.getByText('律令', { exact: false }).first()).toBeVisible({ timeout: 15_000 });
