@@ -14,6 +14,7 @@ import { SelectionRing3D } from '../../components/SelectionRing3D';
 import { hexWorld, HEX_COL_STEP, HEX_ROW_STEP } from '../battle3d/battleGrid';
 import { ChineseRoof3D, SeasonCtx, InspectCtx } from './Folk3D';
 import { useLanguage } from '../../i18n';
+import { BATCH_STATIC, BATCH_SKIP } from '../../components/StaticBatch';
 
 /** A wisp of opaque chimney smoke — three puffs rise and shrink, then recycle
  *  (no transparency; they just dwindle to nothing). */
@@ -109,7 +110,7 @@ export function Banner3D({ color, w, h, phase, faceX = 0 }: {
 }) {
   const ref = useFlutter(phase, 0.28, 2.0);
   return (
-    <group ref={ref}>
+    <group ref={ref} userData={BATCH_SKIP}>
       <mesh position={[faceX, 0, 0]}>
         <boxGeometry args={[w, h, 0.02]} />
         <meshStandardMaterial color={color} side={THREE.DoubleSide} roughness={0.75} />
@@ -304,7 +305,7 @@ export function WallSegment3D({ x, z, tier = 1 }: { x: number; z: number; tier?:
   const thick = 1.5 + (tier - 1) * 0.12;
   const stone = tier >= 3 ? '#736152' : tier === 2 ? '#6e5944' : '#6a5540';
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, h / 2, 0]} castShadow receiveShadow>
         <boxGeometry args={[thick, h, 1.5]} />
         <meshStandardMaterial color={stone} {...surfaceRelief('masonry', 4)} />
@@ -344,7 +345,7 @@ export function innerWallCells(W: number, H: number) {
 /** A lower, crenellated inner-wall segment. */
 export function InnerWallSeg3D({ x, z }: { x: number; z: number }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.5, 1.0, 1.5]} />
         <meshStandardMaterial color="#7a6748" roughness={0.92} />
@@ -362,7 +363,7 @@ export function InnerWallSeg3D({ x, z }: { x: number; z: number }) {
 /** The inner-wall gate facing the avenue — a red-pillared gatehouse. */
 export function InnerGate3D({ x, z, bannerColor }: { x: number; z: number; bannerColor: string }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {[-0.5, 0.5].map((px, i) => (
         <mesh key={i} position={[px, 0.75, 0]} castShadow receiveShadow>
           <boxGeometry args={[0.4, 1.5, 1.5]} />
@@ -395,7 +396,7 @@ export function InnerGate3D({ x, z, bannerColor }: { x: number; z: number; banne
  *  force banner. Sits in the perimeter where a wall block would otherwise be. */
 export function CityGate3D({ x, z, bannerColor }: { x: number; z: number; bannerColor: string }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {/* Gate pillars */}
       {[-0.55, 0.55].map((px, i) => (
         <mesh key={i} position={[px, 0.9, 0]} castShadow receiveShadow>
@@ -446,7 +447,7 @@ export function CityGate3D({ x, z, bannerColor }: { x: number; z: number; banner
 /** A taller corner tower (角樓) anchoring each corner of the wall ring. */
 export function CornerTower3D({ x, z, bannerColor }: { x: number; z: number; bannerColor: string }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 1.15, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.75, 2.3, 1.75]} />
         <meshStandardMaterial color="#6a5540" roughness={0.92} />
@@ -497,7 +498,7 @@ export function canalRow(H: number): number {
 export function CanalBridge3D({ x, z }: { x: number; z: number }) {
   const season = useContext(SeasonCtx);
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.16, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.1, 0.16, 1.9]} />
         <meshStandardMaterial color="#9a8f78" roughness={0.95} />
@@ -590,7 +591,7 @@ export function ConstructionSite3D({ x, z, name }: { x: number; z: number; name:
   const lang = useLanguage();
   const posts: Array<[number, number]> = [[-0.45, -0.45], [0.45, -0.45], [-0.45, 0.45], [0.45, 0.45]];
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {/* Stacked-stone base under construction */}
       <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.95, 0.5, 0.95]} />

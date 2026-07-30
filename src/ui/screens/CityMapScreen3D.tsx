@@ -5,7 +5,7 @@ import { seasonGrade } from '../sceneGrade';
 import { SkyEnvironment } from '../components/SkyEnvironment';
 import { OrbitControls, Html, Instances, Instance } from '@react-three/drei';
 import * as THREE from 'three';
-import { RENDER_HI } from '../renderQuality';
+import {RENDER_HI, GFX } from '../renderQuality';
 import { useGLRecovery } from '../hooks/useGLRecovery';
 import { FrameRateWatch } from '../components/FrameRateWatch';
 import { SelectionRing3D } from '../components/SelectionRing3D';
@@ -34,6 +34,7 @@ import { OfficerPicker } from '../components/OfficerPicker';
 import { OfficerFigure3D, Residence3D, StreetEncounterFigure, Watchman3D, Refugee3D, MourningBanner3D, FestivalPennants3D, SeasonCtx, NightCtx, InspectCtx, type InspectInfo } from './city3d/Folk3D';
 import { LocatorMap } from '../components/LocatorMap';
 import { IntroDive } from '../components/IntroDive';
+import { StaticBatch, BATCH_STATIC } from '../components/StaticBatch';
 import { cityViewWindow } from '../viewWindow';
 import { BUILDING_DEFS, BUILDING_DEFS_BY_ID, BUILDING_CATEGORY, BUILDING_CATEGORY_LABEL, BUILDING_PREREQ, BUILDING_MIN_SIZE, buildingGroupSynergy } from '../../game/data/buildings';
 import { cityAffinity, citySpecialty, type SpecialtyDef } from '../../game/data/specialties';
@@ -370,7 +371,10 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
 
   return (
     <>
-      {/* Main avenue first so other paving/props sit on top of it */}
+      {/* Main avenue first so other paving/props sit on top of it.
+          The paving/dirt/puddle blocks are pure decoration — marked static so
+          the surrounding <StaticBatch> folds them into the district merge. */}
+      <group userData={BATCH_STATIC}>
       {avenue.map((a) => (
         <mesh key={`av-${a.key}`} position={[a.x, 0.045, a.z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <boxGeometry args={[1.46, 1.46, 0.07]} />
@@ -390,6 +394,7 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
           <meshStandardMaterial color="#3a4a52" roughness={0.18} metalness={0.55} />
         </mesh>
       ))}
+      </group>
       <GrassTufts3D tufts={grass} />
       {paths.map((p) => <StonePath3D key={`pa-${p.key}`} x={p.x} z={p.z} seed={p.seed} />)}
       {flowers.map((f) => <FlowerBed3D key={`fb-${f.key}`} x={f.x} z={f.z} seed={f.seed} />)}
@@ -1182,6 +1187,17 @@ function CityScene({
         );
       })()}
 
+      {/* 靜態合批 — everything below that carries a batchStatic marker (民居、
+          街磚、城牆、樓塔、擺件……) collapses into a handful of merged draws.
+          deps 是契約:任何會增減/換色/搬動這些標記物件的輸入都必須在列 ——
+          hovered/selectedPlot/ghostBuilding 之類**故意不在**(它們只驅動未標記
+          的互動物件)。互動子樹(onClick 巡查卡)由 StaticBatch 自動排除。 */}
+      <StaticBatch deps={[
+        preview, city, buildings, construction, plots, slots, bannerColor, season,
+        night, weatherKind, plagued, stats, grand, landmarkInfo, specialty, activity,
+        figures, encounter, household, neighbors, facilities, armies, stockades,
+        ports, scars, isCapital,
+      ]}>
       {/* Terrain tiles — prisms batched into one InstancedMesh (same as the
           battle board); per-tile groups keep hover/click. */}
       <InstancedTilePrisms tiles={preview.tiles} hovered={hovered} />
@@ -1317,9 +1333,9 @@ function CityScene({
               <planeGeometry args={[lenX, HEX_ROW_STEP * 1.1]} />
               <meshStandardMaterial color="#2c5882" roughness={0.32} metalness={0.45} />
             </mesh>
-            {/* Stone banks north & south */}
+            {/* Stone banks north & south — static, foldable into the merge */}
             {[-1, 1].map((s, i) => (
-              <mesh key={i} position={[cxMid, 0.08, cz + s * HEX_ROW_STEP * 0.62]} castShadow receiveShadow>
+              <mesh key={i} position={[cxMid, 0.08, cz + s * HEX_ROW_STEP * 0.62]} castShadow receiveShadow userData={BATCH_STATIC}>
                 <boxGeometry args={[lenX, 0.2, 0.22]} />
                 <meshStandardMaterial color="#9a8f78" roughness={0.94} />
               </mesh>
@@ -1398,6 +1414,7 @@ function CityScene({
           damaged={b.damaged}
         />
       ))}
+      </StaticBatch>
 
      </InspectCtx.Provider>
      </NightCtx.Provider>
@@ -2267,7 +2284,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           // 釘死視角,暗部 7.42% → 7.11%、平均亮度 101.0 → 101.6,肉眼看不出來。
           // VSM('variance')也量過,**否決** —— 漏光把地面陰影沖平(暗部 7.35%、
           // 中間調 46.11%,牆的內側整片變亮)。
-          shadows={RENDER_HI ? 'percentage' : false}
+          shadows={RENDER_HI && GFX.shadows ? 'percentage' : false}
           dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
           style={{ background: light.sky }}
         >

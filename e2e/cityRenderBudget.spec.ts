@@ -121,6 +121,13 @@ test('the city scene links every shader, and parks the world map behind it', asy
   ).toBe(0);
   expect(cityPerFrame, '城邑地圖沒有在畫 —— 進城後是空的').toBeGreaterThan(100);
 
+  // 靜態合批的守門 — StaticBatch 把 ~2,500 個標記 mesh 摺成 ~28 個 draw,實測
+  // 城內 4,144 → 1,598/幀。合批**設計上**靜默降級(merge 失敗就回退原樣,畫面
+  // 不會壞),所以必須有數字鎖著,否則它哪天壞了沒有任何測試會叫。上限 3,500
+  // 給足環境浮動(並行 worker 會觸發 FrameRateWatch 降級,單跑不會 —— 見
+  // mapDrawCalls.spec 的教訓),但擋得住「合批整個沒生效」的 4,144。
+  expect(cityPerFrame, `城內每幀 ${cityPerFrame} 次 draw call —— 靜態合批(StaticBatch)大概失效了`).toBeLessThan(3500);
+
   // 出城要復原 — parking is only safe if it un-parks.
   await page.getByRole('button', { name: '離開城內' }).click();
   await expect(page.getByRole('button', { name: '離開城內' })).toBeHidden({ timeout: 20_000 });

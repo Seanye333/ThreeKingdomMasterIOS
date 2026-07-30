@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html, Line, MeshReflectorMaterial } from '@react-three/drei';
 import * as THREE from 'three';
-import { RENDER_HI } from '../../renderQuality';
+import { RENDER_HI, GFX } from '../../renderQuality';
 import { geoToPixel, MAP_W as PX_W, MAP_H as PX_H } from '../../../game/data/geography';
 import { cityPixel } from '../../../game/data/cityGeo';
 import { useGameStore } from '../../../game/state/store';
@@ -50,7 +50,7 @@ export function Ocean({ night = false }: { night?: boolean }) {
   // desktop-only luxury — and even there it is the most expensive single
   // layer on the map, so it is also the first to go once the frame rate
   // slips (degraded), falling back to the same cheap shimmer.
-  if (RENDER_HI && !IS_MOBILE && !degraded) {
+  if (RENDER_HI && GFX.reflections && !IS_MOBILE && !degraded) {
     return (
       <mesh ref={ref} geometry={geom} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.18, 0]}>
         <MeshReflectorMaterial
@@ -261,6 +261,7 @@ export function Forest3D({ season }: { season: Season }) {
 
 /* ─── Rain / snow particle components ──────────────────────────── */
 export function RainParticles({ count = 2000, bounds }: { count?: number; bounds: { x: number; z: number } }) {
+  count = Math.max(120, Math.round(count * GFX.particles)); // 畫質細項:粒子密度
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const seeds = useMemo(() =>
@@ -291,6 +292,7 @@ export function RainParticles({ count = 2000, bounds }: { count?: number; bounds
   );
 }
 export function SnowParticles({ count = 1500, bounds }: { count?: number; bounds: { x: number; z: number } }) {
+  count = Math.max(100, Math.round(count * GFX.particles)); // 畫質細項:粒子密度
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const seeds = useMemo(() =>

@@ -10,6 +10,7 @@ import { shade, ChineseRoof3D, SeasonCtx, NightCtx } from './Folk3D';
 import { Banner3D, Smoke3D } from './Architecture3D';
 import type { SpecialtyDef } from '../../../game/data/specialties';
 import type { Officer } from '../../../game/types';
+import { BATCH_STATIC } from '../../components/StaticBatch';
 
 /**
  * 城中景物 — the props that make a city read as a lived-in place rather than
@@ -79,7 +80,7 @@ export function Dwelling({ x, z, seed }: { x: number; z: number; seed: number })
   const winEmissive = lit ? '#ff9c3a' : '#000000';
   const winGlow = lit ? (night ? 1.4 : 0.9) : 0;
   return (
-    <group position={[x, 0, z]} rotation={[0, rot, 0]}>
+    <group position={[x, 0, z]} rotation={[0, rot, 0]} userData={BATCH_STATIC}>
       {/* Stone plinth */}
       <mesh position={[0, 0.06, 0]} receiveShadow castShadow>
         <boxGeometry args={[w + 0.18, 0.12, w + 0.18]} />
@@ -140,7 +141,7 @@ export function Dwelling({ x, z, seed }: { x: number; z: number; seed: number })
 export function StoneLion3D({ x, z, faceZ }: { x: number; z: number; faceZ: number }) {
   const stone = '#b9b1a0';
   return (
-    <group position={[x, 0, z]} rotation={[0, faceZ > 0 ? 0 : Math.PI, 0]}>
+    <group position={[x, 0, z]} rotation={[0, faceZ > 0 ? 0 : Math.PI, 0]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.09, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.34, 0.18, 0.42]} />
         <meshStandardMaterial color="#8f8775" roughness={0.95} />
@@ -171,7 +172,7 @@ export function StoneLion3D({ x, z, faceZ }: { x: number; z: number; faceZ: numb
 /** A tall flagpole flying the force banner (opaque cloth). */
 export function FlagPole3D({ x, z, color, h = 2.4 }: { x: number; z: number; color: string; h?: number }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, h / 2, 0]} castShadow>
         <cylinderGeometry args={[0.035, 0.045, h, 6]} />
         <meshStandardMaterial color="#2a2018" roughness={0.8} />
@@ -192,7 +193,7 @@ export function FlagPole3D({ x, z, color, h = 2.4 }: { x: number; z: number; col
  *  flanked by stone lions and banner poles. */
 export function GovernmentHall3D({ x, z, bannerColor, isCapital = false }: { x: number; z: number; bannerColor: string; isCapital?: boolean }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {/* Paved plaza with a border step */}
       <mesh position={[0, 0.05, 0]} receiveShadow>
         <boxGeometry args={[3.8, 0.1, 3.8]} />
@@ -363,7 +364,7 @@ export function GovernmentHall3D({ x, z, bannerColor, isCapital = false }: { x: 
  *  war banner. The seat of 徵兵 (recruitment). */
 export function Barracks3D({ x, z, bannerColor }: { x: number; z: number; bannerColor: string }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.35, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.5, 0.7, 0.8]} />
         <meshStandardMaterial color="#6a5236" roughness={0.85} />
@@ -389,7 +390,7 @@ export function Barracks3D({ x, z, bannerColor }: { x: number; z: number; banner
 export function Tavern3D({ x, z }: { x: number; z: number }) {
   const t = useT();
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.4, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.95, 0.8, 0.9]} />
         <meshStandardMaterial color="#7d5a36" roughness={0.82} />
@@ -506,7 +507,7 @@ export function Lantern3D({ x, z }: { x: number; z: number }) {
 export function StonePath3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   const shade = ['#8f8470', '#857a66', '#968b76', '#7e7460'][seed % 4];
   return (
-    <mesh position={[x, 0.04, z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+    <mesh position={[x, 0.04, z]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow userData={BATCH_STATIC}>
       <boxGeometry args={[1.28, 1.28, 0.08]} />
       <meshStandardMaterial color={shade} roughness={0.98} />
     </mesh>
@@ -520,7 +521,7 @@ export function MarketStall3D({ x, z, seed }: { x: number; z: number; seed: numb
   const sign = ['#c8362a', '#2f6a3a', '#d4a838', '#8a3a7a'][(seed >> 2) % 4];
   const goods = ['#c8a060', '#9a5a2a', '#d8c050', '#6a8a3a', '#b85040'];
   return (
-    <group position={[x, 0, z]} rotation={[0, (seed % 4) * (Math.PI / 8), 0]}>
+    <group position={[x, 0, z]} rotation={[0, (seed % 4) * (Math.PI / 8), 0]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
         <boxGeometry args={[0.85, 0.4, 0.5]} />
         <meshStandardMaterial color="#8a6a40" roughness={0.85} />
@@ -565,7 +566,7 @@ export function Villager3D({ x, z, seed }: { x: number; z: number; seed: number 
   const rot = (seed % 8) * (Math.PI / 4);
   const hat = (seed >> 3) % 2 === 0;
   return (
-    <group position={[x, 0, z]} rotation={[0, rot, 0]}>
+    <group position={[x, 0, z]} rotation={[0, rot, 0]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.17, 0]} castShadow>
         <cylinderGeometry args={[0.08, 0.13, 0.34, 7]} />
         <meshStandardMaterial color={robe} roughness={0.85} />
@@ -592,7 +593,7 @@ export function Villager3D({ x, z, seed }: { x: number; z: number; seed: number 
 /** A stone well with a little tiled roof and a bucket. */
 export function Well3D({ x, z }: { x: number; z: number }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.19, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.34, 0.37, 0.38, 8]} />
         <meshStandardMaterial color="#8f8775" roughness={0.95} />
@@ -624,7 +625,7 @@ export function Well3D({ x, z }: { x: number; z: number }) {
 export function Cart3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   const rot = (seed % 4) * (Math.PI / 5);
   return (
-    <group position={[x, 0, z]} rotation={[0, rot, 0]}>
+    <group position={[x, 0, z]} rotation={[0, rot, 0]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.3, 0]} castShadow>
         <boxGeometry args={[0.72, 0.16, 0.46]} />
         <meshStandardMaterial color="#7a5a38" roughness={0.85} />
@@ -778,7 +779,7 @@ export function Brazier3D({ x, z }: { x: number; z: number }) {
 /** A raised flower bed — soil box, greenery and bright blossoms. */
 export function FlowerBed3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.07, 0]} receiveShadow castShadow>
         <boxGeometry args={[0.72, 0.14, 0.5]} />
         <meshStandardMaterial color="#5a4028" roughness={0.95} />
@@ -800,7 +801,7 @@ export function FlowerBed3D({ x, z, seed }: { x: number; z: number; seed: number
 /** An arched stone bridge spanning the moat outside the gate. */
 export function StoneBridge3D({ x, z }: { x: number; z: number }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.16, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.1, 0.18, 2.6]} />
         <meshStandardMaterial color="#9a8f78" roughness={0.95} />
@@ -831,7 +832,7 @@ export function StoneBridge3D({ x, z }: { x: number; z: number }) {
  *  runs along z here, so boats pass through along x. */
 export function WaterGate3D({ x, z, bannerColor }: { x: number; z: number; bannerColor: string }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {[-0.78, 0.78].map((pz, i) => (
         <mesh key={i} position={[0, 0.8, pz]} castShadow receiveShadow>
           <boxGeometry args={[1.5, 1.6, 0.45]} />
@@ -871,7 +872,7 @@ export function WaterGate3D({ x, z, bannerColor }: { x: number; z: number; banne
  *  cargo boats, crates and barrels, and a couple of dockhands. Extends +x. */
 export function Dock3D({ x, z }: { x: number; z: number }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {/* Plank deck */}
       <mesh position={[1.7, 0.18, 0]} castShadow receiveShadow>
         <boxGeometry args={[3.2, 0.12, 1.1]} />
@@ -951,7 +952,7 @@ export function LilyPads3D({ pads }: { pads: Array<{ x: number; z: number; s: nu
 export function Reed3D({ x, z, seed }: { x: number; z: number; seed: number }) {
   const n = 4 + (seed % 3);
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {Array.from({ length: n }).map((_, i) => {
         const a = (i / n) * Math.PI * 2 + seed;
         return (
@@ -1001,7 +1002,7 @@ export function Pagoda3D({ x, z }: { x: number; z: number }) {
   const tiers = 5;
   const topY = 0.4 + tiers * 0.78;
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {/* Stone base */}
       <mesh position={[0, 0.18, 0]} receiveShadow castShadow>
         <boxGeometry args={[1.7, 0.36, 1.7]} />
@@ -1048,7 +1049,7 @@ export function Pagoda3D({ x, z }: { x: number; z: number }) {
 /** A banner on a short pole — strung along the wall-walk at intervals. */
 export function WallBanner3D({ x, z, color }: { x: number; z: number; color: string }) {
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 1.85, 0]} castShadow>
         <cylinderGeometry args={[0.03, 0.03, 0.9, 6]} />
         <meshStandardMaterial color="#1a1410" />
@@ -1064,7 +1065,7 @@ export function WallBanner3D({ x, z, color }: { x: number; z: number; color: str
 export function Paifang3D({ x, z }: { x: number; z: number }) {
   const pillars = [-1.1, -0.4, 0.4, 1.1];
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {pillars.map((px, i) => (
         <group key={i}>
           <mesh position={[px, 0.13, 0]} castShadow receiveShadow>
@@ -1103,7 +1104,7 @@ export function Paifang3D({ x, z }: { x: number; z: number }) {
 export function DrumTower3D({ x, z }: { x: number; z: number }) {
   const t = useT();
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {/* Stone base with an arched passage */}
       <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.6, 1.0, 1.6]} />
@@ -1150,7 +1151,7 @@ export function DrumTower3D({ x, z }: { x: number; z: number }) {
 export function BellTower3D({ x, z }: { x: number; z: number }) {
   const t = useT();
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {/* Stone arch base */}
       <mesh position={[0, 0.5, 0]} castShadow receiveShadow>
         <boxGeometry args={[1.6, 1.0, 1.6]} />
@@ -1197,7 +1198,7 @@ export function BellTower3D({ x, z }: { x: number; z: number }) {
 export function Pavilion3D({ x, z }: { x: number; z: number }) {
   const corners: Array<[number, number]> = [[-0.42, -0.42], [0.42, -0.42], [-0.42, 0.42], [0.42, 0.42]];
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.12, 0]} receiveShadow castShadow>
         <boxGeometry args={[1.15, 0.24, 1.15]} />
         <meshStandardMaterial color="#a89a78" roughness={0.92} />
@@ -1230,7 +1231,7 @@ export function Garden3D({ x, z }: { x: number; z: number }) {
   const season = useContext(SeasonCtx);
   const frozen = season === 'winter';
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {/* Pond water — frozen pale in winter */}
       <mesh position={[0, 0.0, 0]} receiveShadow>
         <boxGeometry args={[2.6, 0.12, 1.9]} />
@@ -1282,7 +1283,7 @@ export function Farmland3D({ x, z, lush = 0.5 }: { x: number; z: number; lush?: 
   // More productive farms (higher agriculture) sprout denser, taller rows.
   const rows = Math.max(3, Math.min(7, Math.round(3 + lush * 4)));
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.05, 0]} receiveShadow>
         <boxGeometry args={[3.0, 0.1, 2.2]} />
         <meshStandardMaterial color={soil} roughness={0.97} />
@@ -1351,7 +1352,7 @@ export function RuinsOverlay({ houses }: { houses: Array<{ x: number; z: number;
 export function SpecialtyProp3D({ specialty, x, z }: { specialty: SpecialtyDef; x: number; z: number }) {
   const tint = specialty.foodMul > 1 ? '#b89a52' : '#9a7a4a';
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       <mesh position={[0, 0.18, 0]} castShadow receiveShadow><boxGeometry args={[0.4, 0.36, 0.4]} /><meshStandardMaterial color={tint} roughness={0.9} /></mesh>
       <mesh position={[0.28, 0.14, 0.1]} castShadow><boxGeometry args={[0.3, 0.28, 0.3]} /><meshStandardMaterial color="#8a6a3a" roughness={0.92} /></mesh>
       <mesh position={[-0.1, 0.5, 0]} castShadow><boxGeometry args={[0.34, 0.3, 0.34]} /><meshStandardMaterial color={tint} roughness={0.9} /></mesh>
@@ -1371,7 +1372,7 @@ export function GarrisonBanners3D({ x, z, troops, color }: { x: number; z: numbe
   const n = Math.max(0, Math.min(RENDER_HI ? 8 : 4, Math.round(troops / 12000)));
   if (n === 0) return null;
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} userData={BATCH_STATIC}>
       {Array.from({ length: n }, (_, i) => {
         const col = i % 4, row = Math.floor(i / 4);
         return <FlagPole3D key={i} x={-1.2 + col * 0.8} z={1.7 + row * 0.7} color={color} h={1.9} />;

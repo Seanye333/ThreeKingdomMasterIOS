@@ -4,7 +4,7 @@ import { Html, Line, OrbitControls } from '@react-three/drei';
 import { ScenePostFx } from './ScenePostFx';
 import { seasonGrade } from '../sceneGrade';
 import { SkyEnvironment } from './SkyEnvironment';
-import { RENDER_HI } from '../renderQuality';
+import {RENDER_HI, GFX } from '../renderQuality';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
 import { hasEscapeLayers } from '../hooks/useEscapeKey';
 import { WORLD_SCALE, hexAt as geoHexAt, hexCenter as geoHexCenter } from '../../game/data/geography';
@@ -1741,7 +1741,7 @@ export function StrategicMap3D() {
         // r3f 預設(PCFSoftShadowMap)。城內與戰場已改寫成 'percentage'(three
         // 0.184 棄用了這個型別),大地圖維持原樣 —— 這張圖的陰影只在 near 檔開,
         // 動它的收益最小、風險最大,留給日後一併整理。
-        shadows={RENDER_HI}
+        shadows={RENDER_HI && GFX.shadows}
         // See cityMapOpen above: 'never' while the city view is on top.
         frameloop={cityMapOpen ? 'never' : 'always'}
         dpr={RENDER_HI ? [1, 2] : [1, 1.5]}

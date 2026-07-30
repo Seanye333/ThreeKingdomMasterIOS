@@ -5,7 +5,7 @@ import { Html, OrbitControls, Stars, Sparkles } from '@react-three/drei';
 import { ScenePostFx } from '../components/ScenePostFx';
 import { SkyEnvironment } from '../components/SkyEnvironment';
 import * as THREE from 'three';
-import { RENDER_HI } from '../renderQuality';
+import {RENDER_HI, GFX } from '../renderQuality';
 import { useGLRecovery } from '../hooks/useGLRecovery';
 import { TERRAIN_LABEL } from './battle3d/terrainLabels';
 import { OfficerPortrait } from '../components/OfficerPortrait';
@@ -2560,7 +2560,7 @@ export function TacticalBattleScreen3D() {
           // out-of-memory reload while the strategic map context is also alive.
           // 'percentage' — see StrategicMap3D: the r3f default (PCFSoftShadowMap)
           // is deprecated in three 0.184 and downgrades to exactly this anyway.
-          shadows={RENDER_HI ? 'percentage' : false}
+          shadows={RENDER_HI && GFX.shadows ? 'percentage' : false}
           dpr={RENDER_HI ? [1, 2] : [1, 1.5]}
           camera={{ position: [target[0] - 8, 40, target[2] + 6], fov: 45 }}
           gl={{

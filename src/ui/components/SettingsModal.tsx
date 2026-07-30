@@ -4,7 +4,7 @@ import { setVoiceEnabled, setAudioFilesEnabled, isAudioFilesEnabled } from '../.
 import { exportAllSaves, importAllSaves } from '../../game/state/saveTransfer';
 import { installMod, loadMods, parseModBundle, removeMod } from '../../game/systems/mods';
 import { applyUiPrefs, getStoredUiPrefs, type UiPrefs, type UiScale } from '../uiPrefs';
-import { getRenderQualityPref, setRenderQualityPref, type RenderQualityPref } from '../renderQuality';
+import { getRenderQualityPref, setRenderQualityPref, type RenderQualityPref, getGfxPrefs, setGfxPref, type GfxPrefs, type GfxToggle } from '../renderQuality';
 import { useT } from '../i18n';
 import { Modal } from './Modal';
 
@@ -21,6 +21,13 @@ export function SettingsModal({ onClose }: Props) {
   const setSoundEnabled = useGameStore((s) => s.setSoundEnabled);
   // 3D 畫質 — frozen at module load (RENDER_HI), so changing it reloads to apply.
   const [renderQuality, setRenderQualityState] = useState<RenderQualityPref>(getRenderQualityPref);
+  // 畫質細項 — same frozen-at-load contract as the tier (reload applies).
+  const [gfxPrefs, setGfxPrefsState] = useState<GfxPrefs>(getGfxPrefs);
+  const changeGfx = <K extends keyof GfxPrefs>(key: K, v: GfxPrefs[K]) => {
+    if (gfxPrefs[key] === v) return;
+    setGfxPrefsState((p) => ({ ...p, [key]: v }));
+    setGfxPref(key, v);
+  };
   const changeRenderQuality = (pref: RenderQualityPref) => {
     if (pref === renderQuality) return;
     setRenderQualityState(pref);
@@ -133,6 +140,36 @@ export function SettingsModal({ onClose }: Props) {
                       padding: '0.25rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit',
                     }}
                   >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </Row>
+            {/* 畫質細項 — the tier split into its four real costs; auto = 依畫質檔。
+                Module-frozen like the tier itself, so a change applies on reload. */}
+            {([
+              ['shadows', t('陰影', 'Shadows'), t('三圖即時陰影(最貴的一項)', 'Realtime shadow maps (the priciest single item)')],
+              ['postfx', t('後處理', 'Post FX'), t('環境光遮蔽/光暈/色調映射整棧', 'AO / bloom / tone-mapping stack')],
+              ['reflections', t('水面鏡面', 'Water mirror'), t('大地圖海面真實倒影', "The strategic map sea's real reflections")],
+            ] as Array<[keyof GfxPrefs, string, string]>).map(([key, label, hint]) => (
+              <Row key={key} label={label} hint={hint}>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {([['auto', t('自動', 'Auto')], ['on', t('開', 'On')], ['off', t('關', 'Off')]] as Array<[GfxToggle, string]>).map(([q, lbl]) => (
+                    <button
+                      key={q}
+                      onClick={() => changeGfx(key, q)}
+                      style={segBtnStyle(gfxPrefs[key] === q)}
+                    >
+                      {lbl}
+                    </button>
+                  ))}
+                </div>
+              </Row>
+            ))}
+            <Row label={t('天候粒子', 'Weather particles')} hint={t('雨雪風沙的粒子密度', 'Rain/snow particle density')}>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {([['auto', t('自動', 'Auto')], ['full', t('全量', 'Full')], ['reduced', t('減量', 'Reduced')]] as Array<[GfxPrefs['particles'], string]>).map(([q, lbl]) => (
+                  <button key={q} onClick={() => changeGfx('particles', q)} style={segBtnStyle(gfxPrefs.particles === q)}>
                     {lbl}
                   </button>
                 ))}
@@ -635,6 +672,16 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
       {children}
     </div>
   );
+}
+
+/** Segmented-choice button, same look as the 3D 畫質 row. */
+function segBtnStyle(active: boolean): React.CSSProperties {
+  return {
+    background: active ? '#26323e' : 'transparent',
+    border: '1px solid ' + (active ? '#e6c473' : '#2b3845'),
+    color: active ? '#e6c473' : '#7a8893',
+    padding: '0.25rem 0.7rem', cursor: 'pointer', fontFamily: 'inherit',
+  };
 }
 
 const selectStyle: React.CSSProperties = {

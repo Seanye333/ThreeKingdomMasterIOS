@@ -3,7 +3,7 @@ import {
   HueSaturation, BrightnessContrast, DepthOfField,
 } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
-import { RENDER_HI } from '../renderQuality';
+import { RENDER_HI, GFX } from '../renderQuality';
 
 /**
  * 三圖共用的後處理棧 — ambient occlusion, bloom, grading, tone mapping and
@@ -52,7 +52,7 @@ export function ScenePostFx({
   grade = null,
   vignette = null,
 }: PostFxOptions) {
-  if (!RENDER_HI) return null;
+  if (!RENDER_HI || !GFX.postfx) return null;
   // N8AO needs the normal pass; asking for it when AO is off wastes a target.
   const wantAO = !!ao && !mobile;
   const wantDoF = !!dof && !mobile;

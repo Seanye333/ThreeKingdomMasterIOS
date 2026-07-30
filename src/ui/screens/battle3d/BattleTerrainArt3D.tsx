@@ -24,6 +24,7 @@ import { hexWorld, HEX_R, TERRAIN_HEIGHT, TERRAIN_COLOR } from './battleGrid';
 import { groundNormalTexture, groundRoughnessTexture } from '../battleTextures';
 import { EmbeddedSceneCtx, IS_MOBILE } from './shared';
 import { playSfx } from '../../../game/systems/sound';
+import { GFX } from '../../renderQuality';
 
 const R = HEX_R;
 /** Shared normal-map scale — one Vector2 for every surface (never per-frame). */
@@ -911,6 +912,7 @@ export function ZocOverlay({ battle, selectedUnit, playerSide }: {
 
 /* ─── Weather particles ─────────────────────────────────────────── */
 export function RainParticles({ count = 800, bounds }: { count?: number; bounds: { x: number; z: number } }) {
+  count = Math.max(120, Math.round(count * GFX.particles)); // 畫質細項:粒子密度
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const seeds = useMemo(() =>
@@ -1008,6 +1010,7 @@ export function BattleHaze({ bounds, tint, count = 22 }: { bounds: { x: number; 
 }
 
 export function SnowParticles({ count = 600, bounds }: { count?: number; bounds: { x: number; z: number } }) {
+  count = Math.max(100, Math.round(count * GFX.particles)); // 畫質細項:粒子密度
   const meshRef = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const seeds = useMemo(() =>
