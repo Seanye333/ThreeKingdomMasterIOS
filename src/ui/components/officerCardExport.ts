@@ -258,7 +258,7 @@ export async function exportOfficerCardPNG(officer: Officer, lang: Language): Pr
   ctx.textAlign = 'center';
   ctx.fillStyle = '#5a6672';
   ctx.font = '10px system-ui, sans-serif';
-  ctx.fillText(zh ? '三國名將錄 · Three Kingdom Masters' : 'Three Kingdom Masters', W / 2, H - 14);
+  ctx.fillText(zh ? '千古群英錄 · Warlords Eternal' : 'Warlords Eternal', W / 2, H - 14);
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
   if (!blob) return false;
@@ -376,7 +376,7 @@ export async function exportItemCardPNG(
   ctx.textAlign = 'center';
   ctx.fillStyle = '#5a6672';
   ctx.font = '10px system-ui, sans-serif';
-  ctx.fillText(zh ? '三國名將錄 · Three Kingdom Masters' : 'Three Kingdom Masters', ITEM_W / 2, ITEM_H - 14);
+  ctx.fillText(zh ? '千古群英錄 · Warlords Eternal' : 'Warlords Eternal', ITEM_W / 2, ITEM_H - 14);
 
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
   if (!blob) return false;

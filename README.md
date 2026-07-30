@@ -1,4 +1,4 @@
-# 三國志大師 · Three Kingdom Masters
+# 千古群英傳 · Warlords Eternal
 
 仿《三國志》(RTK II–IV / 14)風格的瀏覽器大型戰略遊戲 —— 一張地圖,從天下大勢一路放大到城內街巷與戰場單格。純前端,免安裝,離線可玩。
 

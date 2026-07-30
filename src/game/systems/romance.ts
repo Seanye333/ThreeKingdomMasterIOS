@@ -103,6 +103,6 @@ export function romanceToText(romance: Romance): string {
     romance.bookTitle,
     '',
     ...romance.chapters.flatMap((c) => [c.title, ...c.lines, '']),
-    '— 三國志大師 說書人',
+    '— 千古群英傳 說書人',
   ].join('\n');
 }

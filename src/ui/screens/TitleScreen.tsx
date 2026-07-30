@@ -387,8 +387,8 @@ export function TitleScreen() {
           style={{ position: 'absolute', top: '1rem', right: 'clamp(0.75rem, 8vw, 5rem)', zIndex: 2 }}
         />
         <h1 className={styles.title}>
-          {lang !== 'en' && <span className={styles.titleZh}>三國志</span>}
-          {lang !== 'zh' && <span className={styles.titleEn}>Three Kingdom Masters</span>}
+          {lang !== 'en' && <span className={styles.titleZh}>千古群英傳</span>}
+          {lang !== 'zh' && <span className={styles.titleEn}>Warlords Eternal</span>}
           {/* A single tapered brush sweep — calmer than the old four strokes. */}
           <svg
             className="tkm-brush-stroke"

@@ -86,7 +86,7 @@ export function recordDailyResult(dateStr: string, result: DailyResult): void {
 }
 
 export function dailyShareString(c: DailyChallenge, forceNameZh: string, r: DailyResult): string {
-  return `三國志大師 每日挑戰 ${c.dateStr} · ${forceNameZh} · ${r.victory ? `${r.seasons}旬制霸 🏆` : '敗北 ☠'}`;
+  return `千古群英傳 每日挑戰 ${c.dateStr} · ${forceNameZh} · ${r.victory ? `${r.seasons}旬制霸 🏆` : '敗北 ☠'}`;
 }
 
 /** 連勝 — consecutive victorious days ending today (or yesterday, if

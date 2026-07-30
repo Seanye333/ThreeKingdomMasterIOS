@@ -123,6 +123,6 @@ export function historyBookToText(sections: BookSection[], forceNameZh: string):
     `《${forceNameZh}本紀》`,
     '',
     ...sections.flatMap((s) => [`■ ${s.title}`, ...s.lines, '']),
-    '— 三國志大師 修史局',
+    '— 千古群英傳 修史局',
   ].join('\n');
 }

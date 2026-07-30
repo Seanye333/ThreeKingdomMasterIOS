@@ -241,7 +241,7 @@ summary.push(...smallTables());
 
 // ─── CATALOG.md full dump ───
 const full: string[] = [
-  '# 三國志大師 · 完整內容目錄(機器生成)',
+  '# 千古群英傳 · 完整內容目錄(機器生成)',
   '',
   '> 由 `scripts/gen-catalog.ts` 自動生成,請勿手改;重生成:`npm run docs:catalog`。',
   '> 可讀摘要見 [GUIDE.md](GUIDE.md) 附錄。',

@@ -1,4 +1,4 @@
-# Project instructions — Three Kingdom Masters
+# Project instructions — Warlords Eternal
 
 ## Keep the docs in sync with the code (required)
 
