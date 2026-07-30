@@ -425,15 +425,42 @@ function SaveTransferRows() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
 
-  const doExport = () => {
+  const doExport = async () => {
     const bundle = exportAllSaves();
-    const blob = new Blob([JSON.stringify(bundle)], { type: 'application/json' });
+    const json = JSON.stringify(bundle);
+    const count = Object.keys(bundle.entries).length;
+    const filename = `千古群英傳存檔-${new Date().toISOString().slice(0, 10)}.json`;
+    const done = () => setStatus(t(`已導出 ${count} 項`, `Exported ${count} keys`));
+
+    // iOS/Android WebViews silently ignore <a download> — on the packaged app
+    // that made this button a no-op, i.e. no backup path at all on the very
+    // platform where losing the WebView's storage is the real risk. Hand the
+    // file to the system share sheet first (same route the duel/debate capture
+    // takes), and keep the anchor as the desktop-browser fallback.
+    const nav = navigator as Navigator & {
+      share?: (d: { files?: File[]; title?: string }) => Promise<void>;
+      canShare?: (d: { files: File[] }) => boolean;
+    };
+    const file = new File([json], filename, { type: 'application/json' });
+    if (nav.share && nav.canShare?.({ files: [file] })) {
+      try {
+        await nav.share({ files: [file], title: filename });
+        done();
+        return;
+      } catch (err) {
+        // Dismissing the sheet is a deliberate cancel — don't then shove a
+        // download at them. Any other failure falls through to the anchor.
+        if ((err as DOMException | undefined)?.name === 'AbortError') return;
+      }
+    }
+
+    const blob = new Blob([json], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `三國志大師存檔-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(a.href);
-    setStatus(t(`已導出 ${Object.keys(bundle.entries).length} 項`, `Exported ${Object.keys(bundle.entries).length} keys`));
+    done();
   };
 
   const doImport = (file: File) => {
@@ -461,7 +488,7 @@ function SaveTransferRows() {
       hint={status ?? t('導出成文件 → 傳到另一台設備 → 導入即接著玩(含全部存檔槽與偏好)', 'Export to a file → send it to the other device → import and keep playing (all slots & prefs)')}
     >
       <div style={{ display: 'flex', gap: 6 }}>
-        <button style={btn} onClick={doExport}>⬇ {t('導出', 'Export')}</button>
+        <button style={btn} onClick={() => void doExport()}>⬇ {t('導出', 'Export')}</button>
         <button style={btn} onClick={() => fileRef.current?.click()}>⬆ {t('導入', 'Import')}</button>
         <input
           ref={fileRef}
