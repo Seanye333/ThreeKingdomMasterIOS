@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { SEASON_LABEL } from '../../game/types';
 import type { HistoricalEvent } from '../../game/types/event';
@@ -7,6 +7,7 @@ import styles from './EventModal.module.css';
 import { useT, useLanguage, useDesc, pickName } from '../i18n';
 import { OfficerPortrait } from './OfficerPortrait';
 import { effectChips, type EffectChip } from './eventEffectChips';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 
 /** 事件配樂 — classify an event's mood from its effects (language-agnostic)
  *  with id/name keyword hints, so the right motif greets it. */
@@ -53,7 +54,25 @@ function eventOfficerIds(event: HistoricalEvent): string[] {
   return ids;
 }
 
+/** 名場面 key-art — drop public/events/<event.id>.jpg to light up a painterly
+ *  banner for a famous moment; absent (or 404) → nothing shows (unchanged). */
+function EventArt({ id }: { id: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return (
+    <img
+      key={id}
+      src={`${import.meta.env.BASE_URL}events/${id}.jpg`}
+      alt=""
+      onError={() => setFailed(true)}
+      style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', display: 'block', borderRadius: 4, margin: '2px 0 8px', border: '1px solid var(--evt-glow)' }}
+    />
+  );
+}
+
 export function EventModal() {
+  // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
+  const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const pending = useGameStore((s) => s.pendingEvent);
   const dismiss = useGameStore((s) => s.dismissEvent);
   const resolveChoice = useGameStore((s) => s.resolveEventChoice);
@@ -89,6 +108,12 @@ export function EventModal() {
     <div className={styles.backdrop}>
       <div
         className={styles.modal}
+        ref={frameRef}
+        onKeyDown={onDialogKeyDown}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label="事件 Event"
         style={{ ['--evt-accent' as string]: mood.accent, ['--evt-glow' as string]: mood.glow }}
       >
         <div className={styles.scrollDecoration} />
@@ -100,6 +125,8 @@ export function EventModal() {
           {year} AD · {lang === 'en' ? seasonLabel.en : seasonLabel.zh}
         </div>
         <hr className={styles.divider} />
+        {/* 名場面 — an optional painterly banner for the moment (see EventArt). */}
+        <EventArt id={event.id} />
         {/* 登場人物 — the faces this moment belongs to. */}
         {(() => {
           const cast = eventOfficerIds(event)
