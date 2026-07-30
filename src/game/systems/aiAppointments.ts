@@ -49,7 +49,7 @@ export interface AIAppointmentsOutput {
  */
 export function planAIAppointments(ctx: AIAppointmentsContext): AIAppointmentsOutput {
   const officers = { ...ctx.officers };
-  let appointments = [...ctx.appointments];
+  const appointments = [...ctx.appointments];
   const changes: AIAppointmentsOutput['changes'] = [];
 
   const aiForces = Object.values(ctx.forces).filter((f) => f.id !== ctx.playerForceId);

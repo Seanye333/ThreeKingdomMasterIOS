@@ -26,7 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack?: string }): void {
-    // eslint-disable-next-line no-console
+     
     console.error('[TKM error boundary]', error, info);
   }
 

@@ -24,7 +24,7 @@ describe('破綻 (off-balance meter)', () => {
 
   it('a blow landed on an off-balance fighter bites deeper than on a composed one', () => {
     // Build the attacker's 破綻 by whiffing, then have them eat a clean slash.
-    let exposed = duelRound(fresh(), 'cleave', 'guard', seededRng(3)).bout; // attacker now exposed
+    const exposed = duelRound(fresh(), 'cleave', 'guard', seededRng(3)).bout; // attacker now exposed
     const exposedFlaw = exposed.aFlaw;
     expect(exposedFlaw).toBeGreaterThan(0);
     // Same exchange dealt to a composed attacker vs the exposed one — compare the hit.

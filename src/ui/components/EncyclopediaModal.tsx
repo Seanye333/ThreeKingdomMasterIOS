@@ -26,7 +26,7 @@ import { loadCityCodex, CITY_ACHIEVEMENTS, CITY_ACHIEVEMENTS_BY_ID, CITY_CODEX_M
 import { bpLeaderboard } from '../../game/systems/powerBoard';
 import { ITEM_CODEX_SETS, itemCodexSetProgress, loadItemCodex, ITEM_CODEX_MILESTONES, itemCodexMilestoneReached, itemCodexMilestoneClaimed } from '../../game/systems/itemCodex';
 import { useEscapeKey } from '../hooks/useEscapeKey';
-import { useDesc } from '../i18n';
+import { useDesc, useT } from '../i18n';
 
 interface Props {
   onClose: () => void;
@@ -35,6 +35,7 @@ interface Props {
 type Section = 'officers' | 'codex' | 'ranking' | 'items' | 'skills' | 'traits' | 'events' | 'provinces' | 'cities';
 
 export function EncyclopediaModal({ onClose }: Props) {
+  const t = useT();
   const officers = useGameStore((s) => s.officers);
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
@@ -405,7 +406,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                   })()}
                   <span style={{ flex: 1, color: isMine ? '#f2dd9a' : '#e6edf3' }}>
                     {o.name.zh}
-                    {isMine && <span style={{ marginLeft: 6, fontSize: '0.65rem', color: '#c8a24e' }}>我方</span>}
+                    {isMine && <span style={{ marginLeft: 6, fontSize: '0.65rem', color: '#c8a24e' }}>{t('我方', 'Ours')}</span>}
                   </span>
                   {force && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', color: '#9aa6b0' }}>
@@ -423,7 +424,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                         ? prev.filter((x) => x !== o.id)
                         : [...prev.slice(-1), o.id]);
                     }}
-                    title="⚖ 選兩人對比卡面"
+                    title={t('⚖ 選兩人對比卡面', '⚖ Pick two to compare cards')}
                     style={{
                       background: compareSel.includes(o.id) ? 'rgba(230,196,115,0.25)' : 'transparent',
                       border: `1px solid ${compareSel.includes(o.id) ? '#e6c473' : '#2b3845'}`,
@@ -437,7 +438,7 @@ export function EncyclopediaModal({ onClose }: Props) {
             return (
               <>
                 <div style={{ fontSize: '0.72rem', color: '#7a8893', marginBottom: '0.6rem' }}>
-                  天下武評 — 以綜合戰力(BP)論英雄,純屬品評、不入戰鬥;點列可開武將卡。在世且已現世者入榜。
+                  {t('天下武評 — 以綜合戰力(BP)論英雄,純屬品評、不入戰鬥;點列可開武將卡。在世且已現世者入榜。', 'Power Board — ranks heroes by total battle power (BP). Commentary only; it never affects combat. Tap a row for the officer card. Living, revealed officers qualify.')}
                 </div>
                 {/* 🎯 天下懸賞 — the court's active wanted notices. */}
                 {(bounties?.length ?? 0) > 0 && (
@@ -467,7 +468,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                 {shownRows.map(row)}
                 {!q && mine.length > 0 && (
                   <>
-                    <div style={{ fontSize: '0.72rem', color: '#c8a24e', margin: '0.8rem 0 0.4rem', letterSpacing: '0.08rem' }}>我方名次</div>
+                    <div style={{ fontSize: '0.72rem', color: '#c8a24e', margin: '0.8rem 0 0.4rem', letterSpacing: '0.08rem' }}>{t('我方名次', 'Our standings')}</div>
                     {mine.map(row)}
                   </>
                 )}
@@ -510,7 +511,7 @@ export function EncyclopediaModal({ onClose }: Props) {
           {/* 藏珍功勳 — item-collection milestones; claim into this campaign. */}
           {section === 'items' && playerForceId && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.8rem' }}>
-              <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>藏珍功勳 · 藏 {itemCodex.carried.length}</span>
+              <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>{t('藏珍功勳 · 藏', 'Treasures held ·')} {itemCodex.carried.length}</span>
               {ITEM_CODEX_MILESTONES.map((m) => {
                 const reached = itemCodexMilestoneReached(itemCodex, m);
                 const claimed = itemCodexMilestoneClaimed(itemCodex, m.id);
@@ -543,7 +544,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                 <div style={{ fontSize: '1rem', color: '#e6c473' }}>
                   <span style={{ cursor: 'pointer', textDecoration: 'underline dotted rgba(230,196,115,0.35)', textUnderlineOffset: 2 }} title="名品卡" onClick={() => setItemCardId(it.id)}><Name pair={it.name} /></span>
                   <span style={{ marginLeft: '0.4rem', fontFamily: 'ui-monospace,monospace', fontSize: '0.7rem', color: '#c9a64e' }}>· {it.kind}</span>
-                  {carried && <span title="曾入我庫" style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: '#9ed8b8' }}>· 藏</span>}
+                  {carried && <span title={t('曾入我庫', 'Once in your stores')} style={{ marginLeft: '0.4rem', fontSize: '0.7rem', color: '#9ed8b8' }}>{t('· 藏', '· held')}</span>}
                 </div>
                 <div style={{ fontSize: '0.82rem', color: '#aab6c0', marginTop: '0.3rem', fontStyle: 'italic' }}>{desc(it)}</div>
                 <div style={metaLine}>
@@ -554,7 +555,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                     {origin && <span style={metaLine}>產於 {origin.name.zh}</span>}
                     {holder && (
                       <>
-                        <span style={metaLine}>現持 ·</span>
+                        <span style={metaLine}>{t('現持 ·', 'Held ·')}</span>
                         <button onClick={() => setDrillId(holder.id)} style={xrefChip('#c9a64e')}>{holder.name.zh}</button>
                       </>
                     )}
@@ -662,7 +663,7 @@ export function EncyclopediaModal({ onClose }: Props) {
                   })}
                 </div>
                 {recorded.length === 0 && (
-                  <div style={{ color: '#7a8893', fontStyle: 'italic', fontSize: '0.85rem' }}>尚無名城入錄 —— 將一城養至文教名城/百戰雄城/巨城…即載入此錄(跨戰役)。</div>
+                  <div style={{ color: '#7a8893', fontStyle: 'italic', fontSize: '0.85rem' }}>{t('尚無名城入錄 —— 將一城養至文教名城/百戰雄城/巨城…即載入此錄(跨戰役)。', 'No renowned city recorded yet — raise one to a seat of culture, a hundred-battle stronghold or a great metropolis and it enters this record (across campaigns).')}</div>
                 )}
                 {recorded.map(([cid, ids]) => (
                   <div key={cid} style={card()}>
@@ -707,7 +708,7 @@ export function EncyclopediaModal({ onClose }: Props) {
             ))}
             <button
               onClick={() => setCompareOpen(false)}
-              aria-label="關閉對比"
+              aria-label={t('關閉對比', 'Close comparison')}
               style={{
                 position: 'fixed', top: 14, right: 16, width: 32, height: 32, borderRadius: '50%',
                 background: 'rgba(10,14,20,0.8)', border: '1px solid rgba(255,255,255,0.25)', color: '#cfd8e0',

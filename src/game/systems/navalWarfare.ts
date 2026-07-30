@@ -60,7 +60,7 @@ export function navalDrill(i: NavalDrillInput): number {
   const bestYard = i.ownedPorts.reduce((m, p) => Math.max(m, p.navalTier ?? 1), 0);
   const yards = Math.min(3, i.ownedPorts.length) * 3;
 
-  let d = 6                       // every army can pole a raft across a ford
+  const d = 6                       // every army can pole a raft across a ford
     + waterRatio * 52             // 水鄉之民,生而在舟
     + bestYard * 7                // 船塢等級
     + yards                       // sheer number of harbours

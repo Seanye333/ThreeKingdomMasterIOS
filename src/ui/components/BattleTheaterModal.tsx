@@ -3,7 +3,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import type { BattleDetail } from '../../game/types';
 import { OfficerPortrait } from './OfficerPortrait';
-import { useLanguage } from '../i18n';
+import { useLanguage, useT } from '../i18n';
 import { pickVoiceLine } from '../../game/data/voiceLines';
 import { playSfx } from '../../game/systems/sound';
 
@@ -27,6 +27,7 @@ const PHASE_LABEL: Record<string, { zh: string; en: string; sfx: 'horn' | 'sword
 const PHASE_MS = 2200;
 
 export function BattleTheaterModal({ battle, onClose }: Props) {
+  const t = useT();
   useEscapeKey(onClose);
   const lang = useLanguage();
   const officers = useGameStore((s) => s.officers);
@@ -346,7 +347,7 @@ export function BattleTheaterModal({ battle, onClose }: Props) {
 
             {/* Pursuit / capture / wounded */}
             <div style={{ fontSize: '0.78rem', color: 'var(--tkm-text-body)' }}>
-              {battle.pursued && <div>● 追擊得勝，敵餘軍潰散</div>}
+              {battle.pursued && <div>{t('● 追擊得勝，敵餘軍潰散', '● Pursuit won — the enemy remnant scattered')}</div>}
               {battle.capturedIds && battle.capturedIds.length > 0 && (
                 <div>
                   ● 俘獲 {battle.capturedIds.length} 員：

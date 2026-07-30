@@ -395,7 +395,7 @@ export function OfficerCardFace({ officer, onClose, onJump }: { officer: Officer
             )}
             {/* 鑑藏印(B5) — a vermilion collector's seal: this card is in my hand. */}
             {collectorSeal && (
-              <div aria-hidden title="鑑藏印"
+              <div aria-hidden title={t('鑑藏印', 'Collector\u2019s seal')}
                 style={{ position: 'absolute', right: 10, bottom: 92, width: 30, height: 44, border: '2px solid #b83a2e', borderRadius: 3, color: '#e0574a', display: 'flex', alignItems: 'center', justifyContent: 'center', writingMode: 'vertical-rl', fontSize: '0.72rem', letterSpacing: '0.05rem', fontFamily: '"Ma Shan Zheng", "Songti SC", serif', background: 'rgba(184,58,46,0.08)', opacity: 0.9, transform: 'rotate(-3deg)' }}>
                 {collectorSeal}藏
               </div>

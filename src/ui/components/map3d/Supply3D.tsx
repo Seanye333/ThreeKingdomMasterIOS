@@ -23,6 +23,7 @@ const EMPTY_HEX_PAINT: Record<string, { f: string; t: number }> = {};
    (no gameplay penalty yet), but it answers "can my front be fed?" at a
    glance before a campaign.*/
 export function SupplyLines3D() {
+  const t = useT();
   const cities = useGameStore((s) => s.cities);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const forces = useGameStore((s) => s.forces);
@@ -79,7 +80,7 @@ export function SupplyLines3D() {
                 background: 'rgba(40,14,8,0.9)', border: '1px solid #e0552a', borderRadius: 'var(--tkm-radius-xs)',
                 padding: '1px 7px', fontFamily: 'var(--tkm-font-body)', fontSize: '11px',
                 color: '#f0b0a0', whiteSpace: 'nowrap', letterSpacing: '1px',
-              }}>⚠ 斷補 — 不通都城</div>
+              }}>{t('⚠ 斷補 — 不通都城', '⚠ Cut off — no route to the capital')}</div>
             </Html>
           </group>
         );

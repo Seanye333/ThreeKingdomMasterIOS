@@ -399,7 +399,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
     expect(u.troops).toBeLessThan(3000);
     expect(u.effects.some((e) => e.kind === 'burning')).toBe(true);
     // Forest burns out → open ground.
-    let b2 = { ...base, groundFires: [{ coord: { col: 3, row: 2 }, turnsLeft: 1 }] };
+    const b2 = { ...base, groundFires: [{ coord: { col: 3, row: 2 }, turnsLeft: 1 }] };
     const after2 = endTurn(b2);
     expect(after2.tiles.find((t) => t.coord.col === 3 && t.coord.row === 2)?.terrain).toBe('plain');
     // Rain smothers fires fast.

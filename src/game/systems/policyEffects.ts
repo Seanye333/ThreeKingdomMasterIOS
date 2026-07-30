@@ -61,7 +61,7 @@ function aggregatePolicies(officers: Officer[]): Set<PolicyId> {
   }
   // Second pass — drop any policy whose prereqs are not met.
   // Iterate to a fixed point so chains (A → B → C) resolve correctly.
-  let active = new Set(raw);
+  const active = new Set(raw);
   let changed = true;
   while (changed) {
     changed = false;

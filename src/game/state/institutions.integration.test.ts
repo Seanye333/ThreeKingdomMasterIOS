@@ -133,7 +133,10 @@ describe('制度批整合 — the meters actually move', () => {
     seasons(8);
     const sound = st.getState().inflationByForce[fid] ?? 0;
     expect(debased).toBeGreaterThan(sound);
-  });
+    // Two full 8-season runs plus a scenario reload — measured at ~5.1s on a
+    // loaded machine, i.e. right on vitest's 5s default. Give it real headroom
+    // so a busy CI box doesn't fail this for timing rather than for behaviour.
+  }, 20000);
 
   it('軍功簿 is derived from deeds, so an unrewarded officer owes from turn one', async () => {
     const { outstandingMerit } = await import('../systems/militaryLaw');

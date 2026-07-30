@@ -61,7 +61,7 @@ describe('growFrictionFromProximity (嫌隙 → 宿怨)', () => {
 
 describe('addFriction (one-off)', () => {
   it('drives a pair negative and forges a feud at −100', () => {
-    let r: Record<string, number> = { [pairKey('a', 'b')]: -90 };
+    const r: Record<string, number> = { [pairKey('a', 'b')]: -90 };
     const res = addFriction(r, 'a', 'b', 20, false);
     expect(getRapport(res.rapport, 'a', 'b')).toBe(-100);
     expect(res.forged?.kind).toBe('feud');
