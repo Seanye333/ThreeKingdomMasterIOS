@@ -1176,11 +1176,7 @@ function CityScene({
       <ambientLight intensity={light.ambient * 0.7} color={light.ambientColor} />
       {/* Sky/ground hemisphere fill for richer ambient colour grading */}
       <hemisphereLight args={[light.ambientColor, '#6a5a3e', 0.45]} />
-      <directionalLight
-        position={light.sunPos} intensity={light.sunI} color={light.sun}
-        castShadow
-        shadow-mapSize-width={2048} shadow-mapSize-height={2048}
-      />
+      <CitySun preview={preview} light={light} />
       <directionalLight position={[-8, 6, -6]} intensity={0.25} color={light.sun} />
       {/* Fog far-plane scales with the whole region (city + hinterland) so the
           countryside stays visible when the camera pulls back; near keeps the
@@ -2919,6 +2915,57 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
 /* ─── 四季飄物 — falling snow in winter, drifting gold leaves in autumn,
  *  blossom petals on the spring breeze. One instanced field, dressed by
  *  the season; summer stays clear. */
+/**
+ * 城內的日照與投影。
+ *
+ * 這盞燈原本開著 `castShadow`、每幀付一張 2048² 陰影圖,卻**一道影子都沒畫過**
+ * (2026-07-31 目視驗收才發現)。它只設了 `shadow-mapSize`,而 three 的預設
+ * 陰影相機是 **±5 且對準世界原點** —— 城中心在 (W·COL/2, H·ROW/2) ≈ (13, 10),
+ * 整座城完全落在框外。
+ *
+ * 所以這裡做兩件事:把光源**平移到城中心之上**(方向仍由季節預設的 sunPos 給),
+ * 並把它的 target 釘在城中心。`target` 預設是一顆不在場景圖裡的空物件,r3f 的
+ * `target-position` 只寫值、不會有人幫它更新矩陣 —— 必須自己
+ * `updateMatrixWorld()`,否則光的方向仍然算自單位矩陣。
+ *
+ * 正交盒取城長邊的 0.62 倍(含城外腹地近圈)。**別為了保險把盒子放大** ——
+ * texel 一粗就是大地圖那樁黑格(見 map3d/MapSunShadow)。
+ */
+function CitySun({ preview, light }: {
+  preview: ReturnType<typeof previewBattlefield>;
+  light: typeof SEASON_LIGHT[SeasonKey];
+}) {
+  const ref = useRef<THREE.DirectionalLight>(null);
+  const cx = (preview.width * HEX_COL_STEP) / 2;
+  const cz = (preview.height * HEX_ROW_STEP) / 2;
+  const span = Math.max(preview.width * HEX_COL_STEP, preview.height * HEX_ROW_STEP) * 0.62;
+  useEffect(() => {
+    const l = ref.current;
+    if (!l) return;
+    l.target.position.set(cx, 0, cz);
+    l.target.updateMatrixWorld();
+  }, [cx, cz]);
+  return (
+    <directionalLight
+      ref={ref}
+      position={[cx + light.sunPos[0], light.sunPos[1], cz + light.sunPos[2]]}
+      intensity={light.sunI}
+      color={light.sun}
+      castShadow
+      shadow-mapSize-width={2048}
+      shadow-mapSize-height={2048}
+      shadow-bias={-0.0004}
+      shadow-normalBias={0.03}
+      shadow-camera-left={-span}
+      shadow-camera-right={span}
+      shadow-camera-top={span}
+      shadow-camera-bottom={-span}
+      shadow-camera-near={1}
+      shadow-camera-far={90}
+    />
+  );
+}
+
 function SeasonalDrift({ season }: { season: 'spring' | 'summer' | 'autumn' | 'winter' }) {
   const cfg = season === 'winter'
     ? { count: 900, color: '#ffffff', size: 0.05, fall: 1.1, sway: 0.4, opacity: 0.9 }
