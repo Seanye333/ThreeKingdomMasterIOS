@@ -50,7 +50,7 @@ import { cityLoreBrief } from '../../game/data/cityLore';
 import { useGLRecovery } from '../hooks/useGLRecovery';
 import { FrameRateWatch } from './FrameRateWatch';
 import { computeBeaconAlerts, QueuedBattles3D, DayEncounterMarks3D, FieldBattleMarks3D, FieldClashMelee3D, IgnitionDust3D, BeaconAlerts3D, SiegeRings3D, BurningCities3D, DepartureFlourish3D, ConquestFlourish3D, LossFlourish3D, EspionageAgents3D } from './map3d/WorldMarks3D';
-import { Ocean, Lakes3D, RiverRibbons, SnowBlanket, Forest3D, Farmland3D, Villages3D, GeoLabels3D, TradeRouteLines3D, RainParticles, SnowParticles } from './map3d/NatureLayers3D';
+import { Ocean, Lakes3D, RiverRibbons, SnowBlanket, Forest3D, Farmland3D, Villages3D, GeoLabels3D, TradeRouteLines3D, RainParticles, SnowParticles, Rainbow3D } from './map3d/NatureLayers3D';
 import { MarchingArmies } from './map3d/Armies3D';
 import { City3D } from './map3d/Cities3D';
 import { HexWorldTerrain, HEXW_R } from './map3d/HexWorld3D';
@@ -366,6 +366,8 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
 
       {/* Weather particles (rain / snow) — thinned rather than cut when
           degraded: the weather is readable game state, not just dressing. */}
+      {/* 雨後虹霓 — fires on the rain → clear turn in daylight, then fades. */}
+      <Rainbow3D weather={weather.kind} night={tod === 'night'} />
       {weatherPreset.particles === 'rain' && <RainParticles bounds={particleBounds} count={degraded ? 700 : 2000} />}
       {weatherPreset.particles === 'snow' && <SnowParticles bounds={particleBounds} count={degraded ? 500 : 1500} />}
 

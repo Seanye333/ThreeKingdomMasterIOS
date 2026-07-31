@@ -2,7 +2,7 @@
  * lakes, weather particles, snow blanket, forests, farmland, villages, geo
  * labels and trade-route threads. Extracted verbatim from StrategicMap3D.tsx
  * (pure mechanical split). */
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html, Line, MeshReflectorMaterial } from '@react-three/drei';
 import * as THREE from 'three';
@@ -569,6 +569,81 @@ export function GeoLabels3D() {
           }}>{l.kind === 'mountain' ? `${l.st.glyph}${l.label}` : l.label}</div>
         </Html>
       ))}
+    </group>
+  );
+}
+
+/* ─── 雨後虹霓 ──────────────────────────────────────────────────────────
+ *
+ * A rainbow needs both rain and sun, which in this game means the moment the
+ * weather turns from 雨 to 晴 in daylight — a transition the map had nothing
+ * to say about at all. It arcs in over a couple of seconds, hangs, then fades;
+ * the whole thing is one draw of a ring with a hand-written spectrum, and it
+ * never fires at night or straight after snow.
+ *
+ * Deliberately transient (~18s of real time) and deliberately rare: it marks
+ * a change, so a permanent rainbow would say nothing.
+ */
+export function Rainbow3D({ weather, night }: { weather: string; night: boolean }) {
+  const matRef = useRef<THREE.ShaderMaterial>(null);
+  const prev = useRef(weather);
+  const bornAt = useRef(-1);
+  const grpRef = useRef<THREE.Group>(null);
+  const [armed, setArmed] = useState(false);
+
+  useEffect(() => {
+    const was = prev.current;
+    prev.current = weather;
+    // Only the rain → clear turn, and only in daylight.
+    if (was === 'rain' && weather === 'clear' && !night) setArmed(true);
+  }, [weather, night]);
+
+  const material = useMemo(() => new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, side: THREE.DoubleSide, fog: false,
+    uniforms: { uFade: { value: 0 } },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform float uFade;
+      void main() {
+        // vUv.x runs across the ring's thickness → straight through the spectrum.
+        float t = clamp(vUv.x, 0.0, 1.0);
+        vec3 c =
+          t < 0.17 ? mix(vec3(0.65,0.16,0.55), vec3(0.25,0.30,0.85), t / 0.17) :
+          t < 0.34 ? mix(vec3(0.25,0.30,0.85), vec3(0.25,0.70,0.85), (t-0.17)/0.17) :
+          t < 0.51 ? mix(vec3(0.25,0.70,0.85), vec3(0.40,0.80,0.35), (t-0.34)/0.17) :
+          t < 0.68 ? mix(vec3(0.40,0.80,0.35), vec3(0.95,0.88,0.30), (t-0.51)/0.17) :
+          t < 0.85 ? mix(vec3(0.95,0.88,0.30), vec3(0.95,0.55,0.20), (t-0.68)/0.17) :
+                     mix(vec3(0.95,0.55,0.20), vec3(0.85,0.25,0.20), (t-0.85)/0.15);
+        // Soft on both edges of the band, and thinner toward the ends of the arc.
+        float band = sin(t * 3.14159);
+        float ends = sin(clamp(vUv.y, 0.0, 1.0) * 3.14159);
+        gl_FragColor = vec4(c, band * ends * 0.5 * uFade);
+      }
+    `,
+  }), []);
+
+  useFrame(({ clock }) => {
+    if (!armed) return;
+    if (bornAt.current < 0) bornAt.current = clock.elapsedTime;
+    const age = clock.elapsedTime - bornAt.current;
+    // 2s in, hold, 5s out.
+    const fade = age < 2 ? age / 2 : age > 13 ? Math.max(0, 1 - (age - 13) / 5) : 1;
+    if (matRef.current) matRef.current.uniforms.uFade.value = fade;
+    if (grpRef.current) grpRef.current.visible = fade > 0.001;
+    if (age > 18) { setArmed(false); bornAt.current = -1; }
+  });
+
+  if (!armed) return null;
+  return (
+    <group ref={grpRef} position={[0, -18, -MAP_D * 0.34]} rotation={[0, 0, 0]}>
+      <mesh raycast={() => null}>
+        <ringGeometry args={[MAP_W * 0.30, MAP_W * 0.345, 96, 1, Math.PI * 0.08, Math.PI * 0.84]} />
+        <primitive object={material} ref={matRef} attach="material" />
+      </mesh>
     </group>
   );
 }

@@ -49,6 +49,7 @@ export function BattleFocusFly({ controlsRef, onSettled }: {
     };
   }, [geoAnchor, camera, controlsRef]);
 
+
   useFrame((_, delta) => {
     const a = anim.current;
     if (!a) return;
@@ -83,8 +84,17 @@ export function EventFocusFly({ controlsRef, onSettled }: {
   const { camera } = useThree();
   const capturedKey = useGameStore((s) => s.cityCaptured?.key ?? 0);
   const lostKey = useGameStore((s) => s.cityLost?.key ?? 0);
+  /* 名場面就位 — a historical event fires with a card, and the map behind it
+     was left wherever the player happened to be looking. Most events name a
+     city somewhere in their effects (城防/糧秣/守將…), so fly there while the
+     card is up: dismissing it then leaves you looking at the place it
+     happened, which is the whole point of having a map. The modal is NOT
+     delayed for this — sequencing the card behind a camera move would put a
+     two-second gap between "something happened" and being told what. */
+  const eventId = useGameStore((s) => s.pendingEvent?.event.id ?? null);
   const battleActive = useGameStore((s) => !!s.tacticalBattle);
   const seen = useRef<{ cap: number; lost: number }>({ cap: capturedKey, lost: lostKey });
+  const seenEvent = useRef<string | null>(eventId);
   const anim = useRef<null | {
     from: THREE.Vector3; orbitCenter: THREE.Vector3; radius: number;
     ang0: number; ang1: number; height: number;
@@ -116,6 +126,68 @@ export function EventFocusFly({ controlsRef, onSettled }: {
       t: 0,
     };
   }, [capturedKey, lostKey, battleActive, camera, controlsRef]);
+
+  useEffect(() => {
+    if (battleActive) { seenEvent.current = eventId; return; }
+    if (eventId === seenEvent.current) return;
+    seenEvent.current = eventId;
+    if (!eventId) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+    const st = useGameStore.getState();
+    const ev = st.pendingEvent?.event;
+    if (!ev) return;
+    // The city is wherever the event first names one — its own effects, or the
+    // "officer must be in this city" gate that let it fire at all.
+    const fromEffects = (ev.effects as Array<{ cityId?: string }> | undefined)
+      ?.find((e) => typeof e?.cityId === 'string')?.cityId;
+    const fromRequires = (ev.requires as Array<{ kind: string; cityId?: string }> | undefined)
+      ?.find((r) => r?.kind === 'officer-in-city' && typeof r.cityId === 'string')?.cityId;
+    const city = st.cities[fromEffects ?? fromRequires ?? ''];
+    if (!city) return;
+    const [wx, wz] = pxToWorld(...cityPixel(city.id, city.coords.x, city.coords.y));
+    const h = sampleTerrainHeight(wx, wz);
+    // A gentler, wider arc than the conquest fly — this is a look, not a blow.
+    const ang0 = Math.PI * 0.42;
+    anim.current = {
+      from: camera.position.clone(),
+      orbitCenter: new THREE.Vector3(wx, h, wz),
+      radius: 4.6, ang0, ang1: ang0 + 0.55, height: h + 4.2,
+      fromT: controlsRef.current?.target.clone() ?? new THREE.Vector3(0, 0, 0),
+      toT: new THREE.Vector3(wx, h, wz),
+      t: 0,
+    };
+  }, [eventId, battleActive, camera, controlsRef]);
+
+  useEffect(() => {
+    if (battleActive) { seenEvent.current = eventId; return; }
+    if (eventId === seenEvent.current) return;
+    seenEvent.current = eventId;
+    if (!eventId) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return;
+    const st = useGameStore.getState();
+    const ev = st.pendingEvent?.event;
+    if (!ev) return;
+    // The city is wherever the event first names one — its own effects, or the
+    // "officer must be in this city" gate that let it fire at all.
+    const fromEffects = (ev.effects as Array<{ cityId?: string }> | undefined)
+      ?.find((e) => typeof e?.cityId === 'string')?.cityId;
+    const fromRequires = (ev.requires as Array<{ kind: string; cityId?: string }> | undefined)
+      ?.find((r) => r?.kind === 'officer-in-city' && typeof r.cityId === 'string')?.cityId;
+    const city = st.cities[fromEffects ?? fromRequires ?? ''];
+    if (!city) return;
+    const [wx, wz] = pxToWorld(...cityPixel(city.id, city.coords.x, city.coords.y));
+    const h = sampleTerrainHeight(wx, wz);
+    // A gentler, wider arc than the conquest fly — this is a look, not a blow.
+    const ang0 = Math.PI * 0.42;
+    anim.current = {
+      from: camera.position.clone(),
+      orbitCenter: new THREE.Vector3(wx, h, wz),
+      radius: 4.6, ang0, ang1: ang0 + 0.55, height: h + 4.2,
+      fromT: controlsRef.current?.target.clone() ?? new THREE.Vector3(0, 0, 0),
+      toT: new THREE.Vector3(wx, h, wz),
+      t: 0,
+    };
+  }, [eventId, battleActive, camera, controlsRef]);
 
   useFrame((_, delta) => {
     const a = anim.current;

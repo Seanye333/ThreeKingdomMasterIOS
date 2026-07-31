@@ -68,11 +68,60 @@ export function SkyDome({ top, horizon, sunPos: sunPosArr, celestialColor, moon,
     g.setAttribute('position', new THREE.BufferAttribute(arr, 3));
     return g;
   }, []);
+
+  /* 銀河 — 天漢. The star field was uniform scatter, which reads as "some
+   * stars" rather than as a sky: the Milky Way is the thing that makes a night
+   * sky recognisable, and this setting is one where 牛郎織女隔河相望 is a story
+   * everyone at the table knows.
+   *
+   * A second, much denser point cloud clustered along a tilted great circle,
+   * with a Gaussian falloff away from that band and a warm-white tint. Points
+   * again (no geometry, no texture) — ~1,400 of them cost one draw. */
+  const galaxyGeom = useMemo(() => {
+    const N = IS_MOBILE ? 520 : 1400;
+    const arr = new Float32Array(N * 3);
+    // The band's plane: tilted so it crosses the sky diagonally rather than
+    // sitting on the horizon (where the fog and the terrain would eat it).
+    const tilt = 0.62, spin = 0.9;
+    const nx = Math.sin(tilt) * Math.cos(spin), ny = Math.cos(tilt), nz = Math.sin(tilt) * Math.sin(spin);
+    const r = R * 0.93;
+    let w = 0;
+    for (let i = 0; i < N; i++) {
+      const h1 = Math.abs(Math.sin(i * 3.7891) * 21347.13) % 1;
+      const h2 = Math.abs(Math.sin(i * 9.1237) * 51233.71) % 1;
+      const h3 = Math.abs(Math.sin(i * 5.5513) * 33717.29) % 1;
+      // Angle along the band, plus a Gaussian-ish offset across it (two
+      // uniforms summed — cheap, and the tails give the band soft edges).
+      const a = h1 * Math.PI * 2;
+      const off = (h2 + h3 - 1) * 0.26;
+      // Basis perpendicular to the band normal.
+      const ux = -Math.sin(spin), uy = 0, uz = Math.cos(spin);
+      const vx = ny * uz - nz * uy, vy = nz * ux - nx * uz, vz = nx * uy - ny * ux;
+      let x = Math.cos(a) * ux + Math.sin(a) * vx + nx * off;
+      let y = Math.cos(a) * uy + Math.sin(a) * vy + ny * off;
+      let z = Math.cos(a) * uz + Math.sin(a) * vz + nz * off;
+      const len = Math.hypot(x, y, z) || 1;
+      x /= len; y /= len; z /= len;
+      if (y < 0.06) continue;                    // below the horizon — skip
+      arr[w * 3] = x * r; arr[w * 3 + 1] = y * r; arr[w * 3 + 2] = z * r;
+      w++;
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(arr.subarray(0, w * 3), 3));
+    return g;
+  }, []);
   return (
     <group ref={ref}>
       <mesh material={material}>
         <sphereGeometry args={[R, 32, 16]} />
       </mesh>
+      {/* 天漢 — drawn before the bright stars so they sit on top of the band. */}
+      {stars && (
+        <points geometry={galaxyGeom}>
+          <pointsMaterial size={IS_MOBILE ? 1.3 : 1.6} sizeAttenuation={false} color="#cfd4f0"
+            transparent opacity={0.42} toneMapped={false} fog={false} depthWrite={false} />
+        </points>
+      )}
       {stars && (
         <points geometry={starGeom}>
           <pointsMaterial size={IS_MOBILE ? 1.6 : 2} sizeAttenuation={false} color="#e6ecff"
