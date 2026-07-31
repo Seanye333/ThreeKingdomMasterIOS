@@ -1817,9 +1817,12 @@ export function StrategicMap3D() {
             <ScenePostFx
               mobile={IS_MOBILE}
               ao={{ radius: 2.6, intensity: 1.6 }}
+              // 夜間門檻/強度原為 0.5 / 0.9 —— 同樣是盲調的:後處理真的上畫面
+              // 之後,一個烽火加滿城燈火就把整張圖糊成一團紅光。門檻拉高到只
+              // 讓真正的火光發光,強度回到看得見輪廓的程度。
               bloom={{
-                threshold: tod === 'night' ? 0.5 : 0.85,
-                intensity: tod === 'night' ? 0.9 : 0.35,
+                threshold: tod === 'night' ? 0.85 : 0.9,
+                intensity: tod === 'night' ? 0.42 : 0.3,
               }}
               grade={seasonGrade(season, tod === 'night')}
               tone={seasonTone(season, tod === 'night')}

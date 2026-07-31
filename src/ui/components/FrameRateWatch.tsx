@@ -16,21 +16,16 @@ import { useFrame } from '@react-three/fiber';
  * tight enough to trip this is usually tight again a second later. The host
  * keeps its degraded flag until the scene unmounts.
  *
- * ## ⚠ 已知問題:它拿開場那幾秒當樣本(2026-07-30 查明,**刻意尚未修**)
+ * ## 暖機期 — 別拿開場那幾秒當樣本(2026-07-30 修)
  *
- * 取樣從第一幀就開始,而一個 3D 場景**開頭幾秒必然最慢** —— 貼圖上傳、著色器
- * 編譯、幾百個網格建立、靜態合批第一次烘。大地圖實測開局是 3.8 → 7.9 →
- * 15.4 fps,而 `badSeconds = 3` 正好被這段打滿,於是**後處理整棧在開局就被
- * 永久卸掉**(降級是單向的),玩家整局都看不到色調映射、光暈、四時之色與暗角。
+ * 原本從第一幀就開始取樣,而一個 3D 場景**開頭幾秒必然最慢**:貼圖上傳、
+ * 著色器編譯、幾百個網格建立、靜態合批第一次烘。大地圖實測開局是
+ * 3.8 → 7.9 → 15.4 fps,而 `badSeconds = 3` 正好被這段打滿 —— 於是**後處理
+ * 整棧在開局就被永久卸掉**(降級是單向的),玩家整局都看不到色調映射、
+ * 四時之色與暗角,而那正是這批畫面工作的主體。
  *
- * 加一段暖機期(前 6 秒不計)試過,單看它是對的 —— 但它會連鎖出兩件事:
- * 大地圖預設視角的 draw call 從約 6,000 升到 **10,363**(預算 9,000),而且
- * 後處理一旦真的留下來,地圖上會冒出成片純黑的六角格(見 GUIDE「大地圖的
- * 後處理從來沒有顯示過」一節,成因未明)。也就是說這三件事是同一個結:要修
- * 就得連黑格的成因一起查清楚,只上暖機期會讓畫面比現在更糟。
- *
- * 所以這裡**維持原行為**,把分析留在原地,不要看到「從第一幀就取樣」就順手
- * 改掉 —— 先讀 GUIDE 那一節。
+ * 所以取樣從 `warmupSeconds` 之後才開始,這段時間**完全不計**:場景還沒蓋完
+ * 的幀率不是這台機器的幀率,它只是「還在載入」。
  *
  * Must be rendered INSIDE a <Canvas> (it hooks useFrame).
  */
@@ -38,6 +33,7 @@ export function FrameRateWatch({
   onDegrade,
   fpsFloor = 26,
   badSeconds = 3,
+  warmupSeconds = 6,
 }: {
   /** Called once, when the frame rate has stayed under the floor. */
   onDegrade: () => void;
@@ -45,11 +41,23 @@ export function FrameRateWatch({
   fpsFloor?: number;
   /** Consecutive bad seconds required before degrading. */
   badSeconds?: number;
+  /**
+   * Seconds ignored entirely after mount — texture uploads, shader compiles
+   * and the first batch bake all land here, and none of them say anything
+   * about how this machine runs the scene once it is built.
+   */
+  warmupSeconds?: number;
 }) {
-  const acc = useRef({ t: 0, n: 0, bad: 0, fired: false });
+  const acc = useRef({ warm: 0, t: 0, n: 0, bad: 0, fired: false });
   useFrame((_, delta) => {
     const a = acc.current;
     if (a.fired) return;
+    if (a.warm < warmupSeconds) {
+      // Clamp the per-frame contribution: one 2-second stall (a shader compile)
+      // must not fast-forward through the whole warm-up.
+      a.warm += Math.min(delta, 0.1);
+      return;
+    }
     a.t += delta; a.n++;
     if (a.t >= 1) {
       const fps = a.n / a.t;

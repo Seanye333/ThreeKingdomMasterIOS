@@ -2402,9 +2402,10 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
             <ScenePostFx
               mobile={IS_MOBILE}
               ao={{ radius: 1.4, intensity: 2.0 }}
+              // 同大地圖:夜間門檻原為 0.55/0.7,燈籠與火盆會糊成一片。
               bloom={{
-                threshold: phase === 'lower' ? 0.55 : 0.85,
-                intensity: phase === 'lower' ? 0.7 : 0.35,
+                threshold: phase === 'lower' ? 0.85 : 0.9,
+                intensity: phase === 'lower' ? 0.4 : 0.3,
               }}
               grade={seasonGrade(season, phase === 'lower')}
               tone={seasonTone(season, phase === 'lower')}

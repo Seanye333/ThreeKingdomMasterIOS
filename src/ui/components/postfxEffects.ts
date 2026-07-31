@@ -12,9 +12,38 @@
 import { Effect, BlendFunction } from 'postprocessing';
 import { Uniform } from 'three';
 
-/* ─── 色溫分級 ─────────────────────────────────────────────────────── */
+/* ─── 色彩分級 ─────────────────────────────────────────────────────── */
+
+/**
+ * 一顆效果做完整套分級 —— 而且**在色調映射之後**。
+ *
+ * ## 為什麼不用 library 的 HueSaturation / BrightnessContrast
+ *
+ * 因為它們會把畫面弄出**整格整格的純黑**,而且是在這個專案裡實際發生過的
+ * (2026-07-30 目視驗收查到)。`hue-saturation.frag` 的最後一行是
+ * `outputColor = vec4(min(color, 1.0), inputColor.a)` —— **只夾上限,不夾
+ * 下限**。而它的飽和公式在 saturation = 0.10 時是
+ *
+ *     color' = 1.10988 · color − 0.10988 · average
+ *
+ * 於是任何低於該像素平均值約 10% 的通道會直接變成**負值**。負值流進 AgX
+ * 色調映射就是黑。大地圖的六角格是純色平面,一整格的像素同時跨過門檻,
+ * 所以壞掉的形狀正好是「整格整格的黑」。
+ *
+ * 它作用在**線性 HDR** 空間更是雪上加霜:飽和的暗部(深水、夜色)在線性空間
+ * 裡最弱的通道本來就只有平均值的百分之幾,踩線的機會遠比在顯示參照空間高。
+ *
+ * ## 所以這裡的兩個原則
+ *
+ * 1. **分級跑在 ToneMapping 之後**,拿到的是 0..1 的顯示參照值 —— 對比以
+ *    0.5 為樞軸、亮度加減、飽和度插值,全都是為這個範圍設計的運算。
+ * 2. **最後一定 clamp(0, 1)**。上面那個 bug 的完整版本就是「有人只寫了一半」。
+ */
 
 const GRADE_FRAG = /* glsl */ `
+  uniform float uSat;    // 飽和度增減(0 = 原樣)
+  uniform float uCon;    // 對比增減
+  uniform float uBri;    // 亮度加減
   uniform float uTemp;   // −1 寒 … +1 暖
   uniform float uTint;   // −1 洋紅 … +1 綠
   uniform float uLift;   // 黑位抬升
@@ -22,11 +51,17 @@ const GRADE_FRAG = /* glsl */ `
 
   void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor) {
     vec3 c = inputColor.rgb;
+    c += uBri;
+    c = (c - 0.5) * (1.0 + uCon) + 0.5;
+    // 飽和 — 以感知亮度為軸插值,而不是三通道平均:灰軸取對了,推飽和才不會
+    // 把綠色推成螢光。
+    float y = dot(c, vec3(0.2126, 0.7152, 0.0722));
+    c = mix(vec3(y), c, 1.0 + uSat);
     c.r += uTemp * 0.075;
     c.b -= uTemp * 0.085;
     c.g += uTint * 0.05;
     c = c * uGain + vec3(uLift);
-    outputColor = vec4(c, inputColor.a);
+    outputColor = vec4(clamp(c, 0.0, 1.0), inputColor.a);
   }
 `;
 
@@ -38,24 +73,36 @@ export interface ToneGrade {
   gain?: number;
 }
 
+export interface LookGrade {
+  saturation: number;
+  contrast: number;
+  brightness?: number;
+}
+
 export class ColorGradeEffect extends Effect {
-  constructor({ temperature = 0, tint = 0, lift = 0, gain = 1 }: ToneGrade) {
+  constructor(look: LookGrade | null, tone: ToneGrade | null) {
     super('ColorGradeEffect', GRADE_FRAG, {
       blendFunction: BlendFunction.SRC,
       uniforms: new Map<string, Uniform>([
-        ['uTemp', new Uniform(temperature)],
-        ['uTint', new Uniform(tint)],
-        ['uLift', new Uniform(lift)],
-        ['uGain', new Uniform(gain)],
+        ['uSat', new Uniform(look?.saturation ?? 0)],
+        ['uCon', new Uniform(look?.contrast ?? 0)],
+        ['uBri', new Uniform(look?.brightness ?? 0)],
+        ['uTemp', new Uniform(tone?.temperature ?? 0)],
+        ['uTint', new Uniform(tone?.tint ?? 0)],
+        ['uLift', new Uniform(tone?.lift ?? 0)],
+        ['uGain', new Uniform(tone?.gain ?? 1)],
       ]),
     });
   }
 
-  set(t: ToneGrade): void {
-    this.uniforms.get('uTemp')!.value = t.temperature;
-    this.uniforms.get('uTint')!.value = t.tint ?? 0;
-    this.uniforms.get('uLift')!.value = t.lift ?? 0;
-    this.uniforms.get('uGain')!.value = t.gain ?? 1;
+  set(look: LookGrade | null, tone: ToneGrade | null): void {
+    this.uniforms.get('uSat')!.value = look?.saturation ?? 0;
+    this.uniforms.get('uCon')!.value = look?.contrast ?? 0;
+    this.uniforms.get('uBri')!.value = look?.brightness ?? 0;
+    this.uniforms.get('uTemp')!.value = tone?.temperature ?? 0;
+    this.uniforms.get('uTint')!.value = tone?.tint ?? 0;
+    this.uniforms.get('uLift')!.value = tone?.lift ?? 0;
+    this.uniforms.get('uGain')!.value = tone?.gain ?? 1;
   }
 }
 

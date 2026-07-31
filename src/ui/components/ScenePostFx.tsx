@@ -1,13 +1,13 @@
 import {
   EffectComposer, Bloom, N8AO, ToneMapping, Vignette, SMAA,
-  HueSaturation, BrightnessContrast, DepthOfField, Outline,
+  DepthOfField, Outline,
 } from '@react-three/postprocessing';
 import { ToneMappingMode, GodRaysEffect, KernelSize } from 'postprocessing';
 import { useEffect, useMemo, useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { RENDER_HI, GFX, getArtStyle, subscribeArtStyle, type ArtStyle } from '../renderQuality';
-import { ColorGradeEffect, HeatHazeEffect, SunFlareEffect, SilkPaintingEffect, type ToneGrade } from './postfxEffects';
+import { ColorGradeEffect, HeatHazeEffect, SunFlareEffect, SilkPaintingEffect, type ToneGrade, type LookGrade } from './postfxEffects';
 
 /**
  * 三圖共用的後處理棧 — ambient occlusion, bloom, grading, tone mapping and
@@ -42,8 +42,8 @@ export interface PostFxOptions {
   bloom?: { threshold: number; intensity: number } | null;
   /** 景深 — focus point in world space plus lens settings. Omit to skip. */
   dof?: { target: [number, number, number]; focalLength: number; bokehScale: number } | null;
-  /** 色彩分級 — season/time-of-day grade. */
-  grade?: { saturation: number; contrast: number; brightness?: number } | null;
+  /** 色彩分級 — season/time-of-day look (saturation / contrast / brightness). */
+  grade?: LookGrade | null;
   /** Corner darkening. Omit to skip. */
   vignette?: { offset: number; darkness: number } | null;
   /** 色溫分級 — LUT-like temperature/tint/lift/gain on top of `grade`. */
@@ -117,8 +117,8 @@ export function ScenePostFx({
   useEffect(() => { silkFx.set(artStyle === 'silk' ? 1 : 0, 0.85); }, [silkFx, artStyle]);
   useEffect(() => { silkFx.setSize(size.width, size.height); }, [silkFx, size.width, size.height]);
 
-  const gradeFx = useMemo(() => new ColorGradeEffect(tone ?? { temperature: 0 }), []);
-  useEffect(() => { if (tone) gradeFx.set(tone); }, [gradeFx, tone]);
+  const gradeFx = useMemo(() => new ColorGradeEffect(grade, tone), []);
+  useEffect(() => { gradeFx.set(grade, tone); }, [gradeFx, grade, tone]);
   const hazeFx = useMemo(() => new HeatHazeEffect(heatHaze ?? 0), []);
   useEffect(() => { hazeFx.setIntensity(heatHaze ?? 0); }, [hazeFx, heatHaze]);
 
@@ -203,20 +203,19 @@ export function ScenePostFx({
           height={480}
         />
       ) : <></>}
-      {grade ? <HueSaturation saturation={grade.saturation} /> : <></>}
-      {grade ? (
-        <BrightnessContrast brightness={grade.brightness ?? 0} contrast={grade.contrast} />
-      ) : <></>}
-      {/* 色溫 — after sat/contrast, before tone mapping (AgX expects linear-ish). */}
-      {tone ? <primitive object={gradeFx} dispose={null} /> : <></>}
+      {/* ── 以下是顯示參照(0..1)的區段 ──────────────────────────────
+          AgX 收在這裡:HDR 的東西(AO/體積光/光暈/景深)在它之前,看起來
+          怎樣的東西在它之後。分級**必須**在這一刀之後 —— 詳見
+          ColorGradeEffect 的註解:library 的 HueSaturation 跑在線性 HDR 上
+          且不夾下限,會把飽和的暗部通道推成負值,整格整格地黑。 */}
+      <ToneMapping mode={ToneMappingMode.AGX} />
+      {grade || tone ? <primitive object={gradeFx} dispose={null} /> : <></>}
       {heatHaze != null && heatHaze > 0 ? <primitive object={hazeFx} dispose={null} /> : <></>}
+      {/* 絹本設色 — 墨線畫在成品上,而不是被色調曲線壓平之前。 */}
+      {artStyle === 'silk' ? <primitive object={silkFx} dispose={null} /> : <></>}
       {vignette ? (
         <Vignette eskil={false} offset={vignette.offset} darkness={vignette.darkness} />
       ) : <></>}
-      {/* 絹本設色 — after tone mapping so the ink lines are drawn over the
-          final image rather than being flattened by the tone curve. */}
-      {artStyle === 'silk' ? <primitive object={silkFx} dispose={null} /> : <></>}
-      <ToneMapping mode={ToneMappingMode.AGX} />
       <SMAA />
     </EffectComposer>
   );

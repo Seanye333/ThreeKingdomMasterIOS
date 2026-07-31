@@ -16,7 +16,11 @@ export function seasonGrade(
   season: 'spring' | 'summer' | 'autumn' | 'winter',
   night = false,
 ): { saturation: number; contrast: number; brightness: number } {
-  if (night) return { saturation: -0.06, contrast: 0.16, brightness: -0.02 };
+  // 夜 — 對比刻意**不加**、亮度反而略提。這組數字原本是 contrast 0.16 /
+  // brightness −0.02,是在後處理根本沒上畫面的年代盲調的;真的套上去之後,
+  // 以 0.5 為樞軸的對比會把本來就暗的夜景整個壓死(城內夜晚看不見房子)。
+  // 夜色靠色溫與燈火表達,不靠把暗部推更暗。
+  if (night) return { saturation: -0.06, contrast: 0.02, brightness: 0.05 };
   switch (season) {
     case 'spring': return { saturation: 0.10, contrast: 0.08, brightness: 0.01 };
     case 'summer': return { saturation: 0.14, contrast: 0.10, brightness: 0.00 };
@@ -36,7 +40,7 @@ export function seasonTone(
   season: 'spring' | 'summer' | 'autumn' | 'winter',
   night = false,
 ): { temperature: number; tint: number; lift: number; gain: number } {
-  if (night) return { temperature: -0.42, tint: -0.04, lift: 0.0, gain: 0.99 };
+  if (night) return { temperature: -0.42, tint: -0.04, lift: 0.025, gain: 1.0 };
   switch (season) {
     case 'spring': return { temperature: 0.06, tint: 0.05, lift: 0.0, gain: 1.0 };
     case 'summer': return { temperature: 0.16, tint: 0.02, lift: 0.0, gain: 1.01 };
