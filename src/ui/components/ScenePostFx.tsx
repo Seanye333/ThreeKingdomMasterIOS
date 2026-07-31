@@ -61,6 +61,36 @@ export interface PostFxOptions {
   outline?: { visibleColor: string; hiddenColor?: string; strength?: number } | null;
 }
 
+/**
+ * GL 上下文存活 — the composer must not exist while the context is lost.
+ *
+ * postprocessing's `EffectComposer.addPass()` reads
+ * `renderer.getContext().getContextAttributes().alpha`, and a lost context
+ * returns null there: the whole renderer process dies with
+ * `Cannot read properties of null (reading 'alpha')`. The composer re-adds all
+ * of its passes whenever this component re-renders (its children array is a
+ * fresh identity every time), so a scene that loses its context and keeps
+ * re-rendering — exactly what useGLRecovery arranges before it remounts the
+ * Canvas — will hit that path. `e2e/glRecovery.spec.ts` reproduces it.
+ */
+function useContextAlive(): boolean {
+  const gl = useThree((s) => s.gl);
+  const [alive, setAlive] = useState(true);
+  useEffect(() => {
+    const el = gl.domElement;
+    const lost = (e: Event) => { e.preventDefault(); setAlive(false); };
+    const restored = () => setAlive(true);
+    el.addEventListener('webglcontextlost', lost);
+    el.addEventListener('webglcontextrestored', restored);
+    setAlive(!gl.getContext().isContextLost());
+    return () => {
+      el.removeEventListener('webglcontextlost', lost);
+      el.removeEventListener('webglcontextrestored', restored);
+    };
+  }, [gl]);
+  return alive;
+}
+
 export function ScenePostFx({
   mobile = false,
   ao = null,
@@ -77,6 +107,7 @@ export function ScenePostFx({
   // Hooks before the early return (rules of hooks) — all cheap to build.
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
+  const ctxAlive = useContextAlive();
 
   /* 畫風 — a live pref (see renderQuality). Subscribed rather than read once
      so switching to 絹本設色 in Settings takes effect on the open scene. */
@@ -127,7 +158,7 @@ export function ScenePostFx({
     flareFx.setSun((v.x + 1) / 2, (v.y + 1) / 2, vis, Math.max(0.2, size.width / Math.max(1, size.height)));
   });
 
-  if (!RENDER_HI || !GFX.postfx) return null;
+  if (!RENDER_HI || !GFX.postfx || !ctxAlive) return null;
   const wantAO = !!ao && !mobile;
   const wantDoF = !!dof && !mobile;
   // enableNormalPass={false} 是刻意的,別「修」回 wantAO ——

@@ -153,7 +153,7 @@ export function SettingsModal({ onClose }: Props) {
             {([
               ['shadows', t('陰影', 'Shadows'), t('三圖即時陰影(最貴的一項)', 'Realtime shadow maps (the priciest single item)')],
               ['postfx', t('後處理', 'Post FX'), t('環境光遮蔽/光暈/色調映射整棧', 'AO / bloom / tone-mapping stack')],
-              ['reflections', t('水面鏡面', 'Water mirror'), t('大地圖海面真實倒影', "The strategic map sea's real reflections")],
+              ['reflections', t('水面鏡面', 'Water mirror'), t('大地圖海面真實倒影 —— 打開會關掉該圖的後處理(兩者互斥)', 'Real sea reflections on the world map — turning it on disables that map\u2019s post-processing (they are mutually exclusive)')],
             ] as Array<[keyof GfxPrefs, string, string]>).map(([key, label, hint]) => (
               <Row key={key} label={label} hint={hint}>
                 <div style={{ display: 'flex', gap: 4 }}>

@@ -32,6 +32,19 @@ test('the world map renders shadows without the black-hex acne', async ({ page }
   test.setTimeout(180_000);
   const rig: string[] = [];
   page.on('console', (m) => { if (m.text().includes('[MapSunShadow]')) rig.push(m.text()); });
+  /*
+   * 釘死畫質狀態 —— 這支 spec 的主題是**陰影**,而近黑像素會被另外兩件事污染:
+   * 後處理棧(它在不在,取決於 FrameRateWatch 有沒有降級,而那取決於當下機器
+   * 多忙)與海面鏡面。兩者都會讓同一份 build 在 0.00% 與 2.1% 之間跳 —— 我第
+   * 一版沒釘,於是它在空機上綠、在忙機上紅。把兩者關掉,量到的就只有陰影。
+   * (這是 cityRenderBudget.spec 與 mapDrawCalls.spec 記過的同一個坑:別對橫跨
+   * 兩種畫質狀態的數字下斷言。)
+   */
+  await page.addInitScript(() => {
+    localStorage.setItem('tkm-gfx', JSON.stringify({
+      shadows: 'on', postfx: 'off', particles: 'reduced', reflections: 'off',
+    }));
+  });
   await startCampaign(page);
   await clearOverlays(page);
   const canvas = page.locator('canvas').first();
