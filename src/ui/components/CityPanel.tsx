@@ -60,6 +60,7 @@ const CITY_TABS: { id: CityTab; zh: string; en: string; playerOnly?: boolean }[]
 ];
 
 export function CityPanel() {
+  const scenarioId = useGameStore((s) => s.scenarioId);
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const city = useGameStore((s) =>
@@ -299,7 +300,7 @@ export function CityPanel() {
               cities (山川形勝 + 掌故). Read-only flavour; renders only when the
               city carries an entry in cityLore.ts. */}
           {(() => {
-            const lore = cityLore(city.id);
+            const lore = cityLore(city.id, scenarioId);
             if (!lore) return null;
             return (
               <div style={{

@@ -105,6 +105,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   /** 拖拽行軍 — lock/unlock the orbit controls while a drag is live. */
   onDragLock?: (locked: boolean) => void;
 }) {
+  const loreScenarioId = useGameStore((st) => st.scenarioId);
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
   const officers = useGameStore((s) => s.officers);
@@ -851,7 +852,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
                   garrisons it. Turns the fogged card from a bare "no intel"
                   into a reason to care about the place. */}
               {(() => {
-                const brief = cityLoreBrief(c.id, lang === 'en' ? 'en' : 'zh');
+                const brief = cityLoreBrief(c.id, lang === 'en' ? 'en' : 'zh', 64, loreScenarioId);
                 if (!brief) return null;
                 return (
                   <div style={{

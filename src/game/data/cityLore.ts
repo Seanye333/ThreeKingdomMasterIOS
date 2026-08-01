@@ -8,6 +8,7 @@
  * NOT part of the City runtime type or the save format. All 128 cities carry
  * an entry — see cityLore.test.ts, which fails if one goes missing.
  */
+import { loreEraFor, eraCityLore } from './cityLoreEras';
 export interface CityLore {
   zh: string;
   en: string;
@@ -539,7 +540,18 @@ export const CITY_LORE: Record<string, CityLore> = {
 };
 
 /** Lookup a city's gazetteer note, or null if it carries none. */
-export function cityLore(cityId: string): CityLore | null {
+/**
+ * 風物志 — the note for a city on the board currently being played.
+ *
+ * `CITY_LORE` is written for the Three Kingdoms and says so in every line, so
+ * a cross-era board (戰國/楚漢/隋唐) reads `cityLoreEras` instead and gets
+ * **null** where that era has no note yet. Silence beats an anachronism: the
+ * bug this replaces had 長安 telling a Warring States player about 李傕郭汜,
+ * four centuries early.
+ */
+export function cityLore(cityId: string, scenarioId?: string | null): CityLore | null {
+  const era = loreEraFor(scenarioId);
+  if (era) return eraCityLore(era, cityId);
   return CITY_LORE[cityId] ?? null;
 }
 
@@ -553,8 +565,8 @@ export function cityLore(cityId: string): CityLore | null {
  * Falls back to a hard character cap for the rare note whose first sentence
  * runs long, and returns null when the city has no entry.
  */
-export function cityLoreBrief(cityId: string, lang: 'zh' | 'en', maxChars = 64): string | null {
-  const note = CITY_LORE[cityId];
+export function cityLoreBrief(cityId: string, lang: 'zh' | 'en', maxChars = 64, scenarioId?: string | null): string | null {
+  const note = cityLore(cityId, scenarioId);
   if (!note) return null;
   const text = lang === 'en' ? note.en : note.zh;
   // 。for the Chinese notes, ". " for the English ones (a bare "." would cut
