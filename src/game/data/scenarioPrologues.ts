@@ -55,6 +55,18 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
         zh: '蒼天已死,黃天當立;歲在甲子,天下大吉。\n\n你有數十萬教眾,一呼百應。你沒有的:甲仗、糧道、能守城的人。三十六方各自為戰,而官軍正在集結。這場起義要麼在一年內拿下洛陽,要麼在一年內結束。',
         en: '"The Blue Heaven is dead; the Yellow Heaven shall rise. In the year of jiazi, let the realm rejoice."\n\nYou have hundreds of thousands who come when called. What you do not have: armour, supply lines, anyone who can hold a wall. Thirty-six divisions each fight their own war while the imperial armies gather. This rising either takes Luoyang within the year, or it ends within the year.',
       },
+      huangfu: {
+        zh: '你是皇甫嵩,持節,督冀州。天下名將無多,你是其中一個 —— 長社一戰,你順風縱火,以少破多,朝廷因此把北方交給你。\n\n你麾下有個騎都尉叫曹操,二十九歲,洛陽北部尉出身,五色棒打死過蹇碩的叔父。這種人不適合當屬吏。\n\n打完黃巾,你會上表請免冀州一年租賦,百姓為你作歌。然後你會被宦官誣奏,收印綬,削戶邑。這是你最後一次手握重兵。',
+        en: 'You are Huangfu Song, holding the staff of authority over Ji province. The realm has few real generals and you are one — at Changshe you loosed fire downwind and broke a host many times your size, and the court handed you the north for it.\n\nUnder you rides a cavalry colonel named Cao Cao, twenty-nine, once a ward magistrate in Luoyang who beat a eunuch\'s uncle to death with his coloured staves. Men like that do not stay subordinates.\n\nWhen the Turbans are done you will petition to remit a year\'s taxes from Ji, and the people will make songs about you. Then the eunuchs will slander you, your seals will be taken and your fief cut. This is the last time you will hold an army.',
+      },
+      zhujun: {
+        zh: '你是朱儁,右中郎將,督荊州。宛城久攻不下,你外圍其城,內起土山,聲東而擊西 —— 黃巾之亂終於宛城,而終結它的是你。\n\n你帳下的人比城更值得看:涿郡來的織席販履之徒劉備,帶著兩個結義兄弟;下邳來的孫堅,十七歲就在錢塘江上一個人嚇退海賊。他們現在是你的佐吏。\n\n二十年後,一個會在成都稱帝,一個的兒子會在建業稱帝。',
+        en: 'You are Zhu Jun, General of the Household of the Right, commanding in Jing province. Wancheng would not fall to assault, so you ringed it, raised earth-mounds inside the ring, made a noise in the east and went in from the west — the rebellion ended at Wancheng, and you were the man who ended it.\n\nThe people in your tent are worth more than the city. A mat-weaver out of Zhuo named Liu Bei, with two sworn brothers at his back. A man from Xiapi named Sun Jian who at seventeen faced down pirates on the Qiantang alone. Today they are your junior officers.\n\nTwenty years from now one of them will take the imperial title at Chengdu, and the other\'s son will take it at Jianye.',
+      },
+      'dong-184': {
+        zh: '你是董卓,東中郎將,代盧植擊張角。你會打輸 —— 廣宗一戰失利,朝廷減死一等,你回到涼州。\n\n但涼州才是你真正的本錢。羌胡畏你的名字,你的部曲只認你的號令,朝廷屢次徵你入朝為少府、并州牧,你一次也沒有交出兵權。「所將湟中義從及秦胡兵皆詣臣曰:『牢直不畢,稟賜斷絕』」—— 這是奏章上的話,意思是:我的兵不讓我走。\n\n洛陽的宮牆很高。但那些人已經開始互相殘殺了,而你離得比誰都近。',
+        en: 'You are Dong Zhuo, General of the Household of the East, sent to replace Lu Zhi against Zhang Jue. You will lose — Guangzong goes badly, the court commutes your death sentence one degree, and you go home to Liang province.\n\nLiang was always the real holding. The Qiang say your name carefully; your retainers take orders from no one else. Three times the court has summoned you to the capital as a minister, as a governor — and three times you have kept the army. "The Huangzhong auxiliaries and the Qin-Qiang troops came to me saying their pay was in arrears and their allowances stopped." That is what the memorial says. What it means is: my soldiers will not let me leave.\n\nThe palace walls at Luoyang are high. But the men behind them have begun killing each other, and no one is closer to the gate than you.',
+      },
     },
   },
 

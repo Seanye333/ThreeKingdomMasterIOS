@@ -34,7 +34,9 @@ export function LoadingSplash({ label }: { label?: string }) {
     <div className={styles.root} role="status" aria-live="polite" aria-label={caption}>
       <div className={styles.inner}>
         <Seal chars="鼎" size={76} rotate={-6} className={styles.seal} />
-        <div className={styles.wordmark}>{lang === 'en' ? 'Three Kingdoms' : '三國志'}</div>
+        {/* 不要寫「三國志」—— 那正是 2026-07 為了避開光榮商標才改掉的名字,
+            而且這個載入畫面也會出現在戰國/楚漢/隋唐的盤上。 */}
+        <div className={styles.wordmark}>{lang === 'en' ? 'Warlords Eternal' : '千古群英傳'}</div>
         <div className={styles.bar} />
         <div className={styles.caption}>{caption}</div>
         <div className={styles.quote} key={qi}>{lang === 'en' ? QUOTES[qi].en : QUOTES[qi].zh}</div>

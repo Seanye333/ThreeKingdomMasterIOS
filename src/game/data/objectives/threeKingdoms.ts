@@ -31,6 +31,91 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         descriptionZh: "於186年前攻取洛陽。",
         goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 186 },
       },
+      secondary: [
+        {
+          title: { zh: '三十六方', en: 'Thirty-six Divisions' },
+          description: 'Hold Ye, Beihai and Pingyuan together — the three provinces the rising actually took.',
+          descriptionZh: '同時據有鄴、北海、平原 —— 起事之初真正控住的三州之地。',
+          goal: { kind: 'hold-cities', cityIds: ['ye', 'beihai', 'pingyuan'], byYear: 187 },
+        },
+      ],
+    },
+    /* 皇甫嵩軍 — 長社已勝,朝廷把北方交給他。他手上最值錢的不是八座城,
+       是那個二十九歲的騎都尉。 */
+    {
+      id: 'obj-184-huangfu',
+      forceId: 'huangfu',
+      primary: {
+        title: { zh: '北道之任', en: 'Charge of the Northern Road' },
+        description: 'Break the Yellow Turbans and hold Ye, the seat of Ji province, by 188 AD.',
+        descriptionZh: '於188年前擊潰黃巾,並據有冀州治所鄴城。',
+        goal: { kind: 'defeat-force', forceId: 'yellow-turban', byYear: 188 },
+      },
+      secondary: [
+        {
+          title: { zh: '冀州之鎮', en: 'Seat of Ji Province' },
+          description: 'Hold Ye — Huangfu Song governed Ji after Guangzong and remitted a year of taxes.',
+          descriptionZh: '據有鄴城 —— 廣宗之後皇甫嵩領冀州牧,上表免一年租賦。',
+          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 189 },
+        },
+        {
+          title: { zh: '孟德在幕', en: 'Mengde in the Tent' },
+          description: 'Keep Cao Cao in your service — he is a cavalry colonel under you, and not for long.',
+          descriptionZh: '留住曹操 —— 此時他不過是你麾下騎都尉,而且留不了太久。',
+          goal: { kind: 'recruit-officer', officerId: 'cao-cao', byYear: 190 },
+        },
+      ],
+    },
+    /* 朱儁軍 — 宛城之圍是黃巾之亂的終點。而他帳下坐著三家之中的兩家。 */
+    {
+      id: 'obj-184-zhujun',
+      forceId: 'zhujun',
+      primary: {
+        title: { zh: '宛城之圍', en: 'The Siege of Wancheng' },
+        description: 'Take and hold Wancheng — the rebellion ended where Zhu Jun ended it.',
+        descriptionZh: '攻取並據守宛城 —— 黃巾之亂終於此城,終結它的是朱儁。',
+        goal: { kind: 'hold-cities', cityIds: ['wancheng'], byYear: 187 },
+      },
+      secondary: [
+        {
+          title: { zh: '荊南之定', en: 'Settle the Jing South' },
+          description: 'Hold Xiangyang and Jiangling — the river country behind your siege line.',
+          descriptionZh: '據有襄陽與江陵 —— 你圍城時背後的江漢之地。',
+          goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 189 },
+        },
+        {
+          title: { zh: '織席販履之徒', en: 'The Mat-weaver' },
+          description: 'Keep Liu Bei under your banner past the rising — most of his commanders will not.',
+          descriptionZh: '亂平之後仍留得住劉備 —— 多數人留不住。',
+          goal: { kind: 'recruit-officer', officerId: 'liu-bei', byYear: 190 },
+        },
+      ],
+    },
+    /* 董卓軍 — 史實上他這一仗打輸了。所以他的主要目標不是打贏黃巾,
+       是活著回涼州、把兵權保住,然後等洛陽自己亂起來。 */
+    {
+      id: 'obj-184-dong',
+      forceId: 'dong-184',
+      primary: {
+        title: { zh: '擁兵自重', en: 'Keep the Army' },
+        description: 'Still be standing in 189 AD with Liang province in hand — Dong Zhuo lost at Guangzong and kept his troops anyway.',
+        descriptionZh: '撐到189年,且涼州仍在手中 —— 廣宗雖敗,兵權未交。',
+        goal: { kind: 'survive-until', year: 189 },
+      },
+      secondary: [
+        {
+          title: { zh: '涼州之本', en: 'The Liang Holding' },
+          description: 'Hold Wuwei, Jincheng and Anding — the Qiang country that answers to you and not to the court.',
+          descriptionZh: '據有武威、金城、安定 —— 只認你、不認朝廷的羌胡之地。',
+          goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 188 },
+        },
+        {
+          title: { zh: '近水樓臺', en: 'Nearest the Gate' },
+          description: 'Take Luoyang — in history he only had to be closest when the palace tore itself apart.',
+          descriptionZh: '攻取洛陽 —— 史實上他只是在宮中自相殘殺時離得最近。',
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 192 },
+        },
+      ],
     },
   ],
 

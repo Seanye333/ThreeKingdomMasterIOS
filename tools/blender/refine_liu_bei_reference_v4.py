@@ -113,11 +113,11 @@ def restore_v45_skin(body):
         nodes = skin.node_tree.nodes
         warm = nodes.get("Portrait warm heroic complexion")
         if warm:
-            warm.inputs[0].default_value = 0.28
+            warm.inputs[0].default_value = 0.48
         mature = nodes.get("V34 restrained mature skin color")
         if mature:
             mature.inputs["Saturation"].default_value = 0.82
-            mature.inputs["Value"].default_value = 1.00
+            mature.inputs["Value"].default_value = 0.93
         mottled = nodes.get("Subtle mottled skin tone")
         if mottled:
             mottled.inputs[0].default_value = 0.10
@@ -216,20 +216,24 @@ def rebuild_v4_moustache(materials):
     rng = random.Random(40428)
     groups = {"deep": [], "warm": []}
     for side in (-1, 1):
-        for _ in range(30):
+        # Keep v4 clean while the inherited texture/nostril boundary is being
+        # validated.  Generated roots here read as dark plugs in close-up.
+        for _ in range(0):
             root_x = side * rng.uniform(0.006, 0.032)
             root_z = 1.606 - abs(root_x) * 0.12 + rng.uniform(-0.0015, 0.0015)
             tip_x = side * rng.uniform(0.047, 0.068)
             tip_z = 1.580 - rng.uniform(0.000, 0.010)
             path = [
-                (root_x, -0.1600, root_z),
-                (side * (abs(root_x) + 0.014), -0.1700, root_z - 0.004),
+                (root_x, -0.1470, root_z),
+                (side * (abs(root_x) + 0.014), -0.1640, root_z - 0.004),
                 (side * (abs(root_x) + abs(tip_x)) * 0.52, -0.1740, (root_z + tip_z) * 0.5),
                 (tip_x, -0.1680, tip_z),
             ]
             groups["warm" if rng.random() < 0.14 else "deep"].append((path, rng.uniform(0.42, 0.88)))
-    curve_bundle_poly("LiuBeiV4_Moustache_Deep", groups["deep"], materials["hair"], 0.00015)
-    curve_bundle_poly("LiuBeiV4_Moustache_Warm", groups["warm"], materials["hair_warm"], 0.00013)
+    if groups["deep"]:
+        curve_bundle_poly("LiuBeiV4_Moustache_Deep", groups["deep"], materials["hair"], 0.00012)
+    if groups["warm"]:
+        curve_bundle_poly("LiuBeiV4_Moustache_Warm", groups["warm"], materials["hair_warm"], 0.000105)
 
 
 def render(scene, camera, path, resolution, location, target, lens):
