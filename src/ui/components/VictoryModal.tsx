@@ -4,10 +4,12 @@ import { Seal } from './Seal';
 import { useLanguage, useT, pickName } from '../i18n';
 import styles from './VictoryModal.module.css';
 import { useDialogFocus } from '../hooks/useDialogFocus';
+import { useEraYear } from '../hooks/useEraYear';
 
 const MOTES = Array.from({ length: 14 }, (_, i) => i);
 
 export function VictoryModal() {
+  const eraYear = useEraYear();
   // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
   const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const victoryStatus = useGameStore((s) => s.victoryStatus);
@@ -84,7 +86,7 @@ export function VictoryModal() {
           {isVictory ? (
             lang === 'en' ? (
               <>
-                In the {seasonEn} of <strong>{date.year} AD</strong>, every city
+                In the {seasonEn} of <strong>{eraYear(date.year)}</strong>, every city
                 of the empire flies the banner of{' '}
                 <strong style={{ color: playerForce?.color }}>{forceName}</strong>
                 . The Three Kingdoms era ends — your name shall be written in the
@@ -100,7 +102,7 @@ export function VictoryModal() {
           ) : (
             lang === 'en' ? (
               <>
-                In the {seasonEn} of <strong>{date.year} AD</strong>, the last
+                In the {seasonEn} of <strong>{eraYear(date.year)}</strong>, the last
                 city of{' '}
                 <strong style={{ color: playerForce?.color }}>{forceName}</strong>{' '}
                 fell. Your campaign is over.

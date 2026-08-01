@@ -91,6 +91,7 @@ import type { City, InternalAffairsType, Officer } from '../../game/types';
 import styles from './MapScreen.module.css';
 import { HotseatHandoff } from '../components/HotseatHandoff';
 import { Z } from '../zIndex';
+import { useEraYear } from '../hooks/useEraYear';
 
 // Code-split heavy / rarely-opened modals. They are loaded on demand the
 // first time the user opens them, keeping the initial bundle smaller.
@@ -138,6 +139,7 @@ const PersuasionModal = lazy(() => import('../components/PersuasionModal').then(
 const DuelHallModal = lazy(() => import('../components/DuelHallModal').then(m => ({ default: m.DuelHallModal })));
 
 export function MapScreen() {
+  const eraYear = useEraYear();
   const t = useT();
   const lang = useLanguage();
   // 委派錄 — after ⚡一鍵委派, a summary card of who went where doing what
@@ -817,7 +819,7 @@ export function MapScreen() {
           ← {t('標題', 'Title')}
         </button>
         <div className={styles.dateBlock}>
-          <span className={styles.year}>{date.year} AD</span>
+          <span className={styles.year}>{eraYear(date.year)}</span>
           <span className={styles.season} title={`${season.en} (${season.zh})`}>
             <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: seasonAccent, marginRight: 5, boxShadow: `0 0 5px ${seasonAccent}`, verticalAlign: 'middle' }} />
             {monthNum}月{phaseInfo.zh} <span className={styles.seasonZh} style={{ color: seasonAccent }}>{season.zh}</span>

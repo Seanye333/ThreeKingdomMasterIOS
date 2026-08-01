@@ -10,6 +10,7 @@ import { OfficerDetail } from './OfficerDetail';
 import styles from './OfficersTab.module.css';
 import { useT, useLanguage } from '../i18n';
 import { useDialogFocus } from '../hooks/useDialogFocus';
+import { formatScenarioYear } from '../../game/data/era';
 
 function topStatKey(s: OfficerStats): keyof OfficerStats {
   let key: keyof OfficerStats = 'leadership';
@@ -188,7 +189,7 @@ export function ScenarioOfficersBrowser({ scenario, onClose }: Props) {
           <div>
             <div className={styles.titleZh}>{t('武將一覽', 'Officers')}</div>
             <div className={styles.titleEn}>
-              {lang === 'en' ? scenario.name.en : scenario.name.zh} ({scenario.startDate.year} AD) ·{' '}
+              {lang === 'en' ? scenario.name.en : scenario.name.zh} ({formatScenarioYear(scenario.startDate.year, scenario.id, lang === 'en' ? 'en' : 'zh')}) ·{' '}
               {t(`顯示 ${visibleOfficers.length} / ${total}`, `${visibleOfficers.length} of ${total} shown`)} · {t(`隱藏 ${unsearched}`, `${unsearched} hidden`)}
             </div>
           </div>

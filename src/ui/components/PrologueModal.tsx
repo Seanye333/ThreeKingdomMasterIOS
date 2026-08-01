@@ -7,6 +7,7 @@ import { useGameStore } from '../../game/state/store';
 import { useDesc, useLanguage, useT } from '../i18n';
 import { Modal } from './Modal';
 import { Name } from './Name';
+import { useEraYear } from '../hooks/useEraYear';
 
 /**
  * 序章 — the opening page of a campaign.
@@ -21,6 +22,7 @@ import { Name } from './Name';
  * time only when the board has one.
  */
 export function PrologueModal() {
+  const eraYear = useEraYear();
   const open = useGameStore((s) => s.prologueOpen);
   const scenarioId = useGameStore((s) => s.scenarioId);
   const playerForceId = useGameStore((s) => s.playerForceId);
@@ -55,7 +57,7 @@ export function PrologueModal() {
       onClose={closePrologue}
       title={scenario ? <Name pair={scenario.name} /> : t('序章', 'Prologue')}
       icon="巻"
-      badge={`${year} ${t('年', 'AD')}`}
+      badge={eraYear(year)}
       width="min(680px, 100%)"
       scrollBody
       closeOnBackdrop={false}

@@ -12,8 +12,10 @@ import { POLICY_DEFS } from '../../game/data/officerAttributes';
 import { BUILDING_DEFS_BY_ID } from '../../game/data/buildings';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import { useDialogFocus } from '../hooks/useDialogFocus';
+import { useEraYear } from '../hooks/useEraYear';
 
 export function SeasonReportModal() {
+  const eraYear = useEraYear();
   // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
   const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const report = useGameStore((s) => s.lastReport);
@@ -103,7 +105,7 @@ export function SeasonReportModal() {
     if (c('rebellion')) { zh.push('境內生變'); en.push('unrest stirs'); }
     if (c('succession')) { zh.push('易主承祧'); en.push('a throne passes'); }
     const era = `${report.date.year}年·${season.zh}`;
-    const eraEn = `${season.en} ${report.date.year} AD`;
+    const eraEn = `${season.en} ${eraYear(report.date.year)}`;
     if (zh.length === 0) return { zh: `${era} —— 四海晏然,境內無大事。`, en: `${eraEn} — a quiet season across the realm.` };
     return { zh: `${era} —— ${zh.join('、')}。`, en: `${eraEn} — ${en.join(', ')}.` };
   })();
@@ -128,8 +130,8 @@ export function SeasonReportModal() {
               {lang === 'zh'
                 ? `${season.zh} ${report.date.year} 年`
                 : lang === 'both'
-                  ? `${season.zh} · ${season.en} ${report.date.year} AD`
-                  : `Season Report — ${season.en} ${report.date.year} AD`}
+                  ? `${season.zh} · ${season.en} ${eraYear(report.date.year)}`
+                  : `Season Report — ${season.en} ${eraYear(report.date.year)}`}
             </div>
           </div>
         </header>

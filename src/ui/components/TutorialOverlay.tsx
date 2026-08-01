@@ -4,8 +4,10 @@ import { Z } from '../zIndex';
 
 const TUTORIAL_STEPS: Array<{ titleZh: string; titleEn: string; bodyZh: string; bodyEn: string }> = [
   {
-    titleZh: '欢迎来到三国',
-    titleEn: 'Welcome to the Three Kingdoms',
+    // 不寫「三國」—— 同一套教學會出現在戰國、楚漢、隋唐的盤上,在長平之戰
+    // 開場說「歡迎來到三國」是當場穿幫(2026-08-01 目視巡檢抓到)。
+    titleZh: '歡迎來到千古群英傳',
+    titleEn: 'Welcome, warlord',
     bodyZh: '你是一方势力的君主。目标是统一天下,或选择其他结局。每个季节(春夏秋冬)结束时,系统会处理你的命令。',
     bodyEn: 'You command a force. The goal is to unify the realm — or pursue a different ending. At the end of each season, your orders resolve.',
   },

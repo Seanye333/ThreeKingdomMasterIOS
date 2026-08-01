@@ -39,6 +39,7 @@ const FormationsModal = lazy(() =>
   import('../components/FormationsModal').then((m) => ({ default: m.FormationsModal })));
 import { useT, useLanguage, useDesc } from '../i18n';
 import styles from './TitleScreen.module.css';
+import { formatScenarioYear, eraOffsetFor } from '../../game/data/era';
 
 const DIFFICULTIES: Array<{ id: Difficulty; en: string; zh: string; noteZh: string; noteEn: string }> = [
   { id: 'easy',   en: 'Easy',   zh: '初級', noteZh: '我方初始兵力 +20%。AI 攻擊較保守。', noteEn: 'Your starting troops +20%. AI attacks more cautiously.' },
@@ -178,8 +179,13 @@ export function TitleScreen() {
     return 'sanguo';
   };
   const [activeEra, setActiveEra] = useState<string>('sanguo');
+  // 依史實年份排序 —— 三國盤的內部年份就是史實年份,所以它們本來就是照年份
+  // 排的;跨代盤的內部年份**全部是 178**(見 game/data/era.ts),照它排等於沒
+  // 排,戰國那一頁因此是前300 → 前445 → 前356 這種亂序。加上紀年偏移再排。
   const eraScenarios = useMemo(
-    () => SCENARIOS.filter((s) => eraOf(s) === activeEra),
+    () => SCENARIOS.filter((s) => eraOf(s) === activeEra)
+      .slice()
+      .sort((a, b) => (a.startDate.year + eraOffsetFor(a.id)) - (b.startDate.year + eraOffsetFor(b.id))),
     [activeEra],
   );
   // The "歷代名將" cross-over list offers eras OTHER than the one this scenario
@@ -593,7 +599,7 @@ export function TitleScreen() {
                       className={`${styles.scenarioButton} ${scenarioId === s.id ? styles.scenarioSelected : ''}`}
                       onClick={() => { setScenarioId(s.id); setSelectedForceId(null); }}
                     >
-                      <span className={styles.scenarioYear}>{s.startDate.year} AD</span>
+                      <span className={styles.scenarioYear}>{formatScenarioYear(s.startDate.year, s.id, lang === 'en' ? 'en' : 'zh')}</span>
                       <span className={styles.scenarioName}>
                         {lang !== 'en' && <span className={styles.scenarioNameZh}>{s.name.zh}</span>}
                         {lang !== 'zh' && <span className={styles.scenarioNameEn}>{s.name.en}</span>}
@@ -607,7 +613,7 @@ export function TitleScreen() {
               <div style={{ flex: '1 1 0', minWidth: 0 }}>
                 <p className={styles.scenarioDesc} style={{ marginTop: 0 }}>{desc(scenario)}</p>
                 <div style={{ fontSize: '0.78rem', color: 'var(--tkm-text-muted)', marginBottom: '0.5rem' }}>
-                  {startYear} AD · {scenario.forces.length} {t('勢力', 'forces')}
+                  {formatScenarioYear(startYear, scenario.id, lang === 'en' ? 'en' : 'zh')} · {scenario.forces.length} {t('勢力', 'forces')}
                 </div>
                 {/* 戰役封面 — optional cover above the territory map. Drop
                     public/scenarios/<scenarioId>.jpg to light it up; absent → just
@@ -694,7 +700,7 @@ export function TitleScreen() {
         {step === 'force' && (
           <section className={styles.forceSection} style={{ width: 'min(1000px, 96vw)', maxWidth: 'none' }}>
             <div className={styles.forceLabel}>
-              {lang === 'en' ? scenario.name.en : scenario.name.zh} · {startYear} AD · {t('君主選擇', 'Choose your force')}
+              {lang === 'en' ? scenario.name.en : scenario.name.zh} · {formatScenarioYear(startYear, scenario.id, lang === 'en' ? 'en' : 'zh')} · {t('君主選擇', 'Choose your force')}
             </div>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
               {/* Left — force list */}
@@ -805,7 +811,7 @@ export function TitleScreen() {
           <section className={styles.scenarioCard} style={{ width: 'min(720px, 94vw)', maxWidth: 'none' }}>
             <div style={{ textAlign: 'center', marginBottom: '0.6rem' }}>
               <div style={{ fontSize: '1.05rem', color: 'var(--tkm-text-h2)' }}>{lang === 'en' ? scenario.name.en : scenario.name.zh}</div>
-              <div style={{ fontSize: '0.74rem', color: 'var(--tkm-text-muted)' }}>{startYear} AD</div>
+              <div style={{ fontSize: '0.74rem', color: 'var(--tkm-text-muted)' }}>{formatScenarioYear(startYear, scenario.id, lang === 'en' ? 'en' : 'zh')}</div>
             </div>
             {selectedForce && selectedRuler && (() => {
               const st = forceStats(selectedForce.id);

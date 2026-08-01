@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { SEASON_LABEL, type Season } from '../../game/types';
 import styles from './SeasonTransition.module.css';
+import { useEraYearBoth } from '../hooks/useEraYear';
 
 /** Seasonal accents — jade spring, warm summer, jin autumn, cold winter. */
 const SEASON_ACCENT: Record<Season, string> = {
@@ -35,6 +36,7 @@ const PARTICLES = Array.from({ length: 16 }, (_, i) => i);
  * spectator mode so the auto-sim isn't gated by 1.5s cards.
  */
 export function SeasonTransition() {
+  const { zh: eraYearZh, en: eraYearEn } = useEraYearBoth();
   const year = useGameStore((s) => s.date.year);
   const season = useGameStore((s) => s.date.season);
   const observing = useGameStore((s) => s.playerForceId === null);
@@ -96,8 +98,8 @@ export function SeasonTransition() {
       <div className={styles.card} style={{ color: accent }}>
         <div className={styles.bigChar}>{label.zh}</div>
         <div className={styles.line} />
-        <div className={styles.year}>{card.year}年</div>
-        <div className={styles.en}>{label.en} · {card.year} AD</div>
+        <div className={styles.year}>{eraYearZh(card.year)}</div>
+        <div className={styles.en}>{label.en} · {eraYearEn(card.year)}</div>
       </div>
     </div>
   );

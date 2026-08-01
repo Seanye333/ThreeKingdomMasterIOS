@@ -8,6 +8,7 @@ import { useT, useLanguage, useDesc, pickName } from '../i18n';
 import { OfficerPortrait } from './OfficerPortrait';
 import { effectChips, type EffectChip } from './eventEffectChips';
 import { useDialogFocus } from '../hooks/useDialogFocus';
+import { useEraYear } from '../hooks/useEraYear';
 
 /** 事件配樂 — classify an event's mood from its effects (language-agnostic)
  *  with id/name keyword hints, so the right motif greets it. */
@@ -71,6 +72,7 @@ function EventArt({ id }: { id: string }) {
 }
 
 export function EventModal() {
+  const eraYear = useEraYear();
   // 對話框焦點 — role/aria-modal + Tab 收束 + 關閉後把焦點還回去。
   const { frameRef, onKeyDown: onDialogKeyDown } = useDialogFocus<HTMLDivElement>();
   const pending = useGameStore((s) => s.pendingEvent);
@@ -122,7 +124,7 @@ export function EventModal() {
         {lang !== 'en' && <div className={`${styles.titleZh} ${styles.titleZhAnim}`}>{event.name.zh}</div>}
         {lang !== 'zh' && <div className={styles.titleEn}>{event.name.en}</div>}
         <div className={styles.dateLine}>
-          {year} AD · {lang === 'en' ? seasonLabel.en : seasonLabel.zh}
+          {eraYear(year)} · {lang === 'en' ? seasonLabel.en : seasonLabel.zh}
         </div>
         <hr className={styles.divider} />
         {/* 名場面 — an optional painterly banner for the moment (see EventArt). */}

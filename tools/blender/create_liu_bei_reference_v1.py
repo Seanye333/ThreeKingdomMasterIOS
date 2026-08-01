@@ -13,6 +13,7 @@ import random
 import sys
 from pathlib import Path
 
+import bmesh
 import bpy
 from mathutils import Vector
 
@@ -101,9 +102,9 @@ def sculpt_liu_bei_face():
             co.y -= cheek * 0.0018
         if 1.525 < co.z < 1.615 and ax > 0.038:
             jaw = max(0.0, 1.0 - abs(co.z - 1.565) / 0.052)
-            co.x *= 0.925 + 0.025 * jaw
+            co.x *= 0.955 + 0.025 * jaw
         if ax < 0.050 and 1.510 < co.z < 1.555:
-            co.z -= 0.0055 * (1.0 - ax / 0.050)
+            co.z -= 0.0025 * (1.0 - ax / 0.050)
 
         # Smooth the inherited heavy brow; retain a dignified inner focus.
         if 0.010 < ax < 0.090 and 1.690 < co.z < 1.722:
@@ -125,13 +126,13 @@ def sculpt_liu_bei_face():
             if 1.570 < co.z < 1.583:
                 co.y -= 0.0008
             if 0.032 < ax < 0.052 and 1.568 < co.z < 1.590:
-                co.z += 0.0011
+                co.z += 0.0032
 
         # The roster's famous large earlobes are sculpted into the side mass.
         if 0.086 < ax < 0.128 and -0.060 < co.y < 0.055 and 1.590 < co.z < 1.675:
             lower = max(0.0, 1.0 - abs(co.z - 1.615) / 0.032)
-            co.z -= 0.0065 * lower
-            co.x *= 1.0 + 0.025 * lower
+            co.z -= 0.0090 * lower
+            co.x *= 1.0 - 0.085 * lower
 
     body.data.update()
 
@@ -141,6 +142,7 @@ def tune_skin():
     if not material or not material.use_nodes:
         return
     nodes = material.node_tree.nodes
+    links = material.node_tree.links
     for name, color in (
         ("Portrait warm heroic complexion", (0.245, 0.092, 0.040, 1)),
         ("V34 weathered bronze complexion", (0.225, 0.075, 0.030, 1)),
@@ -148,10 +150,30 @@ def tune_skin():
         node = nodes.get(name)
         if node:
             node.inputs[2].default_value = color
+    warm = nodes.get("Portrait warm heroic complexion")
+    if warm:
+        # The CC0 diffuse carries a painted scalp-stubble hairline that was
+        # hidden by Guan Yu's headcloth. Liu Bei exposes his forehead, so use a
+        # clean fair base here while retaining the procedural pore/vascular
+        # layers downstream.
+        for link in list(links):
+            if link.to_node == warm and link.to_socket == warm.inputs[1]:
+                links.remove(link)
+        warm.inputs[0].default_value = 0.34
+        warm.inputs[1].default_value = (0.33, 0.135, 0.065, 1)
     mature = nodes.get("V34 restrained mature skin color")
     if mature:
         mature.inputs["Saturation"].default_value = 0.76
         mature.inputs["Value"].default_value = 1.08
+    mottled = nodes.get("Subtle mottled skin tone")
+    if mottled:
+        mottled.inputs[0].default_value = 0.075
+    weathered = nodes.get("V34 weathered bronze complexion")
+    if weathered:
+        weathered.inputs[0].default_value = 0.10
+    pore_bump = nodes.get("Micro pore normal")
+    if pore_bump:
+        pore_bump.inputs["Strength"].default_value = 0.095
     shader = next((node for node in nodes if node.type == "BSDF_PRINCIPLED"), None)
     if shader:
         shader.inputs["Roughness"].default_value = 0.52
@@ -191,7 +213,7 @@ def build_calm_eyes_and_brows(materials):
         for index in range(82):
             t = rng.random()
             x = side * (0.014 + 0.062 * t)
-            z = 1.691 + math.sin(t * math.pi) * 0.0048 + t * 0.003 + rng.uniform(-0.0011, 0.0011)
+            z = 1.695 + math.sin(t * math.pi) * 0.0048 - t * 0.003 + rng.uniform(-0.0011, 0.0011)
             y = -0.174 - math.sin(t * math.pi) * 0.0025
             dx = side * rng.uniform(0.003, 0.006)
             fibers.append(([(x, y, z), (x + dx * 0.55, y - 0.0008, z + 0.0028), (x + dx, y, z + 0.0042)], rng.uniform(0.55, 1.05)))
@@ -221,8 +243,9 @@ def build_hair_crown_and_short_beard(materials):
         for segment in range(segments):
             angle = segment / segments * math.tau
             front = max(0.0, -math.sin(angle))
+            back = max(0.0, math.sin(angle))
             side = abs(math.cos(angle))
-            hairline = (front * 0.038 + side * 0.005) * math.sin(theta) ** 7
+            hairline = (front * 0.032 + back * 0.027 + side * 0.018) * math.sin(theta) ** 7
             verts.append((math.cos(angle) * radius_x, -0.006 + math.sin(angle) * radius_y, dome_z + hairline))
     faces = []
     for segment in range(segments):
@@ -249,7 +272,7 @@ def build_hair_crown_and_short_beard(materials):
         polar = rng.uniform(0.18, 1.95)
         normal = Vector((math.sin(polar) * math.cos(azimuth), math.sin(polar) * math.sin(azimuth), math.cos(polar)))
         root = Vector((normal.x * 0.100, -0.041 + normal.y * 0.111, 1.744 + normal.z * 0.068))
-        if root.y < -0.122 and root.z < 1.735 and abs(root.x) < 0.060:
+        if root.y < -0.045 and root.z < 1.770:
             continue
         # Hair is brushed upward/back toward the topknot, unlike Zhang Fei's flyaways.
         target = Vector((root.x * 0.36, -0.008, 1.822))
@@ -278,22 +301,22 @@ def build_hair_crown_and_short_beard(materials):
         for index in range(58):
             t = rng.random()
             root = (side * (0.003 + 0.043 * t), -0.170 - rng.uniform(0.0, 0.003), 1.590 - 0.014 * t + rng.uniform(-0.002, 0.002))
-            tip = (side * (0.045 + 0.045 * t), -0.177, 1.560 - 0.025 * t + rng.uniform(-0.003, 0.003))
+            tip = (side * (0.034 + 0.035 * t), -0.177, 1.568 - 0.016 * t + rng.uniform(-0.002, 0.002))
             mid = ((root[0] + tip[0]) * 0.52, -0.179 - rng.uniform(0.0, 0.004), (root[2] + tip[2]) * 0.50 + rng.uniform(-0.002, 0.002))
             beard["warm" if rng.random() < 0.16 else "deep"].append(([root, mid, tip], rng.uniform(0.48, 0.92)))
     for index in range(185):
         root_x = rng.triangular(-0.050, 0.050, 0.0)
         root_z = rng.uniform(1.535, 1.570)
         center_weight = 1.0 - min(1.0, abs(root_x) / 0.050)
-        length = rng.uniform(0.045, 0.115) * (0.50 + center_weight * 0.70)
+        length = rng.uniform(0.040, 0.078) * (0.58 + center_weight * 0.62)
         tip_x = root_x * rng.uniform(0.20, 0.65) + rng.uniform(-0.006, 0.006)
         root = (root_x, -0.169, root_z)
         middle_a = (root_x * 0.82 + tip_x * 0.18, -0.179 - rng.uniform(0.0, 0.005), root_z - length * 0.28)
         middle_b = (root_x * 0.38 + tip_x * 0.62 + rng.uniform(-0.003, 0.003), -0.181 - rng.uniform(0.0, 0.006), root_z - length * 0.67)
         tip = (tip_x, -0.174, root_z - length)
         beard["warm" if rng.random() < 0.13 else "deep"].append(([root, middle_a, middle_b, tip], rng.uniform(0.45, 0.96)))
-    curve_bundle("LiuBei_Short_Beard_Deep", beard["deep"], materials["hair"], 0.00021)
-    curve_bundle("LiuBei_Short_Beard_Warm", beard["warm"], materials["hair_warm"], 0.00018)
+    curve_bundle("LiuBei_Short_Beard_Deep", beard["deep"], materials["hair"], 0.00024)
+    curve_bundle("LiuBei_Short_Beard_Warm", beard["warm"], materials["hair_warm"], 0.00020)
 
 
 def recolor_and_simplify_costume(materials):
@@ -315,6 +338,17 @@ def recolor_and_simplify_costume(materials):
         obj = bpy.data.objects.get(name)
         if obj:
             assign(obj, materials["yellow_light"] if "Lapel" in name or "Sleeve" in name else materials["yellow"])
+    # The inherited robe mesh contains two detached headcloth tabs beside the
+    # ears.  They are isolated high vertices and must not survive as gold fins.
+    robe = bpy.data.objects.get("Portrait_Deep_Green_Robe")
+    if robe and robe.type == "MESH":
+        bm = bmesh.new()
+        bm.from_mesh(robe.data)
+        detached_tabs = [vertex for vertex in bm.verts if vertex.co.z > 1.60 and abs(vertex.co.x) > 0.080]
+        bmesh.ops.delete(bm, geom=detached_tabs, context="VERTS")
+        bm.to_mesh(robe.data)
+        bm.free()
+        robe.data.update()
     for name in shadow_names:
         obj = bpy.data.objects.get(name)
         if obj:

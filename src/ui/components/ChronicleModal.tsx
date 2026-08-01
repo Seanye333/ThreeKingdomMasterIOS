@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage } from '../i18n';
+import { useEraYear } from '../hooks/useEraYear';
 
 /**
  * 國史 — the campaign chronicle as a scroll painting: every conquest, siege
@@ -21,6 +22,7 @@ const SEASON_ZH: Record<string, string> = { spring: '春', summer: '夏', autumn
 const SEASON_ORDER: Record<string, number> = { spring: 0, summer: 1, autumn: 2, winter: 3 };
 
 export function ChronicleModal({ onClose }: { onClose: () => void }) {
+  const eraYear = useEraYear();
   useEscapeKey(onClose);
   const chronicle = useGameStore((s) => s.chronicle ?? []);
   const date = useGameStore((s) => s.date);
@@ -73,7 +75,7 @@ export function ChronicleModal({ onClose }: { onClose: () => void }) {
             </span>
             <span style={{ marginLeft: '0.9rem', fontSize: '0.75rem', color: '#7a8893', letterSpacing: '0.1rem' }}>
               {playerForce ? (lang === 'en' ? playerForce.name.en : playerForce.name.zh) : ''}
-              {' · '}{t(`至 ${date.year} 年`, `through ${date.year} AD`)}
+              {' · '}{t(`至 ${eraYear(date.year)}`, `through ${eraYear(date.year)}`)}
               {' · '}{chronicle.length} {t('條', 'entries')}
             </span>
           </div>
@@ -103,7 +105,7 @@ export function ChronicleModal({ onClose }: { onClose: () => void }) {
                     fontSize: '1.05rem', color: '#e6c473', letterSpacing: '0.08rem',
                     border: '1px solid #8a6f3a', padding: '0.1rem 0.6rem', borderRadius: 'var(--tkm-radius-xs)',
                     background: 'rgba(212, 168, 74, 0.07)',
-                  }}>{year}{t('年', ' AD')}</span>
+                  }}>{eraYear(year)}</span>
                   <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, #364654, transparent)' }} />
                 </div>
                 {entries.map((e, i) => {

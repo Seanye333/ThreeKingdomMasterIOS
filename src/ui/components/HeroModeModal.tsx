@@ -3,6 +3,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { CHALLENGES, totalStars, type Challenge } from '../../game/data/challenges';
 import { SCENARIOS } from '../../game/data';
 import { useT, useLanguage } from '../i18n';
+import { formatScenarioYear } from '../../game/data/era';
 
 interface Props {
   onClose: () => void;
@@ -82,7 +83,6 @@ export function HeroModeModal({ onClose }: Props) {
         <div style={{ padding: '1rem 1.5rem', overflowY: 'auto', flex: 1, display: 'grid', gap: '0.7rem' }}>
           {sorted.map((c) => {
             const scn = SCENARIOS.find((s) => s.id === c.scenarioId);
-            const year = scn?.startDate.year ?? '';
             const diff = DIFF_LABEL[c.difficulty];
             const rec = records[c.id];
             return (
@@ -102,7 +102,7 @@ export function HeroModeModal({ onClose }: Props) {
                     {rec && (
                       <span style={{ fontSize: '0.74rem', color: '#7ed68a' }}>
                         ✓ {t('通關', 'Cleared')} <span style={{ color: '#d96a4a' }}>{'★'.repeat(rec.bestStars)}</span>
-                        <span style={{ color: '#7a8893' }}> · {rec.bestYear} AD</span>
+                        <span style={{ color: '#7a8893' }}> · {formatScenarioYear(rec.bestYear, c.scenarioId, lang === 'en' ? 'en' : 'zh')}</span>
                       </span>
                     )}
                     <span style={{ color: '#c0504a', letterSpacing: '0.1rem', fontSize: '0.85rem' }}>
@@ -112,7 +112,8 @@ export function HeroModeModal({ onClose }: Props) {
                       {lang === 'en' ? diff.en : diff.zh}
                     </span>
                     <span style={{ fontSize: '0.72rem', color: '#7a8893' }}>
-                      {scn ? (lang === 'en' ? scn.name.en : scn.name.zh) : c.scenarioId} · {year} AD
+                      {scn ? (lang === 'en' ? scn.name.en : scn.name.zh) : c.scenarioId}
+                      {scn ? ` · ${formatScenarioYear(scn.startDate.year, c.scenarioId, lang === 'en' ? 'en' : 'zh')}` : ''}
                     </span>
                   </div>
                   <div style={{ fontSize: '0.8rem', color: '#a08c6a', marginTop: '0.35rem', lineHeight: 1.5 }}>
