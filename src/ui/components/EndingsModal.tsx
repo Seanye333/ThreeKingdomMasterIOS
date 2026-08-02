@@ -277,6 +277,8 @@ export function EndingsModal({ onClose }: Props) {
               lineHeight: 1.8,
               color: '#e6c473',
               textAlign: 'justify',
+              /* 落幕文本是分段寫的(\n\n),沒有 pre-line 會被壓成一整塊。 */
+              whiteSpace: 'pre-line',
               margin: 0,
               marginBottom: '1rem',
             }}
@@ -292,6 +294,7 @@ export function EndingsModal({ onClose }: Props) {
               color: '#aab6c0',
               fontStyle: 'italic',
               textAlign: 'justify',
+              whiteSpace: 'pre-line',
               margin: 0,
             }}
           >
@@ -351,7 +354,10 @@ export function EndingsModal({ onClose }: Props) {
           >
             {playOn && ending.kind !== 'defeat'
               ? t('續行天下 — 承平之亂', 'Play on — the peace to come')
-              : t('續行', 'Continue')}
+              /* 亡國畫面按「續行」語意不對 —— 那裡沒有可續之行。 */
+              : ending.kind === 'defeat'
+                ? t('落幕', 'End')
+                : t('續行', 'Continue')}
           </button>
         </div>
       </div>
