@@ -319,6 +319,156 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'defeat-force', forceId: 'cao', byYear: 207 },
       },
     },
+    /* 孫策 — 史實上他在出兵前死於刺客。這一局他還活著,而許都空虛。 */
+    {
+      id: 'obj-200-sun',
+      forceId: 'sun',
+      primary: {
+        title: { zh: '襲許之機', en: 'The Opening at Xu' },
+        description: 'Take Xuchang while the north is locked at Guandu — the raid Sun Ce never lived to make.',
+        descriptionZh: '趁兩強相持於官渡、北方空虛之際攻取許昌 —— 孫策沒能活著發動的那一擊。',
+        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 205 },
+      },
+      secondary: [
+        {
+          title: { zh: '江東之固', en: 'Jiangdong Secured' },
+          description: 'Hold Jianye, Wu and Kuaiji — the base that must not be lost while you march north.',
+          descriptionZh: '守住建業、吳郡、會稽 —— 北上時不能丟的根本。',
+          goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'kuaiji'], byYear: 205 },
+        },
+        {
+          title: { zh: '不死於刺客', en: 'No Assassin' },
+          description: 'Still alive in 205 — he was killed at twenty-six by three retainers of Xu Gong.',
+          descriptionZh: '撐到205年 —— 史實上他二十六歲死於許貢門客之手。',
+          goal: { kind: 'survive-until', year: 205 },
+        },
+      ],
+    },
+    /* 劉備 — 四十歲,寄人籬下,沒有一寸地。所以主目標就是「有一塊地」。 */
+    {
+      id: 'obj-200-liubei',
+      forceId: 'liu-bei',
+      primary: {
+        title: { zh: '一寸之地', en: 'One Foot of Ground' },
+        description: 'Hold Xiapi and Xiaopei together — keep Xu province instead of losing it a third time.',
+        descriptionZh: '同時據有下邳與小沛 —— 這一次別再把徐州丟掉。',
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'xiaopei'], byYear: 204 },
+      },
+      secondary: [
+        {
+          title: { zh: '掛印封金', en: 'The Seal Left Behind' },
+          description: 'Get Guan Yu back — he is in Cao Cao\'s camp, and he is coming.',
+          descriptionZh: '接回關羽 —— 他在曹營,而他會回來。',
+          goal: { kind: 'recruit-officer', officerId: 'guan-yu', byYear: 203 },
+        },
+        {
+          title: { zh: '不再寄人籬下', en: 'No More Roofs' },
+          description: 'Still standing in 208 — the year the wind finally turned at Chibi.',
+          descriptionZh: '撐到208年 —— 赤壁那一年風才轉向。',
+          goal: { kind: 'survive-until', year: 208 },
+        },
+      ],
+    },
+    /* 劉表 — 這是他唯一一次伸手就能改寫天下的機會。史實上他沒有伸手。 */
+    {
+      id: 'obj-200-liubiao',
+      forceId: 'liu-biao',
+      primary: {
+        title: { zh: '天下之重', en: 'The Weight of the Realm' },
+        description: 'Take Xuchang while the two powers are locked — Liu Xian told him the empire turned on him, and he did nothing.',
+        descriptionZh: '趁兩強相持攻取許昌 —— 劉先說「天下之重,在於將軍」,而他沒有動。',
+        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 207 },
+      },
+      secondary: [
+        {
+          title: { zh: '保江漢間', en: 'Hold the Han and the River' },
+          description: 'Still hold Xiangyang and Jiangling in 208 — the eighteen quiet years.',
+          descriptionZh: '208年時仍據有襄陽與江陵 —— 那安靜的十八年。',
+          goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 208 },
+        },
+        {
+          title: { zh: '南陽之北', en: 'North of Nanyang' },
+          description: 'Take Wancheng — the gate between Jing and the central plains.',
+          descriptionZh: '攻取宛城 —— 荊州與中原之間的那道門。',
+          goal: { kind: 'hold-cities', cityIds: ['wancheng'], byYear: 207 },
+        },
+      ],
+    },
+    /* 劉璋 — 益州的問題從來不是外面打不進來。 */
+    {
+      id: 'obj-200-liuzhang',
+      forceId: 'liu-zhang',
+      primary: {
+        title: { zh: '天府之守', en: 'Keep the Storehouse' },
+        description: 'Still hold Chengdu in 215 — in history he opened the gates in 214.',
+        descriptionZh: '撐到215年仍據有成都 —— 史實上他214年開了門。',
+        goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 215 },
+      },
+      secondary: [
+        {
+          title: { zh: '巴西之防', en: 'The Baxi Line' },
+          description: 'Hold Baxi and Zitong — Pang Xi was sent there against Zhang Lu, not against Cao Cao.',
+          descriptionZh: '守住巴西與梓潼 —— 龐羲去那裡防的是張魯,不是曹操。',
+          goal: { kind: 'hold-cities', cityIds: ['baxi', 'zitong'], byYear: 210 },
+        },
+        {
+          title: { zh: '取漢中', en: 'Take Hanzhong' },
+          description: 'Take Hanzhong — the province your family lost when Zhang Lu closed the roads.',
+          descriptionZh: '攻取漢中 —— 張魯關了棧道之後,你家丟掉的那一塊。',
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 212 },
+        },
+      ],
+    },
+    /* 馬騰 — 史實上是他在西邊替曹操按住了背後。這一局可以不按。 */
+    {
+      id: 'obj-200-mateng',
+      forceId: 'ma-teng',
+      primary: {
+        title: { zh: '關中十部', en: 'The Ten of Guanzhong' },
+        description: "Take Chang'an and hold it — with the north locked at Guandu, no one is watching the pass.",
+        descriptionZh: '攻取並據守長安 —— 兩強鎖在官渡,關中無人看管。',
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 207 },
+      },
+      secondary: [
+        {
+          title: { zh: '涼州一統', en: 'One Command in Liang' },
+          description: 'Hold Wuwei, Jincheng and Anding — the Liang country under a single seal.',
+          descriptionZh: '據有武威、金城、安定 —— 涼州只認一個印。',
+          goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 205 },
+        },
+        {
+          title: { zh: '不入京師', en: 'Never Go to Court' },
+          description: 'Still alive in 212 — the year he went to the capital and his household of two hundred died.',
+          descriptionZh: '撐到212年 —— 史實上他入朝為衛尉,那一年全家二百餘口下獄。',
+          goal: { kind: 'survive-until', year: 212 },
+        },
+      ],
+    },
+    /* 烏丸 — 塞外的規矩:誰給糧、誰給印,就跟誰。 */
+    {
+      id: 'obj-200-wuhuan',
+      forceId: 'wuhuan',
+      primary: {
+        title: { zh: '白狼山之前', en: 'Before White Wolf Mountain' },
+        description: 'Still hold Liucheng in 208 — Cao Cao came over the wall in 207 and the line never formed.',
+        descriptionZh: '撐到208年仍據有柳城 —— 史實上207年曹操出塞,那天陣都沒列完。',
+        goal: { kind: 'hold-cities', cityIds: ['liucheng'], byYear: 208 },
+      },
+      secondary: [
+        {
+          title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+          description: 'Hold Liaodong and Beiping as well — the three Wuhuan commanderies under one chieftain.',
+          descriptionZh: '兼有遼東與北平 —— 三郡烏丸歸於一人。',
+          goal: { kind: 'hold-cities', cityIds: ['liaodong', 'beiping'], byYear: 206 },
+        },
+        {
+          title: { zh: '入塞', en: 'Through the Wall' },
+          description: 'Take Ye — the Wuhuan rode into Hebei more than once, and not only as guests.',
+          descriptionZh: '攻取鄴城 —— 烏丸不只一次入河北,而且不只是作客。',
+          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 210 },
+        },
+      ],
+    },
   ],
 
   // 208 — Chibi

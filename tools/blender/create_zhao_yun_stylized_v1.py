@@ -56,7 +56,10 @@ def capture_human_head():
 def remove_guan_yu_identity():
     remove_matching(
         "V34_Groom_Beard_", "V34_Groom_Moustache_", "V40_Beard_Root_",
+        "V34_Groom_Chin_Transition", "V34_Groom_Flyaways", "V34_Groom_Head_Hair_",
+        "V31_Nostril_",
         "Fullbody_Blade_", "Fullbody_Crimson_Pole_Grip_", "V29_Blade_",
+        "V29_Green_Dragon_Crescent_Blade", "V29_Crescent_Polished_Cutting_Edge",
     )
 
 
@@ -195,6 +198,11 @@ def build_stylized_hair_and_crown(materials):
         if name == "Portrait_Fitted_Headcloth":
             assign(obj, materials["silver_dark"])
             obj.name = "ZhaoYun_Fitted_Silver_Helmet"
+        elif name == "Curved_Cloth_Diadem":
+            assign(obj, materials["silver_bright"])
+            obj.name = "ZhaoYun_Silver_Helmet_Diadem"
+        elif name.startswith("Diadem_Gold_"):
+            assign(obj, materials["cyan"])
         elif name.startswith(("Headcloth_Cloud_Filigree_", "V34_Headcloth_Fold_", "V32_Headcloth_Seam_", "V40_Headcloth_Tension_Fold_")):
             assign(obj, materials["silver_bright"])
         elif name.startswith("Headcloth_Gold_Stud_"):
@@ -241,6 +249,8 @@ def recolor_costume(materials):
         elif any(token in name for token in ("Gold_Edge", "Gold_Binding", "Gold_Piping", "Gold_Cuff", "Belt_Rivet", "Waist_Rivet", "Pauldron_Rivet")):
             assign(obj, materials["silver_bright"])
         elif any(token in name for token in ("Cross_Sash", "Dark_Chest_Vest", "Dragon_Armor_Harness")):
+            assign(obj, materials["blue"])
+        elif "Crossed_Lapel" in name:
             assign(obj, materials["blue"])
         elif any(token in name for token in ("Sleeve", "Deep_Green_Robe", "Layered_Green_Battle_Robe", "Robe_Front", "Flowing_Robe_Main")):
             assign(obj, materials["white"])

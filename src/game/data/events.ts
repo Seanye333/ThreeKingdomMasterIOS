@@ -566,8 +566,13 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'Three Visits to the Thatched Cottage', zh: '三顧茅廬' },
     yearMin: 207,
     yearMax: 211,
+    /* ⚠ 這是**沒有走過三顧鏈**的盤才用的簡述版(例如開局已過 207 年、或
+       司馬徽不在場)。原本寫的是 `flag-set: maolu-abandoned` —— 意思剛好相反:
+       玩家在鏈裡明白選了「罷了,天下何處無賢才」之後,系統反手把諸葛亮送上門,
+       把那個選擇整個抹掉。改成「鏈從未開始」才算(兩個旗標都沒有)。 */
     requires: [
-      { kind: 'flag-set', key: 'maolu-abandoned' },
+      { kind: 'flag-unset', key: 'maolu-visit-1' },
+      { kind: 'flag-unset', key: 'maolu-abandoned' },
       { kind: 'force-alive', forceId: 'force-liu-bei' },
       { kind: 'officer-alive', officerId: 'zhuge-liang' },
       { kind: 'officer-unaffiliated', officerId: 'zhuge-liang' },
@@ -2092,7 +2097,11 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'Slaying Yan Liang at Baima', zh: '白馬斬顏良' },
     yearMin: 200,
     yearMax: 200,
+    /* 與 evt-baima-yanliang 同一個場面。那一版要求 `guan-yu-with-cao`(關羽
+       在曹營才有這一刀),這一版是給沒走過降漢不降曹那條線的盤用的簡述版
+       —— 所以必須互斥,否則同一局會斬兩次顏良。 */
     requires: [
+      { kind: 'flag-unset', key: 'baima-yanliang' },
       { kind: 'officer-active', officerId: 'guan-yu' },
       { kind: 'officer-alive', officerId: 'yan-liang' },
     ],
@@ -2110,7 +2119,13 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'The Leap across Tan Stream', zh: '馬躍檀溪' },
     yearMin: 201,
     yearMax: 206,
-    requires: [{ kind: 'officer-active', officerId: 'liu-bei' }],
+    /* 與 evt-maleap-tanxi 同一個場面。那一版要求劉表尚在(這一躍是從劉表的
+       宴席上逃出來的),這一版連劉表在不在都不問 —— 所以至少要互斥。 */
+    requires: [
+      { kind: 'flag-unset', key: 'maleap-tanxi' },
+      { kind: 'officer-active', officerId: 'liu-bei' },
+      { kind: 'officer-alive', officerId: 'liu-biao' },
+    ],
     description:
       'Ambushed at a banquet and run to the water\'s edge, Liu Bei spurs his horse Dilu into the Tan Stream. "Dilu! Today is life or death!" — and the steed clears the torrent in a single bound, carrying him to safety and the hermit Sima Hui beyond.',
     descriptionZh: "席間遇伏,劉備倉皇走至檀溪。但見前無去路,乃策的盧入水,大呼:「的盧!今日妨吾!」——的盧一躍三丈,飛越激流,載主脫險,得遇水鏡先生於溪畔。",
@@ -2355,7 +2370,9 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'Three Heroes Battle Lü Bu', zh: '三英戰呂布' },
     yearMin: 190,
     yearMax: 191,
+    /* 與 evt-sanying-lubu 同一個場面,互斥(否則虎牢關前會打兩次)。 */
     requires: [
+      { kind: 'flag-unset', key: 'sanying-lubu' },
       { kind: 'officer-active', officerId: 'liu-bei' },
       { kind: 'officer-active', officerId: 'guan-yu' },
       { kind: 'officer-active', officerId: 'zhang-fei' },

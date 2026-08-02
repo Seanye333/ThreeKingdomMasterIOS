@@ -390,6 +390,22 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
         zh: '你剛在徐州被打散,關羽降了曹操,張飛不知所蹤,妻子被俘。你單騎投袁紹 —— 又一次寄人籬下。\n\n這一年你四十歲。你已經丟過徐州兩次、丟過小沛、丟過妻子三回。你還沒有一寸地。',
         en: 'You have just been scattered out of Xuzhou. Guan Yu has gone over to Cao Cao, Zhang Fei is somewhere unknown, your wives are captives. You ride alone to Yuan Shao — another man\'s roof again.\n\nYou are forty years old. You have lost Xuzhou twice, lost Xiaopei, lost your family three times. You do not yet hold one foot of ground.',
       },
+      'liu-biao': {
+        zh: '兩強在官渡相持,誰勝了都要回頭找你。這是你這輩子唯一一次,只要伸手就能改寫天下的機會。\n\n袁紹遣使求援,你許之而不至;曹操在許都空虛,你也不動。劉表傳裡那句話寫得很直:「欲保江漢間,觀天下變。」\n\n韓嵩勸你擇一而從,你不肯;劉先說「豪傑並爭,兩雄相持,天下之重,在於將軍」,你還是不肯。\n\n八年後曹操南下,你的兒子開城投降。荊州十八年不動一兵,最後一次也沒動。',
+        en: 'The two great powers are locked at Guandu, and whichever wins will come looking for you. This is the one moment in your life when reaching out your hand would change the empire.\n\nYuan Shao sends for help; you promise and do not go. Cao Cao has left Xuchang bare; you do not move. Your biography puts it plainly: "He meant to hold the Han and the Yangtze and watch the realm change."\n\nHan Song urges you to pick a side. You refuse. Liu Xian tells you that with the champions locked together, the weight of the empire rests with you. You refuse again.\n\nEight years from now Cao Cao comes south and your son opens the gates. Eighteen years and Jing never moved a soldier — not even this once.',
+      },
+      'liu-zhang': {
+        zh: '中原打得天翻地覆,而蜀道之難,難於上青天 —— 這是益州的護身符,也是它的墓誌銘。\n\n你在成都收到兩邊的使者:曹操表你為振威將軍,你受了;袁紹也來拉攏,你不理。你派龐羲去守巴西,防的不是曹操,是漢中的張魯。\n\n你手上的地方,是這個時代唯一沒被戰火犁過的沃野。而你的問題從來不是外面打不進來,是裡面的人不想跟著你。',
+        en: 'The central plains are tearing themselves apart, and the roads into Shu are harder than climbing to heaven — that is Yi province\'s charm and its epitaph.\n\nEnvoys reach Chengdu from both sides. Cao Cao names you General Who Displays Might and you accept it; Yuan Shao courts you and you ignore him. You send Pang Xi to hold Baxi — not against Cao Cao, against Zhang Lu in Hanzhong.\n\nWhat you hold is the one stretch of rich country this age has not ploughed with war. Your problem was never that outsiders cannot get in. It is that the men inside do not want to follow you.',
+      },
+      'ma-teng': {
+        zh: '官渡相持,關中十部各擁強兵,誰也不服誰。鍾繇以司隸校尉持節督關中,寫信曉諭諸將 —— 你與韓遂各遣子入侍為質。\n\n這一步救了曹操:袁紹遣高幹、郭援入河東,鍾繇向你求援,你派馬超率萬餘人赴之,龐德親手斬了郭援,提首級來見。\n\n所以官渡那一仗,你在西邊替曹操按住了背後。他記得這件事 —— 記到十二年後,把你全家二百餘口下了獄。',
+        en: 'While the armies sit at Guandu, ten commands hold Guanzhong and none of them obeys another. Zhong Yao comes as Colonel-Director with the staff of authority and writes to every general — you and Han Sui each send a son to court as surety.\n\nThat move saves Cao Cao. When Yuan Shao pushes Gao Gan and Guo Yuan into Hedong, Zhong Yao asks you for help; you send Ma Chao with over ten thousand men, and Pang De cuts Guo Yuan down and brings in the head.\n\nSo at Guandu it was you who held Cao Cao\'s back door in the west. He remembers it — remembers it for twelve years, and then puts your household of two hundred in prison.',
+      },
+      wuhuan: {
+        zh: '你是蹋頓,烏丸大人。袁紹矯詔賜你單于印綬,又以宗室之女妻你 —— 中原人肯這樣待烏丸,是頭一遭。所以袁氏敗了,你收留他的兒子。\n\n遼西、右北平、遼東屬國三郡烏丸,控弦十萬。塞外的規矩很簡單:誰給糧、誰給印、誰把女兒嫁過來,就跟誰。\n\n七年後曹操會親自出塞。郭嘉勸他輕兵疾進,田疇引路走盧龍塞的舊道,大軍在白狼山上忽然出現在你面前 —— 那天你連陣都沒列完。',
+        en: 'You are Tadun, chieftain of the Wuhuan. Yuan Shao forged an edict granting you the seal of a Chanyu and gave you a woman of the imperial clan to wife — no Han lord had ever treated the Wuhuan like that. So when the Yuan were broken, you took in his sons.\n\nThree Wuhuan commanderies — Liaoxi, Youbeiping, the Liaodong dependent state — a hundred thousand bows. The rule beyond the wall is simple: whoever brings grain, seals and daughters is the one you ride for.\n\nSeven years from now Cao Cao comes out past the wall himself. Guo Jia tells him to travel light and fast; Tian Chou leads them by the old road through Lulong. The army appears on White Wolf Mountain in front of you — and that day you never finish forming your line.',
+      },
     },
   },
 
