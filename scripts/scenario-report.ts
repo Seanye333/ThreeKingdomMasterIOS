@@ -50,6 +50,12 @@ interface Track {
   nameZh: string;
   cities: number[];        // city count per turn
   troops: number[];
+  /* 金/糧/天命也要看 —— 城數只說了「打得贏嗎」,說不了「活得下去嗎」。
+     黃巾的開局姿態把府庫壓到 0.35、糧到 0.40,而在加這三條之前,沒有人知道
+     那樣的一家會不會第十回合就發不出糧。 */
+  gold: number[];
+  food: number[];
+  mandate: number[];
   diedTurn: number | null;
   peakCities: number;
 }
@@ -76,6 +82,11 @@ async function main() {
   interface RunResult {
     finalCities: Record<string, number>;
     finalTroops: Record<string, number>;
+    /** 撐不撐得住 —— 破產(金<0)與斷糧(糧<兵)第一次發生在第幾回合。 */
+    brokeTurn: Record<string, number | null>;
+    starveTurn: Record<string, number | null>;
+    finalMandate: Record<string, number>;
+    minGold: Record<string, number>;
     diedTurn: Record<string, number | null>;
     objectiveMet: Record<string, boolean>;
     events: Array<{ turn: number; zh: string }>;
@@ -91,7 +102,10 @@ async function main() {
 
   const tracks = new Map<string, Track>();
   for (const f of scenario.forces) {
-    tracks.set(f.id, { id: f.id, nameZh: f.name.zh, cities: [], troops: [], diedTurn: null, peakCities: 0 });
+    tracks.set(f.id, {
+      id: f.id, nameZh: f.name.zh, cities: [], troops: [],
+      gold: [], food: [], mandate: [], diedTurn: null, peakCities: 0,
+    });
   }
   const eventsSeen: Array<{ turn: number; zh: string }> = [];
 
@@ -102,6 +116,12 @@ async function main() {
       const troops = cities.reduce((n, c) => n + (c.troops ?? 0), 0);
       tr.cities.push(cities.length);
       tr.troops.push(troops);
+      tr.gold.push(cities.reduce((n, c) => n + (c.gold ?? 0), 0));
+      tr.food.push(cities.reduce((n, c) => n + (c.food ?? 0), 0));
+      tr.mandate.push(
+        (s as unknown as { mandate?: { byForce?: Record<string, number> } })
+          .mandate?.byForce?.[fid] ?? 0,
+      );
       if (cities.length > tr.peakCities) tr.peakCities = cities.length;
       if (cities.length === 0 && tr.diedTurn === null && turn > 0) tr.diedTurn = turn;
     }
@@ -135,12 +155,22 @@ async function main() {
   }>>)[scenario.id] ?? [];
   const res: RunResult = {
     finalCities: {}, finalTroops: {}, diedTurn: {}, objectiveMet: {},
+    brokeTurn: {}, starveTurn: {}, finalMandate: {}, minGold: {},
     events: eventsSeen, endYear: s.date.year,
   };
   for (const f of scenario.forces) {
     const tr = tracks.get(f.id)!;
     res.finalCities[f.id] = tr.cities[tr.cities.length - 1];
     res.finalTroops[f.id] = tr.troops[tr.troops.length - 1];
+    res.finalMandate[f.id] = tr.mandate[tr.mandate.length - 1];
+    /* 「破產」抓的是府庫見底(遊戲把金夾在 0,所以 <0 永遠抓不到)。
+       同時記最低點 —— 一家從沒歸零但一路貼著 200 過活,跟一家常年三萬,
+       在體感上是兩種遊戲。 */
+    const broke = tr.gold.findIndex((g, i) => tr.cities[i] > 0 && g <= 0);
+    res.brokeTurn[f.id] = broke < 0 ? null : broke;
+    res.minGold[f.id] = Math.min(...tr.gold.filter((_, i) => tr.cities[i] > 0));
+    const st = tr.food.findIndex((fd, i) => tr.cities[i] > 0 && fd < tr.troops[i]);
+    res.starveTurn[f.id] = st < 0 ? null : st;
     res.diedTurn[f.id] = tr.diedTurn;
     const obj = objectives.find((o) => o.forceId === f.id);
     if (!obj) { res.objectiveMet[f.id] = false; continue; }
@@ -169,7 +199,7 @@ async function main() {
   console.log(`\n=== ${scenario.name.zh} (${scenario.id}) ===`);
   console.log(`${RUNS} 輪 × ${TURNS} 回合:${yr(startYear)} → ${yr(runs[0].endYear)}\n`);
 
-  console.log('勢力            開局城  終局城(中位/區間)   終局兵(中位)  覆滅  主目標達成');
+  console.log('勢力            開局城  終局城(中位/區間)   終局兵(中位)  覆滅 主目標  天命  府庫最低  見底  斷糧');
   for (const f of scenario.forces) {
     const cities = runs.map((r) => r.finalCities[f.id]);
     const troops = runs.map((r) => r.finalTroops[f.id]);
@@ -180,7 +210,11 @@ async function main() {
       + `${String(med(cities)).padStart(8)} (${rng(cities)})`.padEnd(20)
       + `${String(med(troops)).padStart(12)}`
       + `${String(died + '/' + RUNS).padStart(7)}`
-      + `${String(met + '/' + RUNS).padStart(9)}`,
+      + `${String(met + '/' + RUNS).padStart(7)}`
+      + `${String(Math.round(med(runs.map((r) => r.finalMandate[f.id])))).padStart(6)}`
+      + `${String(Math.round(med(runs.map((r) => r.minGold[f.id])))).padStart(9)}`
+      + `${String(runs.filter((r) => r.brokeTurn[f.id] !== null).length + '/' + RUNS).padStart(6)}`
+      + `${String(runs.filter((r) => r.starveTurn[f.id] !== null).length + '/' + RUNS).padStart(6)}`,
     );
   }
 

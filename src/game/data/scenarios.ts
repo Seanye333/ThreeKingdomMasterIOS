@@ -145,7 +145,13 @@ export const SCENARIO_184_YELLOW_TURBAN: Scenario = {
      * 董卓:涼州本錢,兵厚糧足,而朝廷的錢輪不到他。
      */
     'yellow-turban': { troops: 1.30, food: 0.40, gold: 0.35, defense: -22, loyalty: -18 },
-    han:             { troops: 0.90, food: 0.85, gold: 1.25, defense: 4, loyalty: 4 },
+    /* 漢室 —— 序章原話是「賣官至公卿,而州郡的倉是空的」,而原本的姿態給的是
+       糧 ×0.85、金 ×1.25。體檢一跑:漢室府庫最低 112,988,其餘四家都在
+       2,500–3,700 之間,三十倍 —— 一個「養不起自己邊防」的朝廷,在數字上是
+       全盤最富的那一家,而且富到沒有任何取捨。
+       糧壓到 0.55(倉是空的),金壓到 0.95(府庫非無,是已為西園所耗;
+       三十八座城使它的絕對值仍居首,但每座城的餘裕跟別家一樣薄)。 */
+    han:             { troops: 0.90, food: 0.55, gold: 0.95, defense: 4, loyalty: 4 },
     huangfu:         { troops: 0.85, food: 1.10, gold: 1.10, defense: 10, loyalty: 8 },
     zhujun:          { troops: 0.85, food: 1.10, gold: 1.10, defense: 10, loyalty: 8 },
     'dong-184':      { troops: 1.10, food: 1.15, gold: 0.75, defense: 6, loyalty: -4 },
