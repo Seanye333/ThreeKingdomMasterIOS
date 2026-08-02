@@ -24,6 +24,19 @@ export type EventEffect =
   | { kind: 'force-troops-multiplier-ruler'; rulerOfficerId: EntityId; multiplier: number }
   | { kind: 'force-gold-ruler'; rulerOfficerId: EntityId; delta: number }
   | { kind: 'spawn-rebel-force'; cityId: EntityId; troops: number; label: BilingualName }
+  /**
+   * 反正 — a fraction of one force's cities go over to whoever holds the
+   * ground next to them (ties broken by garrison strength; a city with no
+   * foreign neighbour simply turns rebel/unowned).
+   *
+   * 為什麼要有這個:一場**運動**的崩解跟一支軍隊的戰敗不一樣。張角一死,黃巾
+   * 不是被逐城攻下的,是成批降的 —— 史書上「黃巾遂降」四個字底下是幾十座城
+   * 一季之內換旗。沒有這個效果,體檢腳本裡的黃巾在教主死後照樣穩穩地滾雪球,
+   * 因為 force-troops-multiplier 只砍兵、不動城。
+   *
+   * 永遠留一座城給該勢力(崩解不等於當場除名 —— 讓玩家/AI 打完最後一場)。
+   */
+  | { kind: 'force-cities-revolt-ruler'; rulerOfficerId: EntityId; fraction: number }
   | { kind: 'grant-title'; officerId: EntityId; titleId: import('./title').CivicTitleId; cityId?: EntityId }
   | { kind: 'force-wish'; officerId: EntityId; wishKind: import('./family').WishKind; text: BilingualName; rejectPenalty?: number; grantBonus?: number }
   | { kind: 'flag'; key: string }; // sets a flag in state.eventFlags

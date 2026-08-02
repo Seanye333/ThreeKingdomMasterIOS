@@ -340,6 +340,31 @@ function applySingleEffect(
       }
       break;
     }
+    case 'force-cities-revolt-ruler': {
+      const f = Object.values(mut.forces).find(
+        (force) => force.rulerOfficerId === e.rulerOfficerId,
+      );
+      if (!f) break;
+      const held = Object.values(mut.cities).filter((c) => c.ownerForceId === f.id);
+      // 先降守備最薄的那幾座 —— 崩解是從邊緣開始的,不是從老巢。
+      const weakest = [...held].sort((a, b) => (a.troops ?? 0) - (b.troops ?? 0));
+      const n = Math.min(held.length - 1, Math.floor(held.length * e.fraction));
+      for (let i = 0; i < n; i++) {
+        const c = weakest[i];
+        // 歸給鄰城的主人;鄰城若也都是自家的,就變成無主的流寇之地。
+        const neighbours = (c.adjacentCityIds ?? [])
+          .map((id) => mut.cities[id])
+          .filter((nb) => nb && nb.ownerForceId && nb.ownerForceId !== f.id);
+        const to = neighbours.sort((a, b) => (b.troops ?? 0) - (a.troops ?? 0))[0];
+        mut.cities[c.id] = {
+          ...c,
+          ownerForceId: to ? to.ownerForceId : null,
+          troops: Math.round((c.troops ?? 0) * 0.4),  // 降卒過半散去
+          loyalty: to ? Math.max(25, (c.loyalty ?? 50) - 15) : 30,
+        };
+      }
+      break;
+    }
     case 'flag':
       mut.eventFlags[e.key] = true;
       break;

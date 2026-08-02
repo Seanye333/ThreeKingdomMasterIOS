@@ -3309,6 +3309,205 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'ominous',
   },
+
+  /* ════════════════════════════════════════════════════════════════════
+     黃巾之亂 — 這張盤自己的事件鏈(2026-08-01)
+
+     體檢腳本(scripts/scenario-report.ts)跑 120 回合的結果:整整三年,這張
+     盤只觸發了五個事件,而且四個在前四回合 —— 它自己的名場面(長社之火、
+     廣宗易帥、張角病死、宛城之圍)一個都沒有。更要命的是黃巾在模擬裡**贏**:
+     13 城滾到 25 城,而漢室從 39 掉到 25。史實上這場起義當年就結束了。
+
+     所以這條鏈同時是內容也是平衡:**張角八月病死**是史實上黃巾崩解的真正
+     原因,把它寫成事件,黃巾的雪球就由歷史本身按住,而不必去偷改開局數值。
+
+     一律用 `-ruler` 系列的效果(依君主解析),所以這幾條在別的盤上也成立
+     —— 只要張角/皇甫嵩/盧植這些人還在場。
+     ══════════════════════════════════════════════════════════════════ */
+  {
+    id: 'evt-yt-changshe',
+    name: { en: 'The Fire at Changshe', zh: '長社之火' },
+    yearMin: 184,
+    yearMax: 185,
+    // 長社在五月。不釘季節的話整條鏈會在開局五個回合內演完,一年的弧線
+    // 被壓成一週 —— 體檢腳本第一次跑就是這樣(第 2,3,4,5 回合各一節)。
+    season: 'summer',
+    requires: [
+      { kind: 'officer-active', officerId: 'huangfu-song' },
+      { kind: 'officer-alive', officerId: 'bo-cai' },
+      { kind: 'flag-unset', key: 'yt-changshe' },
+    ],
+    description:
+      "Bo Cai's Turbans have Huangfu Song penned inside Changshe with a handful of men, and the rebels have camped in the tall grass. That night the wind gets up. Huangfu Song tells his officers: war is deception — and sends men over the wall with torches.",
+    descriptionZh: '波才圍皇甫嵩於長社,官軍兵少,人情震恐。而賊依草結營 —— 是夜大風。嵩謂軍吏曰:「兵有奇變,不在眾寡。」乃約敕軍士皆束苣乘城,使銳士間出圍外,縱火大呼。',
+    chooserRulerId: 'huangfu-song',
+    choices: [
+      {
+        id: 'fire',
+        label: { zh: '順風縱火,銳士間出', en: 'Fire downwind, and send the picked men out' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.9 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'huangfu-song', delta: 6 },
+          { kind: 'officer-loyalty', officerId: 'cao-cao', delta: 6 },
+          { kind: 'flag', key: 'yt-changshe' },
+        ],
+      },
+      {
+        id: 'hold',
+        label: { zh: '堅壁待援,不以少擊眾', en: 'Hold the wall and wait for relief' },
+        effects: [
+          { kind: 'city-defense', cityId: 'xuchang', delta: 8 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'zhang-jiao', delta: 4 },
+          { kind: 'flag', key: 'yt-changshe' },
+        ],
+      },
+    ],
+    effects: [],
+  },
+  {
+    id: 'evt-yt-guangzong',
+    name: { en: 'A New Commander at Guangzong', zh: '廣宗易帥' },
+    yearMin: 184,
+    yearMax: 185,
+    season: 'autumn',   // 檻車徵盧植在八月
+    requires: [
+      { kind: 'officer-active', officerId: 'lu-zhi' },
+      { kind: 'officer-alive', officerId: 'zhang-jiao' },
+      { kind: 'flag-unset', key: 'yt-guangzong' },
+    ],
+    description:
+      'Lu Zhi has Zhang Jue shut up in Guangzong and is building ramps and ladders. The court sends the eunuch Zuo Feng to inspect; someone suggests a gift would smooth the report. Lu Zhi refuses. The report says he is idling behind his walls waiting for Heaven to do the work — and a prison cart comes north for him.',
+    descriptionZh: '盧植連戰破角,築圍鑿塹,造作雲梯,垂當拔之。帝遣小黃門左豐詣軍觀賊,或勸植以賂送豐,植不肯。豐還言於帝曰:「廣宗賊易破耳。盧中郎固壘息軍,以待天誅。」帝怒,檻車徵植,減死一等 —— 而代之者,是東中郎將董卓。',
+    chooserRulerId: 'lu-zhi',
+    choices: [
+      {
+        id: 'refuse',
+        label: { zh: '不賂 —— 檻車便檻車', en: 'No bribe. Let the prison cart come.' },
+        effects: [
+          { kind: 'officer-status', officerId: 'lu-zhi', status: 'imprisoned' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'zhang-jiao', delta: 8 },
+          { kind: 'flag', key: 'yt-guangzong' },
+          { kind: 'flag', key: 'yt-luzhi-jailed' },
+        ],
+      },
+      {
+        id: 'bribe',
+        label: { zh: '送左豐一份,保住這支軍', en: 'Buy Zuo Feng off and keep the army' },
+        effects: [
+          { kind: 'force-gold-ruler', rulerOfficerId: 'lu-zhi', delta: -1200 },
+          { kind: 'officer-loyalty', officerId: 'lu-zhi', delta: -10 },
+          { kind: 'flag', key: 'yt-guangzong' },
+        ],
+      },
+    ],
+    effects: [],
+  },
+  {
+    /* 這條沒有選項 —— 病死不是誰的決定。它也是這張盤的平衡樞紐:
+       黃巾的兵力在此腰斬,滾雪球到此為止。 */
+    id: 'evt-yt-zhangjue-dies',
+    name: { en: 'Zhang Jue Dies of Illness', zh: '張角病死' },
+    yearMin: 184,
+    yearMax: 186,
+    season: 'autumn',   // 八月,卒於廣宗城中 —— 且排在廣宗易帥之後
+    requires: [
+      { kind: 'officer-alive', officerId: 'zhang-jiao' },
+      { kind: 'flag-set', key: 'yt-guangzong' },
+      { kind: 'flag-unset', key: 'yt-zhangjue-dead' },
+    ],
+    description:
+      'Zhang Jue does not fall in battle. He dies of illness in the eighth month, inside Guangzong, before the walls are stormed. The Way of Great Peace had one voice and one body, and both were his; his brothers can lead soldiers but cannot make three hundred thousand people believe. When Huangfu Song finally takes the city he has the grave opened and the coffin broken, and sends the head to the capital.',
+    descriptionZh: '角未破,病死。八月,卒於廣宗城中。太平道一教之眾,所信者一人耳 —— 寶、梁能將兵,不能使三十六方復如臂使指。及嵩拔廣宗,乃發角棺,戮屍,傳首京師。',
+    effects: [
+      { kind: 'officer-status', officerId: 'zhang-jiao', status: 'dead' },
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.55 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'zhang-jiao', delta: -25 },
+      // 三十六方失了那一個聲音,邊上的城當季就換了旗。
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.30 },
+      { kind: 'flag', key: 'yt-zhangjue-dead' },
+    ],
+  },
+  {
+    id: 'evt-yt-wancheng',
+    name: { en: 'The Siege of Wancheng', zh: '宛城之圍' },
+    yearMin: 184,
+    yearMax: 186,
+    season: 'winter',   // 十一月,宛城拔,亂事終
+    requires: [
+      { kind: 'officer-active', officerId: 'zhu-jun' },
+      { kind: 'flag-set', key: 'yt-zhangjue-dead' },
+      { kind: 'flag-unset', key: 'yt-wancheng' },
+    ],
+    description:
+      'Wancheng will not fall to assault. Zhu Jun rings the city, raises earth-mounds inside the ring to look down into it, beats the drums in the northwest and goes in over the southeast wall. The rebellion that began in eight provinces ends at one city gate.',
+    descriptionZh: '朱儁攻宛,不能拔。乃圍城,起土山以臨之,鳴鼓攻其西南,賊悉眾赴之 —— 儁自將精卒五千,掩其東北,乘城而入。起於八州之亂,終於一城之門。',
+    chooserRulerId: 'zhu-jun',
+    choices: [
+      {
+        id: 'storm',
+        label: { zh: '聲東擊西,乘城而入', en: 'Feint west, go in from the northeast' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.7 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'zhu-jun', delta: 8 },
+          { kind: 'officer-loyalty', officerId: 'liu-bei', delta: 6 },
+          { kind: 'officer-loyalty', officerId: 'sun-jian', delta: 6 },
+          // 起於八州之亂,終於一城之門 —— 宛城一破,據城的餘部大半棄旗。
+          { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.45 },
+          { kind: 'flag', key: 'yt-wancheng' },
+        ],
+      },
+      {
+        id: 'accept-surrender',
+        label: { zh: '納降 —— 圍師必闕', en: 'Take the surrender — leave the ring open' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhu-jun', multiplier: 1.12 },
+          { kind: 'city-loyalty', cityId: 'wancheng', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'zhu-jun', delta: 4 },
+          // 納降散得更快 —— 但降卒編進了朱儁自己的軍中(見上一條乘數)。
+          { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.55 },
+          { kind: 'flag', key: 'yt-wancheng' },
+        ],
+      },
+    ],
+    effects: [],
+  },
+  {
+    id: 'evt-yt-huangfu-stripped',
+    name: { en: 'The Seals Are Taken Back', zh: '收印綬,削戶邑' },
+    yearMin: 185,
+    yearMax: 187,
+    requires: [
+      { kind: 'officer-active', officerId: 'huangfu-song' },
+      { kind: 'flag-set', key: 'yt-zhangjue-dead' },
+      { kind: 'flag-unset', key: 'yt-huangfu-stripped' },
+    ],
+    description:
+      'Huangfu Song asked that Ji province be excused a year of taxes, and the province made songs about him. Then Zhao Zhong found that his house had been pulled down for building over the regulations, and Zhang Rang asked him for five million in cash and was refused. Both men memorialised. The seal of Left General comes back off, six thousand households are cut from his fief, and he is made a marquis of a lesser rank.',
+    descriptionZh: '嵩表請免冀州一年田租以贍飢民,帝從之,百姓歌曰:「天下大亂兮市為墟,母不保子兮妻失夫,賴得皇甫兮復安居。」\n\n而中常侍趙忠以嵩軍舍逾制奏之,張讓私求錢五千萬,嵩不與 —— 二人皆奏。詔收左車騎將軍印綬,削戶六千,更封都鄉侯。',
+    chooserRulerId: 'huangfu-song',
+    choices: [
+      {
+        id: 'submit',
+        label: { zh: '交印,歸第', en: 'Hand back the seal and go home' },
+        effects: [
+          { kind: 'force-gold-ruler', rulerOfficerId: 'huangfu-song', delta: -800 },
+          { kind: 'officer-loyalty', officerId: 'huangfu-song', delta: 8 },
+          { kind: 'flag', key: 'yt-huangfu-stripped' },
+        ],
+      },
+      {
+        id: 'defy',
+        label: { zh: '擁兵不交 —— 這支軍是我練的', en: 'Keep the army. I trained it.' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'huangfu-song', delta: -10 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'huangfu-song', multiplier: 1.15 },
+          { kind: 'flag', key: 'yt-huangfu-stripped' },
+          { kind: 'flag', key: 'yt-huangfu-defied' },
+        ],
+      },
+    ],
+    effects: [],
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(

@@ -91,7 +91,50 @@ export const SCENARIO_184_YELLOW_TURBAN: Scenario = {
     'a sworn band of three brothers from Zhuo, and a tiger of Jiangdong named Sun Jian. The age of heroes begins.',
   descriptionZh: "公元184年春。張角創立太平道，黃巾之亂蜂起於五州。漢室急召皇甫嵩、盧植、朱儁三將平亂。投身義軍者中，有少年曹操、桃園結義之劉關張三兄弟、以及江東猛虎孫堅。英雄輩出之時代，自此而始。",
   startDate: { year: 184, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_184),
+  cities: buildInitialCities(CITY_OWNERSHIP_184, {
+    /*
+     * 開局姿態 —— 序章寫的東西,數字要對得上(2026-08-01)。
+     *
+     * 體檢腳本(scripts/scenario-report.ts,五輪 × 150 回合)在加姿態之前的
+     * 結果:黃巾每一輪都從 13 城長到 20 城,漢室從 39 掉到 27,而漢室的主目標
+     * 「於187年前擊潰黃巾」五輪 0 中。史實上這場起義當年就結束了。
+     *
+     * 黃巾:人多、無甲、無糧道、守不住城 —— 兵給到 1.3 倍,而糧、金、城防、
+     * 民忠全部壓低。他們該像史實一樣起得快、崩得也快。
+     * 漢室:名分與府庫在,但州郡倉是空的(序章原話),所以金高糧平而兵略減。
+     * 皇甫嵩/朱儁:朝廷精兵,兵少而甲全 —— 城防與民忠都高。
+     * 董卓:涼州本錢,兵厚糧足,而朝廷的錢輪不到他。
+     */
+    'yellow-turban': { troops: 1.30, food: 0.40, gold: 0.35, defense: -22, loyalty: -18 },
+    han:             { troops: 0.90, food: 0.85, gold: 1.25, defense: 4, loyalty: 4 },
+    huangfu:         { troops: 0.85, food: 1.10, gold: 1.10, defense: 10, loyalty: 8 },
+    zhujun:          { troops: 0.85, food: 1.10, gold: 1.10, defense: 10, loyalty: 8 },
+    'dong-184':      { troops: 1.10, food: 1.15, gold: 0.75, defense: 6, loyalty: -4 },
+  }),
+  /*
+   * 開局外交 —— 184 年的地圖上只有兩邊:朝廷,和黃巾。
+   *
+   * 皇甫嵩、朱儁、董卓在史實裡都是漢廷派出的**討賊將領**,盤上把他們拆成可選
+   * 勢力是為了讓玩家能扮演他們,不是說他們彼此開戰。少了這張表,體檢腳本五輪
+   * 都是同一個荒謬結果:漢室從 39 城掉到 27,而朱儁從 12 長到 16 —— 官軍在忙著
+   * 互相吞併,黃巾在旁邊安穩地長大。
+   *
+   * 董卓給的分數低一級:他名義上聽詔,實際上在觀望(當年他就是因為在廣宗
+   * 打不下來而被檻車徵詣廷尉的)。allied 給三路討賊,董卓只到 non-aggression。
+   */
+  openingRelations: [
+    { a: 'han', b: 'huangfu', score: 90, status: 'allied' },
+    { a: 'han', b: 'zhujun', score: 90, status: 'allied' },
+    { a: 'huangfu', b: 'zhujun', score: 85, status: 'allied' },
+    { a: 'han', b: 'dong-184', score: 55, status: 'non-aggression' },
+    { a: 'huangfu', b: 'dong-184', score: 40, status: 'non-aggression' },
+    { a: 'zhujun', b: 'dong-184', score: 40, status: 'non-aggression' },
+    // 黃巾與四家皆不共戴天 —— 這場戰爭沒有斡旋的餘地。
+    { a: 'yellow-turban', b: 'han', score: -95, status: 'neutral' },
+    { a: 'yellow-turban', b: 'huangfu', score: -95, status: 'neutral' },
+    { a: 'yellow-turban', b: 'zhujun', score: -95, status: 'neutral' },
+    { a: 'yellow-turban', b: 'dong-184', score: -85, status: 'neutral' },
+  ],
   forces: FORCES_184,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_184, DEAD_BY_184, 184),
 };

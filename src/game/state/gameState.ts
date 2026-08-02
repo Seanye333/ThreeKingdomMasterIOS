@@ -1300,6 +1300,9 @@ export function loadScenario(
       for (let j = i + 1; j < aiIds.length; j++)
         if (Math.random() < 0.4) rel(aiIds[i], aiIds[j], 65, 'non-aggression');
   }
+  // 劇本自己的開局外交最後套用 —— 它陳述的是史實(討賊三路是同一邊),
+  // 應當蓋過全域的「亂世死敵/群雄結盟」設定。
+  for (const r of scenario.openingRelations ?? []) rel(r.a, r.b, r.score, r.status);
 
   // 京師 — mark the emperor's city so it ranks as 都 (see citySize) and the
   // 挾天子 systems know where the court sits from turn one.

@@ -1085,8 +1085,33 @@ const CITY_TEMPLATES: CityTemplate[] = [
   },
 ];
 
+/**
+ * 開局姿態 — a per-force tilt applied to the cities that force starts with.
+ *
+ * 城的基礎數值來自 `CITY_TEMPLATES`(每座城一組固定值),劇本只決定歸屬 ——
+ * 所以在此之前,**序章說你缺甲仗糧道,數字上你和別人一模一樣**。黃巾就是最
+ * 極端的例子:序章寫「你沒有的:甲仗、糧道、能守城的人」,而體檢腳本跑五輪,
+ * 他們每一輪都從 13 座城長到 20 座。
+ *
+ * 這個鉤子讓劇本表達那件事:乘數作用在糧/金/兵,增減作用在城防與民忠。
+ * **刻意只有這五個旋鈕** —— 開局姿態是要一眼讀得懂的東西,不是一張調參表。
+ */
+export interface ForcePosture {
+  /** 兵源乘數 —— 黃巾人多,官軍精。 */
+  troops?: number;
+  /** 糧秣乘數 —— 沒有糧道的軍隊撐不過一個冬天。 */
+  food?: number;
+  /** 府庫乘數。 */
+  gold?: number;
+  /** 城防增減(絕對值)—— 流民軍守不住城牆。 */
+  defense?: number;
+  /** 民忠增減(絕對值)。 */
+  loyalty?: number;
+}
+
 export function buildInitialCities(
   ownership: Record<string, string | null>,
+  postures?: Record<string, ForcePosture>,
 ): City[] {
   // Cities a scenario doesn't list inherit the owner of the NEAREST listed
   // city within ~60px (real-geography positions) — so the passes, forts and
@@ -1123,16 +1148,32 @@ export function buildInitialCities(
       adj.get(a)!.add(t.id);
     }
   }
-  return CITY_TEMPLATES.map((t) => ({
-    id: t.id,
-    name: t.name,
-    coords: t.coords,
-    adjacentCityIds: [...(adj.get(t.id) ?? [])],
-    ownerForceId: effectiveOwner(t),
-    terrain: t.terrain ?? 'plain',
-    port: t.port ?? false,
-    ...t.base,
-  }));
+  return CITY_TEMPLATES.map((t) => {
+    const owner = effectiveOwner(t);
+    const p = (owner && postures?.[owner]) || null;
+    const base = { ...t.base };
+    if (p) {
+      if (p.troops != null) base.troops = Math.round(base.troops * p.troops);
+      if (p.food != null) base.food = Math.round(base.food * p.food);
+      if (p.gold != null) base.gold = Math.round(base.gold * p.gold);
+      // 城防與民忠是 0..100 的刻度,夾住免得姿態把城調成負數或滿值。
+      if (p.defense != null) base.defense = Math.max(0, Math.min(100, base.defense + p.defense));
+      if (p.loyalty != null && 'loyalty' in base) {
+        const b = base as { loyalty: number };
+        b.loyalty = Math.max(0, Math.min(100, b.loyalty + p.loyalty));
+      }
+    }
+    return {
+      id: t.id,
+      name: t.name,
+      coords: t.coords,
+      adjacentCityIds: [...(adj.get(t.id) ?? [])],
+      ownerForceId: owner,
+      terrain: t.terrain ?? 'plain',
+      port: t.port ?? false,
+      ...base,
+    };
+  });
 }
 
 export const CITY_IDS = CITY_TEMPLATES.map((t) => t.id);
