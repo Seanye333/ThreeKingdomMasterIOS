@@ -21,6 +21,9 @@ const CITY_OWNERSHIP_184: Record<string, string> = {
   luoyang:   'han',
   // Yellow Turbans control the troubled provinces.
   ye:        'yellow-turban',
+  // 南線 —— 潁川汝南黃巾。皇甫嵩、朱儁最先受命去的是這裡(長社之戰),
+  // 盤上原本南邊一個黃巾都沒有,「長社之火」於是沒有地理依託。
+  runan:     'yellow-turban',
   pingyuan:  'yellow-turban',
   beihai:    'yellow-turban',
   bohai:     'yellow-turban',
@@ -65,12 +68,15 @@ const OFFICER_ASSIGNMENTS_184: Record<string, { forceId: string; cityId: string 
   'huangfu-li':   { forceId: 'huangfu',      cityId: 'chenliu' },
   // Yellow Turban core
   'zhang-jiao':   { forceId: 'yellow-turban',cityId: 'ye' },
-  'zhang-bao-yt': { forceId: 'yellow-turban',cityId: 'pingyuan' },
+  // 張寶據下曲陽(冀州),不在青州的平原;信都是盤上最近的一座。
+  'zhang-bao-yt': { forceId: 'yellow-turban',cityId: 'xindu' },
   'zhang-liang-yt':{forceId: 'yellow-turban',cityId: 'ye' },
   'guan-hai':     { forceId: 'yellow-turban',cityId: 'beihai' },
   'pei-yuanshao': { forceId: 'yellow-turban',cityId: 'bohai' },
-  'sun-zhong':    { forceId: 'yellow-turban',cityId: 'pingyuan' },
-  'bo-cai':       { forceId: 'yellow-turban',cityId: 'ye' },
+  // 孫仲是南陽一路(與趙弘、韓忠、孫夏同在宛城)。
+  'sun-zhong':    { forceId: 'yellow-turban',cityId: 'wancheng' },
+  // 波才是潁川渠帥 —— 圍皇甫嵩於長社的就是他。放在鄴等於把長社之戰移到河北。
+  'bo-cai':       { forceId: 'yellow-turban',cityId: 'runan' },
   'ma-yuanyi':    { forceId: 'yellow-turban',cityId: 'ye' },
   /* 南陽渠帥四人 —— 宛城先後易手於張曼成、趙弘、韓忠、孫夏,朱儁一個一個打過去。
      他們原本全躺在 unsearched 池裡:這張盤最要緊的一場圍城,守方沒有人。 */
@@ -82,7 +88,18 @@ const OFFICER_ASSIGNMENTS_184: Record<string, { forceId: string; cityId: string 
   'dong-zhuo':    { forceId: 'dong-184',     cityId: 'changan' },
   'li-jue':       { forceId: 'dong-184',     cityId: 'changan' },
   'guo-si':       { forceId: 'dong-184',     cityId: 'wuwei' },
-  'ma-teng':      { forceId: 'dong-184',     cityId: 'jincheng' },
+  /* 涼州本部 —— 這八個人在 184 年就是董卓的部曲,而且好幾個原本就站在他自己
+     的城裡(樊稠、張濟、華雄 @武威,李儒 @隴西),只是掛著「在野」。
+     馬騰**不在**這裡:他 187 年才隨韓遂起於涼州,184 年還是漢陽郡一介布衣 ——
+     留在在野池裡(他的家鄉金城正是董卓的城),要用得自己去招。 */
+  'niu-fu':       { forceId: 'dong-184',     cityId: 'changan' },
+  'li-ru':        { forceId: 'dong-184',     cityId: 'changan' },
+  'xu-rong':      { forceId: 'dong-184',     cityId: 'anding' },
+  'hu-zhen':      { forceId: 'dong-184',     cityId: 'jincheng' },
+  'duan-wei':     { forceId: 'dong-184',     cityId: 'anding' },
+  'zhang-ji':     { forceId: 'dong-184',     cityId: 'wuwei' },
+  'fan-chou':     { forceId: 'dong-184',     cityId: 'wuwei' },
+  'hua-xiong':    { forceId: 'dong-184',     cityId: 'wuwei' },
   // Future giants serving the Han at the start of their careers
   'cao-cao':      { forceId: 'huangfu',      cityId: 'chenliu' },
   'liu-bei':      { forceId: 'zhujun',       cityId: 'xinye' },
