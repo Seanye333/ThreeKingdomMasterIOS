@@ -125,6 +125,30 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
         zh: '你是公孫瓚,白馬義從的主人。你在北疆打了半輩子胡騎,靠的是馬快、箭準、下手狠。討董對你不過是南下的由頭 —— 你真正的對手在冀州。\n\n劉備此時在你麾下。',
         en: 'You are Gongsun Zan, master of the White Horse Volunteers. You have spent half your life fighting steppe cavalry on the northern frontier with fast horses, straight arrows and no mercy. The coalition is only a reason to come south — your real opponent is in Ji province.\n\nLiu Bei is one of your officers at this moment.',
       },
+      'yuan-shu': {
+        zh: '你是袁術,後將軍,據南陽。南陽戶口數百萬,天下之富無過於此;孫堅是你的刀,他替你打進洛陽,傳國璽也在你手裡。\n\n你稱袁紹為「家奴」—— 他是庶出,你是嫡子,而天下士人偏偏都去投他。這口氣你一直沒嚥下去。\n\n七年後你會據璽稱帝,眾叛親離,走投無路。臨死前你想喝一口蜜水,廚下答:「只有麥屑三十斛。」',
+        en: 'You are Yuan Shu, General of the Rear, holding Nanyang — millions of households, the richest commandery under heaven. Sun Jian is your blade; he will fight his way into Luoyang for you, and the Imperial Seal is in your hands.\n\nYou call Yuan Shao "the house slave." He was born of a concubine and you of the principal wife — and yet every gentleman in the realm goes to him. You have never swallowed that.\n\nSeven years from now you will take the imperial title on the strength of that seal, and everyone will leave you. At the end you will ask for a cup of honey water, and the kitchen will answer: "There is nothing but thirty bushels of husk."',
+      },
+      'liu-biao': {
+        zh: '你是劉表,單馬入宜城而得荊州。蒯越為你設宴,誘宗賊帥五十五人而盡斬之,一日定荊襄。此後十八年,天下大亂而荊州獨安,兵不出境,士人南奔者以萬計。\n\n盟主的檄文你會署名。兵你不會發。\n\n曹操後來評你四個字:「坐談客耳。」他說得不錯 —— 但這十八年裡,只有你治下的百姓沒有餓死。',
+        en: 'You are Liu Biao, who rode into Yicheng alone and came out holding Jing province. Kuai Yue laid a banquet, lured fifty-five bandit chiefs to it and had every one of them cut down — Jing and Xiang settled in a day. For eighteen years after, while the realm tore itself apart, Jing alone was quiet; your troops never crossed the border and scholars fled south to you in their tens of thousands.\n\nYou will sign the coalition\'s proclamation. You will not send an army.\n\nCao Cao would later sum you up in four characters: "a guest who talks." He was not wrong — and yet for eighteen years yours were the only people who did not starve.',
+      },
+      'liu-yan': {
+        zh: '你是劉焉,漢室宗親。你本想求交趾牧以避亂,術士董扶告訴你「益州分野有天子氣」—— 於是你改口求益州。\n\n入蜀之後,你做的第一件事是燒絕棧道,殺盡朝廷使者,對外說是張魯斷了路。第二件事是造乘輿車具千餘乘。\n\n沒有人知道那些車是給誰坐的。你也不打算解釋。',
+        en: 'You are Liu Yan, of the imperial clan. You meant to ask for Jiaozhi in the far south and sit the chaos out — then the diviner Dong Fu told you that the stars over Yi province showed the aura of a Son of Heaven. So you asked for Yi instead.\n\nThe first thing you did on arriving was burn the plank roads and kill every envoy the court sent, saying Zhang Lu had cut the way. The second was to have a thousand imperial carriages built.\n\nNobody knows who those carriages are for. You do not intend to explain.',
+      },
+      tao: {
+        zh: '你是陶謙,徐州牧,年已六十。徐州百姓殷盛,穀米豐贍,流民多歸之 —— 亂世之中,這是難得的一塊淨土。\n\n你會做一件好心的事:護送曹操的父親曹嵩過境。你派的都尉張闓在半路上殺了他,取財而走。\n\n然後曹操來了。「所過多所殘戮」—— 五縣皆屠,雞犬亦盡,泗水為之不流。你守到死,臨終把徐州讓給一個帶著千餘兵來救你的縣令,姓劉名備。',
+        en: 'You are Tao Qian, Governor of Xu province, sixty years old. Xu is prosperous and its granaries full, and the displaced come to you in numbers — in an age like this, that is a rare clean patch of ground.\n\nYou will do one kind thing: escort Cao Cao\'s father Cao Song through your territory. The captain you send, Zhang Kai, will kill him on the road for his baggage.\n\nThen Cao Cao comes. "Wherever he passed, he slaughtered" — five counties put to the sword, not a dog left alive, until the Si river would not flow. You hold out until you die, and on your deathbed you hand Xu province to a county magistrate who came to your rescue with a thousand men. His name is Liu Bei.',
+      },
+      'kong-rong': {
+        zh: '你是孔融,孔子二十世孫,北海相。四歲讓梨,十歲折李膺之客,天下知名 —— 你這一生,名聲來得比什麼都早。\n\n你治北海,立學校,表儒術,收葬枯骨。「座上客常滿,樽中酒不空,吾無憂矣。」你確實不擅長打仗:黃巾管亥圍城,是太史慈單騎突圍求來的援兵。\n\n你手上兩座城,四個人。你有的是天下第一等的名望,和一張永遠不肯閉上的嘴 —— 十八年後,那張嘴會要了你全家的命。',
+        en: 'You are Kong Rong, twentieth-generation descendant of Confucius, Chancellor of Beihai. At four you gave away the larger pear; at ten you out-talked Li Ying\'s guests. Fame came to you earlier than anything else in your life.\n\nYou govern Beihai by founding schools, honouring the classics and burying the unclaimed dead. "My hall is always full of guests and my cup is never empty — what have I to worry about?" You are indeed no soldier: when Guan Hai\'s Turbans ringed the city it was Taishi Ci who broke out alone to fetch help.\n\nYou hold two cities and four men. What you have is the first reputation in the realm, and a mouth that will not stay shut — eighteen years from now, that mouth will cost your whole household their lives.',
+      },
+      'ma-teng': {
+        zh: '你是馬騰,伏波將軍馬援之後,母親是羌人。身長八尺餘,面鼻雄異,而性賢厚 —— 涼州人敬你,不只因為你能打。\n\n你與韓遂結為異姓兄弟,又反目成仇,又和解,反覆數次。涼州的規矩就是這樣:今日的盟友是昨日殺你部曲的人。\n\n關東諸侯在會盟飲酒,你在西邊守著一座武威城。他們爭的是天下,你爭的是明年的糧。',
+        en: 'You are Ma Teng, descended from the Wave-Subduing General Ma Yuan, your mother a Qiang. Eight feet tall with a striking face, and known for being decent — Liang men respect you, and not only because you can fight.\n\nYou and Han Sui swore to be brothers, then became enemies, then made peace, and then did it all again. That is how Liang works: today\'s ally is the man who killed your retainers last year.\n\nThe lords east of the pass are drinking at their alliance banquet. You are out west holding one city at Wuwei. What they are fighting over is the empire. What you are fighting over is next year\'s grain.',
+      },
     },
   },
 

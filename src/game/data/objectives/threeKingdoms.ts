@@ -243,6 +243,58 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 195 },
       },
     },
+    /* 孔融 — 兩座城、四個人,而且他不是武人。所以主要目標是活著:史實上
+       他撐到 196 年被袁譚攻破北海,妻子被擄,他自己隻身逃奔許都。 */
+    {
+      id: 'obj-190-kongrong',
+      forceId: 'kong-rong',
+      primary: {
+        title: { zh: '北海之守', en: 'Hold Beihai' },
+        description: 'Still hold Beihai in 196 AD — the year Yuan Tan took it from him.',
+        descriptionZh: '撐到196年仍據有北海 —— 史實上這一年袁譚破城,孔融隻身走許都。',
+        goal: { kind: 'hold-cities', cityIds: ['beihai'], byYear: 196 },
+      },
+      secondary: [
+        {
+          title: { zh: '座上客常滿', en: 'A Hall Always Full' },
+          description: 'Hold both Beihai and Linzi — the two seats of the Qi country you administer.',
+          descriptionZh: '同時據有北海與臨淄 —— 你所治的齊地兩處治所。',
+          goal: { kind: 'hold-cities', cityIds: ['beihai', 'linzi'], byYear: 198 },
+        },
+        {
+          title: { zh: '子義突圍', en: 'Ziyi Rides Out' },
+          description: 'Keep Taishi Ci — the one man here who broke a siege for you single-handed.',
+          descriptionZh: '留住太史慈 —— 這座城裡唯一替你單騎突圍求援的人。',
+          goal: { kind: 'recruit-officer', officerId: 'taishi-ci', byYear: 196 },
+        },
+      ],
+    },
+    /* 馬騰 — 一座武威城。關東在爭天下,他在爭明年的糧。史實上他 194 年
+       與韓遂東出擊長安,敗於長平觀。 */
+    {
+      id: 'obj-190-mateng',
+      forceId: 'ma-teng',
+      primary: {
+        title: { zh: '西涼之主', en: 'Master of the West' },
+        description: 'Hold Wuwei, Jincheng and Anding — make the Liang country answer to one man.',
+        descriptionZh: '據有武威、金城、安定 —— 讓涼州只認一個號令。',
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 196 },
+      },
+      secondary: [
+        {
+          title: { zh: '長平觀之役', en: 'The Battle of Changping Guan' },
+          description: "Take Chang'an — in history he marched on it in 194 and was beaten.",
+          descriptionZh: '攻取長安 —— 史實上他194年東出,敗於長平觀。',
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 200 },
+        },
+        {
+          title: { zh: '涼州十部', en: 'The Ten of Liang' },
+          description: 'Outlast Han Sui — sworn brother, then enemy, then brother again.',
+          descriptionZh: '熬過韓遂 —— 結為異姓兄弟,又反目,又和解,反覆數次。',
+          goal: { kind: 'survive-until', year: 200 },
+        },
+      ],
+    },
   ],
 
   // 200 — Guandu
