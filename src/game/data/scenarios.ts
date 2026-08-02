@@ -714,7 +714,9 @@ const FORCES_208: Force[] = [
   { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
   { id: 'liu-bei',   name: { en: 'Liu Bei',     zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'jiangxia', color: '#a85d8a', isPlayer: false },
   { id: 'sun',       name: { en: 'Sun Quan',    zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-biao',  name: { en: 'Liu Cong',    zh: '劉琮軍' }, rulerOfficerId: 'liu-biao',  capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
+  // 赤壁是建安十三年冬,而劉表死於是年八月 —— 這一盤的前提正是劉琮繼位、
+  // 蔡瑁蒯越勸降。勢力名寫的是「劉琮軍」,君主卻掛著劉表,是資料寫漏了。
+  { id: 'liu-biao',  name: { en: 'Liu Cong',    zh: '劉琮軍' }, rulerOfficerId: 'liu-cong',  capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
   { id: 'liu-zhang', name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', isPlayer: false },
   { id: 'zhang-lu',  name: { en: 'Zhang Lu',    zh: '張魯軍' }, rulerOfficerId: 'zhang-lu',  capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
   { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',   capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
@@ -848,7 +850,8 @@ const OFFICER_ASSIGNMENTS_208: Record<string, { forceId: string; cityId: string 
   'sun-yi':      { forceId: 'sun', cityId: 'wuxi' },
 
   // Liu Biao (Liu Cong succeeded)
-  'liu-biao':    { forceId: 'liu-biao', cityId: 'xiangyang' },
+  // 劉表不在這一盤 —— 他八月已死,由劉琮嗣位。
+  'liu-cong':    { forceId: 'liu-biao', cityId: 'xiangyang' },
   'cai-mao':     { forceId: 'liu-biao', cityId: 'xiangyang' },
   'zhang-yun':   { forceId: 'liu-biao', cityId: 'xiangyang' },
   'kuai-liang':  { forceId: 'liu-biao', cityId: 'xiangyang' },

@@ -503,6 +503,131 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 220 },
       },
     },
+    /* 劉琮 — 十七歲,而勸降的人比他官大。所以主目標就是**不降**。 */
+    {
+      id: 'obj-208-liucong',
+      forceId: 'liu-biao',
+      primary: {
+        title: { zh: '不束手', en: 'Do Not Fold' },
+        description: 'Still hold Xiangyang in 210 — in history the letter of surrender went out without a fight.',
+        descriptionZh: '撐到210年仍據有襄陽 —— 史實上降書送出去時,一仗都沒打。',
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 210 },
+      },
+      secondary: [
+        {
+          title: { zh: '江陵之積', en: 'The Arsenal at Jiangling' },
+          description: 'Hold Jiangling — the armoury and grain Cao Cao rode day and night to reach first.',
+          descriptionZh: '守住江陵 —— 曹操晝夜兼行搶的就是那裡的軍實。',
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 209 },
+        },
+        {
+          title: { zh: '荊州水軍', en: "Jing's River Fleet" },
+          description: 'Hold Xiangyang and Jiangxia together — the fleet that decided Red Cliffs was yours first.',
+          descriptionZh: '同時據有襄陽與江夏 —— 決定赤壁的那支水軍,本來是你的。',
+          goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangxia'], byYear: 212 },
+        },
+      ],
+    },
+    /* 劉璋 — 張松袖裡那張圖本來是要獻給曹操的。 */
+    {
+      id: 'obj-208-liuzhang',
+      forceId: 'liu-zhang',
+      primary: {
+        title: { zh: '西川不獻', en: 'The Map Stays in the Sleeve' },
+        description: 'Still hold Chengdu in 215 — Zhang Song sold the way in, and the gates opened in 214.',
+        descriptionZh: '撐到215年仍據有成都 —— 張松賣了路,214年門就開了。',
+        goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 215 },
+      },
+      secondary: [
+        {
+          title: { zh: '永年不叛', en: 'Yongnian Does Not Turn' },
+          description: 'Still have Zhang Song in 212 — the year his own brother reported him.',
+          descriptionZh: '212年時張松仍在麾下 —— 那一年是他親兄長告發了他。',
+          goal: { kind: 'recruit-officer', officerId: 'zhang-song', byYear: 212 },
+        },
+        {
+          title: { zh: '北取漢中', en: 'Take Hanzhong' },
+          description: 'Take Hanzhong from Zhang Lu — the reason you ever invited outside help.',
+          descriptionZh: '自張魯手中取回漢中 —— 你當初請外援,為的就是這個。',
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 213 },
+        },
+      ],
+    },
+    /* 張魯 — 一個以道立國的地方。他要的從來不是天下。 */
+    {
+      id: 'obj-208-zhanglu',
+      forceId: 'zhang-lu',
+      primary: {
+        title: { zh: '漢寧之治', en: 'The Rule of Hanning' },
+        description: 'Still hold Hanzhong in 216 — Cao Cao came through Sanguan in 215 and he sealed the storehouses and left.',
+        descriptionZh: '撐到216年仍據有漢中 —— 史實上215年曹操自散關入,他封藏府庫而去。',
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 216 },
+      },
+      secondary: [
+        {
+          title: { zh: '巴漢之民', en: 'The People of Ba and Han' },
+          description: 'Hold Hanzhong and Baxi together — the Ba country where tens of thousands followed the Way.',
+          descriptionZh: '同時據有漢中與巴西 —— 奉道者數萬戶的巴地。',
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 214 },
+        },
+        {
+          title: { zh: '南取益州', en: 'South into Yi' },
+          description: 'Take Chengdu — Liu Zhang killed your mother and brother, and the roads run both ways.',
+          descriptionZh: '攻取成都 —— 劉璋殺你母弟,而棧道是雙向的。',
+          goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 215 },
+        },
+      ],
+    },
+    /* 馬騰 — 這一年朝廷徵他入朝。韓遂勸他別去。 */
+    {
+      id: 'obj-208-mateng',
+      forceId: 'ma-teng',
+      primary: {
+        title: { zh: '不入鄴城', en: 'Never Ride to Ye' },
+        description: 'Still alive in 212 — he accepted the summons in 208 and his household died in 212.',
+        descriptionZh: '撐到212年 —— 史實上他208年應徵入朝,212年全家二百餘口下獄。',
+        goal: { kind: 'survive-until', year: 212 },
+      },
+      secondary: [
+        {
+          title: { zh: '關中之地', en: 'The Guanzhong Country' },
+          description: "Take Chang'an — the pass country the ten commands could never agree on.",
+          descriptionZh: '攻取長安 —— 關中十部誰也談不攏的那塊地。',
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 213 },
+        },
+        {
+          title: { zh: '孟起在側', en: 'Mengqi at Hand' },
+          description: 'Still have Ma Chao in 214 — he rose in the west, and it cost the family everything.',
+          descriptionZh: '214年時馬超仍在麾下 —— 他起兵的代價是全家。',
+          goal: { kind: 'recruit-officer', officerId: 'ma-chao', byYear: 214 },
+        },
+      ],
+    },
+    /* 士燮 — 離戰場最遠、活得最久的人。他的勝利是「什麼都沒發生」。 */
+    {
+      id: 'obj-208-shixie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '疆場無事', en: 'No Alarm on the Border' },
+        description: 'Still hold Jiaozhi and Nanhai in 220 — forty years in the post and the province never burned.',
+        descriptionZh: '撐到220年仍據有交趾與南海 —— 在郡四十餘年,交州獨全。',
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 220 },
+      },
+      secondary: [
+        {
+          title: { zh: '南海之富', en: 'The Wealth of the Southern Sea' },
+          description: 'Hold Jiaozhi, Nanhai, Hepu and Jiuzhen — the whole of Jiao under one house.',
+          descriptionZh: '據有交趾、南海、合浦、九真 —— 交州盡歸一門。',
+          goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai', 'hepu', 'jiuzhen'], byYear: 215 },
+        },
+        {
+          title: { zh: '北向荊南', en: 'North into the Jing South' },
+          description: 'Take Changsha — the one direction a Jiao lord could ever have gone.',
+          descriptionZh: '攻取長沙 —— 交州之主唯一可能北上的方向。',
+          goal: { kind: 'hold-cities', cityIds: ['changsha'], byYear: 220 },
+        },
+      ],
+    },
   ],
 
   // 220 — Three Kingdoms Declared
