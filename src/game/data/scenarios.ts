@@ -13,7 +13,7 @@ const FORCES_184: Force[] = [
   { id: 'han',         name: { en: 'Han Court',       zh: '漢室'     }, rulerOfficerId: 'lu-zhi',      capitalCityId: 'luoyang',  color: '#f0d878', isPlayer: false },
   { id: 'yellow-turban',name:{ en: 'Yellow Turbans',  zh: '黃巾'     }, rulerOfficerId: 'zhang-jiao',  capitalCityId: 'ye',       color: '#a88a2a', isPlayer: false },
   { id: 'huangfu',     name: { en: 'Huangfu Song',    zh: '皇甫嵩軍' }, rulerOfficerId: 'huangfu-song',capitalCityId: 'chenliu',  color: '#3a7dd9', isPlayer: false },
-  { id: 'zhujun',      name: { en: 'Zhu Jun',         zh: '朱儁軍'   }, rulerOfficerId: 'zhu-jun',     capitalCityId: 'wancheng', color: '#2a9b8a', isPlayer: false },
+  { id: 'zhujun',      name: { en: 'Zhu Jun',         zh: '朱儁軍'   }, rulerOfficerId: 'zhu-jun',     capitalCityId: 'xinye',    color: '#2a9b8a', isPlayer: false },
   { id: 'dong-184',    name: { en: 'Dong Zhuo',       zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'changan',  color: '#6a3d8a', isPlayer: false },
 ];
 
@@ -28,7 +28,11 @@ const CITY_OWNERSHIP_184: Record<string, string> = {
   chenliu:   'huangfu',
   pengcheng: 'huangfu',
   xiapi:     'huangfu',
-  wancheng:  'zhujun',
+  // 宛城 —— 春,張曼成殺南陽太守褚貢而據宛。朱儁自五月圍到十一月才拔下它。
+  // 這座城**不是朱儁的起點,是他的目標**(見 objectives 的「宛城之圍」)。
+  wancheng:  'yellow-turban',
+  xinye:     'zhujun',
+  fancheng:  'zhujun',
   xiangyang: 'zhujun',
   // Dong Zhuo in the west.
   changan:   'dong-184',
@@ -55,7 +59,10 @@ const OFFICER_ASSIGNMENTS_184: Record<string, { forceId: string; cityId: string 
   'lu-zhi':       { forceId: 'han',          cityId: 'luoyang' },
   'wang-yun':     { forceId: 'han',          cityId: 'luoyang' },
   'huangfu-song': { forceId: 'huangfu',      cityId: 'chenliu' },
-  'zhu-jun':      { forceId: 'zhujun',       cityId: 'wancheng' },
+  'zhu-jun':      { forceId: 'zhujun',       cityId: 'xinye' },
+  // 皇甫嵩的幕僚 —— 傅燮為護軍司馬,隨他自長社打到東郡。
+  'fu-xie':       { forceId: 'huangfu',      cityId: 'chenliu' },
+  'huangfu-li':   { forceId: 'huangfu',      cityId: 'chenliu' },
   // Yellow Turban core
   'zhang-jiao':   { forceId: 'yellow-turban',cityId: 'ye' },
   'zhang-bao-yt': { forceId: 'yellow-turban',cityId: 'pingyuan' },
@@ -65,6 +72,12 @@ const OFFICER_ASSIGNMENTS_184: Record<string, { forceId: string; cityId: string 
   'sun-zhong':    { forceId: 'yellow-turban',cityId: 'pingyuan' },
   'bo-cai':       { forceId: 'yellow-turban',cityId: 'ye' },
   'ma-yuanyi':    { forceId: 'yellow-turban',cityId: 'ye' },
+  /* 南陽渠帥四人 —— 宛城先後易手於張曼成、趙弘、韓忠、孫夏,朱儁一個一個打過去。
+     他們原本全躺在 unsearched 池裡:這張盤最要緊的一場圍城,守方沒有人。 */
+  'zhang-mancheng': { forceId: 'yellow-turban', cityId: 'wancheng' },
+  'zhao-hong-yt':   { forceId: 'yellow-turban', cityId: 'wancheng' },
+  'han-zhong-yt':   { forceId: 'yellow-turban', cityId: 'wancheng' },
+  'sun-xia':        { forceId: 'yellow-turban', cityId: 'wancheng' },
   // Dong Zhuo (still a general at this point)
   'dong-zhuo':    { forceId: 'dong-184',     cityId: 'changan' },
   'li-jue':       { forceId: 'dong-184',     cityId: 'changan' },
@@ -72,12 +85,21 @@ const OFFICER_ASSIGNMENTS_184: Record<string, { forceId: string; cityId: string 
   'ma-teng':      { forceId: 'dong-184',     cityId: 'jincheng' },
   // Future giants serving the Han at the start of their careers
   'cao-cao':      { forceId: 'huangfu',      cityId: 'chenliu' },
-  'liu-bei':      { forceId: 'zhujun',       cityId: 'wancheng' },
-  'guan-yu':      { forceId: 'zhujun',       cityId: 'wancheng' },
-  'zhang-fei':    { forceId: 'zhujun',       cityId: 'wancheng' },
-  'sun-jian':     { forceId: 'zhujun',       cityId: 'wancheng' },
+  'liu-bei':      { forceId: 'zhujun',       cityId: 'xinye' },
+  'guan-yu':      { forceId: 'zhujun',       cityId: 'xinye' },
+  'zhang-fei':    { forceId: 'zhujun',       cityId: 'xinye' },
+  'sun-jian':     { forceId: 'zhujun',       cityId: 'xinye' },
   'yuan-shao':    { forceId: 'han',          cityId: 'luoyang' },
   'yuan-shu':     { forceId: 'han',          cityId: 'luoyang' },
+  /* 朝堂 —— 平亂的總指揮與那幾個要錢的人。何進以大將軍鎮京師、都督左右羽林,
+     張讓趙忠是中常侍。他們原本也在 unsearched 池裡,於是「廣宗易帥」與
+     「收印綬,削戶邑」兩條事件講的是盤上不存在的人。 */
+  'he-jin':       { forceId: 'han',          cityId: 'luoyang' },
+  'zhang-rang':   { forceId: 'han',          cityId: 'luoyang' },
+  'zhao-zhong':   { forceId: 'han',          cityId: 'luoyang' },
+  'jian-shuo':    { forceId: 'han',          cityId: 'luoyang' },
+  // 鄒靖 —— 幽州校尉,劉備最初就是率義兵從他。
+  'zou-jing':     { forceId: 'han',          cityId: 'beiping' },
 };
 
 const DEAD_BY_184: string[] = [];
