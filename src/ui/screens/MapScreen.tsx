@@ -180,6 +180,9 @@ export function MapScreen() {
   };
   const [showWishes, setShowWishes] = useState(false);
   const [showEnding, setShowEnding] = useState(false);
+  /* 敗亡時 EndingsModal 由 victoryStatus 掛載,不是由 showEnding —— 少了這個
+     旗標,onClose 設 showEnding=false 也關不掉它(條件式照樣為真)。 */
+  const [endingDismissed, setEndingDismissed] = useState(false);
   const [showReplays, setShowReplays] = useState(false);
   const [showDeeds, setShowDeeds] = useState(false);
   const [showHallOfFame, setShowHallOfFame] = useState(false);
@@ -1524,8 +1527,17 @@ export function MapScreen() {
       <PrologueModal />
       {!dayFlow && !prologueOpen && <EventModal />}
       <VictoryModal />
-      {(victoryStatus === 'victory' || showEnding) && (
-        <EndingsModal onClose={() => setShowEnding(false)} />
+      {/* 勝**與敗**都要掛。原本只掛 victory,於是 endings.ts 裡寫好的五段敗亡
+          輓歌(社稷為墟/階下之囚/奉璽出降/流亡天涯/敗亡)一次也沒被玩家看過 ——
+          亡國時看到的只有 VictoryModal 那一行「爾之霸業,就此而止」。
+          EndingsModal 的 z-index(990)高於 VictoryModal(200):先讀落幕文,
+          關掉之後底下就是本局戰史年表。 */}
+      {(victoryStatus === 'victory'
+        || (victoryStatus === 'defeat' && !endingDismissed)
+        || showEnding) && (
+        <EndingsModal
+          onClose={() => { setShowEnding(false); setEndingDismissed(true); }}
+        />
       )}
       <TutorialOverlay />
       {/* Headless AI turns while the fullscreen battle view is down (fly-in

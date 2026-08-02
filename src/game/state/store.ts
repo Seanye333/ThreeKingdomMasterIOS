@@ -5474,6 +5474,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           playerForceId: state.playerForceId,
           date: result.date,
           victoryGoal: state.victoryGoal ?? 'free',
+          scenarioId: state.scenarioId,
         });
         // 熱座 — a conquered player leaves the table; the rotation must not
         // stall on an empty chair (cycleHotSeat is a modulo over the list, so a

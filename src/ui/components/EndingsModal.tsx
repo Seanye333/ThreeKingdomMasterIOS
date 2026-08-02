@@ -192,9 +192,16 @@ export function EndingsModal({ onClose }: Props) {
   const forces = useGameStore((s) => s.forces);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const date = useGameStore((s) => s.date);
+  /* store 在季末也算一次(store.ts 的 checkEndings)。這裡少帶 victoryGoal 與
+     scenarioId 的話,兩邊算出來的會是不同的結局 —— 補齊。 */
+  const victoryGoal = useGameStore((s) => s.victoryGoal);
+  const scenarioId = useGameStore((s) => s.scenarioId);
   const ending = useMemo(
-    () => checkEndings({ cities, officers, forces, playerForceId, date }),
-    [cities, officers, forces, playerForceId, date],
+    () => checkEndings({
+      cities, officers, forces, playerForceId, date,
+      victoryGoal: victoryGoal ?? 'free', scenarioId,
+    }),
+    [cities, officers, forces, playerForceId, date, victoryGoal, scenarioId],
   );
   const t = useT();
   const lang = useLanguage();
@@ -290,6 +297,33 @@ export function EndingsModal({ onClose }: Props) {
           >
             {ending.textEn}
           </p>
+        )}
+        {(ending.verdictZh || ending.verdictEn) && (
+          <div
+            style={{
+              marginTop: '1.4rem',
+              paddingTop: '1rem',
+              borderTop: '1px solid rgba(230, 196, 115, 0.28)',
+            }}
+          >
+            {lang !== 'en' && ending.verdictZh && (
+              <p style={{
+                fontSize: '0.95rem', lineHeight: 1.85, color: '#c9ad74',
+                fontStyle: 'italic', textAlign: 'justify', margin: 0,
+              }}>
+                {ending.verdictZh}
+              </p>
+            )}
+            {lang !== 'zh' && ending.verdictEn && (
+              <p style={{
+                fontSize: '0.84rem', lineHeight: 1.7, color: '#93a2ad',
+                fontStyle: 'italic', textAlign: 'justify',
+                margin: lang === 'en' ? 0 : '0.6rem 0 0',
+              }}>
+                {ending.verdictEn}
+              </p>
+            )}
+          </div>
         )}
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           {playOn && ending.kind !== 'defeat' && (

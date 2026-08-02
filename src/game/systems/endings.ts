@@ -1,5 +1,6 @@
 import type { City, EntityId, Force, GameDate, Officer } from '../types';
 import type { EndingKind } from '../state/gameState';
+import { scenarioVerdict } from '../data/scenarioVerdicts';
 
 export interface EndingContext {
   cities: Record<EntityId, City>;
@@ -12,6 +13,8 @@ export interface EndingContext {
   /** 勝利條件 — when not 'free', only the chosen path (and defeat) ends the
    *  campaign; lesser/incidental endings are suppressed so the game continues. */
   victoryGoal?: 'free' | 'unify' | 'hegemon' | 'tripartite';
+  /** 執行中的劇本 — 用來取分盤分家的敗亡變體與史官論曰(見 data/scenarioVerdicts)。 */
+  scenarioId?: string | null;
 }
 
 /** Which ending kinds satisfy a chosen victory goal. Unification always counts
@@ -28,15 +31,42 @@ export interface EndingResult {
   titleEn: string;
   textZh: string;
   textEn: string;
+  /** 論曰 — 該盤該家專屬的史筆,附在正文之後(沒寫過的盤就沒有)。 */
+  verdictZh?: string;
+  verdictEn?: string;
 }
 
 export function checkEndings(ctx: EndingContext): EndingResult | null {
-  const result = rawEnding(ctx);
+  const result = withScenarioVoice(rawEnding(ctx), ctx);
   if (!result) return null;
   const goal = ctx.victoryGoal ?? 'free';
   // Defeat always ends the game; with a goal set, only matching victories do.
   if (goal === 'free' || result.kind === 'defeat') return result;
   return GOAL_ALLOWED[goal].includes(result.kind) ? result : null;
+}
+
+/**
+ * 把通用結局換成這個盤這一家自己的聲音。
+ *
+ *  - 有寫敗亡變體 → 整段換掉(通用的那五段是給沒寫過的盤用的)。
+ *  - 有寫論曰 → 附上;勝敗各取一段。
+ *
+ * 沒寫過就原樣回傳 —— 86 個盤不會都寫,而沒寫的那些不該因此變成空白。
+ */
+function withScenarioVoice(
+  result: EndingResult | null,
+  ctx: EndingContext,
+): EndingResult | null {
+  if (!result) return null;
+  const v = scenarioVerdict(ctx.scenarioId, ctx.playerForceId);
+  if (!v) return result;
+  const lost = result.kind === 'defeat';
+  return {
+    ...result,
+    ...(lost && v.defeat ? v.defeat : {}),
+    verdictZh: (lost ? v.verdictLostZh : v.verdictZh) ?? undefined,
+    verdictEn: (lost ? v.verdictLostEn : v.verdictEn) ?? undefined,
+  };
 }
 
 function rawEnding(ctx: EndingContext): EndingResult | null {
