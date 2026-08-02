@@ -48,6 +48,9 @@ export const RULES: Record<string, string> = {
   'goal-already-met': '主目標第 0 回合就已達成 —— 那不是目標,是開局狀態',
   'goal-year-past': '目標的 byYear 早於開局年份 —— 永遠不可能達成',
   'goal-force-self': '目標是擊潰自己',
+  'ruler-no-profile':
+    '君主沒有本性譜(rulerProfiles.ts)—— 該勢力會靜默地吃 opportunist/雜糅/balanced 預設值,'
+    + 'AI 行事風格、治國理念、門第政策三條線一起變成通用值',
   'event-blocked-unaffiliated':
     '事件要求某人在野,而該盤開局就把他編進了某勢力 —— 這條事件鏈在這張盤永遠不會觸發',
 };
@@ -127,6 +130,7 @@ export async function auditAll(): Promise<Finding[]> {
   const { SCENARIOS } = await import('../src/game/data/scenarios');
   const { SCENARIO_OBJECTIVES } = await import('../src/game/data/objectives');
   const { HISTORICAL_EVENTS } = await import('../src/game/data/events');
+  const { RULER_PROFILES } = await import('../src/game/data/rulerProfiles');
   const out: Finding[] = [];
 
   /* 要求「在野」的事件 —— 這是最容易無聲失效的一種閘門。三顧茅廬那條就是:
@@ -207,6 +211,12 @@ export async function auditAll(): Promise<Finding[]> {
       } else if (c.cityOwner.get(f.capitalCityId) !== f.id) {
         add('warn', 'capital-not-owned',
           `${f.name.zh} 的首都 ${f.capitalCityId} 歸 ${c.cityOwner.get(f.capitalCityId) ?? '無主'}`, f.id);
+      }
+      /* 本性譜 —— 這條抓的是**靜默失效**:少一筆不會報錯,只是那一家的 AI
+         行為、治國理念、門第政策悄悄退回通用值。我自己就製造過一次:把赤壁
+         盤的君主由已死的劉表改成劉琮,而劉琮當時不在表裡。 */
+      if (!f.personality && !RULER_PROFILES[f.rulerOfficerId]) {
+        add('warn', 'ruler-no-profile', `${f.name.zh} 的君主 ${f.rulerOfficerId} 沒有本性譜`, f.id);
       }
       if ((c.citiesOf.get(f.id) ?? 0) === 0) add('error', 'force-no-city', `${f.name.zh} 開局沒有城`, f.id);
       if ((c.officersInService.get(f.id) ?? 0) === 0) add('error', 'force-no-officer', `${f.name.zh} 開局沒有在職武將`, f.id);

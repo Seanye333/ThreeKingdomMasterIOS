@@ -3541,6 +3541,7 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
   - **虛構人才庫**(`fictionalPool`,loadScenario):開局即生成一批虛構武將(關閉/少量 20/大量 50)注入 rootless 在野池,供搜索 —— 配合武將位置「隨機」可玩近乎虛構的開局。
   - **初始外交**(`initialDiplomacy`,loadScenario 種入 diplomacy.relations):`逐鹿`(預設,全中立可開戰)/ `亂世死敵`(各對勢力 score −50、status 中立,AI 不締約)/ `群雄結盟`(AI 勢力間 40% 機率 non-aggression、score 65,玩家須面對聯盟)。
   - **劇本自訂開局外交**(`Scenario.openingRelations`,2026-08):劇本可自己陳述開局關係,在上面三種全域模式**之後**套用(所以蓋得過它們)。需要它的理由很實際:黃巾之亂裡漢室、皇甫嵩軍、朱儁軍**是同一邊**,他們是朝廷的三路討賊軍,不是三個諸侯。沒有這張表,AI 讓官軍互相吞併 —— 體檢腳本五輪都是漢室 39 城掉到 27、朱儁 12 長到 16,平黃巾的戰爭被稀釋掉。現況:三路討賊 allied(85–90),董卓只到 non-aggression(40–55,他名義上聽詔而實際觀望),四家對黃巾 −85~−95。
+  - **開局忠誠**(`OfficerAssignment.loyalty`,`buildInitialOfficers`,2026-08-02):編制表的每一筆可選填忠誠,不填仍是 90。原本**所有在職武將一律 90** —— 十常侍對盧植 90、曹操對皇甫嵩 90、劉關張孫堅對朱儁也 90,而這幾個人的故事講的正是他們留不住。忠誠一律 90,離間/策反/去留幾條線在開局就是死的。184 盤已分:張讓趙忠 35、蹇碩 40、袁術 45、關張 45、劉備 50、孫堅 52、袁紹 55、曹操 58、何進 62。
   - **開局姿態**(`ForcePosture`,`buildInitialCities` 第二參數,2026-08):按勢力給城池初值乘數/增減 —— `troops` / `food` / `gold` 乘數 + `defense` / `loyalty` 絕對增減(後兩者夾在 0–100)。用來讓**序章寫的東西與數字對得上**:黃巾的序章寫「你沒有的:甲仗、糧道、能守城的人」,姿態就給 兵 ×1.30、糧 ×0.40、金 ×0.35、城防 −22、民忠 −18。184 盤五家見 `scenarios.ts`。
   - **在野登場**(`talentDiscovery`):搜索人才成功率乘數 —— 稀少 ×0.6 / 正常 / 眾多 ×1.4(handleSearch,上限 0.95)。
   - **單挑頻率**(`duelFrequency`):陣前一騎討觸發機率乘數 —— 罕見 ×0.5 / 正常 / 頻繁 ×2(combat.ts 基礎 12%)。
@@ -3584,6 +3585,7 @@ node --import tsx scripts/scenario-audit.ts scn-208-chibi   # 單盤明細
 | `goal-already-met` | 主目標第 0 回合就已達成(朱儁「攻取並據守宛城」而盤上開局就把宛城給他) |
 | `goal-year-past` / `goal-force-self` | 期限早於開局年 / 目標是擊潰自己 |
 | `event-blocked-unaffiliated` | 事件要求某人在野,而該盤開局把他編進了某勢力 —— **名叫「三顧茅廬」的那張盤把諸葛亮編進了劉表軍,於是那條鏈在自己的主場盤上永遠不會觸發** |
+| `ruler-no-profile` | 君主不在 `rulerProfiles.ts` 裡 —— 該勢力靜默地吃 opportunist/雜糅/balanced 預設值(把赤壁盤君主由已死的劉表改成劉琮之後,就製造過這個洞) |
 
 例外必須具名並寫理由(見該檔 `EXCEPTIONS`)。沒有理由的例外等於把規則關掉。
 

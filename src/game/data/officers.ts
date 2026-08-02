@@ -2664,8 +2664,24 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
 // (Sun family sword is inherited Sun Jian → Sun Ce → Sun Quan; we
 //  resolve by picking the alive owner.)
 
+/** 開局編制的一筆 —— `loyalty` 選填(不填 90),見 buildInitialOfficers。 */
+export interface OfficerAssignment {
+  forceId: string;
+  cityId: string;
+  loyalty?: number;
+}
+
 export function buildInitialOfficers(
-  assignments: Record<string, { forceId: string; cityId: string }>,
+  /**
+   * 開局編制。`loyalty` 選填,不填就是 90。
+   *
+   * 為什麼要能填:原本每一位在職武將的忠誠都硬寫成 90 —— 十常侍對盧植 90、
+   * 曹操對皇甫嵩 90、劉關張孫堅對朱儁也 90。可是這幾個人的故事,講的正是
+   * 他們**留不住**:張讓趙忠賣的是自己的官,曹操三年後就散家財起兵,劉備與
+   * 孫堅在朱儁帳下待不到一年。忠誠一律 90,離間、策反、去留這幾條線在開局
+   * 就是死的。
+   */
+  assignments: Record<string, OfficerAssignment>,
   deadIds: string[] = [],
   scenarioYear?: number,
 ): Officer[] {
@@ -2745,7 +2761,7 @@ export function buildInitialOfficers(
       deathYear: t.deathYear,
       hometownCityId: t.hometownCityId,
       stats: t.stats,
-      loyalty: a ? 90 : 0,
+      loyalty: a ? (a.loyalty ?? 90) : 0,
       // If assigned in scenario → use that city. Otherwise plant the
       // unsearched officer at their historical hometown if known, so
       // "Search for Talent" only finds them in the right place.
@@ -2800,7 +2816,7 @@ export function buildInitialOfficers(
       deathYear: t.deathYear,
       hometownCityId: t.hometownCityId,
       stats: t.stats,
-      loyalty: a ? 90 : 0,
+      loyalty: a ? (a.loyalty ?? 90) : 0,
       locationCityId: a?.cityId ?? t.hometownCityId ?? null,
       forceId: a?.forceId ?? null,
       status: a ? 'idle' : 'unsearched',

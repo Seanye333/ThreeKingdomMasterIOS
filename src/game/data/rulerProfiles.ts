@@ -71,6 +71,10 @@ export const RULER_PROFILES: Record<string, RulerProfile> = {
   'gongsun-yuan':{ personality: 'opportunist', statecraft: 'legalist',   recruitmentStance: 'aristocratic' }, // 反覆稱燕王
   'liu-biao':    { personality: 'scholar',     statecraft: 'confucian',  recruitmentStance: 'aristocratic' }, // 坐談客,守荊襄
   'liu-zhang':   { personality: 'cautious',    statecraft: 'confucian',  recruitmentStance: 'aristocratic' }, // 闇弱守成
+  /* 劉琮 —— 赤壁盤的荊州之主(2026-08 把該勢力的 rulerOfficerId 由已死的劉表
+     改成劉琮之後,他成了全表唯一沒有本性譜的君主,那一家於是靜默地吃預設值)。
+     蔡瑁蒯越當國、舉州而降,守備而倚世族。 */
+  'liu-cong':    { personality: 'cautious',    statecraft: 'confucian',  recruitmentStance: 'aristocratic' }, // 不戰而以荊州降
   'liu-yan':     { personality: 'opportunist', statecraft: 'confucian',  recruitmentStance: 'aristocratic' }, // 益州牧,陰有異志
   'liu-yao':     { personality: 'defensive',   statecraft: 'confucian',  recruitmentStance: 'aristocratic' },
   'tao-qian':    { personality: 'cautious',    statecraft: 'confucian',  recruitmentStance: 'balanced' },     // 三讓徐州
@@ -86,7 +90,11 @@ export const RULER_PROFILES: Record<string, RulerProfile> = {
   'he-jin':      { personality: 'hesitant',    statecraft: 'confucian',  recruitmentStance: 'balanced' },     // 屠家外戚,優柔召董
   'wang-yun':    { personality: 'hesitant',    statecraft: 'confucian',  recruitmentStance: 'aristocratic' }, // 連環計後剛愎
   'lu-zhi':      { personality: 'defensive',   statecraft: 'confucian',  recruitmentStance: 'meritocratic' }, // 名將大儒
-  'huangfu-song':{ personality: 'defensive',   statecraft: 'militarist', recruitmentStance: 'meritocratic' }, // 平黃巾良將
+  /* 皇甫嵩改 defensive → aggressive(2026-08):長社順風縱火夜襲、廣宗夜擊、
+     下曲陽築京觀,他從不與賊持久。而在 184 盤上這個值是有後果的 —— 他與朱儁
+     領的是同一件差事(擊潰黃巾),體檢五輪朱儁(aggressive)5/5 達成,
+     皇甫嵩(defensive)0/5。一張以「朝廷派將討賊」為題的盤,主將不該是守勢。 */
+  'huangfu-song':{ personality: 'aggressive',  statecraft: 'militarist', recruitmentStance: 'meritocratic' }, // 平黃巾良將
   'zhu-jun':     { personality: 'aggressive',  statecraft: 'militarist', recruitmentStance: 'meritocratic' },
   'wang-lang':   { personality: 'scholar',     statecraft: 'confucian',  recruitmentStance: 'aristocratic' }, // 老儒,終被罵死陣前
   'hua-xin':     { personality: 'opportunist', statecraft: 'confucian',  recruitmentStance: 'aristocratic' },

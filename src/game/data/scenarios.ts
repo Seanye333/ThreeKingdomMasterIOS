@@ -1,7 +1,7 @@
 import type { Force, Scenario, Officer } from '../types';
 import { loadMods, modScenariosForStart } from '../systems/mods';
 import { buildInitialCities } from './cities';
-import { buildInitialOfficers, buildHistoricalOfficers } from './officers';
+import { buildInitialOfficers, buildHistoricalOfficers, type OfficerAssignment } from './officers';
 import { fillRetinues } from './retinues';
 import type { Dynasty } from './dynasties';
 
@@ -57,7 +57,7 @@ const CITY_OWNERSHIP_184: Record<string, string> = {
   // Misc unowned cities default to null in buildInitialCities.
 };
 
-const OFFICER_ASSIGNMENTS_184: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_184: Record<string, OfficerAssignment> = {
   // Han court loyalists
   'lu-zhi':       { forceId: 'han',          cityId: 'luoyang' },
   'wang-yun':     { forceId: 'han',          cityId: 'luoyang' },
@@ -95,26 +95,26 @@ const OFFICER_ASSIGNMENTS_184: Record<string, { forceId: string; cityId: string 
   'niu-fu':       { forceId: 'dong-184',     cityId: 'changan' },
   'li-ru':        { forceId: 'dong-184',     cityId: 'changan' },
   'xu-rong':      { forceId: 'dong-184',     cityId: 'anding' },
-  'hu-zhen':      { forceId: 'dong-184',     cityId: 'jincheng' },
-  'duan-wei':     { forceId: 'dong-184',     cityId: 'anding' },
+  'hu-zhen':      { forceId: 'dong-184',     cityId: 'jincheng', loyalty: 70 },  // 後與呂布不和而致陽人之敗
+  'duan-wei':     { forceId: 'dong-184',     cityId: 'anding', loyalty: 68 },    // 屯華陰,終不肯附李傕
   'zhang-ji':     { forceId: 'dong-184',     cityId: 'wuwei' },
   'fan-chou':     { forceId: 'dong-184',     cityId: 'wuwei' },
   'hua-xiong':    { forceId: 'dong-184',     cityId: 'wuwei' },
   // Future giants serving the Han at the start of their careers
-  'cao-cao':      { forceId: 'huangfu',      cityId: 'chenliu' },
-  'liu-bei':      { forceId: 'zhujun',       cityId: 'xinye' },
-  'guan-yu':      { forceId: 'zhujun',       cityId: 'xinye' },
-  'zhang-fei':    { forceId: 'zhujun',       cityId: 'xinye' },
-  'sun-jian':     { forceId: 'zhujun',       cityId: 'xinye' },
-  'yuan-shao':    { forceId: 'han',          cityId: 'luoyang' },
-  'yuan-shu':     { forceId: 'han',          cityId: 'luoyang' },
+  'cao-cao':      { forceId: 'huangfu',      cityId: 'chenliu', loyalty: 58 },   // 騎都尉,留不了太久 —— 五年後散家財起兵
+  'liu-bei':      { forceId: 'zhujun',       cityId: 'xinye', loyalty: 50 },     // 佐吏而已,志不在此
+  'guan-yu':      { forceId: 'zhujun',       cityId: 'xinye', loyalty: 45 },     // 他忠的是劉備,不是朱儁
+  'zhang-fei':    { forceId: 'zhujun',       cityId: 'xinye', loyalty: 45 },
+  'sun-jian':     { forceId: 'zhujun',       cityId: 'xinye', loyalty: 52 },     // 佐軍司馬,自有部曲
+  'yuan-shao':    { forceId: 'han',          cityId: 'luoyang', loyalty: 55 },   // 四世三公,所圖非漢
+  'yuan-shu':     { forceId: 'han',          cityId: 'luoyang', loyalty: 45 },   // 十三年後他要自己稱帝
   /* 朝堂 —— 平亂的總指揮與那幾個要錢的人。何進以大將軍鎮京師、都督左右羽林,
      張讓趙忠是中常侍。他們原本也在 unsearched 池裡,於是「廣宗易帥」與
      「收印綬,削戶邑」兩條事件講的是盤上不存在的人。 */
-  'he-jin':       { forceId: 'han',          cityId: 'luoyang' },
-  'zhang-rang':   { forceId: 'han',          cityId: 'luoyang' },
-  'zhao-zhong':   { forceId: 'han',          cityId: 'luoyang' },
-  'jian-shuo':    { forceId: 'han',          cityId: 'luoyang' },
+  'he-jin':       { forceId: 'han',          cityId: 'luoyang', loyalty: 62 },   // 大將軍與士人共謀,而所忠者己身
+  'zhang-rang':   { forceId: 'han',          cityId: 'luoyang', loyalty: 35 },   // 「張常侍是我父」—— 忠的是天子,不是朝廷
+  'zhao-zhong':   { forceId: 'han',          cityId: 'luoyang', loyalty: 35 },
+  'jian-shuo':    { forceId: 'han',          cityId: 'luoyang', loyalty: 40 },   // 五年後就要謀殺何進
   // 鄒靖 —— 幽州校尉,劉備最初就是率義兵從他。
   'zou-jing':     { forceId: 'han',          cityId: 'beiping' },
 };
@@ -244,7 +244,7 @@ const CITY_OWNERSHIP_190: Record<string, string> = {
   //          anding, shangdang, guiyang, nanhai, hepu, wudu
 };
 
-const OFFICER_ASSIGNMENTS_190: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_190: Record<string, OfficerAssignment> = {
   // Cao
   'cao-cao':     { forceId: 'cao',       cityId: 'xuchang' },
   'xiahou-dun':  { forceId: 'cao',       cityId: 'xuchang' },
@@ -369,7 +369,7 @@ const CITY_OWNERSHIP_200: Record<string, string> = {
   // Neutral: liaodong, changan, hanzhong, jiaozhi, nanhai, hepu, wudu
 };
 
-const OFFICER_ASSIGNMENTS_200: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_200: Record<string, OfficerAssignment> = {
   // Cao
   'cao-cao':     { forceId: 'cao',       cityId: 'xuchang' },
   'xiahou-dun':  { forceId: 'cao',       cityId: 'xuchang' },
@@ -520,7 +520,7 @@ const CITY_OWNERSHIP_GATHERING: Record<string, string> = {
   // ── Neutral (1): Guiyang (between Sun and Liu Biao) ──
 };
 
-const OFFICER_ASSIGNMENTS_GATHERING: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_GATHERING: Record<string, OfficerAssignment> = {
   // ── Gongsun Du (Liaodong, newly added force) ──
   'gongsun-du':  { forceId: 'gongsun-du', cityId: 'liaodong' },
   'gongsun-kang':{ forceId: 'gongsun-du', cityId: 'liaodong' },
@@ -866,7 +866,7 @@ const CITY_OWNERSHIP_208: Record<string, string> = {
   // Neutral: guiyang
 };
 
-const OFFICER_ASSIGNMENTS_208: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_208: Record<string, OfficerAssignment> = {
   // Cao Cao at peak power
   'cao-cao':     { forceId: 'cao', cityId: 'xuchang' },
   'cao-pi':      { forceId: 'cao', cityId: 'xuchang' },
@@ -1091,7 +1091,7 @@ const CITY_OWNERSHIP_234: Record<string, string> = {
   // jiaozhi, nanhai, hepu, guiyang stay neutral
 };
 
-const OFFICER_ASSIGNMENTS_234: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_234: Record<string, OfficerAssignment> = {
   // ── Wei ──
   'cao-rui':     { forceId: 'cao', cityId: 'luoyang' },
   'sima-yi':     { forceId: 'cao', cityId: 'changan' }, // commanding the west
@@ -1265,7 +1265,7 @@ const CITY_OWNERSHIP_220: Record<string, string> = {
   // Neutral: guiyang
 };
 
-const OFFICER_ASSIGNMENTS_220: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_220: Record<string, OfficerAssignment> = {
   // ── Wei (Cao Pi succeeds Cao Cao) ──
   'cao-pi':      { forceId: 'cao', cityId: 'luoyang' },
   'cao-zhi':     { forceId: 'cao', cityId: 'xuchang' },
@@ -1484,7 +1484,7 @@ const CITY_OWNERSHIP_215: Record<string, string> = {
   yuexi:     'nanman',
 };
 
-const OFFICER_ASSIGNMENTS_215: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_215: Record<string, OfficerAssignment> = {
   // Cao Cao
   'cao-cao':     { forceId: 'cao', cityId: 'xuchang' },
   'cao-pi':      { forceId: 'cao', cityId: 'xuchang' },
@@ -1655,7 +1655,7 @@ const CITY_OWNERSHIP_197: Record<string, string> = {
   shangdang: 'yuan-shao',
 };
 
-const OFFICER_ASSIGNMENTS_197: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_197: Record<string, OfficerAssignment> = {
   // Cao force
   'cao-cao':     { forceId: 'cao',       cityId: 'xuchang' },
   'xiahou-dun':  { forceId: 'cao',       cityId: 'xuchang' },
@@ -1752,7 +1752,7 @@ const CITY_OWNERSHIP_219: Record<string, string> = {
   jianning: 'nanman', yunnan: 'nanman', yongchang: 'nanman', yuexi: 'nanman',
 };
 
-const OFFICER_ASSIGNMENTS_219: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_219: Record<string, OfficerAssignment> = {
   // Cao
   'cao-cao':     { forceId: 'cao',     cityId: 'xuchang' },
   'cao-pi':      { forceId: 'cao',     cityId: 'xuchang' },
@@ -1855,7 +1855,7 @@ const CITY_OWNERSHIP_222: Record<string, string> = {
   jianning: 'nanman', yunnan: 'nanman', yongchang: 'nanman', yuexi: 'nanman',
 };
 
-const OFFICER_ASSIGNMENTS_222: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_222: Record<string, OfficerAssignment> = {
   // Wei (Cao Pi's young state)
   'cao-pi':      { forceId: 'cao',     cityId: 'luoyang' },
   'cao-ren':     { forceId: 'cao',     cityId: 'xiangyang' },
@@ -1952,7 +1952,7 @@ const CITY_OWNERSHIP_225: Record<string, string> = {
   yuexi: 'nanman',
 };
 
-const OFFICER_ASSIGNMENTS_225: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_225: Record<string, OfficerAssignment> = {
   // Shu — the campaign army
   'liu-shan':    { forceId: 'liu-bei', cityId: 'chengdu' },
   'zhuge-liang': { forceId: 'liu-bei', cityId: 'chengdu' },
@@ -2086,7 +2086,7 @@ const CITY_OWNERSHIP_198: Record<string, string> = {
   // Neutrals: changan (warlord aftermath), hanzhong (Zhang Lu), jiaozhi, nanhai, hepu
 };
 
-const OFFICER_ASSIGNMENTS_198: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_198: Record<string, OfficerAssignment> = {
   // ── Cao Cao (besieging Xiapi) ──
   'cao-cao':     { forceId: 'cao', cityId: 'xuchang' },
   'cao-ren':     { forceId: 'cao', cityId: 'pengcheng' },
@@ -2259,7 +2259,7 @@ const CITY_OWNERSHIP_207: Record<string, string> = {
   hepu:      'shi-xie',
 };
 
-const OFFICER_ASSIGNMENTS_207: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_207: Record<string, OfficerAssignment> = {
   // ── Cao Cao (returning south after White Wolf Mountain) ──
   'cao-cao':     { forceId: 'cao', cityId: 'xuchang' },
   'cao-pi':      { forceId: 'cao', cityId: 'xuchang' },
@@ -2464,7 +2464,7 @@ const CITY_OWNERSHIP_211: Record<string, string> = {
   hepu:      'shi-xie',
 };
 
-const OFFICER_ASSIGNMENTS_211: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_211: Record<string, OfficerAssignment> = {
   // ── Cao Cao (marching west to Tong Pass) ──
   'cao-cao':     { forceId: 'cao', cityId: 'changan' },
   'cao-pi':      { forceId: 'cao', cityId: 'xuchang' },
@@ -2658,7 +2658,7 @@ const CITY_OWNERSHIP_228: Record<string, string> = {
   wuhuan:    'xianbei',
 };
 
-const OFFICER_ASSIGNMENTS_228: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_228: Record<string, OfficerAssignment> = {
   // ── Wei (Cao Rui's court; Sima Yi recalled to face Zhuge Liang) ──
   'cao-rui':     { forceId: 'cao', cityId: 'luoyang' },
   'cao-zhen':    { forceId: 'cao', cityId: 'changan' }, // initial commander of the western front
@@ -2851,7 +2851,7 @@ const CITY_OWNERSHIP_263: Record<string, string> = {
   lingling:  'sun',
 };
 
-const OFFICER_ASSIGNMENTS_263: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_263: Record<string, OfficerAssignment> = {
   // ── Wei (Sima Zhao the Duke of Jin in all but name) ──
   'sima-zhao':   { forceId: 'cao', cityId: 'luoyang' },
   'sima-yan':    { forceId: 'cao', cityId: 'luoyang' }, // future Jin emperor
@@ -3042,7 +3042,7 @@ const CITY_OWNERSHIP_189: Record<string, string> = {
   //           liaodong, yanmen, jianye, wu, jiaozhi, hanzhong, etc.
 };
 
-const OFFICER_ASSIGNMENTS_189: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_189: Record<string, OfficerAssignment> = {
   // ── He Jin (still alive at start; the eunuchs will murder him) ──
   'he-jin':      { forceId: 'han',     cityId: 'luoyang' },
   'he-miao':     { forceId: 'han',     cityId: 'luoyang' },
@@ -3199,7 +3199,7 @@ const CITY_OWNERSHIP_194: Record<string, string> = {
   //     keep changan, mei, tongguan, luoyang as neutral ruins
 };
 
-const OFFICER_ASSIGNMENTS_194: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_194: Record<string, OfficerAssignment> = {
   // ── Cao Cao (marching into Xu after father's murder) ──
   'cao-cao':     { forceId: 'cao', cityId: 'chenliu' },
   'cao-ren':     { forceId: 'cao', cityId: 'chenliu' },
@@ -3397,7 +3397,7 @@ const CITY_OWNERSHIP_214: Record<string, string> = {
   hepu:      'shi-xie',
 };
 
-const OFFICER_ASSIGNMENTS_214: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_214: Record<string, OfficerAssignment> = {
   // ── Cao Cao (just stalemated Sun Quan at Ruxu; eyes on Hanzhong) ──
   'cao-cao':     { forceId: 'cao', cityId: 'xuchang' },
   'cao-pi':      { forceId: 'cao', cityId: 'ye' },
@@ -3603,7 +3603,7 @@ const CITY_OWNERSHIP_249: Record<string, string> = {
   lingling:  'sun',
 };
 
-const OFFICER_ASSIGNMENTS_249: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_249: Record<string, OfficerAssignment> = {
   // ── Sima Faction (the coup, spring of 249) ──
   'sima-yi':     { forceId: 'sima', cityId: 'luoyang' }, // feigning illness then striking
   'sima-shi':    { forceId: 'sima', cityId: 'luoyang' }, // commands the assault on the gates
@@ -3801,7 +3801,7 @@ const CITY_OWNERSHIP_280: Record<string, string> = {
   hepu:      'sun',
 };
 
-const OFFICER_ASSIGNMENTS_280: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_280: Record<string, OfficerAssignment> = {
   // ── Great Jin — Sima Yan and the six armies ──
   'sima-yan':    { forceId: 'sima', cityId: 'luoyang' }, // Emperor Wu of Jin
   'sima-you':    { forceId: 'sima', cityId: 'luoyang' }, // Prince of Qi, brother
@@ -4007,7 +4007,7 @@ const CITY_OWNERSHIP_192: Record<string, string> = {
   jiangzhou: 'liu-yan',
 };
 
-const OFFICER_ASSIGNMENTS_192: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_192: Record<string, OfficerAssignment> = {
   // ── Han Court at Chang'an (Wang Yun's restoration) ──
   'wang-yun':    { forceId: 'han', cityId: 'changan' },
   'liu-xie':     { forceId: 'han', cityId: 'changan' }, // Emperor Xian, 11 years old
@@ -4232,7 +4232,7 @@ const CITY_OWNERSHIP_204: Record<string, string> = {
   hepu:      'shi-xie',
 };
 
-const OFFICER_ASSIGNMENTS_204: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_204: Record<string, OfficerAssignment> = {
   // ── Cao Cao (closing the trench at Ye) ──
   'cao-cao':     { forceId: 'cao', cityId: 'ye' }, // present at the siege
   'cao-pi':      { forceId: 'cao', cityId: 'xuchang' }, // about to claim Lady Zhen
@@ -4476,7 +4476,7 @@ const CITY_OWNERSHIP_213: Record<string, string> = {
   hepu:      'shi-xie',
 };
 
-const OFFICER_ASSIGNMENTS_213: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_213: Record<string, OfficerAssignment> = {
   // ── Cao Cao (massing on the Yangtze) ──
   'cao-cao':     { forceId: 'cao', cityId: 'xuchang' },
   'cao-pi':      { forceId: 'cao', cityId: 'ye' },
@@ -4722,7 +4722,7 @@ const CITY_OWNERSHIP_221: Record<string, string> = {
   yuexi:     'nanman',
 };
 
-const OFFICER_ASSIGNMENTS_221: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_221: Record<string, OfficerAssignment> = {
   // ── Wei (Cao Pi as Emperor Wen) ──
   'cao-pi':      { forceId: 'cao', cityId: 'luoyang' },
   'cao-rui':     { forceId: 'cao', cityId: 'luoyang' }, // 17 years old, crown prince
@@ -4999,7 +4999,7 @@ const CITY_OWNERSHIP_229: Record<string, string> = {
   yongchang: 'nanman',
 };
 
-const OFFICER_ASSIGNMENTS_229: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_229: Record<string, OfficerAssignment> = {
   // ── Wei (Emperor Ming, Cao Rui) ──
   'cao-rui':     { forceId: 'cao', cityId: 'luoyang' },
   'cao-zhen':    { forceId: 'cao', cityId: 'changan' },
@@ -5255,7 +5255,7 @@ const CITY_OWNERSHIP_252: Record<string, string> = {
   hepu:      'sun',
 };
 
-const OFFICER_ASSIGNMENTS_252: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_252: Record<string, OfficerAssignment> = {
   // ── Wei (Cao Fang, with Sima Shi as the power) ──
   'cao-fang':    { forceId: 'cao', cityId: 'luoyang' },
   'cao-mao':     { forceId: 'cao', cityId: 'luoyang' }, // 11 years old
@@ -5479,7 +5479,7 @@ const CITY_OWNERSHIP_264: Record<string, string> = {
   hepu:      'sun',
 };
 
-const OFFICER_ASSIGNMENTS_264: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_264: Record<string, OfficerAssignment> = {
   // ── Wei loyalist (Sima Zhao at Luoyang) ──
   'sima-zhao':   { forceId: 'cao', cityId: 'luoyang' }, // Duke of Jin
   'sima-yan':    { forceId: 'cao', cityId: 'luoyang' }, // heir, will found Jin
@@ -5701,7 +5701,7 @@ const CITY_OWNERSHIP_265: Record<string, string> = {
   hepu:      'sun',
 };
 
-const OFFICER_ASSIGNMENTS_265: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_265: Record<string, OfficerAssignment> = {
   // ── Jin (Sima Yan, just received the abdication) ──
   'sima-yan':    { forceId: 'sima', cityId: 'luoyang' }, // Emperor Wu of Jin
   'sima-you':    { forceId: 'sima', cityId: 'luoyang' },
@@ -5929,7 +5929,7 @@ const CITY_OWNERSHIP_GUANYU_JING: Record<string, string> = {
   wuhuan:    'xianbei',
 };
 
-const OFFICER_ASSIGNMENTS_GUANYU_JING: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_GUANYU_JING: Record<string, OfficerAssignment> = {
   // ── Wei (Cao Pi just declared the dynasty) ──
   'cao-pi':      { forceId: 'cao', cityId: 'luoyang' },
   'cao-zhi':     { forceId: 'cao', cityId: 'xuchang' },
@@ -6151,7 +6151,7 @@ const CITY_OWNERSHIP_ZHUGE_LIVES: Record<string, string> = {
   hepu:      'sun',
 };
 
-const OFFICER_ASSIGNMENTS_ZHUGE_LIVES: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_ZHUGE_LIVES: Record<string, OfficerAssignment> = {
   // ── Shu Han (Zhuge Liang at the height of victory, age 60) ──
   'liu-shan':    { forceId: 'liu-bei', cityId: 'chengdu' },
   'zhuge-liang': { forceId: 'liu-bei', cityId: 'changan' }, // the new western capital
@@ -6326,7 +6326,7 @@ const CITY_OWNERSHIP_CHIBI_WIN: Record<string, string> = {
   hepu:      'shi-xie',
 };
 
-const OFFICER_ASSIGNMENTS_CHIBI_WIN: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_CHIBI_WIN: Record<string, OfficerAssignment> = {
   // ── Cao Cao — at imperial apex ──
   'cao-cao':     { forceId: 'cao', cityId: 'xuchang' },
   'cao-pi':      { forceId: 'cao', cityId: 'xuchang' },
@@ -6564,7 +6564,7 @@ const CITY_OWNERSHIP_WOMEN: Record<string, string> = {
   hanzhong:  'bian-liang',
 };
 
-const OFFICER_ASSIGNMENTS_WOMEN: Record<string, { forceId: string; cityId: string }> = {
+const OFFICER_ASSIGNMENTS_WOMEN: Record<string, OfficerAssignment> = {
   // ── Diao Chan — the seductive sovereign of Chang'an ──
   'diaochan':    { forceId: 'diaochan-han', cityId: 'changan' },
   'lu-bu':       { forceId: 'diaochan-han', cityId: 'changan' }, // her sworn champion
@@ -6711,13 +6711,13 @@ export const SCENARIO_WHATIF_WOMEN: Scenario = {
 // pulled back to that force's capital, so nobody is left stranded in what is
 // now enemy territory after the map is redrawn.
 function whatIfOfficers(
-  base: Record<string, { forceId: string; cityId: string }>,
+  base: Record<string, OfficerAssignment>,
   ownership: Record<string, string>,
   forces: Force[],
-): Record<string, { forceId: string; cityId: string }> {
+): Record<string, OfficerAssignment> {
   const capital: Record<string, string> = {};
   for (const f of forces) capital[f.id] = f.capitalCityId;
-  const out: Record<string, { forceId: string; cityId: string }> = {};
+  const out: Record<string, OfficerAssignment> = {};
   for (const [id, a] of Object.entries(base)) {
     const held = ownership[a.cityId] === a.forceId;
     out[id] = { forceId: a.forceId, cityId: held ? a.cityId : (capital[a.forceId] ?? a.cityId) };
@@ -7359,7 +7359,7 @@ export const SCENARIO_WHATIF_LUXUN_LIVES: Scenario = {
 // Yi), philosophers (Mencius, Xunzi, Mozi) and assassins drift between courts.
 // ════════════════════════════════════════════════════════════════════════
 function buildWarringStatesOfficers(
-  assignments: Record<string, { forceId: string; cityId: string }>,
+  assignments: Record<string, OfficerAssignment>,
   dynasties: Dynasty[] = ['warring-states'],
 ): Officer[] {
   return buildHistoricalOfficers(dynasties).map((o) => {
@@ -7416,7 +7416,7 @@ const CITY_OWNERSHIP_WS_SEVEN: Record<string, string> = {
   zhuyai: 'chu', linhai: 'chu', 'yi-county': 'chu', chibi: 'chu', changban: 'chu',
 };
 
-const ASSIGN_WS_SEVEN: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_SEVEN: Record<string, OfficerAssignment> = {
   // 秦 — king, the spear (Bai Qi, Wang Jian, Sima Cuo, Meng Ao), the law (Shang
   //     Yang, Fan Ju, Zhang Yi, Lü Buwei, Cai Ze, Gan Mao, Chuli Ji).
   'hist-qin-zhaoxiang': { forceId: 'qin', cityId: 'changan' },
@@ -7509,7 +7509,7 @@ const CITY_OWNERSHIP_WS_CHANGPING: Record<string, string> = {
   ...CITY_OWNERSHIP_WS_SEVEN,
   shangdang: 'qin', // Qin has taken the Shangdang plateau — the war's spark
 };
-const ASSIGN_WS_CHANGPING: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_CHANGPING: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-zhao-xiaocheng': { forceId: 'zhao', cityId: 'ye' },       // the impatient king
   'hist-bai-qi':    { forceId: 'qin',  cityId: 'shangdang' },     // poised to encircle
@@ -7540,7 +7540,7 @@ const CITY_OWNERSHIP_WS_YUEYI: Record<string, string> = {
   linzi: 'yan', pengcheng: 'yan', xiapi: 'yan', xiaopei: 'yan', // Yan overruns Qi
   // Qi clings to two towns: Ju (langya) and Jimo (beihai)
 };
-const ASSIGN_WS_YUEYI: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_YUEYI: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   // Yan's host holds the burned capital of Linzi
   'hist-yue-yi': { forceId: 'yan', cityId: 'linzi' },
@@ -7580,7 +7580,7 @@ const CITY_OWNERSHIP_WS_GUILING: Record<string, string> = {
   ...CITY_OWNERSHIP_WS_SEVEN,
   ye: 'wei', // Pang Juan has stormed Handan
 };
-const ASSIGN_WS_GUILING: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_GUILING: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-qi-weiwang': { forceId: 'qi', cityId: 'linzi' },
   'hist-pang-juan':  { forceId: 'wei',  cityId: 'ye' },      // holds taken Handan, far from home
@@ -7620,7 +7620,7 @@ const CITY_OWNERSHIP_WS_HANDAN: Record<string, string> = {
   ...CITY_OWNERSHIP_WS_SEVEN,
   shangdang: 'qin', // taken at Changping; the noose around Handan
 };
-const ASSIGN_WS_HANDAN: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_HANDAN: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-zhao-xiaocheng': { forceId: 'zhao', cityId: 'ye' },
   // Qin's siege army pressing down from Shangdang
@@ -7658,7 +7658,7 @@ const CITY_OWNERSHIP_WS_QIN_UNIFY: Record<string, string> = {
   shangdang: 'qin', // the eastern marches already swallowed
   luoyang: 'qin',   // Yiyang and the Zhou heartland taken
 };
-const ASSIGN_WS_QIN_UNIFY: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_QIN_UNIFY: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   // The conquest cabinet
   'hist-qin-shihuang': { forceId: 'qin', cityId: 'changan' },
@@ -7704,7 +7704,7 @@ const FORCES_WS_SHANGYANG: Force[] = FORCES_WS_SEVEN.map((f) =>
 const CITY_OWNERSHIP_WS_SHANGYANG: Record<string, string> = Object.fromEntries(
   Object.entries(CITY_OWNERSHIP_WS_SEVEN).filter(([c]) => !WS_SHANGYANG_NEUTRAL.has(c)),
 );
-const ASSIGN_WS_SHANGYANG: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_SHANGYANG: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-qin-xiaogong': { forceId: 'qin', cityId: 'changan' }, // Duke Xiao
   'hist-shang-yang':   { forceId: 'qin', cityId: 'changan' }, // the architect of the law
@@ -7735,7 +7735,7 @@ const CITY_OWNERSHIP_WS_YANYING: Record<string, string> = {
   jiangling: 'qin', wancheng: 'qin', xiangyang: 'qin', fancheng: 'qin',
   yiling: 'qin', xiling: 'qin', maicheng: 'qin', gongan: 'qin', wan: 'qin',
 };
-const ASSIGN_WS_YANYING: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_YANYING: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-bai-qi':    { forceId: 'qin', cityId: 'jiangling' }, // stands in the burned Ying
   'hist-wang-jian': { forceId: 'qin', cityId: 'wancheng' },
@@ -7762,7 +7762,7 @@ export const SCENARIO_WS_YANYING: Scenario = {
 // ── 五國攻秦·函谷關 (Warring States). Su Qin binds the six kingdoms with a single
 //    seal of alliance and hurls them west at the gate of Hangu; behind it Zhang Yi
 //    works to split them apart again. The eternal contest of vertical and horizontal. ──
-const ASSIGN_WS_HANGU: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_HANGU: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-su-qin':  { forceId: 'zhao', cityId: 'ye' },      // chancellor of the alliance, six seals
   'hist-zhang-yi':{ forceId: 'qin',  cityId: 'changan' }, // the horizontal counter, in Qin
@@ -7791,7 +7791,7 @@ const CITY_OWNERSHIP_WS_YIQUE: Record<string, string> = {
   luoyang: 'qin', // Yiyang and the Yi gorges broken open
   hulao: 'qin',
 };
-const ASSIGN_WS_YIQUE: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_YIQUE: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-bai-qi':    { forceId: 'qin', cityId: 'luoyang' }, // standing on the broken pass
   'hist-wang-jian': { forceId: 'qin', cityId: 'luoyang' },
@@ -7821,7 +7821,7 @@ const CITY_OWNERSHIP_WS_YUYU: Record<string, string> = {
   ...CITY_OWNERSHIP_WS_SEVEN,
   shangdang: 'qin', // Qin holds Yuyu deep in the hills
 };
-const ASSIGN_WS_YUYU: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_YUYU: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-zhao-huiwen': { forceId: 'zhao', cityId: 'ye' },
   'hist-bai-qi':      { forceId: 'qin',  cityId: 'shangdang' }, // the Qin army holding Yuyu
@@ -7853,7 +7853,7 @@ const CITY_OWNERSHIP_WS_TIANDAN: Record<string, string> = {
   ...CITY_OWNERSHIP_WS_SEVEN,
   linzi: 'yan', pengcheng: 'yan', xiapi: 'yan', xiaopei: 'yan', // Yan still holds conquered Qi
 };
-const ASSIGN_WS_TIANDAN: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_TIANDAN: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   // The suspicious new king who recalled Yue Yi
   'hist-yan-huiwang': { forceId: 'yan', cityId: 'ji' },
@@ -7897,7 +7897,7 @@ const CITY_OWNERSHIP_WS_WEIWEN: Record<string, string> = {
   ye: 'wei',     // Ye is Wei's, where Ximen Bao tames the Zhang and its witches
   boling: 'wei', // Yue Yang has swallowed Zhongshan
 };
-const ASSIGN_WS_WEIWEN: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_WEIWEN: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-wei-wenhou':  { forceId: 'wei', cityId: 'chenliu' },
   'hist-li-kui-ws':   { forceId: 'wei', cityId: 'chenliu' }, // the first Legalist reformer
@@ -7938,7 +7938,7 @@ const CITY_OWNERSHIP_WS_QIMIN: Record<string, string> = {
   ...CITY_OWNERSHIP_WS_SEVEN,
   lujiang: 'qi', // Qi has pushed into the Huai, beyond swallowed Song
 };
-const ASSIGN_WS_QIMIN: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_WS_QIMIN: Record<string, OfficerAssignment> = {
   ...ASSIGN_WS_SEVEN,
   'hist-qi-minwang': { forceId: 'qi', cityId: 'linzi' }, // Emperor of the East
   'hist-tian-ji':    { forceId: 'qi', cityId: 'linzi' },
@@ -8007,7 +8007,7 @@ const CITY_OWNERSHIP_CHUHAN: Record<string, string> = {
   guilin: 'chu', cangwu: 'chu', jiuzhen: 'chu', rinan: 'chu', zhuyai: 'chu',
   linhai: 'chu', 'yi-county': 'chu', chibi: 'chu', changban: 'chu',
 };
-const ASSIGN_CHUHAN: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_CHUHAN: Record<string, OfficerAssignment> = {
   // 西楚 — the Hegemon-King and his marshals
   'hist-xiang-yu':    { forceId: 'chu', cityId: 'pengcheng' },
   'hist-fan-zeng':    { forceId: 'chu', cityId: 'pengcheng' }, // the one adviser he ignores
@@ -8069,7 +8069,7 @@ const CITY_OWNERSHIP_CH_SANQIN: Record<string, string> = {
   ...CITY_OWNERSHIP_CHUHAN,
   chencang: 'han', // Han Xin slips out the back road and takes Chencang
 };
-const ASSIGN_CH_SANQIN: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_CH_SANQIN: Record<string, OfficerAssignment> = {
   ...ASSIGN_CHUHAN,
   'hist-han-xin':  { forceId: 'han', cityId: 'chencang' }, // the secret march
   'hist-fan-kuai': { forceId: 'han', cityId: 'chencang' },
@@ -8094,7 +8094,7 @@ const CITY_OWNERSHIP_CH_PENGCHENG: Record<string, string> = {
   // the coalition has rolled east and seized the Hegemon's own capital
   pengcheng: 'han', xiapi: 'han', xuchang: 'han', chenliu: 'han', runan: 'han',
 };
-const ASSIGN_CH_PENGCHENG: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_CH_PENGCHENG: Record<string, OfficerAssignment> = {
   ...ASSIGN_CHUHAN,
   'hist-liu-bang': { forceId: 'han', cityId: 'pengcheng' }, // feasting in the taken capital
   'hist-zhang-liang': { forceId: 'han', cityId: 'pengcheng' },
@@ -8125,7 +8125,7 @@ const CITY_OWNERSHIP_CH_GAIXIA: Record<string, string> = Object.fromEntries(
   Object.keys(CITY_OWNERSHIP_CHUHAN).map((c) => [c, GAIXIA_CHU_CITIES.includes(c) ? 'chu' : 'han']),
 );
 const FORCES_CH_GAIXIA: Force[] = FORCES_CHUHAN.filter((f) => f.id === 'chu' || f.id === 'han');
-const ASSIGN_CH_GAIXIA: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_CH_GAIXIA: Record<string, OfficerAssignment> = {
   ...ASSIGN_CHUHAN,
   // the former lords, all crushed or gone over to Han by now
   'hist-tian-rong': { forceId: 'han', cityId: 'linzi' },
@@ -8167,7 +8167,7 @@ const CITY_OWNERSHIP_CH_JINGXING: Record<string, string> = {
   // Han Xin has already conquered Wei on his way north
   puyang: 'han', luoyang: 'han', baima: 'han', yanjin: 'han', liyang: 'han',
 };
-const ASSIGN_CH_JINGXING: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_CH_JINGXING: Record<string, OfficerAssignment> = {
   ...ASSIGN_CHUHAN,
   'hist-han-xin':   { forceId: 'han', cityId: 'taiyuan' }, // backed against the river
   'hist-zhang-er':  { forceId: 'han', cityId: 'taiyuan' }, // turned on Chen Yu, marches with Han
@@ -8218,7 +8218,7 @@ const FORCES_CH_JULU: Force[] = [
   { id: 'qi',   name: { en: 'Qi',         zh: '齊' }, rulerOfficerId: 'hist-tian-dan-chu',  capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
   { id: 'wei',  name: { en: 'Wei',        zh: '魏' }, rulerOfficerId: 'hist-wei-bao',       capitalCityId: 'puyang',    color: '#2f8e6f', isPlayer: false },
 ];
-const ASSIGN_CH_JULU: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_CH_JULU: Record<string, OfficerAssignment> = {
   // 秦 — the boy-emperor in Xianyang and the empire's two great armies
   'hist-qin-ershi':   { forceId: 'qin', cityId: 'changan' }, // the Second Emperor, Zhao Gao's puppet
   'hist-zhang-han':   { forceId: 'qin', cityId: 'changan' }, // guarding the supply road
@@ -8285,7 +8285,7 @@ const FORCES_CH_DAZE: Force[] = [
   { id: 'chu',      name: { en: 'Chu (Xiang)', zh: '楚' }, rulerOfficerId: 'hist-xiang-liang',  capitalCityId: 'jianye',    color: '#e07b39', isPlayer: false },
   { id: 'qi',       name: { en: 'Qi',         zh: '齊'   }, rulerOfficerId: 'hist-tian-dan-chu', capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
 ];
-const ASSIGN_CH_DAZE: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_CH_DAZE: Record<string, OfficerAssignment> = {
   // 秦 — the empire, vast but rotting under Er Shi and Zhao Gao
   'hist-qin-ershi': { forceId: 'qin', cityId: 'changan' },
   'hist-zhao-gao':  { forceId: 'qin', cityId: 'changan' },
@@ -8334,7 +8334,7 @@ const FORCES_CH_WEISHUI: Force[] = [
   { id: 'han', name: { en: 'Han', zh: '漢' }, rulerOfficerId: 'hist-liu-bang',   capitalCityId: 'changan',   color: '#3a7dd9', isPlayer: false },
   { id: 'qi',  name: { en: 'Qi',  zh: '齊' }, rulerOfficerId: 'hist-tian-guang', capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
 ];
-const ASSIGN_CH_WEISHUI: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_CH_WEISHUI: Record<string, OfficerAssignment> = {
   ...ASSIGN_CHUHAN,
   // the north all swept into Han's hand; the old lords folded in
   'hist-zhang-han':  { forceId: 'han', cityId: 'changan' },
@@ -8411,7 +8411,7 @@ const CITY_OWNERSHIP_ST_SUIEND: Record<string, string> = {
   // (the south — Jing, Shu, Lingnan — and the far frontier stay unclaimed:
   //  Xiao Xian, Lin Shihong, Feng Ang and the rest are not yet on this board)
 };
-const ASSIGN_ST_SUIEND: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_ST_SUIEND: Record<string, OfficerAssignment> = {
   // 唐 — Li Yuan and the future Taizong; the great Tang generals are NOT here yet
   'hist-li-yuan':      { forceId: 'tang', cityId: 'changan' },
   'hist-tang-taizong': { forceId: 'tang', cityId: 'changan' }, // Li Shimin, age 19
@@ -8460,7 +8460,7 @@ const CITY_OWNERSHIP_ST_QIANSHUI: Record<string, string> = {
   ...CITY_OWNERSHIP_ST_SUIEND,
   chencang: 'xiqin', // Xue Ju has driven east through the Long passes toward Chang'an
 };
-const ASSIGN_ST_QIANSHUI: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_ST_QIANSHUI: Record<string, OfficerAssignment> = {
   ...ASSIGN_ST_SUIEND,
   'hist-tang-taizong': { forceId: 'tang', cityId: 'mei' },      // out to meet the Qin horse
   'hist-li-jing':      { forceId: 'tang', cityId: 'mei' },
@@ -8486,7 +8486,7 @@ const CITY_OWNERSHIP_ST_BOBI: Record<string, string> = {
   taiyuan: 'dingyang',  // Liu Wuzhou has stormed down and taken Taiyuan
   shangdang: 'dingyang',
 };
-const ASSIGN_ST_BOBI: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_ST_BOBI: Record<string, OfficerAssignment> = {
   ...ASSIGN_ST_SUIEND,
   'hist-liu-wuzhou':   { forceId: 'dingyang', cityId: 'taiyuan' }, // in the captured cradle
   'hist-yuchi-gong':   { forceId: 'dingyang', cityId: 'taiyuan' }, // Song Jingang's spearhead
@@ -8520,7 +8520,7 @@ const CITY_OWNERSHIP_ST_HULAO: Record<string, string> = Object.fromEntries(
     return [c, 'tang'];                     // Tang has swallowed Wagang/Xiqin/Dingyang/Wu
   }),
 );
-const ASSIGN_ST_HULAO: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_ST_HULAO: Record<string, OfficerAssignment> = {
   // 唐 — the captains all gathered now, the siege of Luoyang and the race to Hulao
   'hist-li-yuan':      { forceId: 'tang', cityId: 'changan' },
   'hist-tang-taizong': { forceId: 'tang', cityId: 'hulao' },   // racing to seize the pass
@@ -8566,7 +8566,7 @@ const FORCES_ST_ANSHI: Force[] = [
   { id: 'tang', name: { en: 'Tang',     zh: '唐'   }, rulerOfficerId: 'hist-li-longji', capitalCityId: 'changan', color: '#d4af37', isPlayer: false },
   { id: 'yan',  name: { en: 'Great Yan', zh: '大燕' }, rulerOfficerId: 'hist-an-lushan', capitalCityId: 'beiping', color: '#8b2e2e', isPlayer: false },
 ];
-const ASSIGN_ST_ANSHI: Record<string, { forceId: string; cityId: string }> = {
+const ASSIGN_ST_ANSHI: Record<string, OfficerAssignment> = {
   // 唐 — the dozing emperor, and the loyal commanders who must save the dynasty
   'hist-li-longji':     { forceId: 'tang', cityId: 'changan' },  // Xuanzong, soon fleeing to Shu
   'hist-yang-guifei':   { forceId: 'tang', cityId: 'changan' },  // doomed at Mawei
