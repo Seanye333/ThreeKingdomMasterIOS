@@ -34,8 +34,8 @@ from refine_liu_bei_reference_v3 import curve_bundle_poly
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "public/models/duel/_src"
-INPUT_BLEND = SRC / "zhang-fei-reference-fullbody-v10.blend"
-HEAD_SOURCE = SRC / "guan-yu-reference-fullbody-v45.blend"
+HEAD_SOURCE = SRC / "guan-yu-reference-fullbody-v44.blend"
+INPUT_BLEND = HEAD_SOURCE
 SKIN_SOURCE = SRC / "guan-yu-mpfb-base.blend"
 OUTPUT_BLEND = SRC / "zhao-yun-stylized-v1.blend"
 FRONT = SRC / "zhao-yun-stylized-v1-front.png"
@@ -53,18 +53,23 @@ def capture_human_head():
     return coordinates
 
 
-def remove_zhang_fei_identity():
+def remove_guan_yu_identity():
     remove_matching(
-        "ZhangFei_Bushy_Beard_", "ZhangFei_Moustache_", "ZhangFei_Heavy_Brow_",
-        "ZhangFei_Brow_Fibers_", "ZhangFeiV2_Brow_", "ZhangFeiV2_Cheek_Scar_",
-        "ZhangFeiV3_Face_", "ZhangFei_Upper_Lid_", "ZhangFei_Lower_Lid_",
-        "ZhangFei_Eye_", "ZhangFei_Tear_Duct_", "ZhangFeiV5_Eye_",
-        "ZhangFeiV2_Mouth_", "ZhangFeiV3_Mouth_", "ZhangFei_Wild_Hair_",
-        "ZhangFei_Dense_Scalp_Fibers", "ZhangFeiV4_Topknot_Escaped_Strands",
-        "V31_Nostril_", "V39_Face_UnderEye_Crease_",
-        "ZhangFeiV2_EightSpan_Serpent_Blade", "ZhangFeiV2_Serpent_Gold_Ridge_",
-        "ZhangFei_Spear_Tassel_", "ZhangFei_Spear_Crimson_Gem",
+        "V34_Groom_Beard_", "V34_Groom_Moustache_", "V40_Beard_Root_",
+        "Fullbody_Blade_", "Fullbody_Crimson_Pole_Grip_", "V29_Blade_",
     )
+
+
+def prepare_source_body():
+    body = bpy.data.objects["Guan_Yu_Basemesh"]
+    body.name = "Zhao_Yun_Basemesh"
+    rig = bpy.data.objects.get("Guan_Yu_Game_Rig")
+    if rig:
+        rig.name = "Zhao_Yun_Game_Rig"
+    pores = body.modifiers.get("V32 physical facial pores")
+    if pores:
+        body.modifiers.remove(pores)
+    return body
 
 
 def restore_young_stylized_head(source_coordinates):
@@ -107,9 +112,9 @@ def restore_young_stylized_head(source_coordinates):
             if dx < 0.030 and co.y < -0.090:
                 lateral = max(0.0, 1.0 - dx / 0.030)
                 if 1.674 < co.z < 1.694:
-                    co.z += 0.0009 * lateral
+                    co.z += 0.0002 * lateral
                 elif 1.654 < co.z < 1.674:
-                    co.z -= 0.00045 * lateral
+                    co.z -= 0.00010 * lateral
 
         # Smaller straight nose and clean youthful mouth.
         if ax < 0.030 and 1.600 < co.z < 1.670 and co.y < -0.095:
@@ -149,6 +154,10 @@ def restore_clean_young_skin(body):
 
 
 def make_materials():
+    skin = mat("Zhao Yun warm stylized hero skin", (0.34, 0.135, 0.068, 1), 0.57, noise=17.0, bump=0.018)
+    skin_shader = next((node for node in skin.node_tree.nodes if node.type == "BSDF_PRINCIPLED"), None)
+    if skin_shader:
+        skin_shader.inputs["Subsurface Weight"].default_value = 0.040
     silver = mat("Zhao Yun stylized moon silver", (0.36, 0.43, 0.54, 1), 0.25, metallic=0.83, noise=18.0, bump=0.018)
     silver_bright = mat("Zhao Yun bright silver edge", (0.60, 0.70, 0.84, 1), 0.19, metallic=0.90, noise=13.0, bump=0.010)
     silver_dark = mat("Zhao Yun blue shadow steel", (0.070, 0.115, 0.180, 1), 0.34, metallic=0.72, noise=23.0, bump=0.025)
@@ -159,7 +168,7 @@ def make_materials():
     gold = mat("Zhao Yun restrained pale gold", (0.42, 0.28, 0.080, 1), 0.31, metallic=0.78, noise=14.0, bump=0.014)
     hair = mat("Zhao Yun stylized blue black hair", (0.002, 0.006, 0.014, 1), 0.54, noise=24.0, bump=0.020)
     hair_hi = mat("Zhao Yun cool hair highlight", (0.010, 0.028, 0.060, 1), 0.47, noise=28.0, bump=0.016)
-    eye_white = mat("Zhao Yun warm clear sclera", (0.46, 0.40, 0.34, 1), 0.35, noise=8.0, bump=0.004)
+    eye_white = mat("Zhao Yun warm clear sclera", (0.32, 0.27, 0.225, 1), 0.38, noise=8.0, bump=0.004)
     iris_outer = mat("Zhao Yun deep limbal ring", (0.003, 0.006, 0.010, 1), 0.22)
     iris = mat("Zhao Yun bright dark brown iris", (0.050, 0.022, 0.008, 1), 0.22, noise=42.0, bump=0.012)
     pupil = mat("Zhao Yun pupil", (0.00005, 0.00003, 0.00002, 1), 0.15)
@@ -170,68 +179,52 @@ def make_materials():
 
 
 def build_stylized_face(materials):
-    for side in (-1, 1):
-        x = side * 0.0327
-        z = 1.6740
-        sphere(f"ZhaoYun_Eye_Sclera_{side:+d}", (x, -0.1248, z), (0.0151, 0.0147, 0.0126), materials["eye_white"], 64, 32)
-        sphere(f"ZhaoYun_Eye_Limbal_{side:+d}", (x, -0.1395, z), (0.00665, 0.00070, 0.00565), materials["iris_outer"], 52, 26)
-        sphere(f"ZhaoYun_Eye_Iris_{side:+d}", (x, -0.1400, z), (0.00580, 0.00054, 0.00495), materials["iris"], 52, 26)
-        sphere(f"ZhaoYun_Eye_Pupil_{side:+d}", (x, -0.14045, z), (0.00225, 0.00038, 0.00225), materials["pupil"], 40, 20)
-        sphere(f"ZhaoYun_Eye_Catchlight_{side:+d}", (x - 0.0016, -0.1409, z + 0.0020), (0.00072, 0.00014, 0.00064), materials["catchlight"], 24, 12)
-
-        upper = [(side * 0.0145, -0.1725, 1.6790), (side * 0.0255, -0.1746, 1.6828), (side * 0.0365, -0.1744, 1.6832), (side * 0.0480, -0.1706, 1.6795)]
-        lower = [(side * 0.0150, -0.1726, 1.6680), (side * 0.0260, -0.1745, 1.6654), (side * 0.0370, -0.1741, 1.6659), (side * 0.0476, -0.1706, 1.6688)]
-        strand(f"ZhaoYun_Upper_Lid_{side:+d}", upper, 0.00070, materials["lid"], taper=False)
-        strand(f"ZhaoYun_Lower_Lid_{side:+d}", lower, 0.00042, materials["lid"], taper=False)
-
-    rng = random.Random(168)
-    brows = []
-    for side in (-1, 1):
-        for _ in range(105):
-            t = rng.random()
-            x = side * (0.012 + 0.066 * t)
-            z = 1.704 + math.sin(t * math.pi) * 0.0060 - 0.0025 * t + rng.uniform(-0.0008, 0.0008)
-            y = -0.1685 - math.sin(t * math.pi) * 0.0040
-            dx = side * rng.uniform(0.003, 0.006)
-            brows.append(([(x, y, z), (x + dx * 0.55, y - 0.0007, z + 0.0024), (x + dx, y, z + 0.0035)], rng.uniform(0.50, 0.95)))
-    curve_bundle_poly("ZhaoYun_Bold_Brow_Fibers", brows, materials["hair"], 0.00024)
-
-    strand("ZhaoYun_Upper_Lip", [(-0.037, -0.1740, 1.581), (-0.019, -0.1760, 1.583), (0.0, -0.1766, 1.581), (0.019, -0.1760, 1.583), (0.037, -0.1740, 1.581)], 0.00038, materials["lip"], taper=True)
-    strand("ZhaoYun_Lower_Lip", [(-0.034, -0.1738, 1.573), (-0.017, -0.1760, 1.571), (0.0, -0.1767, 1.5705), (0.017, -0.1760, 1.571), (0.034, -0.1738, 1.573)], 0.00040, materials["lip"], taper=True)
+    # Keep the v44 eye stack in place with its original socket fit.  Only
+    # simplify the age lines and darken the proven brow grooming for a youthful
+    # but determined Zhao Yun expression.
+    remove_matching("Portrait_Brow_Furrow_", "V39_Face_UnderEye_Crease_", "V39_Face_Brow_Anchor_")
+    for obj in bpy.data.objects:
+        if obj.name.startswith(("Portrait_Brow_", "V32_Brow_Density_")):
+            assign(obj, materials["hair"])
 
 
 def build_stylized_hair_and_crown(materials):
-    cap = bpy.data.objects.get("ZhangFei_Coarse_Hair_Cap")
-    bun = bpy.data.objects.get("ZhangFeiV2_Hair_Bun_Core")
-    pulled = bpy.data.objects.get("ZhangFeiV2_Hair_Pulled_Flow")
-    coils = bpy.data.objects.get("ZhangFeiV2_Hair_Bun_Coils")
-    tie = bpy.data.objects.get("ZhangFeiV2_Hair_Oxblood_Tie")
-    for obj in (cap, bun, pulled, coils):
-        if obj:
+    # Convert the fitted Han headcloth into a compact silver cavalry helmet.
+    for obj in bpy.data.objects:
+        name = obj.name
+        if name == "Portrait_Fitted_Headcloth":
+            assign(obj, materials["silver_dark"])
+            obj.name = "ZhaoYun_Fitted_Silver_Helmet"
+        elif name.startswith(("Headcloth_Cloud_Filigree_", "V34_Headcloth_Fold_", "V32_Headcloth_Seam_", "V40_Headcloth_Tension_Fold_")):
+            assign(obj, materials["silver_bright"])
+        elif name.startswith("Headcloth_Gold_Stud_"):
+            assign(obj, materials["silver_bright"])
+        elif name in ("Headcloth_Crest_Jade_Inlay", "Headcloth_Imperial_Cloud_Crest"):
+            assign(obj, materials["cyan"] if "Jade" in name else materials["silver_bright"])
+        elif name.startswith("Headcloth_Long_Tail_"):
+            assign(obj, materials["white"])
+        elif name.startswith("Headcloth_Tail_Gold_Edge_"):
+            assign(obj, materials["cyan"])
+        elif name.startswith("V34_Groom_Head_Hair_"):
             assign(obj, materials["hair"])
-    if tie:
-        assign(tie, materials["silver_bright"])
 
-    # Replace the dark headband with a silver diadem, retaining its fitted mesh.
-    headband = bpy.data.objects.get("ZhangFei_Black_Oxblood_Headband")
-    if headband:
-        assign(headband, materials["silver_bright"])
-        headband.name = "ZhaoYun_Fitted_Silver_Diadem"
-    crest = bpy.data.objects.get("ZhangFei_Gold_Forehead_Crest")
-    if crest:
-        assign(crest, materials["cyan"])
-        crest.name = "ZhaoYun_Diadem_Sky_Jade_Crest"
-
-    # Solid graphic locks read cleanly in motion and avoid uncanny sparse hair.
-    locks = [
-        [(-0.076, -0.132, 1.738), (-0.084, -0.147, 1.705), (-0.078, -0.150, 1.660)],
-        [(0.076, -0.132, 1.738), (0.084, -0.147, 1.705), (0.078, -0.150, 1.660)],
-        [(-0.035, 0.020, 1.830), (-0.055, 0.080, 1.745), (-0.070, 0.095, 1.620)],
-        [(0.035, 0.020, 1.830), (0.060, 0.075, 1.735), (0.082, 0.100, 1.610)],
-        [(0.0, 0.025, 1.850), (0.015, 0.095, 1.730), (-0.005, 0.125, 1.575)],
-    ]
-    for index, points in enumerate(locks):
-        strand(f"ZhaoYun_Stylized_Hair_Lock_{index}", points, 0.0055 if index < 2 else 0.0070, materials["hair_hi"], taper=True)
+    # A clean white horsehair plume gives Zhao Yun an immediate cavalry-hero
+    # silhouette while retaining historically plausible Han helmet structure.
+    sphere("ZhaoYun_Helmet_Plume_Socket", (0.0, 0.015, 1.834), (0.021, 0.018, 0.024), materials["silver_bright"], 32, 16)
+    for index in range(13):
+        spread = (index - 6) / 6.0
+        material = materials["cyan"] if index in (0, 12) else materials["white"]
+        strand(
+            f"ZhaoYun_White_Horsehair_Plume_{index}",
+            [
+                (spread * 0.008, 0.020, 1.846),
+                (spread * 0.030, 0.080 + abs(spread) * 0.015, 1.940 + (1.0 - abs(spread)) * 0.030),
+                (spread * 0.060, 0.205 + abs(spread) * 0.040, 1.930 - abs(spread) * 0.055),
+            ],
+            0.0032 if index in (0, 12) else 0.0040,
+            material,
+            taper=True,
+        )
 
 
 def recolor_costume(materials):
@@ -239,7 +232,11 @@ def recolor_costume(materials):
         name = obj.name
         if name.startswith(("ZhaoYun_", "Zhao_Yun_")):
             continue
-        if any(token in name for token in ("Waist_Lamella", "Pauldron_Scale", "Right_Pauldron_Layer", "Fitted_Greave", "Dragon_Pauldron_Base", "Sculpted_Dragon_Head")):
+        if name.startswith("Dragon_"):
+            assign(obj, materials["silver"])
+        elif name.startswith("V37_Dragon_Belt_"):
+            assign(obj, materials["cyan"] if "Eye" in name else materials["silver_dark"])
+        elif any(token in name for token in ("Waist_Lamella", "Pauldron_Scale", "Right_Pauldron_Layer", "Fitted_Greave", "Dragon_Pauldron_Base", "Sculpted_Dragon_Head")):
             assign(obj, materials["silver"])
         elif any(token in name for token in ("Gold_Edge", "Gold_Binding", "Gold_Piping", "Gold_Cuff", "Belt_Rivet", "Waist_Rivet", "Pauldron_Rivet")):
             assign(obj, materials["silver_bright"])
@@ -293,9 +290,9 @@ def pole_endpoints(pole):
 
 
 def rebuild_dragon_gut_spear(materials):
-    pole = bpy.data.objects.get("ZhangFei_Serpent_Spear_Pole")
+    pole = bpy.data.objects.get("Fullbody_Green_Dragon_Pole")
     if not pole:
-        raise RuntimeError("Zhang Fei spear pole is missing")
+        raise RuntimeError("Guan Yu polearm shaft is missing")
     pole.name = "ZhaoYun_Dragon_Gut_Spear_Shaft"
     assign(pole, materials["silver_dark"])
     bottom, top = pole_endpoints(pole)
@@ -335,12 +332,12 @@ def render(scene, camera, path, resolution, location, target, lens):
 
 
 def main():
-    source_coordinates = capture_human_head()
     bpy.ops.wm.open_mainfile(filepath=str(INPUT_BLEND))
-    remove_zhang_fei_identity()
-    body = restore_young_stylized_head(source_coordinates)
+    remove_guan_yu_identity()
+    body = prepare_source_body()
     restore_clean_young_skin(body)
     materials = make_materials()
+    body.material_slots[0].material = materials["skin"]
     build_stylized_face(materials)
     build_stylized_hair_and_crown(materials)
     recolor_costume(materials)

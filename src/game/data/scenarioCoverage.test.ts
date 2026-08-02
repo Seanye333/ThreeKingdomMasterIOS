@@ -39,13 +39,13 @@ function findHoles(): Hole[] {
 /**
  * 目前的空洞數。**只准往下改。**
  *
- *  2026-08-01  補完黃巾之亂 271 → 補完反董卓聯軍十一勢力 263(59 個盤還有洞)
+ *  2026-08-01  黃巾之亂 271 → 反董卓聯軍 263 → 孫策定江東 247(58 個盤還有洞)
  *
  * 最大的幾個:孫策定江東 16、徐州牧 10、官渡之戰 10、白狼山 10、赤壁之戰 10。
  * 形狀很一致 —— 缺的都是**周邊勢力**(劉表、劉焉/劉璋、馬騰、公孫、孔融、
  * 士燮、烏桓),也就是「地圖上存在、但沒人替它寫過一句話」的那些家。
  */
-const HOLE_BUDGET = 263;
+const HOLE_BUDGET = 247;
 
 describe('戰役覆蓋率(序章 / 目標)', () => {
   it('never grows the number of uncovered forces', () => {
@@ -62,7 +62,7 @@ describe('戰役覆蓋率(序章 / 目標)', () => {
   });
 
   /** 已經補齊的盤不可以再退回去 —— 逐盤鎖定,補一個加一個。 */
-  const COMPLETE = ['scn-184-yellow-turban', 'scn-190-anti-dong-zhuo'];
+  const COMPLETE = ['scn-184-yellow-turban', 'scn-190-anti-dong-zhuo', 'scn-195-jiangdong'];
   it.each(COMPLETE)('%s covers every force with both a prologue and an objective', (id) => {
     const holes = findHoles().filter((h) => h.scenario === id);
     expect(holes, `${id} 有空洞:${holes.map((h) => `${h.force}/${h.kind}`).join(', ')}`).toEqual([]);

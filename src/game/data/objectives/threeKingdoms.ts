@@ -925,6 +925,177 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'declare-emperor' },
       },
     },
+    /* 呂布 — 兩座城,十一員將。史實上他 199 年死於白門樓,所以主目標就是
+       活過那一年,而且是在下邳活過。 */
+    {
+      id: 'obj-195-lubu',
+      forceId: 'lu-bu',
+      primary: {
+        title: { zh: '白門樓之前', en: 'Before the White Gate' },
+        description: 'Still hold Xiapi in 200 AD — in history the tower fell in 199.',
+        descriptionZh: '撐到200年仍據有下邳 —— 史實上白門樓是199年的事。',
+        goal: { kind: 'hold-cities', cityIds: ['xiapi'], byYear: 200 },
+      },
+      secondary: [
+        {
+          title: { zh: '徐州之主', en: 'Master of Xu' },
+          description: 'Hold Xiapi and Langya together — the province you took while its lord was away.',
+          descriptionZh: '同時據有下邳與琅琊 —— 趁人出兵而取的那個州。',
+          goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 198 },
+        },
+        {
+          title: { zh: '公臺不去', en: 'Gongtai Stays' },
+          description: 'Keep Chen Gong — he knew exactly what you were and stayed anyway.',
+          descriptionZh: '留住陳宮 —— 他明知你是什麼人,還是留下了。',
+          goal: { kind: 'recruit-officer', officerId: 'chen-gong', byYear: 199 },
+        },
+      ],
+    },
+    /* 劉表 — 不出兵就沒人動得了他。所以主目標是「守住十八年」,
+       副目標才是那筆峴山的血債。 */
+    {
+      id: 'obj-195-liubiao',
+      forceId: 'liu-biao',
+      primary: {
+        title: { zh: '荊州獨安', en: 'Jing Alone at Peace' },
+        description: 'Still hold Xiangyang in 208 AD — Liu Biao held it eighteen years and died in his bed.',
+        descriptionZh: '撐到208年仍據有襄陽 —— 劉表守了十八年,死於病榻。',
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 208 },
+      },
+      secondary: [
+        {
+          title: { zh: '江夏之門', en: 'The Gate at Jiangxia' },
+          description: 'Hold Jiangxia — Huang Zu killed Sun Jian, and the son will come for it.',
+          descriptionZh: '守住江夏 —— 黃祖射殺孫堅,那個兒子遲早要來。',
+          goal: { kind: 'hold-cities', cityIds: ['jiangxia'], byYear: 208 },
+        },
+        {
+          title: { zh: '斷其根本', en: 'Cut the Root' },
+          description: 'Destroy the Sun force before it can take the six commanderies.',
+          descriptionZh: '在孫氏取得江東六郡之前擊滅之。',
+          goal: { kind: 'defeat-force', forceId: 'sun', byYear: 205 },
+        },
+      ],
+    },
+    /* 劉璋 — 史實上他撐到 214 年開城。主目標就是把那道門守住。 */
+    {
+      id: 'obj-195-liuzhang',
+      forceId: 'liu-yan',
+      primary: {
+        title: { zh: '不開此門', en: 'Do Not Open the Gate' },
+        description: 'Still hold Chengdu in 215 AD — in history he opened it in 214.',
+        descriptionZh: '撐到215年仍據有成都 —— 史實上他214年開了門。',
+        goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 215 },
+      },
+      secondary: [
+        {
+          title: { zh: '收漢中', en: 'Retake Hanzhong' },
+          description: 'Take Hanzhong from Zhang Lu — he closed the plank roads after you killed his family.',
+          descriptionZh: '自張魯手中取回漢中 —— 你殺了他母弟,他關了棧道。',
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 210 },
+        },
+        {
+          title: { zh: '孝直不叛', en: 'Xiaozhi Does Not Turn' },
+          description: 'Still have Fa Zheng in 213 — the man who wrote to Liu Bei showing him the way in.',
+          descriptionZh: '213年時法正仍在麾下 —— 就是他寫信替劉備指路的。',
+          goal: { kind: 'recruit-officer', officerId: 'fa-zheng', byYear: 213 },
+        },
+      ],
+    },
+    /* 公孫瓚 — 易京之下,他 199 年自焚。主目標是別走到那一步。 */
+    {
+      id: 'obj-195-gongsun',
+      forceId: 'gongsun',
+      primary: {
+        title: { zh: '易京不焚', en: 'Yijing Does Not Burn' },
+        description: 'Still hold Yi county in 200 AD — in history he burned himself in it in 199.',
+        descriptionZh: '撐到200年仍據有易縣 —— 史實上他199年在城中自焚。',
+        goal: { kind: 'hold-cities', cityIds: ['yi-county'], byYear: 200 },
+      },
+      secondary: [
+        {
+          title: { zh: '幽州之復', en: 'Retake You Province' },
+          description: 'Hold Beiping and Ji together — the frontier command you actually understood.',
+          descriptionZh: '同時據有北平與薊 —— 你真正懂的那條邊。',
+          goal: { kind: 'hold-cities', cityIds: ['beiping', 'ji'], byYear: 199 },
+        },
+        {
+          title: { zh: '子龍未去', en: 'Zilong Has Not Left' },
+          description: 'Keep Zhao Yun — he left in history, saying he had not found what he sought.',
+          descriptionZh: '留住趙雲 —— 史實上他託辭兄喪而去,終身未歸。',
+          goal: { kind: 'recruit-officer', officerId: 'zhao-yun', byYear: 200 },
+        },
+      ],
+    },
+    /* 馬騰 — 關東在爭天下,他守的是隴西的春耕。 */
+    {
+      id: 'obj-195-mateng',
+      forceId: 'ma-teng',
+      primary: {
+        title: { zh: '隴右之安', en: 'Peace in the Long Country' },
+        description: 'Hold Wuwei, Jincheng and Longxi together — one command over the whole Liang country.',
+        descriptionZh: '同時據有武威、金城、隴西 —— 讓整個涼州只認一個號令。',
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'longxi'], byYear: 205 },
+      },
+      secondary: [
+        {
+          title: { zh: '入關中', en: 'Into Guanzhong' },
+          description: "Take Chang'an — the march that failed at Changping Guan the year before.",
+          descriptionZh: '攻取長安 —— 去年在長平觀敗掉的那一趟。',
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 205 },
+        },
+        {
+          title: { zh: '錦馬超', en: 'Ma Chao in Brocade' },
+          description: 'Still have Ma Chao in 211 — the year he rose in the west and it cost his family everything.',
+          descriptionZh: '211年時馬超仍在麾下 —— 他起兵的那一年,代價是全家。',
+          goal: { kind: 'recruit-officer', officerId: 'ma-chao', byYear: 211 },
+        },
+      ],
+    },
+    /* 嚴白虎 — 塢堡之長,不是諸侯。主目標是把孫策擋在江北。 */
+    {
+      id: 'obj-195-yanbaihu',
+      forceId: 'yan-baihu',
+      primary: {
+        title: { zh: '劃江而治', en: 'A River Between Us' },
+        description: 'Hold Wu commandery and Wuxi through 199 — the terms your brother went to ask for.',
+        descriptionZh: '守住吳郡與無錫至199年 —— 你弟弟去談的正是這個。',
+        goal: { kind: 'hold-cities', cityIds: ['wu', 'wuxi'], byYear: 199 },
+      },
+      secondary: [
+        {
+          title: { zh: '東吳德王', en: 'Prince of Virtue' },
+          description: 'Break the Sun force outright — the boy came over with a thousand men.',
+          descriptionZh: '擊滅孫氏 —— 那孩子過江時不過千餘人。',
+          goal: { kind: 'defeat-force', forceId: 'sun', byYear: 200 },
+        },
+      ],
+    },
+    /* 王朗 — 受漢印綬,守漢之郡。他的目標不是爭天下,是不棄土。 */
+    {
+      id: 'obj-195-wanglang',
+      forceId: 'wang-lang',
+      primary: {
+        title: { zh: '不棄印綬', en: 'The Seal Is Not Abandoned' },
+        description: 'Still hold Kuaiji in 199 — Yu Fan told him to run; he would not.',
+        descriptionZh: '撐到199年仍據有會稽 —— 虞翻勸他避走,他不肯。',
+        goal: { kind: 'hold-cities', cityIds: ['kuaiji'], byYear: 199 },
+      },
+      secondary: [
+        {
+          title: { zh: '東冶不奔', en: 'No Ship to Dongye' },
+          description: 'Hold Kuaiji and Linhai together — in history he lost both and took ship south.',
+          descriptionZh: '同時據有會稽與臨海 —— 史實上他兩處皆失,浮海南奔。',
+          goal: { kind: 'hold-cities', cityIds: ['kuaiji', 'linhai'], byYear: 200 },
+        },
+        {
+          title: { zh: '仲翔在側', en: 'Zhongxiang at Hand' },
+          description: 'Keep Yu Fan — the one man who told you the truth about Sun Ce.',
+          descriptionZh: '留住虞翻 —— 唯一跟你說實話的人。',
+          goal: { kind: 'recruit-officer', officerId: 'yu-fan', byYear: 200 },
+        },
+      ],
+    },
   ],
 
   // 197 — The Bohai front

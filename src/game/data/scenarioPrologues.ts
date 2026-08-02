@@ -228,6 +228,42 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
         zh: '孫策向你借兵時,你答應了,大概是覺得他打不下來。\n\n你手上有玉璽,有淮南,有一句念了二十年的讖語。你即將做出這個時代最著名的一個錯誤決定。',
         en: 'When Sun Ce asked you for troops you gave them, probably because you did not think he could win.\n\nYou hold the Seal, you hold Huainan, and you have been reciting the same prophecy for twenty years. You are about to make the most famous bad decision of the age.',
       },
+      'yuan-shao': {
+        zh: '四世三公,門生故吏遍天下。你據冀、青、并三州,帶甲數十萬 —— 此刻的你是天下最強的人,沒有第二個。\n\n沮授勸你「迎大駕於西京,挾天子而令諸侯」。你不肯。你的理由不是不懂:是天子在你營中,你每做一件事都得先請旨,而你已經習慣了不請旨。\n\n那個機會會被許都那個兵不滿萬的人撿走。五年之後,你們在官渡見面。',
+        en: 'Four generations of the highest office; your family\'s clients and former subordinates fill the empire. You hold Ji, Qing and Bing with hundreds of thousands under arms — at this moment you are the strongest man alive, and there is no second.\n\nJu Shou urges you to fetch the emperor from the west and command the lords in his name. You refuse. Not because you fail to see it: because with an emperor in your camp you would have to ask permission for everything, and you have long since stopped asking.\n\nThe man at Xu with fewer than ten thousand troops will pick that chance up instead. Five years from now you meet him at Guandu.',
+      },
+      'lu-bu': {
+        zh: '你是呂布。天下無人騎得過你,也無人再敢信你第二次。丁原、董卓,兩個提拔你的人都死在你手上 —— 這件事你走到哪裡都跟著。\n\n兗州敗於曹操,你來投劉備,然後趁他出兵取了下邳。陳宮還在你身邊,高順、張遼、臧霸也在。這些人明知道你是什麼人,還是留下了。\n\n四年後白門樓上,你會說「縛太急」,會說「明公所患不過於布,今布服矣」。曹操幾乎心動。然後劉備開口:「公不見丁建陽、董卓之事乎?」',
+        en: 'You are Lü Bu. No man alive rides better, and no man will trust you twice. Ding Yuan and Dong Zhuo both raised you up and both died by your hand — that follows you everywhere.\n\nBeaten out of Yan by Cao Cao, you came to Liu Bei for shelter and took Xiapi the moment he marched. Chen Gong is still with you. So are Gao Shun, Zhang Liao, Zang Ba. Every one of them knows exactly what you are, and stayed.\n\nFour years from now on the White Gate Tower you will say "the ropes are too tight," and "what my lord feared was only Bu, and Bu now submits." Cao Cao will very nearly agree. Then Liu Bei will speak: "Has my lord forgotten Ding Jianyang and Dong Zhuo?"',
+      },
+      'liu-biao': {
+        zh: '荊州地方數千里,帶甲十餘萬,士人南奔者以萬計。你不出兵,誰也奈何不了你。\n\n只有一件事跟著你:四年前,孫堅為你攻襄陽,死在峴山的竹林裡,射他的是你的部將黃祖。\n\n那個孩子如今二十一歲,剛過了江。他遲早會來要這筆帳,而黃祖還在江夏替你守著門。',
+        en: 'Jing province runs thousands of li, over a hundred thousand under arms, scholars fleeing south to you in their tens of thousands. So long as you do not march, no one can touch you.\n\nOne thing does follow you. Four years ago Sun Jian came against Xiangyang for you and died in the bamboo on Mount Xian, shot by your officer Huang Zu.\n\nThat man\'s boy is twenty-one now and has just crossed the river. He will come to collect. And Huang Zu is still down at Jiangxia, holding your door.',
+      },
+      'liu-yan': {
+        zh: '你是劉璋。父親劉焉去年死了,益州的官吏推你繼位 —— 他們挑的不是最能幹的兒子,是最好說話的那個。趙韙的原話是:「璋溫仁。」\n\n漢中的張魯已經不聽你了。你殺了他的母親和弟弟,他關了棧道,從此蜀道以北不再是你的。\n\n你手上有法正、張任、嚴顏、黃權,個個是人物 —— 十九年後,你會在成都城裡看著他們替你守城,然後開門投降。你說的是:「父子在州二十餘年,無恩德以加百姓,而百姓攻戰三年,肌膏草野者,以璋故也,何心能安!」',
+        en: 'You are Liu Zhang. Your father Liu Yan died last year and the officials of Yi put you on the seat — not the ablest son, the most agreeable one. Zhao Wei\'s exact words were: "Zhang is mild."\n\nZhang Lu in Hanzhong no longer answers you. You killed his mother and his brother; he closed the plank roads, and everything north of them stopped being yours.\n\nYou hold Fa Zheng, Zhang Ren, Yan Yan, Huang Quan — every one of them a figure. Nineteen years from now you will watch them defend Chengdu for you, and then open the gates. What you will say is: "My father and I held this province twenty years and gave the people nothing; they have fought three years and their flesh has fed the fields, and it is because of me. How could my heart be easy?"',
+      },
+      gongsun: {
+        zh: '界橋之後,你就沒有再贏過。麴義的先登死士破了你的白馬義從,袁紹一步一步壓過來。\n\n所以你築了易京:塹十重,起京數十,中央高樓十丈,積穀三百萬斛。你把家眷遷進去,說「兵法百樓不攻」,又說「當今四方虎爭,無有能坐吾城下相守經年者也」。\n\n城裡不許男子近前,傳令用女人的聲音喊過牆頭。你的部將在外面被圍,你不救 —— 你說救了一個,以後個個都等著人救。於是再沒有人替你死。',
+        en: 'Since Jieqiao you have not won again. Ju Yi\'s vanguard broke your White Horse Volunteers, and Yuan Shao has been closing ever since.\n\nSo you built Yijing: ten rings of ditch, dozens of raised mounds, a central tower a hundred feet high, three million bushels of grain. You moved your household inside and said that by the art of war a hundred towers are not assaulted — and that in an age of tigers no one can sit under your walls for years.\n\nInside, no man may approach you; orders are relayed over the wall by women\'s voices. When your commanders are surrounded outside you do not relieve them — relieve one, you said, and every one of them will sit and wait to be relieved. So no one dies for you any more.',
+      },
+      'ma-teng': {
+        zh: '去年你與韓遂東出,敗於長平觀。朝廷下詔赦你,拜征西將軍,你回了涼州 —— 這是涼州的常態:打、和、再打,而每一次和解都埋著下一次的仇。\n\n馬超今年二十,已經能自己領兵了。龐德在你帳下。韓遂是你的異姓兄弟 —— 也是十年後親手殺你全家八千里外那個消息的源頭。\n\n關東的人在爭天下。你要守的是隴西的春耕。',
+        en: 'Last year you and Han Sui marched east and were beaten at Changping Guan. The court pardoned you, made you General Who Conquers the West, and you went home — that is the rhythm of Liang: fight, make peace, fight again, and every peace carries the next feud inside it.\n\nMa Chao is twenty and leads his own men now. Pang De is in your tent. Han Sui is your sworn brother — and, ten years from now, the reason a message arrives from two thousand miles away saying your household is dead.\n\nThe men east of the pass are fighting for the empire. What you have to protect is the spring sowing in Longxi.',
+      },
+      'yan-baihu': {
+        zh: '你是嚴白虎,吳郡的萬人之長,自稱東吳德王。這一帶的塢堡認你的號令,不認朝廷的印。太守換了幾任,你一任也沒少收過糧。\n\n江北來了個二十一歲的孩子,帶著千餘人。你弟弟嚴輿去談,說劃江而治。\n\n孫策在席上一手戟擲了過去。',
+        en: 'You are Yan Baihu, chief of ten thousand in Wu commandery, styling yourself Prince of Virtue of Eastern Wu. The stockades hereabouts obey you and not the court\'s seals. Governors have come and gone; not one of them ever cut your take of the grain.\n\nA twenty-one-year-old has crossed from the north with a thousand-odd men. Your brother Yan Yu goes to negotiate — a river between us, each to his own bank.\n\nAt the table, Sun Ce throws a halberd.',
+      },
+      'hua-xin': {
+        zh: '你是華歆,豫章太守。少時與管寧同席讀書,門外有乘軒者過,你抬頭看了一眼 —— 管寧割席分坐,說「子非吾友也」。這件事跟了你一輩子。\n\n孫策渡江而來,你會整衣冠出迎。他以上賓之禮待你,說「府君年德名望,遠近所歸」。豫章不流一滴血。\n\n世人說你潔身,你確實不受饋遺。可是十九年後,是你帶著兵進宮,親手把伏皇后從壁中牽出來。她披髮徒跣過殿,問天子「不能復相活邪」,天子說「我亦不知命在何時」。那時你已經是尚書令了。',
+        en: 'You are Hua Xin, Grand Administrator of Yuzhang. As a boy you shared a reading mat with Guan Ning; a nobleman\'s carriage passed the gate and you looked up — Guan Ning cut the mat in two and said, "You are no friend of mine." That has followed you all your life.\n\nWhen Sun Ce crosses the river you will straighten your robes and go out to meet him. He will receive you as an honoured guest and say your years and reputation draw men from far and near. Yuzhang will not lose a drop of blood.\n\nMen call you incorruptible, and it is true that you take no gifts. Yet nineteen years from now it is you who will come into the palace with soldiers and pull the Empress Fu out of the wall she hid in. She will be dragged barefoot past the hall, her hair loose, and ask the emperor whether he cannot keep her alive; he will answer that he does not know how long his own life is. By then you will be Master of Writing.',
+      },
+      'wang-lang': {
+        zh: '你是王朗,會稽太守,經學之士,朝廷所命。虞翻勸你:孫策兵精,不如避之。你不肯 —— 你說你受漢的印綬,守的是漢的郡,豈能望風而走。\n\n你會敗,會浮海奔東冶,會被追上俘獲。孫策念你是儒者,責而不害。\n\n三十年後你官至魏司徒。而在後世的說書人口中,你會被寫成陣前被人罵死的那個老頭 —— 史書上的你,其實是個到死都認為守土是本分的人。',
+        en: 'You are Wang Lang, Grand Administrator of Kuaiji, a classicist holding a court appointment. Yu Fan advises you: Sun Ce\'s troops are sharp, better to avoid him. You refuse — you hold the Han\'s seal over the Han\'s commandery, and an officer does not run at the sight of dust.\n\nYou will lose, take ship for Dongye, and be run down and captured. Sun Ce, out of regard for a scholar, will scold you and let you live.\n\nThirty years on you will be Minister over the Masses of Wei. And in the storytellers\' version you will be the old man argued to death in front of an army — when the man in the histories simply believed to the end that holding one\'s ground was the job.',
+      },
     },
   },
 
