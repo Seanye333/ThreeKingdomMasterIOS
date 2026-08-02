@@ -2306,13 +2306,16 @@ const OFFICER_ASSIGNMENTS_207: Record<string, { forceId: string; cityId: string 
   'sun-qian':    { forceId: 'liu-biao', cityId: 'xinye' },
   'jian-yong':   { forceId: 'liu-biao', cityId: 'xinye' },
   'xu-shu':      { forceId: 'liu-biao', cityId: 'xinye' }, // about to be lured to Cao Cao
-  // Hermits of Longzhong — present at Xiangyang sphere
-  'sima-hui':    { forceId: 'liu-biao', cityId: 'xiangyang' },
-  'cui-zhouping':{ forceId: 'liu-biao', cityId: 'xiangyang' },
-  'huang-chengyan':{forceId: 'liu-biao', cityId: 'xiangyang' },
-  // Zhuge Liang, Pang Tong — unsearched recluses at Xiangyang/Longzhong area
-  'zhuge-liang': { forceId: 'liu-biao', cityId: 'xiangyang' },
-  'pang-tong':   { forceId: 'liu-biao', cityId: 'xiangyang' },
+  /* 隆中那幾位**不編進劉表軍** —— 上面兩行註解原本就寫著 "hermits" 與
+     "unsearched recluses",而底下五行卻把他們全掛進了劉表麾下,意圖與資料
+     互相矛盾。史實上司馬徽、崔州平、黃承彥、諸葛亮一個都沒仕過劉表。
+
+     這不只是史實問題:`evt-maolu-1` 要求 `officer-unaffiliated: zhuge-liang`,
+     所以臥龍只要開局在劉表軍底下,**這張名叫「三顧茅廬」的盤就永遠演不到
+     三顧茅廬**。劉表的主目標寫的也正是「招得諸葛亮」—— 原本第 0 回合就綠了。
+
+     不寫進 assignments 的人會以 unsearched 進入人才池(見 buildInitialOfficers),
+     落在各自的家鄉,要用得自己去尋訪。這正是隆中對的前提。 */
 
   // ── Sun Quan ──
   'sun-quan':    { forceId: 'sun', cityId: 'jianye' },

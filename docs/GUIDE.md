@@ -3554,6 +3554,41 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 - **師徒傳授**:同城武將傳授其已通政策,**無需書院、免費**,但 +1 季較慢。
 - 政策/戰法分三級(policyTier / tacticTier),級越高越貴越久。
 
+### 11.2b 戰役目標的判定(objectives.ts,2026-08-02)
+
+每個盤的每一家都有主目標與若干次要目標(`data/objectives/`),`evaluateGoal` 每旬重算。
+
+- **`hold-cities` / `control-province` 有兩種讀法,由「開局有沒有那座城」決定**:
+  - **開局就據有 → 守成**。要撐到 `byYear` 那一年才判成功;在那之前一律 pending,到期而沒守住才是 failure。
+  - **開局不據有 → 取得**。拿到就成功,不必空等到期限(英雄挑戰「於 217 年前取成都與漢中」正是這一種)。
+  - 為什麼不加旗標:資料已經說了,說在盤面上。`ObjectiveContext.scenarioId` 取得開局盤面(結果快取);沒有 scenarioId 的呼叫端(挑戰系統、自由模式)一律當「取得」。
+  - ⚠ 改這條之前,**所有守成型目標第 0 回合就是綠的** —— 盤面體檢一跑,86 個盤裡有 90 條主目標開局即完成:鄭「守洛待援」開局據洛陽、趙「鉅鹿之圍」開局據鉅鹿、三秦「三秦拒漢」開局據三秦。玩家什麼都還沒做。
+- **`defeat-force` / `recruit-officer`**:達成即成功,`byYear` 過了而未達成則 failure。
+- **`survive-until`**:年份到即成功。**`declare-emperor`**:稱帝即成功。**`unify-realm`**:全城。
+
+#### 11.2c 盤面體檢(scripts/scenario-audit.ts + scenarioAudit.test.ts,2026-08-02)
+
+深挖第一個戰役時發現的毛病幾乎都不是那一盤特有的,而是**一類**問題,而一類問題靠人一盤一盤看是看不完的。所以規則寫成腳本,測試**硬性歸零**(不是棘輪)——加新盤時它會先紅,那正是它的用途:一個新戰役要跟已有的 86 個一樣完整才進得來。
+
+```
+node --import tsx scripts/scenario-audit.ts              # 全部
+node --import tsx scripts/scenario-audit.ts scn-208-chibi   # 單盤明細
+```
+
+| 規則 | 抓什麼 |
+|---|---|
+| `ruler-missing` / `ruler-dead` / `ruler-elsewhere` | 君主不在盤上 / 開局就是屍體 / 隸屬別家(赤壁的劉琮勢力曾指向已死的劉表) |
+| `capital-not-owned` | 首都不歸自己(**彭城之戰、徐州牧是設計如此**,已具名例外) |
+| `force-no-city` / `force-no-officer` | 開局沒城 / 沒有任何在職武將 |
+| `goal-city-missing` / `goal-force-missing` / `goal-officer-missing` | 目標指向盤上不存在的城/勢力/武將 |
+| `goal-already-met` | 主目標第 0 回合就已達成(朱儁「攻取並據守宛城」而盤上開局就把宛城給他) |
+| `goal-year-past` / `goal-force-self` | 期限早於開局年 / 目標是擊潰自己 |
+| `event-blocked-unaffiliated` | 事件要求某人在野,而該盤開局把他編進了某勢力 —— **名叫「三顧茅廬」的那張盤把諸葛亮編進了劉表軍,於是那條鏈在自己的主場盤上永遠不會觸發** |
+
+例外必須具名並寫理由(見該檔 `EXCEPTIONS`)。沒有理由的例外等於把規則關掉。
+
+與 `scripts/scenario-report.ts`(讓 AI 真的把盤打完,量平衡)互補 —— 一支查靜態一致性,一支查動態可玩性,別用其中一支代替另一支。
+
 ### 11.3 承平之亂 —— 贏了之後續行(afterVictory.ts,2026-07-26)
 
 此前**勝利是一堵牆**:`checkEndings` 把 `victoryStatus` 翻成 `'victory'`,結局卡浮出,而 MapScreen 是**依 `victoryStatus` 渲染**那張卡的 —— 於是卡上的「續行」鈕按了關不掉(它只清 `showEnding`),同時所有輸入路徑都被 `victoryStatus !== 'playing'` 擋住。遊戲在最有意思的那一刻停住:你什麼都拿到了,而替你打下來的那些人還站在那裡。

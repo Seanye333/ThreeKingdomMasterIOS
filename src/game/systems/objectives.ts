@@ -7,6 +7,24 @@ import type {
   ScenarioObjective,
 } from '../types';
 import { PROVINCE_BY_CITY } from '../data/provinces';
+import { SCENARIOS } from '../data/scenarios';
+
+/**
+ * 開局時這座城歸誰 —— 用來分辨「守成」與「取得」兩種 hold-cities 目標。
+ *
+ * 一次算好一張表,86 個盤 × 各自的城,只在第一次問的時候建。
+ */
+const initialOwnerCache = new Map<string, Map<string, string | null>>();
+function initialOwnerOf(scenarioId: string | null, cityId: string): string | null {
+  if (!scenarioId) return null;
+  let m = initialOwnerCache.get(scenarioId);
+  if (!m) {
+    const sc = SCENARIOS.find((x) => x.id === scenarioId);
+    m = new Map((sc?.cities ?? []).map((c) => [c.id, c.ownerForceId ?? null]));
+    initialOwnerCache.set(scenarioId, m);
+  }
+  return m.get(cityId) ?? null;
+}
 
 export interface ObjectiveContext {
   scenarioId: EntityId | null;
@@ -35,10 +53,32 @@ export function evaluateGoal(
         (id) => ctx.cities[id]?.ownerForceId === ctx.playerForceId,
       );
       const allHeld = owned.length === goal.cityIds.length;
-      const expired = goal.byYear !== undefined && ctx.year > goal.byYear;
-      if (allHeld) return { status: 'success', progress: `${owned.length}/${goal.cityIds.length}` };
-      if (expired) return { status: 'failure', progress: `${owned.length}/${goal.cityIds.length}` };
-      return { status: 'pending', progress: `${owned.length}/${goal.cityIds.length}` };
+      /*
+       * 「據有 X,至 N 年」有兩種讀法,而**開局有沒有那座城**決定是哪一種:
+       *
+       *  - 開局就據有 → **守成**。要撐到期限那一年才算數。原本 allHeld 就
+       *    直接判成功,於是守成型目標第 0 回合即完成 —— 盤面體檢一跑,86 盤
+       *    裡有 90 條主目標開局就是綠的:鄭「守洛待援」開局據洛陽、趙「鉅鹿
+       *    之圍」開局據鉅鹿、三秦「三秦拒漢」開局據三秦……玩家什麼都還沒做。
+       *  - 開局不據有 → **取得**。拿到就贏,不必空等到期限
+       *    (英雄挑戰「於 217 年前取成都與漢中」正是這一種)。
+       *
+       * 兩種都對,所以不加旗標讓資料自己說 —— 資料已經說了,說在盤面上。
+       * 沒有 scenarioId 的呼叫端(挑戰系統的單元測試、自由模式)取不到開局
+       * 盤面,一律當「取得」,與改動前的行為相同。
+       */
+      const progress = `${owned.length}/${goal.cityIds.length}`;
+      const defending =
+        goal.byYear !== undefined
+        && ctx.playerForceId != null
+        && goal.cityIds.every((id) => initialOwnerOf(ctx.scenarioId, id) === ctx.playerForceId);
+      if (!defending) {
+        return allHeld ? { status: 'success', progress } : { status: 'pending', progress };
+      }
+      if (ctx.year >= goal.byYear!) {
+        return allHeld ? { status: 'success', progress } : { status: 'failure', progress };
+      }
+      return { status: 'pending', progress };
     }
     case 'defeat-force': {
       const dead = !ctx.liveForceIds.has(goal.forceId);
@@ -64,10 +104,18 @@ export function evaluateGoal(
       if (cityIds.length === 0) return { status: 'pending' };
       const owned = cityIds.filter((id) => ctx.cities[id]?.ownerForceId === ctx.playerForceId);
       const allHeld = owned.length === cityIds.length;
-      const expired = goal.byYear !== undefined && ctx.year > goal.byYear;
-      if (allHeld) return { status: 'success', progress: `${owned.length}/${cityIds.length}` };
-      if (expired) return { status: 'failure', progress: `${owned.length}/${cityIds.length}` };
-      return { status: 'pending', progress: `${owned.length}/${cityIds.length}` };
+      const progress = `${owned.length}/${cityIds.length}`;
+      // 與 hold-cities 同理:開局就全據該州的是守成目標,要撐到期限才算數。
+      const defending =
+        goal.byYear !== undefined
+        && ctx.playerForceId != null
+        && cityIds.every((id) => initialOwnerOf(ctx.scenarioId, id) === ctx.playerForceId);
+      if (!defending) {
+        return allHeld ? { status: 'success', progress } : { status: 'pending', progress };
+      }
+      return ctx.year >= goal.byYear!
+        ? { status: allHeld ? 'success' : 'failure', progress }
+        : { status: 'pending', progress };
     }
     case 'declare-emperor':
       return ctx.isEmperor ? { status: 'success' } : { status: 'pending' };
