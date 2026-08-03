@@ -8369,7 +8369,7 @@ export const SCENARIO_CH_WEISHUI: Scenario = {
   name: { en: 'The Battle of the Wei River', zh: '楚漢·濰水之戰' },
   description:
     'The water-trick that ended a kingdom. Han Xin, having swept Wei, Dai, Zhao and Yan into Liu Bang\'s hand, turns on Qi — and storms Linzi in a rush before the persuader Li Yiji\'s peace can take hold. Xiang Yu, alarmed at last, sends his finest general Long Ju with two hundred thousand to save it. Long Ju scorns his enemy and will not wait. So in the night Han Xin dams the Wei river upstream with ten thousand sandbags, lures Long Ju half across the dry bed, then breaks the dam — and the flood takes half the Chu host as it struggles in the water. Long Ju dies on the far bank, Qi falls, and the balance of the whole war tips toward Han.',
-  descriptionZh: "水淹一國之計。韓信既掃魏、代、趙、燕入於劉邦之手，遂轉兵向齊——趁說客酈食其之和未定，急襲破臨淄。項羽至此始驚，遣其第一名將龍且，提二十萬以救之。龍且輕敵，不肯持重。韓信乃夜以萬囊壅濰水上流，誘龍且半渡涸床，決囊放水——洪流挾去半數楚師於水中掙扎之際。龍且死於彼岸，齊遂平，而舉世戰局之勢，自此傾於漢矣。",
+  descriptionZh: "水淹一國之計。韓信既掃魏、代、趙、燕入於劉邦之手，遂轉兵向齊——趁說客酈食其之和未定，急襲破臨淄。項羽至此始驚，遣其第一名將龍且，提二十萬以救之。龍且輕敵，不肯持重。韓信乃夜以萬囊壅濰水上流，誘龍且半渡涸床，決囊放水——洪流挾去半數楚師於水中掙紮之際。龍且死於彼岸，齊遂平，而舉世戰局之勢，自此傾於漢矣。",
   startDate: { year: 178, season: 'autumn' },
   cities: buildInitialCities(CITY_OWNERSHIP_CH_WEISHUI),
   forces: FORCES_CH_WEISHUI,

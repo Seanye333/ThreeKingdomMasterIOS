@@ -27,7 +27,7 @@ export type DuelAnim =
   | 'taunt'   // 挑釁 — battle-cry / chest-thump to bank 氣
   | 'thrust'  // 突刺 — fast lunging stab
   | 'combo'   // 連擊 — a rapid multi-hit flurry
-  | 'disarm'  // 缴械 — rip the foe's weapon aside off a parry
+  | 'disarm'  // 繳械 — rip the foe's weapon aside off a parry
   | 'hit'     // 受擊 — flinch from a blow (from left / right / gut)
   | 'death'   // 倒地 — cut down
   | 'victory';// 得勝 — battle-cry flourish

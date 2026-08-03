@@ -50,7 +50,7 @@ export function meetsMinSize(citySizeId: CitySize, minSize?: CitySize): boolean 
 export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
   'develop-agriculture': {
     type: 'develop-agriculture',
-    label: { en: 'Develop Agriculture', zh: '農業開発' },
+    label: { en: 'Develop Agriculture', zh: '農業開發' },
     stat: 'politics',
     goldCost: 300,
     description:
@@ -58,7 +58,7 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
   },
   'develop-commerce': {
     type: 'develop-commerce',
-    label: { en: 'Develop Commerce', zh: '商業開発' },
+    label: { en: 'Develop Commerce', zh: '商業開發' },
     stat: 'politics',
     goldCost: 300,
     description:
@@ -74,7 +74,7 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
   },
   'recruit-troops': {
     type: 'recruit-troops',
-    label: { en: 'Recruit Troops', zh: '徴兵' },
+    label: { en: 'Recruit Troops', zh: '徵兵' },
     stat: 'charisma',
     goldCost: 500,
     description:
@@ -155,11 +155,11 @@ export const COMMAND_DEFS: Record<CommandType, CommandDef> = {
   },
   'promote-learning': {
     type: 'promote-learning',
-    label: { en: 'Promote Learning', zh: '興学' },
+    label: { en: 'Promote Learning', zh: '興學' },
     stat: 'intelligence',
     goldCost: 300,
     description:
-      '興学 — Hold lectures and endow the schools. Grants an XP burst to every officer stationed in this city (amplified by a 書院/太學), and lifts public morale. Your stable of talent grows faster where learning is honoured.',
+      '興學 — Hold lectures and endow the schools. Grants an XP burst to every officer stationed in this city (amplified by a 書院/太學), and lifts public morale. Your stable of talent grows faster where learning is honoured.',
   },
   'anti-corruption': {
     type: 'anti-corruption',

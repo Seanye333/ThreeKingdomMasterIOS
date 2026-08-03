@@ -516,7 +516,7 @@ function FarEmbassyView({ fromCityId, roamers, onClose }: { fromCityId: string; 
       {/* §7.7-deep ①(A)異域援軍 — call the realm's host to this city. */}
       {target && aid && openedRealms?.[target.id] && (
         <div style={{ fontSize: '0.68rem', color: '#7a8893', marginBottom: '0.5rem', lineHeight: 1.5 }}>
-          {t('義従遠征軍', 'Expeditionary host')}: {aid.unitZh ? (lang === 'en' ? aid.unitEn : aid.unitZh) : ''} ≈ {aid.troops.toLocaleString()}{aid.warhorses > 0 ? t(` + 戰馬 ${aid.warhorses}`, ` + ${aid.warhorses} horses`) : ''}
+          {t('義從遠征軍', 'Expeditionary host')}: {aid.unitZh ? (lang === 'en' ? aid.unitEn : aid.unitZh) : ''} ≈ {aid.troops.toLocaleString()}{aid.warhorses > 0 ? t(` + 戰馬 ${aid.warhorses}`, ` + ${aid.warhorses} horses`) : ''}
           {canSummonAid
             ? <button onClick={() => { if (summonRealmAid(target.id, fromCityId).ok) playSfx('coin'); }} style={miniBtn}>{t('召至此城', 'Summon here')}</button>
             : <span style={{ color: '#5d6b76' }}>{t(' · 須執其封號且關係≥50', ' · needs its 封號 + relation ≥ 50')}</span>}

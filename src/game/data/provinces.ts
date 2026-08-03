@@ -8,7 +8,7 @@ import type { Province } from '../types';
 export const PROVINCES: Province[] = [
   {
     id: 'sili',
-    name: { en: 'Sili', zh: '司隷' },
+    name: { en: 'Sili', zh: '司隸' },
     description: 'The capital province, holding Luoyang and Chang\'an. The seat of the Han Court.',
     descriptionZh: '京畿之州,轄洛陽、長安。漢室朝廷所在。',
     color: '#d4a84a',

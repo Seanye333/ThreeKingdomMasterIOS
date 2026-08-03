@@ -71,7 +71,7 @@ describe('seceProvince — 擁州自立', () => {
       [CIDS[0]]: mkCity(CIDS[0], { troops: 9000 }),
       [CIDS[1]]: mkCity(CIDS[1], { troops: 4000 }),
     };
-    const forces: Record<string, Force> = { wei: mkForce() }; // capital 'ye' is outside 司隷
+    const forces: Record<string, Force> = { wei: mkForce() }; // capital 'ye' is outside 司隸
     const res = seceProvince({ provinceId: PV, gov, officers, cities, forces });
     expect(res).not.toBeNull();
     expect(res!.secededCityIds.length).toBe(2);

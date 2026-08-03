@@ -7,7 +7,7 @@ import type { BilingualName, EntityId } from './common';
 export type BuildingId =
   | 'barracks'   // 兵營 — boosts troop training (recruit) and troop cap
   | 'market'     // 市場 — boosts commerce gold per season
-  | 'foundry'    // 鉄工坊 — boosts equipment quality, slight commerce
+  | 'foundry'    // 鐵工坊 — boosts equipment quality, slight commerce
   | 'academy'    // 書院 — boosts officer XP and recruit chance
   | 'temple'     // 寺院 — boosts loyalty per season and resistance to instigate
   | 'farm'       // 屯田 — boosts agriculture food yield

@@ -1946,7 +1946,7 @@ export function OfficerDetail({
                   const it = officer.equipment.map((id) => ITEMS_BY_ID[id]).find((x) => x?.kind === slot);
                   return (
                     <span key={slot}
-                      title={it ? it.name.zh : t(`${zh}空缺 — 宝物庫可配`, `${slot} empty — assign from the armoury`)}
+                      title={it ? it.name.zh : t(`${zh}空缺 — 寶物庫可配`, `${slot} empty — assign from the armoury`)}
                       style={{
                         display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0.14rem 0.5rem',
                         borderRadius: 'var(--tkm-radius-xs)', fontSize: '0.72rem',

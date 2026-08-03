@@ -4,7 +4,7 @@ import { SCENARIO_234_WUZHANG, SCENARIO_208_CHIBI, SCENARIO_190_ANTI_DONG_ZHUO }
 /** 剧本体检 — the passes/forts added to the map after the scenario tables
  *  were written must inherit historically sensible owners (proximity fill
  *  in buildInitialCities + targeted table fixes). */
-describe('scenario ownership sanity (新城就近归属)', () => {
+describe('scenario ownership sanity (新城就近歸屬)', () => {
   const owner = (scn: { cities: Array<{ id: string; ownerForceId: string | null }> }, id: string) =>
     scn.cities.find((c) => c.id === id)?.ownerForceId;
 
@@ -16,7 +16,7 @@ describe('scenario ownership sanity (新城就近归属)', () => {
     expect(owner(SCENARIO_190_ANTI_DONG_ZHUO, 'liyang')).toBe('yuan-shao');
   });
 
-  it('208 赤壁 — 曹操已下新野, 荆州未降, 江東守濡須', () => {
+  it('208 赤壁 — 曹操已下新野, 荊州未降, 江東守濡須', () => {
     expect(owner(SCENARIO_208_CHIBI, 'xinye')).toBe('cao');
     expect(owner(SCENARIO_208_CHIBI, 'fancheng')).toBe('liu-biao');
     expect(owner(SCENARIO_208_CHIBI, 'ruxu')).toBe('sun');

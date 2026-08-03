@@ -117,7 +117,7 @@ export function terrainDefenderMultiplier(city?: City): number {
     case 'pass':     return 1.15; // 關隘 — a handful can hold a chokepoint
     case 'mountain': return 1.12; // 山城 — high walls, hard climbs
     case 'forest':   return 1.06; // 山林 — broken ground, ambush cover
-    case 'wetland':  return 1.05; // 湿地 — bogs down the assault
+    case 'wetland':  return 1.05; // 濕地 — bogs down the assault
     default:         return 1.0;  // plain / water / desert
   }
 }
@@ -1116,8 +1116,8 @@ export function resolveBattle(
       attackerMorale: Math.round(aMorale),
       defenderMorale: Math.round(dMorale),
       text: captured.length > 0
-        ? `追撃成功 — 俘獲 ${captured.length} 名將`
-        : '追撃 — 餘敵潰逃',
+        ? `追擊成功 — 俘獲 ${captured.length} 名將`
+        : '追擊 — 餘敵潰逃',
     });
   }
 

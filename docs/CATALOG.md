@@ -1035,7 +1035,7 @@
 | 瓦面金裝鐧 Qin Qiong's Gilt Mace | weapon | — | WAR+9 LEA+4 CHA+3 |
 | 饕餮吞天斧 Taotie Sky-Devouring Axe | weapon | — | WAR+13 INT+-2 |
 | 窮奇噬魂槍 Qiongqi Soul-Eating Spear | weapon | — | WAR+10 INT+3 |
-| 梼杌裂地錘 Taowu Earth-Splitting Maul | weapon | — | WAR+12 LEA+2 |
+| 檮杌裂地錘 Taowu Earth-Splitting Maul | weapon | — | WAR+12 LEA+2 |
 | 相柳九首戟 Xiangliu Nine-Head Halberd | weapon | — | WAR+11 INT+3 |
 | 應龍喚雨矛 Responding-Dragon Rain Spear | weapon | — | WAR+9 INT+5 |
 | 烏茲鋼刀 Wootz Steel Saber | weapon | — | WAR+10 LEA+2 |
@@ -1444,7 +1444,7 @@
 | 銅礦 Copper Mining | 銅礦 +50 金 | 工兵 |
 | 珍珠貿 Pearl Trade | 珍珠貿 +60 金 | 海貿 |
 | 玉貿 Jade Trade | 玉貿 +40 金 | 絲綢之路 |
-| 関稅 River Tolls | 関稅 +50 金 | 商業 |
+| 關稅 River Tolls | 關稅 +50 金 | 商業 |
 | 茶馬貿易 Tea-Horse Trade | 茶馬 +10% 金 | 商業 |
 | 漁鹽 Fishery & Salt | 漁鹽 +40 金 +15% 糧 | — |
 | 桑稅 Silk Tax | 桑稅 +35 金 | — |
@@ -1452,13 +1452,13 @@
 | 朝貢 Tribute System | 朝貢 +50 金 | — |
 | 南蠻朝貢 Nanman Tribute | 南蠻納貢 +40 金 | — |
 | 匈奴朝貢 Xiongnu Tribute | 匈奴納貢 +30 金 | 撫夷 |
-| 礼楽 Rites | 禮樂 +1 忠/季 | — |
-| 賑災 Famine Relief | 賑災 +1 忠/季 | 礼楽 |
+| 禮樂 Rites | 禮樂 +1 忠/季 | — |
+| 賑災 Famine Relief | 賑災 +1 忠/季 | 禮樂 |
 | 義倉 Community Granary | 義倉 +3 忠/季 | 屯田 |
 | 養濟院 Charity House | 養濟院 +3 忠 | 賑災 |
-| 鄉約 Village Mediation | 鄉約 +1 忠 | 礼楽 |
+| 鄉約 Village Mediation | 鄉約 +1 忠 | 禮樂 |
 | 輕徭薄賦 Light Taxes | 輕徭 +2 忠/-20% 金 | 法治 |
-| 撫夷 Frontier Pacification | 撫夷 +2 忠 | 礼楽 |
+| 撫夷 Frontier Pacification | 撫夷 +2 忠 | 禮樂 |
 | 力役 Corvée Labor | 力役 −2 忠 | — |
 | 徵兵 Mass Conscription | 徵兵 −1 忠 +35% 兵 | — |
 | 夜禁 Night Curfew | 夜禁 −1 忠 | — |
@@ -1467,7 +1467,7 @@
 | 烽燧 Beacon Towers | 烽燧 +10 守 | 工兵 |
 | 關隘 Fortified Passes | 關隘 +20 守 | 城防 |
 | 海防 Coastal Fortress | 海防 +20 守 | 城防、水軍 |
-| 禁衛 Imperial Guard | 禁衛 +25 守 | 礼楽、親衛 |
+| 禁衛 Imperial Guard | 禁衛 +25 守 | 禮樂、親衛 |
 | 養兵 Recruitment | 養兵 +20% 兵 | — |
 | 牧苑 State Stud Farm | 牧苑 +10% 兵 | 馬政 |
 
@@ -1475,17 +1475,17 @@
 
 | 政策 | 效果 | 地形 | 前置 |
 |---|---|---|---|
-| 軍学 Military Theory | 軍学 +10% 攻 | 全地形 | — |
+| 軍學 Military Theory | 軍學 +10% 攻 | 全地形 | — |
 | 軍紀 Camp Discipline | 軍紀 士氣保底 30 | 全地形 | 養兵 |
-| 武備學堂 Military Academy | 武備堂 +8% 攻 | 全地形 | 軍学、学問 |
+| 武備學堂 Military Academy | 武備堂 +8% 攻 | 全地形 | 軍學、學問 |
 | 親衛 Elite Guards | 親衛 −15% 受傷 | 全地形 | 養兵、軍紀 |
 | 馬鎧 Horse Armor | 馬鎧 −20% 受傷 | 全地形 | 鍛造、馬政 |
 | 盾陣 Shield Wall | 盾陣 抗箭 | 全地形 | 鍛造 |
-| 弩兵 Crossbow Corps | 弩兵 +30% 射 | 全地形 | 軍学 |
-| 射禮 Archery School | 射禮 +15% 射 | 全地形 | 軍学 |
+| 弩兵 Crossbow Corps | 弩兵 +30% 射 | 全地形 | 軍學 |
+| 射禮 Archery School | 射禮 +15% 射 | 全地形 | 軍學 |
 | 火船 Naval Fireships | 火船 +20% 火攻 / 水:火船 +50% 火攻 | 全地形(水戰加強) | — |
 | 輜重 Supply Train | 輜重 士氣保底 25 | 全地形 | — |
-| 撫夷 Frontier Pacification | 撫夷 山地 +15% 攻 | mountain | 礼楽 |
+| 撫夷 Frontier Pacification | 撫夷 山地 +15% 攻 | mountain | 禮樂 |
 | 山戰 Mountain Warfare | 山戰 山地 +20% 攻 | mountain | — |
 | 水軍 Naval Academy | 水軍 +20% 攻 | naval/river | — |
 
@@ -1493,7 +1493,7 @@
 
 | 政策 | 效果 | 前置 |
 |---|---|---|
-| 学問 Scholarship | 學問 招攬 +20% | — |
+| 學問 Scholarship | 學問 招攬 +20% | — |
 | seek-talent  | 招攬 +15% | — |
 | 九品中正 Nine-Grade Rectifier | 九品 招攬 +15% | — |
 | 察舉 Examination System | 察舉 招攬 +10% | — |
@@ -1514,7 +1514,7 @@
 | 法治 Legalism | — |
 | 鍛造 Smithing | — |
 | 馬政 Horse Stewardship | — |
-| 医術 Medicine | — |
+| 醫術 Medicine | — |
 | 鑄幣 Coinage | 商業、法治 |
 | 邊防 Border Garrison | — |
 | 攻城 Siege School | — |
@@ -1670,17 +1670,17 @@
 | 三箭定天山 Three Arrows at Tianshan | 謀略 | ★ | rally | 2 | 2 |
 | 單鞭奪槊 Seizing the Lance | 謀略 | ★ | rally | 2 | 2 |
 | 突擊 Charge | 近戰 |  | charge | 1 | 2 |
-| 斉射 Volley | 遠射 |  | rain-of-arrows | 4 | 1 |
+| 齊射 Volley | 遠射 |  | rain-of-arrows | 4 | 1 |
 | 火計 Fire | 玄術 |  | fire-attack | 3 | 0 |
 | 水計 Water | 玄術 |  | fire-attack | 3 | 0 |
 | 鼓舞 Rouse | 近戰 |  | rally | 2 | 2 |
 | 偽計 Ruse | 擾敵 |  | confusion | 4 | 0 |
 | 連弩 Crossbow | 遠射 |  | rain-of-arrows | 4 | 1 |
 | 投石 Catapult | 遠射 |  | rain-of-arrows | 4 | 1 |
-| 撹乱 Disorder | 擾敵 |  | confusion | 4 | 0 |
+| 攪乱 Disorder | 擾敵 |  | confusion | 4 | 0 |
 | 落穴 Pitfall | 擾敵 |  | false-retreat | 0 | 0 |
 | 急襲 Ambush | 近戰 |  | charge | 1 | 2 |
-| 罵声 Curse | 擾敵 |  | confusion | 4 | 0 |
+| 罵聲 Curse | 擾敵 |  | confusion | 4 | 0 |
 | 死戰 Last Stand | 近戰 |  | defend | 0 | 0 |
 | 鐵壁 Iron Wall | 近戰 |  | defend | 0 | 0 |
 | 突進 Surge | 近戰 |  | charge | 1 | 2 |
@@ -2264,21 +2264,21 @@
 | 技 | 類別 | 說明 |
 |---|---|---|
 | 武神 God of War | combat | 蓋世猛將。近戰武力 +15，一騎打勝率 +20%。 |
-| 飛将 Flying General | combat | 凡人莫敵。武力 +18,15% 機率對敵造成三倍損失。 |
+| 飛將 Flying General | combat | 凡人莫敵。武力 +18,15% 機率對敵造成三倍損失。 |
 | 兵聖 Sage of War | combat | 通曉萬般戰陣。武力 +12,統率 +8。 |
 | 虎臣 Tiger Vanguard | combat | 三軍之先鋒。武力 +10,攻擊力 +10%。 |
-| 鉄誓 Iron Vow | combat | 誓不勝即死。武力 +8,我方損失 −10%。 |
+| 鐵誓 Iron Vow | combat | 誓不勝即死。武力 +8,我方損失 −10%。 |
 | 神算 Celestial Tactician | wisdom | 料敵於先機。統率 +12,我方戰力 +10%。 |
 | 臥龍 Crouching Dragon | wisdom | 計謀感天動地。統率 +15,敵方計策效果減半。 |
 | 鳳雛 Young Phoenix | wisdom | 才智與臥龍齊名。統率 +13,戰力 +10%。 |
-| 鉄壁 Iron Formation | command | 陣列堅不可破。統率 +10,我方損失 −15%。 |
+| 鐵壁 Iron Formation | command | 陣列堅不可破。統率 +10,我方損失 −15%。 |
 | 威風 Imposing Host | command | 威勢震敵膽。統率 +8,戰力 +5%。 |
 | 攻城 Siegemaster | command | 不畏堅城。攻城時戰力 +20%。 |
 | 守城 Wallwarden | command | 守將之翹楚。守城時城防 ×1.3。 |
 | 火神 Fire Master | wisdom | 精於火攻。敵方損失 ×1.2。 |
 | 伏兵 Ambush Master | wisdom | 布下絕命陷阱。敵方損失 ×1.15,統率 +5。 |
-| 剛胆 Iron Will | wisdom | 不受敵計所惑。防禦 ×1.15。 |
-| 仁徳 Benevolent | civil | 深得民心。所在城每季民忠 +5,徵兵成功率 +15%。 |
+| 剛膽 Iron Will | wisdom | 不受敵計所惑。防禦 ×1.15。 |
+| 仁德 Benevolent | civil | 深得民心。所在城每季民忠 +5,徵兵成功率 +15%。 |
 | 弁舌 Silver Tongue | civil | 舌辯為力。徵兵成功率 +20%。 |
 | 識才 Eye for Talent | civil | 慧眼識珠。徵兵成功率 +15%,民忠光環 +5。 |
 | 内政 Administrator | civil | 倉廩司之能臣。內政效果 ×1.3。 |
@@ -2289,10 +2289,10 @@
 | 水神 Navy Master | combat | 江河之主宰。水戰統率 +12,戰力 +5%。 |
 | 勇猛 Brave | combat | 勇氣激勵全軍。武力 +6。 |
 | 不屈 Tireless | combat | 不可磨滅之意志。我方損失 ×0.92。 |
-| 追撃 Pursuit | combat | 潰兵無處可逃。敵方損失 ×1.12。 |
+| 追擊 Pursuit | combat | 潰兵無處可逃。敵方損失 ×1.12。 |
 | 殿軍 Rear Guard | combat | 敗中不亂。我方損失 ×0.85。 |
 | 江東之虎 Tiger of Jiangdong | combat | 開朝立國之虎。武力 +12,統率 +5。 |
-| 小覇王 Little Conqueror | combat | 少年霸主。武力 +14。 |
+| 小霸王 Little Conqueror | combat | 少年霸主。武力 +14。 |
 
 ### 威名 Prestige(8)
 
@@ -2342,7 +2342,7 @@
 
 ### 軍階 Military Ranks(15)
 
-兵卒 → 都尉 → 校尉 → 中郎將 → 偏将軍 → 裨将軍 → 将軍 → 四安平将軍 → 四征鎮将軍 → 四方将軍 → 衛将軍 → 車騎将軍 → 驃騎将軍 → 大将軍 → 丞相
+兵卒 → 都尉 → 校尉 → 中郎將 → 偏將軍 → 裨將軍 → 將軍 → 四安平將軍 → 四征鎮將軍 → 四方將軍 → 衛將軍 → 車騎將軍 → 驃騎將軍 → 大將軍 → 丞相
 
 ### 船級 Ship Classes(8)
 

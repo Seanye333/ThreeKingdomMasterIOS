@@ -446,11 +446,11 @@ export function MarchPicker({ cityId, onClose }: Props) {
                 </div>
               );
             })()}
-            {/* 行軍節奏 — 急行軍(快·累毙·疲勞) / 常行 / 緩進(慢·減孤軍折損). */}
+            {/* 行軍節奏 — 急行軍(快·累斃·疲勞) / 常行 / 緩進(慢·減孤軍折損). */}
             <div style={{ display: 'flex', gap: 6, marginTop: '0.4rem' }}>
               {MARCH_PACES.map((p) => {
                 const on = pace === p;
-                const tip = p === 'forced' ? t('急行軍:少一季,但累毙折兵、抵達疲勞', 'Forced: −1 season, but stragglers lost & arrives weary')
+                const tip = p === 'forced' ? t('急行軍:少一季,但累斃折兵、抵達疲勞', 'Forced: −1 season, but stragglers lost & arrives weary')
                   : p === 'cautious' ? t('緩進:多一季,但孤軍折損減半', 'Cautious: +1 season, but half the deep-strike attrition')
                   : t('常行', 'Normal pace');
                 return (

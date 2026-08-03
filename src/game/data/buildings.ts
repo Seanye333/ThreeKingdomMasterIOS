@@ -344,7 +344,7 @@ export const BUILDING_DEFS: BuildingDef[] = [
   },
   {
     id: 'foundry',
-    name: { en: 'Foundry', zh: '鉄工坊' },
+    name: { en: 'Foundry', zh: '鐵工坊' },
     description: 'Forges arms and tools. +8% troop training and +3% commerce per level.',
     descriptionZh: "鍛造兵器與工具。每等級徵兵速度 +8%，商業 +3%。",
     goldPerLevel: 500,

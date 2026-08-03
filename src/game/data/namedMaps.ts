@@ -162,7 +162,7 @@ export const NAMED_BATTLE_MAPS: NamedBattleMap[] = [
       return out;
     })(),
     specialTiles: [
-      { coord: { col: 10, row: 3 }, label: { en: 'Wuchao Granary', zh: '烏巣之倉' }, role: 'supply' },
+      { coord: { col: 10, row: 3 }, label: { en: 'Wuchao Granary', zh: '烏巢之倉' }, role: 'supply' },
     ],
     attackerObjective: { kind: 'capture-supply', tileCoord: { col: 10, row: 3 }, turnsRequired: 2 },
     introZh: '官渡決於烏巢 — 直取糧囤、焚其積穀,袁紹百萬之眾不戰自潰。',

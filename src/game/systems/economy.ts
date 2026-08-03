@@ -211,7 +211,7 @@ export function tickCityEconomy(
     policyBadges: [
       ...eff.badges,
       ...(taxEff.loyalty !== 0 ? [taxEff.zh] : []),
-      ...(hasSpecialist ? ['専才坐鎮'] : []),
+      ...(hasSpecialist ? ['專才坐鎮'] : []),
     ],
     warhorseBreed,
     ironSmelt,

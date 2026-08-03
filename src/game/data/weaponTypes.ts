@@ -120,7 +120,7 @@ export function classifyWeaponByName(name: { zh: string; en: string }): WeaponTy
   if (/扇|麈|fan|whisk/.test(s)) return 'fan';
   if (/槍|矛|矟|槊|稍|pike|spear|lance|halberd-spear/.test(s)) return 'spear';
   if (/刀|鎌|鐮|saber|sabre|glaive|cleaver|falchion|sickle|scythe|偃月|blade(?!.*sword)/.test(s)) return 'sabre';
-  if (/劍|剑|爪|鉤|鈎|sword|rapier|dagger|knife|claw|hook|talon/.test(s)) return 'sword';
+  if (/劍|劍|爪|鉤|鈎|sword|rapier|dagger|knife|claw|hook|talon/.test(s)) return 'sword';
   return null;
 }
 

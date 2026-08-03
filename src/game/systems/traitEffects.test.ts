@@ -87,7 +87,7 @@ describe('戰場專長 — unit/terrain specialist traits now bite', () => {
 });
 
 describe('舌戰口才 — rhetorical traits scale prowess', () => {
-  it('雄辯 raises, 寡黙 lowers', () => {
+  it('雄辯 raises, 寡默 lowers', () => {
     expect(wordWarProwessMul(mkOfficer({ id: 'e', traits: ['eloquent'] as never }))).toBeGreaterThan(1);
     expect(wordWarProwessMul(mkOfficer({ id: 't', traits: ['taciturn'] as never }))).toBeLessThan(1);
     expect(wordWarProwessMul(mkOfficer({ id: 'n', traits: [] as never }))).toBe(1);

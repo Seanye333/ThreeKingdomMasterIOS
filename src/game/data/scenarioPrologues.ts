@@ -683,7 +683,7 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
     },
     forces: {
       'liu-bei': {
-        zh: '你連營七百餘里。曹丕聽說之後笑了:「備不曉兵,豈有七百里連營可以拒敵者乎!」\n\n夏天到了,天太熱,你把水軍移上岸,把營寨扎進林子裡。這是你一生最後一個決定。',
+        zh: '你連營七百餘里。曹丕聽說之後笑了:「備不曉兵,豈有七百里連營可以拒敵者乎!」\n\n夏天到了,天太熱,你把水軍移上岸,把營寨紮進林子裡。這是你一生最後一個決定。',
         en: 'Your camps run for seven hundred li. When Cao Pi heard of it he laughed: "Liu Bei does not understand war. Whoever heard of resisting an enemy with seven hundred li of linked camps?"\n\nSummer comes and the heat is unbearable, so you bring the marines ashore and pitch your camps in the woods. It is the last decision of your life.',
       },
       sun: {
@@ -767,7 +767,7 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
   // ── 228–280 · 後三國 ──────────────────────────────────────────────
   'scn-228-shiting': {
     intro: {
-      zh: '太和二年,鄱陽太守周魴詐降誘曹休,前後七箋,言辭懇切。休疑之,魴乃詣郡門下,截髮謝罪。\n\n休信之,率步騎十萬向皖。陸遜為大都督,朱桓、全琮為左右督,各三萬人。戰於石亭,休大敗,死傷萬餘,車乘器械略盡。休還,慚憤,疽發背而卒。\n\n朱桓曾請斷夾石、挂車之路以絕其歸,則休可生擒,「若蒙天威,得以休自效,便可乘勝長驅,進取壽春,割有淮南」。孫權以問陸遜,遜以為不可。',
+      zh: '太和二年,鄱陽太守周魴詐降誘曹休,前後七箋,言辭懇切。休疑之,魴乃詣郡門下,截髮謝罪。\n\n休信之,率步騎十萬向皖。陸遜為大都督,朱桓、全琮為左右督,各三萬人。戰於石亭,休大敗,死傷萬餘,車乘器械略盡。休還,慚憤,疽發背而卒。\n\n朱桓曾請斷夾石、掛車之路以絕其歸,則休可生擒,「若蒙天威,得以休自效,便可乘勝長驅,進取壽春,割有淮南」。孫權以問陸遜,遜以為不可。',
       en: 'Zhou Fang, Administrator of Poyang, feigned defection to draw Cao Xiu in — seven letters, each more earnest than the last. When Cao Xiu grew suspicious, Zhou Fang went to the gate of his own headquarters and cut off his hair in penance.\n\nCao Xiu believed him and came to Wan with a hundred thousand foot and horse. Lu Xun took supreme command with Zhu Huan and Quan Cong on the wings, thirty thousand each. At Shiting Cao Xiu was broken: over ten thousand casualties, and his carts and equipment lost almost entire. He went home in shame and rage, an abscess opened on his back, and he died.\n\nZhu Huan had asked to cut the Jiashi and Guache roads and take Cao Xiu alive — "and then, riding the victory, we drive on to Shouchun and take Huainan for ourselves." Sun Quan put it to Lu Xun, who thought it could not be done.',
     },
     forces: {
@@ -1560,7 +1560,7 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
 
   'scn-whatif-guojia-lives': {
     intro: {
-      zh: '岔路在柳城的歸途。\n\n史書上,郭嘉隨軍北征烏桓,水土不服,道病卒,年三十八。次年赤壁大敗,曹操嘆曰:「郭奉孝在,不使孤至此。」\n\n這一局他回來了。荊州剛下,水軍新編,連環的船已經扎好 —— 而帳中多了一個從不隨眾附和的人。',
+      zh: '岔路在柳城的歸途。\n\n史書上,郭嘉隨軍北征烏桓,水土不服,道病卒,年三十八。次年赤壁大敗,曹操嘆曰:「郭奉孝在,不使孤至此。」\n\n這一局他回來了。荊州剛下,水軍新編,連環的船已經紮好 —— 而帳中多了一個從不隨眾附和的人。',
       en: 'The fork is the road home from Liucheng.\n\nIn the histories Guo Jia went north against the Wuhuan, could not take the climate, and died of illness on the road at thirty-eight. The next year came Chibi, and Cao Cao said: "Had Fengxiao been here, I would not have come to this."\n\nOn this board he came back. Jing province has just fallen, the fleet is newly organised, the ships are already chained — and there is one man in the tent who has never once agreed with the room.',
     },
     forces: {
@@ -2271,7 +2271,7 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
         en: 'Daliang\'s walls are strong, and the Qin have turned the Yellow River onto them.',
       },
       han: {
-        zh: '韓國第一個滅。你連掙扎的餘地都沒有。',
+        zh: '韓國第一個滅。你連掙紮的餘地都沒有。',
         en: 'Han falls first. There is not even room to struggle.',
       },
     },

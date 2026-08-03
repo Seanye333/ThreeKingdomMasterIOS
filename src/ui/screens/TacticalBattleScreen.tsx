@@ -117,7 +117,7 @@ export function TacticalBattleScreen() {
   // Resolve through the same city→map table the board generator uses (the old
   // `map-${cityId}` derivation missed renamed maps like 赤壁/定軍山).
   const namedMap = battle.field ? undefined : NAMED_MAPS_BY_ID[NAMED_MAPS_BY_CITY[battle.cityId] ?? ''];
-  const battleTitleZh = namedMap?.name.zh ?? (battle.field ? '野戰' : '戰術戰闘');
+  const battleTitleZh = namedMap?.name.zh ?? (battle.field ? '野戰' : '戰術戰鬥');
   const battleTitleEn = namedMap?.name.en ?? (battle.field ? 'Field Battle' : 'Tactical Battle');
 
   return (

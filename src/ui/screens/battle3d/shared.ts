@@ -15,6 +15,6 @@ export const IS_MOBILE = typeof window !== 'undefined'
  *  rather than beside the unit components so those files export only
  *  components (react-refresh/only-export-components). */
 export const UNIT_GLYPH: Record<import('../../../game/types').UnitType, string> = {
-  infantry: '歩', spearmen: '槍', cavalry: '騎',
+  infantry: '步', spearmen: '槍', cavalry: '騎',
   archers: '弓', siege: '攻', navy: '水',
 };

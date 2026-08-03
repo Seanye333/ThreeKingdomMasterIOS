@@ -46,15 +46,15 @@ export function doctrineRecruitFit(
       if (cha >= 65) return { delta: 0.05 };
       if (cha < 55) return { delta: -0.12, reasonZh: '王道之士,不屑事寡德之主', reasonEn: 'A man of virtue spurns a lord of little benevolence' };
       return { delta: 0 };
-    case 'hegemonic': // 覇道 — follows strength.
+    case 'hegemonic': // 霸道 — follows strength.
       if (might >= 85) return { delta: 0.12 };
       if (might >= 70) return { delta: 0.05 };
-      if (might < 55) return { delta: -0.10, reasonZh: '覇道之士慕強,不從弱主', reasonEn: 'A man of force follows only the strong' };
+      if (might < 55) return { delta: -0.10, reasonZh: '霸道之士慕強,不從弱主', reasonEn: 'A man of force follows only the strong' };
       return { delta: 0 };
-    case 'ritual': // 礼教 — holds out for a lord of standing.
+    case 'ritual': // 禮教 — holds out for a lord of standing.
       if (rankTier >= 2 || aristocratic) return { delta: 0.10 };
       if (ruler.stats.politics >= 75) return { delta: 0.04 };
-      return { delta: -0.07, reasonZh: '礼教之士重名分,不附無名之主', reasonEn: 'A man of rite holds out for a lord of proper standing' };
+      return { delta: -0.07, reasonZh: '禮教之士重名分,不附無名之主', reasonEn: 'A man of rite holds out for a lord of proper standing' };
     case 'fame': // 名利 — opportunist, drawn to a winning house.
       return { delta: citiesOwned >= 5 ? 0.06 : 0.02 };
     case 'separatist': // 割據 — harbours their own ambitions.

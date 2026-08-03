@@ -23,7 +23,7 @@ export const STRATAGEMS: Stratagem[] = [
   },
   {
     id: 'charge',
-    name: { en: 'Charge', zh: '突撃' },
+    name: { en: 'Charge', zh: '突擊' },
     description:
       'A devastating melee attack: +50% damage on this strike, but spends all remaining AP.',
     descriptionZh: "猛突敵陣，傷害增五成，惟耗盡所餘行動力。",
@@ -119,7 +119,7 @@ export const STRATAGEMS: Stratagem[] = [
   },
   {
     id: 'gallop',
-    name: { en: "Flying General's Gallop", zh: '飛将' },
+    name: { en: "Flying General's Gallop", zh: '飛將' },
     description:
       "Lü Bu's signature. Charge up to 3 hexes in a straight line, attacking the first enemy you reach for +75% damage.",
     descriptionZh: "呂布飛將之姿。直線突進三格，迎面之敵受七成五重創。",

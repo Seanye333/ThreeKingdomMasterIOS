@@ -56,7 +56,7 @@ export function PrologueModal() {
     <Modal
       onClose={closePrologue}
       title={scenario ? <Name pair={scenario.name} /> : t('序章', 'Prologue')}
-      icon="巻"
+      icon="卷"
       badge={eraYear(year)}
       width="min(680px, 100%)"
       scrollBody

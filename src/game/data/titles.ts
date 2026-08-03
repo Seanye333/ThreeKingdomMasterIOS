@@ -39,7 +39,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'lt-general',
-    name: { en: 'Lt. General', zh: '偏将軍' },
+    name: { en: 'Lt. General', zh: '偏將軍' },
     tier: 4,
     loyaltyBonus: 3,
     troopCapMultiplier: 1.15,
@@ -48,7 +48,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'vice-general',
-    name: { en: 'Vice General', zh: '裨将軍' },
+    name: { en: 'Vice General', zh: '裨將軍' },
     tier: 5,
     loyaltyBonus: 3,
     troopCapMultiplier: 1.2,
@@ -57,7 +57,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'general',
-    name: { en: 'General', zh: '将軍' },
+    name: { en: 'General', zh: '將軍' },
     tier: 6,
     loyaltyBonus: 4,
     troopCapMultiplier: 1.25,
@@ -66,7 +66,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'frontier-general',
-    name: { en: 'Frontier General', zh: '四安平将軍' },
+    name: { en: 'Frontier General', zh: '四安平將軍' },
     tier: 7,
     loyaltyBonus: 4,
     troopCapMultiplier: 1.3,
@@ -75,7 +75,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'campaign-general',
-    name: { en: 'Campaign General', zh: '四征鎮将軍' },
+    name: { en: 'Campaign General', zh: '四征鎮將軍' },
     tier: 8,
     loyaltyBonus: 5,
     troopCapMultiplier: 1.34,
@@ -84,7 +84,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'cardinal-general',
-    name: { en: 'Cardinal General', zh: '四方将軍' },
+    name: { en: 'Cardinal General', zh: '四方將軍' },
     tier: 9,
     loyaltyBonus: 5,
     troopCapMultiplier: 1.38,
@@ -93,7 +93,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'guard-general',
-    name: { en: 'Guard General', zh: '衛将軍' },
+    name: { en: 'Guard General', zh: '衛將軍' },
     tier: 10,
     loyaltyBonus: 6,
     troopCapMultiplier: 1.42,
@@ -102,7 +102,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'chariot-general',
-    name: { en: 'Chariot General', zh: '車騎将軍' },
+    name: { en: 'Chariot General', zh: '車騎將軍' },
     tier: 11,
     loyaltyBonus: 6,
     troopCapMultiplier: 1.46,
@@ -111,7 +111,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'cavalry-general',
-    name: { en: 'Cavalry General', zh: '驃騎将軍' },
+    name: { en: 'Cavalry General', zh: '驃騎將軍' },
     tier: 12,
     loyaltyBonus: 7,
     troopCapMultiplier: 1.48,
@@ -120,7 +120,7 @@ export const MILITARY_RANKS: MilitaryRank[] = [
   },
   {
     id: 'grand-general',
-    name: { en: 'Grand General', zh: '大将軍' },
+    name: { en: 'Grand General', zh: '大將軍' },
     tier: 13,
     loyaltyBonus: 8,
     troopCapMultiplier: 1.5,

@@ -2531,7 +2531,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
         cityId: city.id,
         kind: 'command-success',
         text: `${officer.name.en} promoted learning at ${city.name.en}: ${pupils.length} officer(s) gained ${burst} XP each.`,
-        textZh: `${officer.name.zh}興学講學於${city.name.zh}：在城 ${pupils.length} 員各得 ${burst} 歷練。`,
+        textZh: `${officer.name.zh}興學講學於${city.name.zh}：在城 ${pupils.length} 員各得 ${burst} 歷練。`,
       });
       bumpDeed(cmd.officerId, { civicWorks: 1 });
       continue;

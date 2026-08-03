@@ -49,7 +49,7 @@ export const OFFICER_RELATIONSHIPS: OfficerRelationship[] = [
   { a: 'cao-cao',     b: 'xu-chu',      kind: 'master-servant',
     note: { zh: '誓死護主', en: 'Devoted personal guard' } },
   { a: 'lu-bu',       b: 'gao-shun',    kind: 'master-servant',
-    note: { zh: '高順，呂布従', en: 'Sworn to Lü Bu\'s flag' } },
+    note: { zh: '高順，呂布從', en: 'Sworn to Lü Bu\'s flag' } },
   { a: 'sun-quan',    b: 'zhou-tai',    kind: 'master-servant',
     note: { zh: '九死一生捨身護主', en: 'Bore wounds shielding his lord' } },
 

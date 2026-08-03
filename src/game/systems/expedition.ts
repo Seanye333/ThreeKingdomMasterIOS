@@ -28,7 +28,7 @@ const TREASURE_ITEM_IDS: EntityId[] = ITEMS.filter((i) => i.kind === 'weapon' ||
    pace and the odds. Effects on the TARGET land the moment he arrives;
    findings he carries are delivered when he gets home. ───────────────────── */
 
-const EXPLORE_BASE = 18; // 情报開眼 ticks a plain探索 lights on the target city
+const EXPLORE_BASE = 18; // 情報開眼 ticks a plain探索 lights on the target city
 const INFILTRATE_BASE = 30; // 刺探 lights deeper, longer-lasting intel
 
 function clamp(lo: number, hi: number, v: number): number {
@@ -498,7 +498,7 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
         cityId: exp.toCityId,
         kind: 'expedition',
         text: `${officer.name.en} returned from his errand to find his home lost.`,
-        textZh: `${officer.name.zh}游历归来,故城已失。`,
+        textZh: `${officer.name.zh}游历歸來,故城已失。`,
       });
       continue;
     }
@@ -566,7 +566,7 @@ export function stepExpeditions(input: ExpeditionStepInput): ExpeditionStepResul
       cityId: exp.fromCityId,
       kind: 'expedition',
       text: `${officer.name.en} returned to ${home.name.en}.${haul.note ? ' ' + haul.note : ''}${sum.en ? ` [${sum.en}]` : ''}`,
-      textZh: `${officer.name.zh}游历归来 · ${home.name.zh}。${haul.noteZh ?? ''}${sum.zh ? `(${sum.zh})` : ''}`,
+      textZh: `${officer.name.zh}游历歸來 · ${home.name.zh}。${haul.noteZh ?? ''}${sum.zh ? `(${sum.zh})` : ''}`,
     });
     for (const e of xpRes.entries) report(exp, e); // 升級 notices
     // 護衛歸來 — the guard comes home too, seasoned by the road (shared 歷練).
@@ -627,7 +627,7 @@ function resolveErrand(exp: Expedition, ctx: ErrandCtx): ErrandResult {
         cityId: exp.toCityId,
         kind: 'expedition',
         text: `${officer.name.en} was seized in ${targetName.en} and thrown in irons.`,
-        textZh: `${officer.name.zh}于${targetName.zh}事败被擒,身陷囹圄。`,
+        textZh: `${officer.name.zh}于${targetName.zh}事敗被擒,身陷囹圄。`,
       },
     };
   }

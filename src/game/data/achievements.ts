@@ -7,7 +7,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── 2026-07 duel-deepening feats ──────────────────────────────
   {
     id: 'ach-peace-duel',
-    name: { en: 'One Rider Ends the War', zh: '一騎定和' },
+    name: { en: 'One Rider Ends the War', zh: '單騎息兵' },
     description: 'Win a duel of peace — a single bout settles a quarrel between realms.',
     descriptionZh: '決鬥定和取勝 — 一將點到為止,兩國罷兵息戰。',
     tier: 'gold',
@@ -268,7 +268,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── Iconic recruits ───────────────────────────────────────────
   {
     id: 'ach-recruit-zhuge',
-    name: { en: 'The Sleeping Dragon Roused', zh: '臥龍之出仕' },
+    name: { en: 'The Sleeping Dragon Roused', zh: '臥龍出山' },
     description: 'Recruit Zhuge Liang into your service.',
     descriptionZh: "招攬諸葛亮入仕麾下。",
     tier: 'gold',
@@ -277,7 +277,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-recruit-pang-tong',
-    name: { en: 'The Phoenix Found', zh: '鳳雛之発見' },
+    name: { en: 'The Phoenix Found', zh: '鳳雛來歸' },
     description: 'Recruit Pang Tong into your service.',
     descriptionZh: "招攬鳳雛龐統入仕麾下。",
     tier: 'gold',
@@ -285,7 +285,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-recruit-lu-bu',
-    name: { en: 'The Flying General Yours', zh: '飛将,我従' },
+    name: { en: 'The Flying General Yours', zh: '飛將歸心' },
     description: 'Recruit Lü Bu — the warrior of warriors.',
     descriptionZh: "招攬呂布——萬人敵中的萬人敵。",
     tier: 'legendary',
@@ -294,7 +294,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-recruit-sima',
-    name: { en: 'The Tomb-Tiger Tamed', zh: '冢虎,我降' },
+    name: { en: 'The Tomb-Tiger Tamed', zh: '冢虎入彀' },
     description: 'Recruit Sima Yi.',
     descriptionZh: "招攬司馬懿入仕麾下。",
     tier: 'legendary',
@@ -304,7 +304,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── Iconic defeats ────────────────────────────────────────────
   {
     id: 'ach-slay-yan-liang',
-    name: { en: 'Slew Yan Liang', zh: '顏良斬殺' },
+    name: { en: 'Slew Yan Liang', zh: '斬顏良' },
     description: 'Defeat Yan Liang in single combat or battle.',
     descriptionZh: "於陣前或單挑中擊敗顏良。",
     tier: 'silver',
@@ -312,7 +312,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-slay-wen-chou',
-    name: { en: 'Slew Wen Chou', zh: '文丑斬殺' },
+    name: { en: 'Slew Wen Chou', zh: '誅文丑' },
     description: 'Defeat Wen Chou.',
     descriptionZh: "擊敗文丑。",
     tier: 'silver',
@@ -320,7 +320,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-slay-dong-zhuo',
-    name: { en: 'Toppled the Tyrant', zh: '董卓，討' },
+    name: { en: 'Toppled the Tyrant', zh: '董卓伏誅' },
     description: 'Defeat Dong Zhuo.',
     descriptionZh: "擊敗董卓。",
     tier: 'gold',
@@ -328,7 +328,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-duel-lu-bu',
-    name: { en: 'Duelled the Flying General', zh: '飛将一騎' },
+    name: { en: 'Duelled the Flying General', zh: '力屈飛將' },
     description: 'Win a duel against Lü Bu.',
     descriptionZh: "於單挑中擊敗飛將呂布。",
     tier: 'legendary',
@@ -339,7 +339,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── Iconic city captures ──────────────────────────────────────
   {
     id: 'ach-take-luoyang',
-    name: { en: 'Seized the Eastern Capital', zh: '洛陽奪取' },
+    name: { en: 'Seized the Eastern Capital', zh: '兵入洛陽' },
     description: 'Take Luoyang.',
     descriptionZh: "攻取洛陽。",
     tier: 'silver',
@@ -347,7 +347,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-take-changan',
-    name: { en: 'Seized the Western Capital', zh: '長安奪取' },
+    name: { en: 'Seized the Western Capital', zh: '兵入長安' },
     description: "Take Chang'an.",
     descriptionZh: "攻取長安。",
     tier: 'silver',
@@ -355,7 +355,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-take-xuchang',
-    name: { en: 'Took the Court', zh: '許昌奪取' },
+    name: { en: 'Took the Court', zh: '許都易主' },
     description: 'Take Xuchang — seat of the late-Han court.',
     descriptionZh: "攻取許昌——漢末朝廷所在之地。",
     tier: 'silver',
@@ -389,7 +389,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-meng-huo',
-    name: { en: 'Seven Captures', zh: '七擒七縦' },
+    name: { en: 'Seven Captures', zh: '七擒七縱' },
     description: 'Witness the Seven Captures of Meng Huo.',
     descriptionZh: "親歷七擒孟獲之事。",
     tier: 'gold',
@@ -449,7 +449,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-tripartite',
-    name: { en: 'Three Kingdoms', zh: '三国鼎立' },
+    name: { en: 'Three Kingdoms', zh: '三國鼎立' },
     description: 'Reach the Tripartite ending.',
     descriptionZh: "達成「三國鼎立」結局。",
     tier: 'gold',
@@ -457,7 +457,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-recluse',
-    name: { en: 'The Hidden Sage', zh: '隠士退隠' },
+    name: { en: 'The Hidden Sage', zh: '歸隱林泉' },
     description: 'Reach the Recluse ending.',
     descriptionZh: "達成「隱士退隱」結局。",
     tier: 'silver',
@@ -475,7 +475,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── Imperial ranks ────────────────────────────────────────────
   {
     id: 'ach-king',
-    name: { en: 'King Among Men', zh: '王即位' },
+    name: { en: 'King Among Men', zh: '進位為王' },
     description: 'Achieve the rank of King.',
     descriptionZh: "晉位至王爵。",
     tier: 'gold',
@@ -485,7 +485,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── Cumulative ────────────────────────────────────────────────
   {
     id: 'ach-100-kills',
-    name: { en: 'Bloody Hands', zh: '百戰錬磨' },
+    name: { en: 'Bloody Hands', zh: '殲敵十萬' },
     description: 'Kill 100,000 enemy troops across all campaigns.',
     descriptionZh: "累計斬殺敵軍十萬人。",
     tier: 'bronze',
@@ -493,7 +493,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-1m-kills',
-    name: { en: 'River of Blood', zh: '百万斬' },
+    name: { en: 'River of Blood', zh: '殲敵百萬' },
     description: 'Kill one million enemy troops cumulatively.',
     descriptionZh: "累計斬殺敵軍百萬人。",
     tier: 'legendary',
@@ -501,7 +501,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-50-cities',
-    name: { en: 'Conqueror', zh: '攻城五十' },
+    name: { en: 'Conqueror', zh: '拔城五十' },
     description: 'Take 50 cities cumulatively.',
     descriptionZh: "累計攻取五十座城池。",
     tier: 'silver',
@@ -509,7 +509,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-10-recruits',
-    name: { en: 'Eye for Talent', zh: '識才十名' },
+    name: { en: 'Eye for Talent', zh: '識才十人' },
     description: 'Recruit 10 officers cumulatively.',
     descriptionZh: "累計招攬十名武將。",
     tier: 'bronze',
@@ -527,7 +527,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── Skills ────────────────────────────────────────────────────
   {
     id: 'ach-learn-god-of-war',
-    name: { en: 'Learned the God of War', zh: '武神，会得' },
+    name: { en: 'Learned the God of War', zh: '悟得武神' },
     description: 'Have an officer learn the 武神 skill via level-up.',
     descriptionZh: "麾下武將透過升級習得「武神」技能。",
     tier: 'legendary',
@@ -604,7 +604,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── More iconic defeats ───────────────────────────────────────
   {
     id: 'ach-slay-yuan-shao',
-    name: { en: 'Broke the Four-Generations House', zh: '四世三公,破' },
+    name: { en: 'Broke the Four-Generations House', zh: '破四世三公' },
     description: 'Defeat Yuan Shao.',
     descriptionZh: '擊敗四世三公之袁紹。',
     tier: 'gold',
@@ -612,7 +612,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-slay-cao-cao',
-    name: { en: 'Felled the Hero of Chaos', zh: '亂世奸雄,討' },
+    name: { en: 'Felled the Hero of Chaos', zh: '挫亂世奸雄' },
     description: 'Defeat Cao Cao in the field.',
     descriptionZh: '於陣前擊敗曹操。',
     tier: 'legendary',
@@ -631,7 +631,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── Single combat ─────────────────────────────────────────────
   {
     id: 'ach-duel-guan-yu',
-    name: { en: 'Crossed Blades with the Saint', zh: '與武聖一騎' },
+    name: { en: 'Crossed Blades with the Saint', zh: '與武聖爭鋒' },
     description: 'Win a duel against Guan Yu.',
     descriptionZh: '於單挑中擊敗武聖關羽。',
     tier: 'legendary',
@@ -666,7 +666,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── First steps ───────────────────────────────────────────────
   {
     id: 'ach-first-blood',
-    name: { en: 'First Blood', zh: '初陣' },
+    name: { en: 'First Blood', zh: '首戰告捷' },
     description: 'Win your first battle.',
     descriptionZh: '贏得第一場戰鬥。',
     tier: 'bronze',
@@ -674,7 +674,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-first-recruit',
-    name: { en: 'First Retainer', zh: '初得賢' },
+    name: { en: 'First Retainer', zh: '首得一賢' },
     description: 'Recruit your first officer.',
     descriptionZh: '招攬第一名武將。',
     tier: 'bronze',
@@ -684,7 +684,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ─── More cumulative milestones ────────────────────────────────
   {
     id: 'ach-500k-kills',
-    name: { en: 'Tide of Iron', zh: '五十萬斬' },
+    name: { en: 'Tide of Iron', zh: '殲敵五十萬' },
     description: 'Kill 500,000 enemy troops cumulatively.',
     descriptionZh: '累計斬殺敵軍五十萬人。',
     tier: 'gold',

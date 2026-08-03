@@ -27,18 +27,18 @@ export type PersonalityTrait =
   | 'martial-valor' // 武勇 — actively seeks duels (+15% duel-init chance)
   | 'composed'      // 沈着 — calm in crisis; resists confusion / fear
   | 'impatient'     // 急躁 — fast but error-prone (more crit / more miss)
-  | 'taciturn'      // 寡黙 — speaks rarely; immune to slander/frame
+  | 'taciturn'      // 寡默 — speaks rarely; immune to slander/frame
   | 'cheerful'      // 開朗 — boosts adjacent ally morale in tactical battles
   | 'noble'         // 高潔 — refuses gold bribes; harder to corrupt
   | 'sickly'        // 病弱 — ages faster, dies younger
-  | 'long-lived'    // 寿福 — ages slower, lives long
+  | 'long-lived'    // 壽福 — ages slower, lives long
   | 'refined'       // 風流 — poet/scholar; +charisma during diplomacy events
-  | 'cruel'         // 残忍 — terrifies enemies in tactical battle but lowers own loyalty
+  | 'cruel'         // 殘忍 — terrifies enemies in tactical battle but lowers own loyalty
   | 'precognitive'  // 神算 — sees through enemy plots (espionage immunity)
-  | 'matchless'     // 一騎当千 — peerless duelist; massive duel bonus
+  | 'matchless'     // 一騎當千 — peerless duelist; massive duel bonus
   | 'frail'         // 文弱 — physically weak; cannot duel
-  | 'one-eyed'      // 独眼 — combat veterans (Xiahou Dun) — bonus when wounded
-  | 'gluttonous'    // 食道楽 — eats well; lowers food supply effects
+  | 'one-eyed'      // 獨眼 — combat veterans (Xiahou Dun) — bonus when wounded
+  | 'gluttonous'    // 食道樂 — eats well; lowers food supply effects
   // ─── Phase 36 additions — 15 more flavorful traits ─────────────
   | 'generous'      // 慷慨 — Sun Ce / Liu Bei: gives gold freely, +loyalty in own force
   | 'jealous'       // 嫉妒 — Zhou Yu / Yuan Shu: hates being outshone; conflicts with peer talents
@@ -145,7 +145,7 @@ export type PersonalityTrait =
   | 'keeps-word'           // 守信 — keeps promises
   | 'humble'               // 謙遜 — modest
   | 'modest-dress'         // 儉樸 — frugal
-  | 'tolerant'             // 寛容 — forgives errors
+  | 'tolerant'             // 寬容 — forgives errors
   | 'principled'           // 守節 — holds principles
   | 'frugal'               // 儉嗇 — saves coin
   | 'meritocratic'         // 任賢 — promotes by skill
@@ -188,7 +188,7 @@ export type PersonalityTrait =
   | 'deep-schemer'         // 老謀深算 — long-game plotter
   | 'iron-bones'           // 鐵骨 — never bends
   | 'phoenix-mind'         // 鳳雛 — Pang Tong style
-  | 'sleeping-dragon'      // 卧龍 — hidden brilliance
+  | 'sleeping-dragon'      // 臥龍 — hidden brilliance
   | 'crane-step'           // 鶴步 — unhurried elegance
   | 'wild-stallion'        // 野駒 — untamed
   | 'frost-blade'          // 霜刃 — cold killer
@@ -233,13 +233,13 @@ export interface PersonalityTraitDef {
  * approaches the strategic map.
  */
 export type RulerPersonality =
-  | 'aggressive'     // 攻撃型 — Cao Cao, Sun Ce: marches aggressively, prefers conquest
+  | 'aggressive'     // 攻擊型 — Cao Cao, Sun Ce: marches aggressively, prefers conquest
   | 'defensive'     // 守勢型 — Liu Bei, Liu Biao: fortifies, defends
-  | 'opportunist'   // 機会型 — Sun Quan: strikes when others weaken
+  | 'opportunist'   // 機會型 — Sun Quan: strikes when others weaken
   | 'hesitant'      // 慎重型 — Yuan Shao: builds large but slow to act
   | 'tyrant'        // 暴虐型 — Dong Zhuo: aggressive, ignores diplomacy
-  | 'scholar'       // 学者型 — Kong Rong, Liu Yan: defensive, prefers internal affairs
-  | 'expansionist'  // 拡張型 — Yuan Shu, Ma Teng: spreads thin
+  | 'scholar'       // 學者型 — Kong Rong, Liu Yan: defensive, prefers internal affairs
+  | 'expansionist'  // 擴張型 — Yuan Shu, Ma Teng: spreads thin
   | 'cautious';     // 守備型 — Tao Qian: minimal action
 
 export interface RulerPersonalityDef {

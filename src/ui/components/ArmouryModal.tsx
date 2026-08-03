@@ -184,7 +184,7 @@ export function ArmouryModal({ onClose }: Props) {
       >
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>{t('宝物庫', 'Armoury')}</div>
+            <div className={styles.titleZh}>{t('寶物庫', 'Armoury')}</div>
             <div className={styles.titleEn}>
               Armoury — {ITEMS.length} items
             </div>

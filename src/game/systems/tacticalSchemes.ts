@@ -932,7 +932,7 @@ export function applyStratagem(
           ...(b.log ?? []),
           {
             turn: b.turn,
-            text: '飛将，突貫!',
+            text: '飛將，突貫!',
             speaker: unit.officerId,
             kind: 'voice',
           },

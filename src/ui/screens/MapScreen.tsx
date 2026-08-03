@@ -682,7 +682,7 @@ export function MapScreen() {
       { id: 'stats', zh: '戰記', en: 'Campaign stats', hint: g.rec, run: () => setShowCampaignStats(true) },
       { id: 'glossary', zh: '概念 — 機制詞條', en: 'Concepts glossary', hint: g.rec, run: () => setShowGlossary(true) },
       { id: 'diplomacy', zh: '邦交', en: 'Diplomacy', hint: g.diplo, run: () => setShowDiplomacy(true) },
-      { id: 'dipgraph', zh: '關係図', en: 'Relations graph', hint: g.diplo, run: () => setShowDipGraph(true) },
+      { id: 'dipgraph', zh: '關係圖', en: 'Relations graph', hint: g.diplo, run: () => setShowDipGraph(true) },
       { id: 'forces', zh: '群雄', en: 'Forces', hint: g.diplo, run: () => setShowForces(true) },
       { id: 'relationships', zh: '因緣', en: 'Officer relations', hint: g.people, run: () => setShowRelationships(true) },
       { id: 'bonds', zh: '結義', en: 'Bonds', hint: g.people, run: () => setShowBonds(true) },
@@ -758,11 +758,11 @@ export function MapScreen() {
     },
     {
       label: t('外交', 'Diplomacy'),
-      title: t('外交 — 邦交、形勢一覽、關係図', 'Diplomacy — relations, standings, graph'),
+      title: t('外交 — 邦交、形勢一覽、關係圖', 'Diplomacy — relations, standings, graph'),
       items: [
         { label: t('邦交', 'Relations'),     onClick: () => setShowDiplomacy(true), title: t('結盟/停戰/歲幣等外交指令', 'Alliances, truces, tribute…') },
         { label: t('形勢一覽', 'Standings'), onClick: () => setShowRelations(true), title: t('勢力 × 勢力關係矩陣', 'Force × force relation matrix') },
-        { label: t('關係図', 'Graph'),       onClick: () => setShowDipGraph(true), title: t('邦交關係圖(節點圖)', 'Diplomacy as a node graph') },
+        { label: t('關係圖', 'Graph'),       onClick: () => setShowDipGraph(true), title: t('邦交關係圖(節點圖)', 'Diplomacy as a node graph') },
       ],
     },
     {
@@ -1050,11 +1050,11 @@ export function MapScreen() {
       <main className={`${styles.main} ${immersiveVisual ? styles.mainImmersive : ''}`}>
         <div className={styles.mapWrap} style={{ position: 'relative' }}>
           {/* Free the strategic map's WebGL context while the fullscreen battle
-              (单挑 / 舌战 / 会战) sits opaque on top of it. Two live three.js
+              (單挑 / 舌戰 / 會戰) sits opaque on top of it. Two live three.js
               contexts at once is what tips mobile browsers into an out-of-memory
               tab reload — which drops the player back to the map mid-fight and
-              forces a re-出阵. Minimizing the battle to its map diorama clears
-              battleScreenUp, so the map remounts and 观战 still works. */}
+              forces a re-出陣. Minimizing the battle to its map diorama clears
+              battleScreenUp, so the map remounts and 觀戰 still works. */}
           {!battleScreenUp && <Suspense fallback={null}><StrategicMap3D /></Suspense>}
           {/* In-transit armies overview — shown over both map modes. Sits
               below the objective card (top-left, ~top:12–110); the beacon

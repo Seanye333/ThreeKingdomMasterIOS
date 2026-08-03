@@ -10,16 +10,16 @@ export type MilitaryRankId =
   | 'captain'           // 都尉
   | 'colonel'           // 校尉
   | 'palace-general'    // 中郎將 (五官/左/右中郎將 — above 校尉, below 將軍)
-  | 'lt-general'        // 偏将軍
-  | 'vice-general'      // 裨将軍
-  | 'general'           // 雜號将軍 (討逆/盪寇… — the general 将軍 tier)
-  | 'frontier-general'  // 四安四平将軍 (安東/平南…)
-  | 'campaign-general'  // 四征四鎮将軍 (征西/鎮北…)
-  | 'cardinal-general'  // 四方将軍 (前/後/左/右将軍)
-  | 'guard-general'     // 衛将軍
-  | 'chariot-general'   // 車騎将軍
-  | 'cavalry-general'   // 驃騎将軍
-  | 'grand-general'     // 大将軍
+  | 'lt-general'        // 偏將軍
+  | 'vice-general'      // 裨將軍
+  | 'general'           // 雜號將軍 (討逆/盪寇… — the general 將軍 tier)
+  | 'frontier-general'  // 四安四平將軍 (安東/平南…)
+  | 'campaign-general'  // 四征四鎮將軍 (征西/鎮北…)
+  | 'cardinal-general'  // 四方將軍 (前/後/左/右將軍)
+  | 'guard-general'     // 衛將軍
+  | 'chariot-general'   // 車騎將軍
+  | 'cavalry-general'   // 驃騎將軍
+  | 'grand-general'     // 大將軍
   | 'chancellor';       // 丞相・大司馬 (top tier)
 
 /**

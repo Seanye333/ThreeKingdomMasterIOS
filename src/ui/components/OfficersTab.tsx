@@ -191,7 +191,7 @@ export function OfficersTab({ onClose }: Props) {
       >
         <header className={styles.header}>
           <div>
-            <div className={styles.titleZh}>{lang === 'en' ? 'Officers' : '武将'}</div>
+            <div className={styles.titleZh}>{lang === 'en' ? 'Officers' : '武將'}</div>
             <div className={styles.titleEn}>
               Officers — {visibleOfficers.length} of {totalKnown} shown ·{' '}
               {totalUnsearched} hidden · {totalDead} fallen

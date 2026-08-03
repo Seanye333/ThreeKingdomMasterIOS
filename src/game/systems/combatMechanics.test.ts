@@ -16,7 +16,7 @@ describe('陣克陣 — formationCounterMul', () => {
   });
 });
 
-describe('連携 — areBonded', () => {
+describe('連攜 — areBonded', () => {
   it('recognises sworn pairs in either order, rejects strangers', () => {
     expect(areBonded('liu-bei', 'guan-yu')).toBe(true);
     expect(areBonded('guan-yu', 'liu-bei')).toBe(true);

@@ -296,7 +296,7 @@ export const POLICY_DESC: Record<string, string> = {
   pottery:             '陶器 — 陶器作坊。商業 +5/季，民間日用品供應充足。',
   lacquerware:         '漆器 — 漆器精造。高級奢侈品出口，外交禮品 +1 等。',
   'merchant-guild':    '行會 — 建立商會。商業 +12，但商人世族影響 +1。',
-  'river-customs':     '関稅 — 江河關卡。每季金 +50，水運效率 −5%。',
+  'river-customs':     '關稅 — 江河關卡。每季金 +50，水運效率 −5%。',
   'pawn-bureau':       '質庫 — 官辦當鋪。災年金 +30 (典當收入)，民忠 −1。',
   'court-treasury':    '內庫 — 帝王私帑。奢華消費可獨立，外交賞賜不耗國庫。',
   'bamboo-craft':      '竹器 — 竹器作坊。輕工業 +5%，需有竹林資源。',

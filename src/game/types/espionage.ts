@@ -9,7 +9,7 @@ import type { BilingualName, EntityId } from './common';
 export type EspionageKind =
   | 'gather-intel'  // 諜報 — reveal enemy stats; +knowledge
   | 'instigate'     // 煽動 — drop city loyalty to provoke rebellion
-  | 'sabotage'      // 破壊 — destroy food stocks at target city
+  | 'sabotage'      // 破壞 — destroy food stocks at target city
   | 'assassinate'   // 暗殺 — attempt to kill a specific enemy officer
   | 'defect'        // 寝返 — turn an enemy officer to your side
   | 'frame'         // 離間 — drop loyalty of an enemy officer toward their lord

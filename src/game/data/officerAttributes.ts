@@ -12,16 +12,16 @@ import {
 
 export type Doctrine =
   | 'royal'      // 王道 — benevolent rule, win hearts
-  | 'hegemonic'  // 覇道 — rule by force
-  | 'ritual'     // 礼教 — Confucian rite-based order
+  | 'hegemonic'  // 霸道 — rule by force
+  | 'ritual'     // 禮教 — Confucian rite-based order
   | 'fame'       // 名利 — opportunist, fame & profit
   | 'separatist' // 割據 — independent warlord
   | 'reclusion'; // 在野 — recluse / sage
 
 export const DOCTRINE_DEFS: Record<Doctrine, { zh: string; en: string; color: string }> = {
   royal:      { zh: '王道',  en: 'Royal Way',   color: '#d4a84a' },
-  hegemonic:  { zh: '覇道',  en: 'Hegemony',    color: '#b8442e' },
-  ritual:     { zh: '礼教',  en: 'Confucian',   color: '#88b7e8' },
+  hegemonic:  { zh: '霸道',  en: 'Hegemony',    color: '#b8442e' },
+  ritual:     { zh: '禮教',  en: 'Confucian',   color: '#88b7e8' },
   fame:       { zh: '名利',  en: 'Fame',        color: '#c19a3b' },
   separatist: { zh: '割據',  en: 'Separatist',  color: '#7a5a3a' },
   reclusion:  { zh: '在野',  en: 'Reclusion',   color: '#7a9a5a' },
@@ -201,17 +201,17 @@ export function deriveFormations(stats: OfficerStats, id?: string): OfficerForma
 
 export type TacticId =
   | 'charge'      // 突擊
-  | 'volley'      // 斉射
+  | 'volley'      // 齊射
   | 'fire-attack' // 火計
   | 'water-attack'// 水計
   | 'rouse'       // 鼓舞
   | 'ruse'        // 偽計
   | 'crossbow'    // 連弩
   | 'catapult'    // 投石
-  | 'disorder'    // 撹乱
+  | 'disorder'    // 攪乱
   | 'pitfall'     // 落穴
   | 'ambush'      // 急襲
-  | 'curse'       // 罵声
+  | 'curse'       // 罵聲
   // ── Phase 54 expansion ──
   | 'last-stand'  // 死戰 — low-HP rage
   | 'iron-wall'   // 鐵壁 — anti-melee bulwark
@@ -491,17 +491,17 @@ export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   'xuerengui-sanjian': { zh: '三箭定天山', en: 'Three Arrows at Tianshan' },
   'yuchigong-duoshuo': { zh: '單鞭奪槊', en: 'Seizing the Lance' },
   charge:        { zh: '突擊', en: 'Charge' },
-  volley:        { zh: '斉射', en: 'Volley' },
+  volley:        { zh: '齊射', en: 'Volley' },
   'fire-attack': { zh: '火計', en: 'Fire' },
   'water-attack':{ zh: '水計', en: 'Water' },
   rouse:         { zh: '鼓舞', en: 'Rouse' },
   ruse:          { zh: '偽計', en: 'Ruse' },
   crossbow:      { zh: '連弩', en: 'Crossbow' },
   catapult:      { zh: '投石', en: 'Catapult' },
-  disorder:      { zh: '撹乱', en: 'Disorder' },
+  disorder:      { zh: '攪乱', en: 'Disorder' },
   pitfall:       { zh: '落穴', en: 'Pitfall' },
   ambush:        { zh: '急襲', en: 'Ambush' },
-  curse:         { zh: '罵声', en: 'Curse' },
+  curse:         { zh: '罵聲', en: 'Curse' },
   'last-stand':  { zh: '死戰', en: 'Last Stand' },
   'iron-wall':   { zh: '鐵壁', en: 'Iron Wall' },
   rush:          { zh: '突進', en: 'Surge' },
@@ -1712,14 +1712,14 @@ export type PolicyId =
   | 'hydraulics' // 治水 — water works
   | 'engineering'// 工兵 — siege engineering
   | 'commerce'   // 商業 — trade
-  | 'scholarship'// 学問 — learning
+  | 'scholarship'// 學問 — learning
   | 'legalism'   // 法治 — rule by law
-  | 'rites'      // 礼楽 — rituals & music
+  | 'rites'      // 禮樂 — rituals & music
   | 'recruitment'// 養兵 — troop training
   | 'smithing'   // 鍛造 — weapon forging
   | 'horse-stewardship' // 馬政 — cavalry breeding
-  | 'medicine'   // 医術 — medicine
-  | 'military-theory'   // 軍学 — military academy
+  | 'medicine'   // 醫術 — medicine
+  | 'military-theory'   // 軍學 — military academy
   // ── Economic (5) ──
   | 'salt-monopoly'     // 鹽政 — state salt monopoly (Han classic)
   | 'iron-monopoly'     // 鐵政 — state iron monopoly
@@ -1816,7 +1816,7 @@ export type PolicyId =
   | 'pottery'           // 陶器 — pottery industry (everyday commerce)
   | 'lacquerware'       // 漆器 — lacquerware (luxury export)
   | 'merchant-guild'    // 行會 — formal merchant guilds
-  | 'river-customs'     // 関稅 — river toll/customs
+  | 'river-customs'     // 關稅 — river toll/customs
   | 'pawn-bureau'       // 質庫 — government-backed pawnshops
   | 'court-treasury'    // 內庫 — palace treasury (vs state treasury)
   | 'bamboo-craft'      // 竹器 — bamboo crafts (light industry)
@@ -1901,14 +1901,14 @@ export const POLICY_DEFS: Record<PolicyId, { zh: string; en: string }> = {
   hydraulics:          { zh: '治水', en: 'Hydraulics' },
   engineering:         { zh: '工兵', en: 'Engineering' },
   commerce:            { zh: '商業', en: 'Commerce' },
-  scholarship:         { zh: '学問', en: 'Scholarship' },
+  scholarship:         { zh: '學問', en: 'Scholarship' },
   legalism:            { zh: '法治', en: 'Legalism' },
-  rites:               { zh: '礼楽', en: 'Rites' },
+  rites:               { zh: '禮樂', en: 'Rites' },
   recruitment:         { zh: '養兵', en: 'Recruitment' },
   smithing:            { zh: '鍛造', en: 'Smithing' },
   'horse-stewardship': { zh: '馬政', en: 'Horse Stewardship' },
-  medicine:            { zh: '医術', en: 'Medicine' },
-  'military-theory':   { zh: '軍学', en: 'Military Theory' },
+  medicine:            { zh: '醫術', en: 'Medicine' },
+  'military-theory':   { zh: '軍學', en: 'Military Theory' },
   'salt-monopoly':     { zh: '鹽政', en: 'Salt Monopoly' },
   'iron-monopoly':     { zh: '鐵政', en: 'Iron Monopoly' },
   coinage:             { zh: '鑄幣', en: 'Coinage' },
@@ -1988,7 +1988,7 @@ export const POLICY_DEFS: Record<PolicyId, { zh: string; en: string }> = {
   pottery:             { zh: '陶器', en: 'Pottery' },
   lacquerware:         { zh: '漆器', en: 'Lacquerware' },
   'merchant-guild':    { zh: '行會', en: 'Merchant Guild' },
-  'river-customs':     { zh: '関稅', en: 'River Tolls' },
+  'river-customs':     { zh: '關稅', en: 'River Tolls' },
   'pawn-bureau':       { zh: '質庫', en: 'Pawn Bureau' },
   'court-treasury':    { zh: '內庫', en: 'Palace Treasury' },
   'bamboo-craft':      { zh: '竹器', en: 'Bamboo Crafts' },

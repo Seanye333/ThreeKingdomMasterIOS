@@ -154,7 +154,7 @@ export type TerrainKind =
  *   infantry   neutral baseline
  */
 export type UnitType =
-  | 'infantry'  // 歩兵 — generalist, no bonus, no penalty
+  | 'infantry'  // 步兵 — generalist, no bonus, no penalty
   | 'spearmen'  // 槍兵 — strong vs cavalry
   | 'cavalry'   // 騎兵 — fast, strong vs archers
   | 'archers'   // 弓兵 — ranged, strong vs spearmen
@@ -247,7 +247,7 @@ export type TacticalStatus =
 export type StratagemId =
   | 'fire-attack'   // 火計
   | 'confusion'     // 計略
-  | 'charge'        // 突撃
+  | 'charge'        // 突擊
   | 'defend'        // 防御
   | 'rally'         // 鼓舞
   | 'rain-of-arrows' // 矢雨齊發
@@ -256,7 +256,7 @@ export type StratagemId =
   | 'precognition'  // 神算 — reveal enemy AP & cooldowns next turn
   | 'lightning'     // 落雷 — direct damage with chance to confuse
   | 'supply-strike' // 兵糧攻 — sap morale of all enemies on map
-  | 'gallop'        // 飛将 — Lü Bu's signature: charge 3 hexes + strike
+  | 'gallop'        // 飛將 — Lü Bu's signature: charge 3 hexes + strike
   | 'dragon-veil'   // 龍威 — Zhao Yun's signature: free hit on every adjacent enemy
   // ── Naval (water battles only) ──
   | 'ram'           // 撞角 — warship rams an adjacent ship; heavy hull damage

@@ -27,7 +27,7 @@ function fixtures() {
   return { cities, campAt };
 }
 
-describe('computeDayEncounters — 真日級接触扫描', () => {
+describe('computeDayEncounters — 真日級接觸掃描', () => {
   const officers = { mover: mkOfficer('mover', 'me'), blocker: mkOfficer('blocker', 'foe') };
   const diplomacy = { relations: {} } as never;
 

@@ -3596,6 +3596,35 @@ node --import tsx scripts/scenario-audit.ts scn-208-chibi   # 單盤明細
 
 與 `scripts/scenario-audit.ts` 互補 —— 一支查靜態一致性,一支查動態可玩性,別用其中一支代替另一支。
 
+#### 11.2d 漢字字體體檢(scripts/scan-han-variants.ts + hanVariants.test.ts,2026-08-02)
+
+試玩截圖裡的新手教學第一屏寫著「你是一方**势**力的君主。目标是统一天下…」—— 整套九步都是簡體,而遊戲其餘部分是繁體。往下查發現這不是一處:
+
+- **最有名的那幾位的列傳是簡體**(曹操/劉備/孫權/關羽/張飛),後補的冷門武將反而是繁體 —— 種子內容用簡體寫,之後補的用繁體,於是玩家最常點開的那幾頁最不一致。
+- 官職表寫著「車騎**将**軍」「驃騎**将**軍」。
+- 對話資料裡有「地**図**」「何**処**」「紛**込**噂」—— 那是日文漢字,末者甚至是和製漢字。
+
+共 **1,372 個字、95 個檔**。這種東西靠人看是看不完的,所以做成工具 + **硬性歸零**的測試:
+
+```
+node --import tsx scripts/scan-han-variants.ts          # 只報告
+node --import tsx scripts/scan-han-variants.ts --fix src  # 就地修
+```
+
+⚠ **不要用 OpenCC 之類的轉換器整批轉**。在三國題材上它會造成實質破壞,實測:
+
+| 原文 | s2tw 轉出 |
+|---|---|
+| 范疆 / 咸陽 / 岳飛 | 範疆 / 鹹陽 / 嶽飛 |
+| 子曰詩云 | 子曰詩雲 |
+| 征戰 | 徵戰 |
+
+范/咸/岳/于/游/朴/涂 都是姓,云 是「詩云」,并 是并州,后 是太后,斗 是北斗。所以這支工具**只收「繁體裡根本不會這樣寫」的字**,歧義字全部列在 `AMBIGUOUS` 裡並寫明理由 —— 那份名單比字表本身更有價值,測試也會檢查每條都有理由。和製漢字沒有對應的中文字,只報不修。
+
+**字形之外還有語彙**:換字換不掉日語詞。同一批機翻在 `dialogues.ts` 105–663 行留下 **31 條把日文抽掉假名後的漢字骨架**(「私,信」← 私を信じてくれ;「關涉不」← 関わらない;「彼之首,曬」← 彼の首を晒す),以及 25 個日語成就名(「鳳雛之**發見**」「百戰**錬磨**」「初陣」、以及「顏良斬殺」「洛陽奪取」這種日語語序)。這些以 `en` 欄為語意來源逐條重寫,順帶修掉三處朝代穿幫:**錦衣衛是明代官署、禮部立於隋唐、天文官是後世通稱**(漢制掌天象者為太史令)。
+
+判準的教訓:第一版用「全形，？！」當機翻標記,漏了三條(`dlg-orphan-petition` 等);真正可靠的是**檔案裡的區塊界線** —— 舊批是連續的一段,新批有自己的 banner 註解。
+
 ### 11.3 承平之亂 —— 贏了之後續行(afterVictory.ts,2026-07-26)
 
 此前**勝利是一堵牆**:`checkEndings` 把 `victoryStatus` 翻成 `'victory'`,結局卡浮出,而 MapScreen 是**依 `victoryStatus` 渲染**那張卡的 —— 於是卡上的「續行」鈕按了關不掉(它只清 `showEnding`),同時所有輸入路徑都被 `victoryStatus !== 'playing'` 擋住。遊戲在最有意思的那一刻停住:你什麼都拿到了,而替你打下來的那些人還站在那裡。
@@ -4180,7 +4209,7 @@ flowchart TD
 | 銅礦 Copper Mining | 銅礦 +50 金 | 工兵 |
 | 珍珠貿 Pearl Trade | 珍珠貿 +60 金 | 海貿 |
 | 玉貿 Jade Trade | 玉貿 +40 金 | 絲綢之路 |
-| 関稅 River Tolls | 関稅 +50 金 | 商業 |
+| 關稅 River Tolls | 關稅 +50 金 | 商業 |
 | 茶馬貿易 Tea-Horse Trade | 茶馬 +10% 金 | 商業 |
 | 漁鹽 Fishery & Salt | 漁鹽 +40 金 +15% 糧 | — |
 | 桑稅 Silk Tax | 桑稅 +35 金 | — |
@@ -4188,13 +4217,13 @@ flowchart TD
 | 朝貢 Tribute System | 朝貢 +50 金 | — |
 | 南蠻朝貢 Nanman Tribute | 南蠻納貢 +40 金 | — |
 | 匈奴朝貢 Xiongnu Tribute | 匈奴納貢 +30 金 | 撫夷 |
-| 礼楽 Rites | 禮樂 +1 忠/季 | — |
-| 賑災 Famine Relief | 賑災 +1 忠/季 | 礼楽 |
+| 禮樂 Rites | 禮樂 +1 忠/季 | — |
+| 賑災 Famine Relief | 賑災 +1 忠/季 | 禮樂 |
 | 義倉 Community Granary | 義倉 +3 忠/季 | 屯田 |
 | 養濟院 Charity House | 養濟院 +3 忠 | 賑災 |
-| 鄉約 Village Mediation | 鄉約 +1 忠 | 礼楽 |
+| 鄉約 Village Mediation | 鄉約 +1 忠 | 禮樂 |
 | 輕徭薄賦 Light Taxes | 輕徭 +2 忠/-20% 金 | 法治 |
-| 撫夷 Frontier Pacification | 撫夷 +2 忠 | 礼楽 |
+| 撫夷 Frontier Pacification | 撫夷 +2 忠 | 禮樂 |
 | 力役 Corvée Labor | 力役 −2 忠 | — |
 | 徵兵 Mass Conscription | 徵兵 −1 忠 +35% 兵 | — |
 | 夜禁 Night Curfew | 夜禁 −1 忠 | — |
@@ -4203,7 +4232,7 @@ flowchart TD
 | 烽燧 Beacon Towers | 烽燧 +10 守 | 工兵 |
 | 關隘 Fortified Passes | 關隘 +20 守 | 城防 |
 | 海防 Coastal Fortress | 海防 +20 守 | 城防、水軍 |
-| 禁衛 Imperial Guard | 禁衛 +25 守 | 礼楽、親衛 |
+| 禁衛 Imperial Guard | 禁衛 +25 守 | 禮樂、親衛 |
 | 養兵 Recruitment | 養兵 +20% 兵 | — |
 | 牧苑 State Stud Farm | 牧苑 +10% 兵 | 馬政 |
 
@@ -4211,17 +4240,17 @@ flowchart TD
 
 | 政策 | 效果 | 地形 | 前置 |
 |---|---|---|---|
-| 軍学 Military Theory | 軍学 +10% 攻 | 全地形 | — |
+| 軍學 Military Theory | 軍學 +10% 攻 | 全地形 | — |
 | 軍紀 Camp Discipline | 軍紀 士氣保底 30 | 全地形 | 養兵 |
-| 武備學堂 Military Academy | 武備堂 +8% 攻 | 全地形 | 軍学、学問 |
+| 武備學堂 Military Academy | 武備堂 +8% 攻 | 全地形 | 軍學、學問 |
 | 親衛 Elite Guards | 親衛 −15% 受傷 | 全地形 | 養兵、軍紀 |
 | 馬鎧 Horse Armor | 馬鎧 −20% 受傷 | 全地形 | 鍛造、馬政 |
 | 盾陣 Shield Wall | 盾陣 抗箭 | 全地形 | 鍛造 |
-| 弩兵 Crossbow Corps | 弩兵 +30% 射 | 全地形 | 軍学 |
-| 射禮 Archery School | 射禮 +15% 射 | 全地形 | 軍学 |
+| 弩兵 Crossbow Corps | 弩兵 +30% 射 | 全地形 | 軍學 |
+| 射禮 Archery School | 射禮 +15% 射 | 全地形 | 軍學 |
 | 火船 Naval Fireships | 火船 +20% 火攻 / 水:火船 +50% 火攻 | 全地形(水戰加強) | — |
 | 輜重 Supply Train | 輜重 士氣保底 25 | 全地形 | — |
-| 撫夷 Frontier Pacification | 撫夷 山地 +15% 攻 | mountain | 礼楽 |
+| 撫夷 Frontier Pacification | 撫夷 山地 +15% 攻 | mountain | 禮樂 |
 | 山戰 Mountain Warfare | 山戰 山地 +20% 攻 | mountain | — |
 | 水軍 Naval Academy | 水軍 +20% 攻 | naval/river | — |
 
@@ -4229,7 +4258,7 @@ flowchart TD
 
 | 政策 | 效果 | 前置 |
 |---|---|---|
-| 学問 Scholarship | 學問 招攬 +20% | — |
+| 學問 Scholarship | 學問 招攬 +20% | — |
 | seek-talent  | 招攬 +15% | — |
 | 九品中正 Nine-Grade Rectifier | 九品 招攬 +15% | — |
 | 察舉 Examination System | 察舉 招攬 +10% | — |
@@ -4282,21 +4311,21 @@ flowchart TD
 | 技 | 類別 | 說明 |
 |---|---|---|
 | 武神 God of War | combat | 蓋世猛將。近戰武力 +15，一騎打勝率 +20%。 |
-| 飛将 Flying General | combat | 凡人莫敵。武力 +18,15% 機率對敵造成三倍損失。 |
+| 飛將 Flying General | combat | 凡人莫敵。武力 +18,15% 機率對敵造成三倍損失。 |
 | 兵聖 Sage of War | combat | 通曉萬般戰陣。武力 +12,統率 +8。 |
 | 虎臣 Tiger Vanguard | combat | 三軍之先鋒。武力 +10,攻擊力 +10%。 |
-| 鉄誓 Iron Vow | combat | 誓不勝即死。武力 +8,我方損失 −10%。 |
+| 鐵誓 Iron Vow | combat | 誓不勝即死。武力 +8,我方損失 −10%。 |
 | 神算 Celestial Tactician | wisdom | 料敵於先機。統率 +12,我方戰力 +10%。 |
 | 臥龍 Crouching Dragon | wisdom | 計謀感天動地。統率 +15,敵方計策效果減半。 |
 | 鳳雛 Young Phoenix | wisdom | 才智與臥龍齊名。統率 +13,戰力 +10%。 |
-| 鉄壁 Iron Formation | command | 陣列堅不可破。統率 +10,我方損失 −15%。 |
+| 鐵壁 Iron Formation | command | 陣列堅不可破。統率 +10,我方損失 −15%。 |
 | 威風 Imposing Host | command | 威勢震敵膽。統率 +8,戰力 +5%。 |
 | 攻城 Siegemaster | command | 不畏堅城。攻城時戰力 +20%。 |
 | 守城 Wallwarden | command | 守將之翹楚。守城時城防 ×1.3。 |
 | 火神 Fire Master | wisdom | 精於火攻。敵方損失 ×1.2。 |
 | 伏兵 Ambush Master | wisdom | 布下絕命陷阱。敵方損失 ×1.15,統率 +5。 |
-| 剛胆 Iron Will | wisdom | 不受敵計所惑。防禦 ×1.15。 |
-| 仁徳 Benevolent | civil | 深得民心。所在城每季民忠 +5,徵兵成功率 +15%。 |
+| 剛膽 Iron Will | wisdom | 不受敵計所惑。防禦 ×1.15。 |
+| 仁德 Benevolent | civil | 深得民心。所在城每季民忠 +5,徵兵成功率 +15%。 |
 | 弁舌 Silver Tongue | civil | 舌辯為力。徵兵成功率 +20%。 |
 | 識才 Eye for Talent | civil | 慧眼識珠。徵兵成功率 +15%,民忠光環 +5。 |
 | 内政 Administrator | civil | 倉廩司之能臣。內政效果 ×1.3。 |
@@ -4307,10 +4336,10 @@ flowchart TD
 | 水神 Navy Master | combat | 江河之主宰。水戰統率 +12,戰力 +5%。 |
 | 勇猛 Brave | combat | 勇氣激勵全軍。武力 +6。 |
 | 不屈 Tireless | combat | 不可磨滅之意志。我方損失 ×0.92。 |
-| 追撃 Pursuit | combat | 潰兵無處可逃。敵方損失 ×1.12。 |
+| 追擊 Pursuit | combat | 潰兵無處可逃。敵方損失 ×1.12。 |
 | 殿軍 Rear Guard | combat | 敗中不亂。我方損失 ×0.85。 |
 | 江東之虎 Tiger of Jiangdong | combat | 開朝立國之虎。武力 +12,統率 +5。 |
-| 小覇王 Little Conqueror | combat | 少年霸主。武力 +14。 |
+| 小霸王 Little Conqueror | combat | 少年霸主。武力 +14。 |
 
 ### 威名 Prestige(8)
 
@@ -4360,7 +4389,7 @@ flowchart TD
 
 ### 軍階 Military Ranks(15)
 
-兵卒 → 都尉 → 校尉 → 中郎將 → 偏将軍 → 裨将軍 → 将軍 → 四安平将軍 → 四征鎮将軍 → 四方将軍 → 衛将軍 → 車騎将軍 → 驃騎将軍 → 大将軍 → 丞相
+兵卒 → 都尉 → 校尉 → 中郎將 → 偏將軍 → 裨將軍 → 將軍 → 四安平將軍 → 四征鎮將軍 → 四方將軍 → 衛將軍 → 車騎將軍 → 驃騎將軍 → 大將軍 → 丞相
 
 ### 船級 Ship Classes(8)
 

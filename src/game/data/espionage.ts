@@ -23,7 +23,7 @@ export const ESPIONAGE_DEFS: EspionageDef[] = [
   },
   {
     kind: 'sabotage',
-    name: { en: 'Sabotage Stores', zh: '破壊' },
+    name: { en: 'Sabotage Stores', zh: '破壞' },
     description: 'Burn enemy food stocks. Destroys 30–50% of food at the targeted city.',
     descriptionZh: "焚毀敵方糧倉。摧毀目標城池30%至50%之糧草。",
     goldCost: 200,

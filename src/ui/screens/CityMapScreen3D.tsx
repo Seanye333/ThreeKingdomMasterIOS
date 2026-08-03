@@ -487,10 +487,10 @@ function CityDwellings3D({ preview, cityWallCol, occupied, bannerColor, stats, g
       <group onClick={(e) => { e.stopPropagation(); inspect({ title: '園林 · 雅集', body: landmarkInfo.gardenBody, color: '#9ac06a' }); }}>
         <Garden3D x={landmarks.garden.x} z={landmarks.garden.z} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '屯田 · 田畝', body: '军民屯垦之田,城邑粮秣所出。可於此勸課農桑、興修水利。', color: '#bcd07a', commands: ['develop-agriculture', 'major-agriculture', 'flood-control'] }); }}>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '屯田 · 田畝', body: '軍民屯墾之田,城邑糧秣所出。可於此勸課農桑、興修水利。', color: '#bcd07a', commands: ['develop-agriculture', 'major-agriculture', 'flood-control'] }); }}>
         <Farmland3D x={landmarks.farm.x} z={landmarks.farm.z} lush={weatherKind === 'drought' ? stats.fAgri * 0.32 : stats.fAgri} />
       </group>
-      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '府衙 · 治所', body: '一城之治所,太守理政、安民撫眾、興学教化之地。', color: '#f0d98a', commands: ['improve-loyalty', 'relief', 'anti-corruption', 'encourage-migration', 'promote-learning'] }); }}>
+      <group onClick={(e) => { e.stopPropagation(); inspect({ title: '府衙 · 治所', body: '一城之治所,太守理政、安民撫眾、興學教化之地。', color: '#f0d98a', commands: ['improve-loyalty', 'relief', 'anti-corruption', 'encourage-migration', 'promote-learning'] }); }}>
         <GovernmentHall3D x={hall.x} z={hall.z} bannerColor={bannerColor} isCapital={isCapital} />
       </group>
       <group onClick={(e) => { e.stopPropagation(); inspect({ title: '兵營 · 校場', body: '操演士卒、招募新軍、屯田練兵、鎮守疆場之所。', color: '#c08858', commands: ['recruit-troops', 'military-farming', 'drill-troops', 'garrison'] }); }}>
@@ -2735,7 +2735,7 @@ function CityMapScreen3DInner({ city, cityId, onClose }: {
           </div>
         )}
 
-        {/* Landmark inspect card — appears when a 地标 is tapped */}
+        {/* Landmark inspect card — appears when a 地標 is tapped */}
         {encounterOpen && encounterInfo && (() => {
           const K = encounterInfo.kind;
           const info = K === 'merchant'

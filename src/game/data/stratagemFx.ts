@@ -38,8 +38,8 @@ export function stratagemFxKind(id: StratagemId): StratagemFxKind | null {
     case 'dragon-veil':      return 'dragon';    // 龍威
     case 'defend':           return 'shield';    // 防御
     case 'chain-ships':      return 'chain';     // 連環
-    case 'charge':           return 'shockwave'; // 突撃
-    case 'gallop':           return 'streak';    // 飛将
+    case 'charge':           return 'shockwave'; // 突擊
+    case 'gallop':           return 'streak';    // 飛將
     case 'supply-strike':    return 'grain';     // 兵糧攻
     case 'false-retreat':    return 'feint';     // 偽計
     case 'ram':              return 'splash';    // 撞角

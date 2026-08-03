@@ -6,7 +6,7 @@ import type { BilingualName, EntityId } from './common';
  * from Liang, etc).
  */
 export type ProvinceId =
-  | 'sili'      // 司隷 — capital region (Luoyang, Chang'an)
+  | 'sili'      // 司隸 — capital region (Luoyang, Chang'an)
   | 'yu'        // 豫州 — central plain
   | 'ji'        // 冀州 — north (Yuan Shao's base)
   | 'qing'      // 青州 — east coast

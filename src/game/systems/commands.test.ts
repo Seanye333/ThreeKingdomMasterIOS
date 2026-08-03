@@ -323,7 +323,7 @@ describe('施政預覽 — previewCommandGain (deterministic pre-dispatch estima
       .toBeGreaterThan(previewCommandGain('develop-commerce', weak, city)!.delta);
   });
 
-  it('returns null for commands with no single previewable metric (治水/興学/鎮守)', () => {
+  it('returns null for commands with no single previewable metric (治水/興學/鎮守)', () => {
     const o = mkOfficer({ id: 'o', stats: { politics: 80, intelligence: 80, leadership: 80 } });
     const city = mkCity({ id: 'c', population: 200000 });
     expect(previewCommandGain('flood-control', o, city)).toBeNull();

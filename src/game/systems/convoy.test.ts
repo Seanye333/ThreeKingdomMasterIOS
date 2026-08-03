@@ -184,7 +184,7 @@ describe('隨軍糧 — march provisions & rationing', () => {
   });
 });
 
-describe('押運武将 — capacity & pace set by the officer', () => {
+describe('押運武將 — capacity & pace set by the officer', () => {
   it('capacity scales with 政治', () => {
     const able = mkOfficer({ id: 'able', stats: { politics: 90 } });
     const plain = mkOfficer({ id: 'plain', stats: { politics: 30 } });

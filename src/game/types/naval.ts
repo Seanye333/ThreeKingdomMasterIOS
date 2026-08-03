@@ -8,7 +8,7 @@ import type { BilingualName, EntityId } from './common';
 export type ShipClass =
   | 'transport'   // 運船 — moves troops + officers across water
   | 'warship'     // 艨艟 — combat ships; counts for naval battle
-  | 'flagship'    // 楼船 — large command ship; +leadership in battle
+  | 'flagship'    // 樓船 — large command ship; +leadership in battle
   // ── D-set additions ──
   | 'dou-jian'    // 鬥艦 — mid-tier oar warship, Chibi-era mainstay
   | 'zou-ge'      // 走舸 — small fast skiff, Wu boarding raids

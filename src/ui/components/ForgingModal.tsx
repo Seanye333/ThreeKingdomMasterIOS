@@ -157,7 +157,7 @@ export function ForgingModal({ onClose }: Props) {
         style={{
           background: 'linear-gradient(160deg,#1b2531,#10161e)',
           border: '1px solid rgba(255,255,255,0.1)', borderRadius: 'var(--tkm-radius-lg)',
-          borderTop: '3px solid #f55a20',  // ember orange — 炉火
+          borderTop: '3px solid #f55a20',  // ember orange — 爐火
           width: 'min(820px,100%)',
           maxHeight: '90vh',
           display: 'flex', flexDirection: 'column',

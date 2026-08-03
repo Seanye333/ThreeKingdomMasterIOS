@@ -15,7 +15,7 @@ export type InternalAffairsType =
   // ── Specialist actions ──
   | 'encourage-migration' // 招撫流民 — boost population
   | 'upgrade-wall'        // 城壁強化 — upgrade wallTier 1→2→3
-  | 'promote-learning'    // 興学 — XP burst to stationed officers (教化)
+  | 'promote-learning'    // 興學 — XP burst to stationed officers (教化)
   | 'anti-corruption'     // 巡查肅貪 — claw back graft → city gold + loyalty
   | 'adjudicate'          // 決獄 — hear the backlog of court cases (§1.11)
   | 'household-audit'     // 括戶 — drag sheltered households back onto the registers (§1.12)

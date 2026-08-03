@@ -13120,7 +13120,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             if (state.careerMode?.officerId === attackerCmd.officerId) {
               const cityName = state.cities[tb.cityId]?.name ?? { zh: '?', en: '?' };
               careerMilestones.push({
-                title: { zh: `${cityName.zh}陥落`, en: `Took ${cityName.en}` },
+                title: { zh: `${cityName.zh}陷落`, en: `Took ${cityName.en}` },
                 year: state.date.year,
                 season: state.date.season,
               });

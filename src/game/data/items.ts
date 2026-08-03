@@ -968,10 +968,10 @@ const FORGE_BATCH_6: Item[] = [
   },
   {
     id: 'taowu-chui',
-    name: { en: 'Taowu Earth-Splitting Maul', zh: '梼杌裂地錘' },
+    name: { en: 'Taowu Earth-Splitting Maul', zh: '檮杌裂地錘' },
     kind: 'weapon',
     description: 'The Taowu\'s obstinate maul — a blow splits the very earth.',
-    descriptionZh: '《山海經》梼杌頑兇,錘震裂地。',
+    descriptionZh: '《山海經》檮杌頑兇,錘震裂地。',
     effects: { war: 12, leadership: 2 },
     grants: { formation: 'five-elements' },
     rarity: 'gold',

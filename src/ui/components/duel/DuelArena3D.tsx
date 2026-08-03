@@ -1244,7 +1244,7 @@ function Scene({
       <StageProps knockKey={killKey} knockX={killX} />
       <Weather kind={look.weather} />
 
-      {/* 伤痕 — blood pools deepen beneath each fighter as they take wounds. */}
+      {/* 傷痕 — blood pools deepen beneath each fighter as they take wounds. */}
       <WoundStain x={-0.95} wounds={leftWounds} />
       <WoundStain x={0.95} wounds={rightWounds} />
 

@@ -185,8 +185,8 @@ const ridgePx = (ridge: ReadonlyArray<readonly [number, number]>): Array<[number
   ridge.map(([lon, lat]) => geoToPixel(lon, lat));
 
 const MOUNTAINS = ([
-  { zh: '岷山', en: 'Min Mountains', ridge: [[96, 31], [98, 29.5], [100, 28]], width: 3.0, cost: 1.6 },           // 青藏东缘
-  { zh: '隴山', en: 'Long Mountains', ridge: [[96, 35.5], [100, 36], [104, 36]], width: 2.0, cost: 1.1 },         // 昆仑/陇右
+  { zh: '岷山', en: 'Min Mountains', ridge: [[96, 31], [98, 29.5], [100, 28]], width: 3.0, cost: 1.6 },           // 青藏東緣
+  { zh: '隴山', en: 'Long Mountains', ridge: [[96, 35.5], [100, 36], [104, 36]], width: 2.0, cost: 1.1 },         // 昆仑/隴右
   { zh: '秦嶺', en: 'Qinling', ridge: [[105, 33.8], [108, 33.7], [111, 33.5], [113, 33.4]], width: 0.8, cost: 1.2 },
   { zh: '巴山', en: 'Ba Mountains', ridge: [[105, 32.5], [108, 32], [111, 31.5]], width: 0.7, cost: 1.3 },        // 大巴/巫山
   { zh: '太行山', en: 'Taihang', ridge: [[113.5, 41], [113.8, 38], [113.5, 35]], width: 0.7, cost: 0.9 },

@@ -764,7 +764,7 @@ export const FORGE_RECIPES: ForgeRecipe[] = [
     minFoundryLevel: 3,
     ingredients: ['yangjia-qiang', 'yu-mei-ren-jian'],
     description: 'Forge the Taowu Earth-Splitting Maul.',
-    descriptionZh: '鑄成「梼杌裂地錘」。',
+    descriptionZh: '鑄成「檮杌裂地錘」。',
   },
   {
     id: 'recipe-xiangliu-ji',

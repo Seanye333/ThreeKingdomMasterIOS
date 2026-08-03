@@ -56,12 +56,12 @@ describe('unified geo distance system', () => {
     expect(dur('taiyuan', 'luoyang')).toBe(1);
     // Medium rides.
     expect(dur('beiping', 'ye')).toBe(2);
-    expect(dur('changan', 'hanzhong')).toBe(2);  // across 秦岭 via the pass roads
+    expect(dur('changan', 'hanzhong')).toBe(2);  // across 秦嶺 via the pass roads
     expect(dur('liaodong', 'beiping')).toBe(2);
     // Long hauls across real mountains/distance.
     expect(dur('hanzhong', 'xiangyang')).toBe(3);
     expect(dur('jiaozhi', 'nanhai')).toBe(3);
-    expect(dur('hanzhong', 'wancheng')).toBe(4); // across 秦岭/武当, genuinely far
+    expect(dur('hanzhong', 'wancheng')).toBe(4); // across 秦嶺/武當, genuinely far
   });
 
   it('無錫 sits in 江東 next to 吳, not in the gorges (regression: mislabel)', () => {

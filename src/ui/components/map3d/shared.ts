@@ -197,7 +197,7 @@ const RIVERS_GEO: Array<{
     [110, 38], [110, 36], [112, 35], [114, 35], [117, 36], [119, 37.5],
   ], width_deg: 0.20 },
   // 长江 — source in Tibet → Sichuan → through gorges → East China Sea
-  { name: 'yangtze', nameZh: '长江', points: [
+  { name: 'yangtze', nameZh: '長江', points: [
     [96, 33], [100, 31], [104, 30], [107, 30.5], [110, 30.5], [113, 30.5],
     [115, 30.5], [117, 30.8], [120, 31], [122, 31.5],
   ], width_deg: 0.25 },
@@ -231,7 +231,7 @@ const DESERTS = DESERTS_GEO.map((d) => {
 /** Major inland lakes — painted as water in the terrain + a surface disc. */
 const LAKES_GEO: Array<{ name: string; lon: number; lat: number; r_deg: number }> = [
   { name: 'dongting', lon: 112.9, lat: 29.3, r_deg: 0.92 },  // 洞庭湖
-  { name: 'poyang',   lon: 116.3, lat: 29.0, r_deg: 0.70 },  // 鄱阳湖
+  { name: 'poyang',   lon: 116.3, lat: 29.0, r_deg: 0.70 },  // 鄱陽湖
   { name: 'taihu',    lon: 120.2, lat: 31.2, r_deg: 0.48 },  // 太湖
 ];
 export const LAKES = LAKES_GEO.map((l) => {
@@ -277,10 +277,10 @@ export function valueNoise(x: number, z: number): number {
 const C_SEA       = new THREE.Color('#2c5882');
 const C_SHALLOW   = new THREE.Color('#5a8acf');
 const C_BEACH     = new THREE.Color('#c8b078');
-const C_PLAIN     = new THREE.Color('#7a8a4a');     // 中原/江汉 — fertile olive (mid band)
-const C_LOESS     = new THREE.Color('#b8a566');     // 华北/黄土 — wheat-gold north
+const C_PLAIN     = new THREE.Color('#7a8a4a');     // 中原/江漢 — fertile olive (mid band)
+const C_LOESS     = new THREE.Color('#b8a566');     // 華北/黄土 — wheat-gold north
 const C_SOUTH     = new THREE.Color('#577d36');     // 江南 — lush green
-const C_TROPIC    = new THREE.Color('#3d6b2c');     // 岭南/交州 — deep tropical green
+const C_TROPIC    = new THREE.Color('#3d6b2c');     // 嶺南/交州 — deep tropical green
 const C_HILL      = new THREE.Color('#6a7038');
 const C_FOREST    = new THREE.Color('#3a5a2a');
 const C_MOUNTAIN  = new THREE.Color('#6a5440');
@@ -298,10 +298,10 @@ const C_LAKE      = new THREE.Color('#356f9a');     // inland lake water
  *  height is untouched, so movement/biome geometry is unchanged. */
 function plainColor(px: number, py: number): THREE.Color {
   const stops: Array<[number, THREE.Color]> = [
-    [120, C_LOESS],   // 北疆/华北   lat ~37.7
+    [120, C_LOESS],   // 北疆/華北   lat ~37.7
     [250, C_PLAIN],   // 中原        lat ~34
     [400, C_SOUTH],   // 江南        lat ~28.5
-    [580, C_TROPIC],  // 岭南/交州   lat ~22
+    [580, C_TROPIC],  // 嶺南/交州   lat ~22
   ];
   let col: THREE.Color;
   if (py <= stops[0][0]) col = stops[0][1].clone();

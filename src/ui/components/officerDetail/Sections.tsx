@@ -34,8 +34,8 @@ const REL_KIND_LABEL: Record<string, { zh: string; en: string; color: string }> 
   'sworn-brothers': { zh: '義兄弟', en: 'Sworn Brothers', color: '#e6c473' },
   'rival':          { zh: '宿敵',   en: 'Rival',          color: '#b8442e' },
   'mentor-student': { zh: '師弟',   en: 'Mentor / Student', color: '#3a7dd9' },
-  'master-servant': { zh: '主従',   en: 'Master / Servant', color: '#c9a64e' },
-  'romantic':       { zh: '恋人',   en: 'Romantic',         color: '#c178c7' },
+  'master-servant': { zh: '主從',   en: 'Master / Servant', color: '#c9a64e' },
+  'romantic':       { zh: '戀人',   en: 'Romantic',         color: '#c178c7' },
   'enemy':          { zh: '私仇',   en: 'Personal Enemy',   color: '#5a2025' },
   // Family kinds (from FamilyRelation type)
   'spouse':         { zh: '配偶',   en: 'Spouse',          color: '#e8a8c8' },
@@ -919,7 +919,7 @@ export function FamilyTreeSection({ officerId, officersOverride, drillDown }: {
 
   return (
     <section className={styles.statsSection}>
-      <h3 className={styles.sectionTitle}>{t('家系図', 'Family Tree')}</h3>
+      <h3 className={styles.sectionTitle}>{t('家系圖', 'Family Tree')}</h3>
       <div style={{
         background: 'linear-gradient(180deg, rgba(212,168,74,0.04) 0%, transparent 100%)',
         padding: '0.6rem 0.4rem',

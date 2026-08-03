@@ -325,7 +325,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'flag-set', key: 'maolu-done' },
     ],
     description:
-      'Your vanguard reaches Xicheng and finds the gates wide open — Kongming alone on the wall, burning incense, playing the guqin. Fifteen万 men halt at the sound of one instrument.',
+      'Your vanguard reaches Xicheng and finds the gates wide open — Kongming alone on the wall, burning incense, playing the guqin. Fifteen萬 men halt at the sound of one instrument.',
     descriptionZh: '前鋒抵西城,城門大開 — 孔明獨坐城頭,焚香操琴。十五萬大軍,被一張琴攔在城外。',
     effects: [],
     chooserRulerId: 'sima-yi',
@@ -626,7 +626,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   },
   {
     id: 'evt-fan-castle-guan-yu',
-    name: { en: 'The Fall of Guan Yu', zh: '關羽，麦城死' },
+    name: { en: 'The Fall of Guan Yu', zh: '關羽，麥城死' },
     yearMin: 219,
     yearMax: 220,
     requires: [{ kind: 'officer-active', officerId: 'guan-yu' }],
@@ -904,7 +904,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   },
   {
     id: 'evt-cao-pi-seven-step-poem',
-    name: { en: 'Seven Steps to Spare a Brother', zh: '七歩詩' },
+    name: { en: 'Seven Steps to Spare a Brother', zh: '七步詩' },
     yearMin: 220,
     yearMax: 221,
     requires: [
@@ -1124,7 +1124,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   },
   {
     id: 'evt-guan-yu-five-passes',
-    name: { en: "Past Five Passes, Six Generals", zh: '過五關斬六将' },
+    name: { en: "Past Five Passes, Six Generals", zh: '過五關斬六將' },
     yearMin: 200,
     yearMax: 201,
     requires: [
@@ -1161,7 +1161,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   },
   {
     id: 'evt-cao-cao-wancheng',
-    name: { en: 'Disaster at Wancheng', zh: '宛城之変' },
+    name: { en: 'Disaster at Wancheng', zh: '宛城之變' },
     yearMin: 197,
     yearMax: 197,
     requires: [

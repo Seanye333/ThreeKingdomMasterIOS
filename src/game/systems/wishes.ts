@@ -290,7 +290,7 @@ function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
       officerId: o.id,
       kind: 'transfer',
       text: {
-        zh: `${o.name.zh}请求转任至${target?.name.zh ?? '其他城'}。`,
+        zh: `${o.name.zh}請求轉任至${target?.name.zh ?? '其他城'}。`,
         en: `${o.name.en} requests transfer to ${target?.name.en ?? 'another city'}.`,
       },
       targetId: target?.id,
@@ -306,7 +306,7 @@ function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
       officerId: o.id,
       kind: 'reinforce',
       text: {
-        zh: `${o.name.zh}请求增兵${o.locationCityId ? ctx.cities[o.locationCityId]?.name.zh : ''}。`,
+        zh: `${o.name.zh}請求增兵${o.locationCityId ? ctx.cities[o.locationCityId]?.name.zh : ''}。`,
         en: `${o.name.en} requests reinforcements for ${o.locationCityId ? ctx.cities[o.locationCityId]?.name.en : 'their city'}.`,
       },
       targetId: o.locationCityId ?? undefined,
@@ -417,7 +417,7 @@ function generateWish(o: Officer, ctx: WishContext): OfficerWish | null {
     officerId: o.id,
     kind: 'promote',
     text: {
-      zh: `${o.name.zh}请求升迁。`,
+      zh: `${o.name.zh}請求升遷。`,
       en: `${o.name.en} requests promotion.`,
     },
     issuedYear: ctx.date.year,

@@ -27,7 +27,7 @@ const input = () => ({
     } as HistoricBattle,
   ],
   chronicle: [
-    { year: 196, season: 'spring', zh: '舉义旗於涿郡', kind: 'event' },
+    { year: 196, season: 'spring', zh: '舉義旗於涿郡', kind: 'event' },
     { year: 200, season: 'autumn', zh: '克合肥', kind: 'conquest' },
   ],
   victoryStatus: 'victory',

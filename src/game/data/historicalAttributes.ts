@@ -748,7 +748,7 @@ export const HISTORICAL_TACTICS: Record<string, TacticId[]> = {
   'hist-zhang-qian':  ['fast-strike', 'wait-tired'],
   'hist-chen-tang':   ['fast-strike', 'rush', 'ban-chao'],
   'hist-huo-guang':   ['attack-plans', 'borrow-knife'],
-  'hist-cai-lun':     [],  // 工艺家无战法
+  'hist-cai-lun':     [],  // 工藝家無戰法
   'hist-zhang-heng':  [],
 
   // 兩晉

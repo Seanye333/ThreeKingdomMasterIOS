@@ -743,7 +743,7 @@ export const HIST_BIOS_4: Record<string, OfficerBiography> = {
     en: 'A famed general of late Sui. Holding Qijun, he broke the Wagang and the bandit hosts many times — a pillar at the end of Sui. At Xingyang he walked into Li Mi\'s ambush, was broken, and killed himself.',
   },
   'hist-empress-xiao': {
-    zh: '蕭岿之女,隋煬帝皇后。江都之變後,被宇文化及挾持,後落入竇建德之手,再入突厥。唐太宗滅突厥,迎其歸長安,以禮待之。',
+    zh: '蕭巋之女,隋煬帝皇后。江都之變後,被宇文化及挾持,後落入竇建德之手,再入突厥。唐太宗滅突厥,迎其歸長安,以禮待之。',
     en: 'Daughter of Xiao Kui, empress of Yang Guang of Sui. After the Jiangdu mutiny she was held by Yuwen Huaji, then fell to Dou Jiande, then to the Türks. When Taizong of Tang destroyed the Türks he brought her back to Chang\'an and received her with rite.',
   },
   'hist-yang-tong': {
@@ -909,7 +909,7 @@ export const HIST_BIOS_4: Record<string, OfficerBiography> = {
     en: 'A famed Northern Song general of the Zhe house of hereditary commanders. He held the northwest border and broke the Western Xia many times.',
   },
   'hist-zhong-shiheng': {
-    zh: '北宋名將。鎮西北,抗西夏。與其孫种師道、种師中世稱「種家將」。',
+    zh: '北宋名將。鎮西北,抗西夏。與其孫種師道、種師中世稱「種家將」。',
     en: 'A famed Northern Song general. He held the northwest against Western Xia. With his grandsons Zhong Shidao and Zhong Shizhong he formed the "Zhong family generals."',
   },
   'hist-wen-tong': {

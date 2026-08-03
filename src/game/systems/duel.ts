@@ -385,7 +385,7 @@ const WEAPON_ARTS: Record<string, WeaponArt> = {
   'bosaidun-cha':         { kind: 'pierce', zh: '三叉·破守', en: 'Trident — Pierce',        weaponZh: '波塞頓三叉戟', weaponEn: "Poseidon's Trident" },
   'chenxing-chui':        { kind: 'power',  zh: '晨星·奮擊', en: 'Morningstar — Overpower+', weaponZh: '晨星流星錘', weaponEn: 'Morningstar Flail' },
   'pei-bagua-chui':       { kind: 'power',  zh: '梅花·奮擊', en: 'Plum Hammers — Overpower+', weaponZh: '八卦梅花亮銀錘', weaponEn: 'Eight-Trigram Silver Hammers' },
-  'taowu-chui':           { kind: 'power',  zh: '裂地·奮擊', en: 'Earth-Splitter — Overpower+', weaponZh: '梼杌裂地錘', weaponEn: 'Taowu Earth-Splitting Maul' },
+  'taowu-chui':           { kind: 'power',  zh: '裂地·奮擊', en: 'Earth-Splitter — Overpower+', weaponZh: '檮杌裂地錘', weaponEn: 'Taowu Earth-Splitting Maul' },
 };
 
 /** The duel art of the first legendary weapon an officer has equipped, if any. */
@@ -2178,7 +2178,7 @@ export function applyAimedStrike(bout: DuelBout, side: 'attacker' | 'defender', 
   bumpFoeFlaw(22);
   if (target === 'disarm') {
     clearFoeGuard();
-    return { bout: b, ok: true, disarm: foe, dmgToFoe: stagger, textZh: '一擊击械 — 敵兵器脫手!', textEn: 'a clean strike — the foe is disarmed!' };
+    return { bout: b, ok: true, disarm: foe, dmgToFoe: stagger, textZh: '一擊擊械 — 敵兵器脫手!', textEn: 'a clean strike — the foe is disarmed!' };
   }
   // unhorse
   if (foe === 'attacker') { b.aUnhorsed = true; b.aMountSavior = false; } else { b.dUnhorsed = true; b.dMountSavior = false; }

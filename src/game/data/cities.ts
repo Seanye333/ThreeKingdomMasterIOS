@@ -7,18 +7,18 @@ export type Terrain =
   | 'plain'    // 平原 — fertile lowland (default)
   | 'mountain' // 山地 — mountainous, hard to attack
   | 'forest'   // 山林 — wooded hills
-  | 'water'    // 水郷 — riverine / lakeside
+  | 'water'    // 水鄉 — riverine / lakeside
   | 'desert'   // 砂漠 — arid frontier
-  | 'wetland'  // 湿地 — marshy lowland
+  | 'wetland'  // 濕地 — marshy lowland
   | 'pass';    // 關 — narrow chokepoint
 
 export const TERRAIN_DEFS: Record<Terrain, { zh: string; en: string; color: string }> = {
   plain:    { zh: '平原', en: 'Plain',    color: '#a8c87a' },
   mountain: { zh: '山地', en: 'Mountain', color: '#7a5a3a' },
   forest:   { zh: '山林', en: 'Forest',   color: '#5a7a3a' },
-  water:    { zh: '水郷', en: 'Riverine', color: '#88b7e8' },
+  water:    { zh: '水鄉', en: 'Riverine', color: '#88b7e8' },
   desert:   { zh: '砂漠', en: 'Desert',   color: '#c19a3b' },
-  wetland:  { zh: '湿地', en: 'Wetland',  color: '#5a8a7a' },
+  wetland:  { zh: '濕地', en: 'Wetland',  color: '#5a8a7a' },
   pass:     { zh: '關',   en: 'Pass',     color: '#a8442e' },
 };
 

@@ -173,13 +173,13 @@ export function EncyclopediaModal({ onClose }: Props) {
                 letterSpacing: '0.1rem',
               }}
             >
-              {s === 'officers' ? '武将' :
+              {s === 'officers' ? '武將' :
                 s === 'codex' ? '圖鑑' :
                 s === 'ranking' ? '武評' :
                 s === 'items' ? '名品' :
                 s === 'skills' ? '特技' :
                 s === 'traits' ? '性格' :
-                s === 'events' ? '史実' :
+                s === 'events' ? '史實' :
                 s === 'provinces' ? '州郡' : '名城'}
             </button>
           ))}

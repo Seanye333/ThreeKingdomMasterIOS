@@ -151,7 +151,7 @@ function unify(): EndingResult {
     titleZh: '天下統一',
     titleEn: 'Unified the Realm',
     textZh:
-      '汉室倾颓数十年,战乱无休。今卿一统九州,百姓重见天日。史官将此功记入青史,千秋万代,永传其名。',
+      '漢室傾颓數十年,戰乱無休。今卿一統九州,百姓重見天日。史官將此功記入青史,千秋萬代,永傳其名。',
     textEn:
       'For decades the Han crumbled and the realm bled. Now you have brought all nine provinces under one banner. The people see daylight again. The historians enter your name into the record — to be remembered for ten thousand generations.',
   };
@@ -184,10 +184,10 @@ function endured(): EndingResult {
 function restoreHan(): EndingResult {
   return {
     kind: 'restore-han',
-    titleZh: '汉室再兴',
+    titleZh: '漢室再興',
     titleEn: 'The Han Restored',
     textZh:
-      '献帝降诏,大汉中兴。卿以宗室之身,聚天下英才,夺三京以复祖业。汉祚再续四百年,后世称卿为光武之亚。',
+      '獻帝降詔,大漢中興。卿以宗室之身,聚天下英才,奪三京以复祖业。漢祚再續四百年,后世稱卿為光武之亞。',
     textEn:
       'Emperor Xian issues an edict of restoration. As kin of the imperial line, you have gathered the talent of the realm and recovered the three capitals. The Han endures another four hundred years. Later ages will name you second only to Emperor Guangwu.',
   };
@@ -208,10 +208,10 @@ function hegemon(): EndingResult {
 function tripartite(): EndingResult {
   return {
     kind: 'tripartite',
-    titleZh: '三国鼎立',
+    titleZh: '三國鼎立',
     titleEn: 'The Three Kingdoms Stand',
     textZh:
-      '天下三分,卿守一隅,与其余二雄分庭抗礼。 兵戈或暂息,然各怀大志。 史称三国时代,自此而始。',
+      '天下三分,卿守一隅,與其余二雄分庭抗禮。 兵戈或暫息,然各懷大志。 史稱三國時代,自此而始。',
     textEn:
       'The realm divides in three. You hold one corner, balanced against the other two. The sword may rest awhile, but each watches the other. Historians will call this the Age of Three Kingdoms — beginning here.',
   };
@@ -220,10 +220,10 @@ function tripartite(): EndingResult {
 function recluse(): EndingResult {
   return {
     kind: 'recluse',
-    titleZh: '隐士退隐',
+    titleZh: '隱士退隱',
     titleEn: 'The Sage Retires',
     textZh:
-      '不与天下争锋,守一隅之地,与亲信渔樵山林。 浊世汹涌,而卿之名清如孤云,后人记为隐世名君。',
+      '不與天下争鋒,守一隅之地,與親信漁樵山林。 濁世洶湧,而卿之名清如孤云,后人記為隱世名君。',
     textEn:
       'You take no part in the contest for the realm. Holding your small corner, you fish and gather firewood in the hills with your closest friends. The world stays muddy, but your name floats clean above it like a single cloud. Later ages remember you as the hidden ruler.',
   };
@@ -232,10 +232,10 @@ function recluse(): EndingResult {
 function emperor(): EndingResult {
   return {
     kind: 'emperor',
-    titleZh: '即位称帝',
+    titleZh: '即位稱帝',
     titleEn: 'Enthroned',
     textZh:
-      '卿登九五之位,改元建号。四方称臣,百官朝贺。 自此,新朝立焉。',
+      '卿登九五之位,改元建號。四方稱臣,百官朝賀。 自此,新朝立焉。',
     textEn:
       'You ascend the dragon throne. A new era begins under your reign-name. The corners of the realm bow; the hundred officials offer congratulations. Thus a new dynasty is founded.',
   };
@@ -307,9 +307,9 @@ function defeat(ctx: EndingContext): EndingResult {
 
   return {
     ...base,
-    titleZh: '败亡',
+    titleZh: '敗亡',
     titleEn: 'Defeated',
-    textZh: '势力倾覆,部下星散。 历史从未记得失败者的姓名。',
+    textZh: '勢力傾覆,部下星散。 历史從未記得失敗者的姓名。',
     textEn:
       'Your force collapses, your followers scatter. History does not remember the names of the defeated.',
   };

@@ -27,7 +27,7 @@ const laneWater = (tiles: ReturnType<typeof generateTerrain>) =>
     && t.coord.col >= 4 && t.coord.col <= 13
     && t.coord.row >= 3 && t.coord.row <= 8).length;
 
-describe('real-geography battlefields (战斗地图写实)', () => {
+describe('real-geography battlefields (戰斗地圖寫實)', () => {
   it('storming 襄陽 from the north crosses the 漢水; from the south the lane is open', () => {
     const target = byId['xiangyang'];
     const hint = { terrain: target.terrain, port: target.port, x: target.coords.x, y: target.coords.y };
@@ -42,8 +42,8 @@ describe('real-geography battlefields (战斗地图写实)', () => {
     // window size.)
     const bridges = (tiles: ReturnType<typeof generateTerrain>) =>
       tiles.filter((t) => t.terrain === 'bridge' || t.terrain === 'ice').length;
-    expect(laneWater(fromNorth), '北面来攻应有汉水在场').toBeGreaterThanOrEqual(6);
-    expect(bridges(fromNorth), '北面来攻需架桥渡汉水').toBeGreaterThanOrEqual(1);
+    expect(laneWater(fromNorth), '北面來攻應有漢水在場').toBeGreaterThanOrEqual(6);
+    expect(bridges(fromNorth), '北面來攻需架橋渡漢水').toBeGreaterThanOrEqual(1);
     // Both approaches stay playable: an approach road exists on the board.
     const roads = (tiles: ReturnType<typeof generateTerrain>) =>
       tiles.filter((t) => t.terrain === 'road' || t.terrain === 'bridge').length;
@@ -85,7 +85,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
     expect(tiles.some((t) => t.terrain === 'chokepoint')).toBe(true);
   });
 
-  it('the rampart hugs the water — river flanks stay river (贴水而建)', () => {
+  it('the rampart hugs the water — river flanks stay river (貼水而建)', () => {
     const target = byId['xiangyang'];
     const off = (id: string) => ({ officer: { id, name: { zh: id, en: id }, skills: [], stats: { war: 70, leadership: 70, intelligence: 60, politics: 50, charisma: 50 }, forceId: 'x', locationCityId: null, status: 'idle' } as never, troops: 4000 });
     const battle = setupTacticalBattle({
@@ -102,21 +102,21 @@ describe('real-geography battlefields (战斗地图写实)', () => {
     const band = battle.tiles.filter((t) => t.coord.col === wallCol && t.coord.row >= 3 && t.coord.row <= 8);
     const fortOrWater = band.every((t) =>
       t.terrain === 'wall' || t.terrain === 'gate' || t.terrain === 'tower' || t.terrain === 'moat' || t.terrain === 'river');
-    expect(fortOrWater, '城墙带只应是工事或水面').toBe(true);
+    expect(fortOrWater, '城牆帶只應是工事或水面').toBe(true);
     expect(battle.tiles.some((t) => t.terrain === 'gate')).toBe(true);
     const hugsWater = battle.tiles.some((t) =>
       t.terrain === 'river' && Math.abs(t.coord.col - wallCol) <= 1 && t.coord.row >= 2 && t.coord.row <= 9);
-    expect(hugsWater, '漢水应贴着城墙').toBe(true);
+    expect(hugsWater, '漢水應貼着城牆').toBe(true);
   });
 
   it('describeBattleSite names the real ground', () => {
     const xy = cityPos(byId['xiangyang']);
     const north = describeBattleSite(xy.x, xy.y - 4);            // just north of 襄陽 → 漢水
-    expect(north?.zh, '襄陽城北应是汉水').toMatch(/漢水/);
+    expect(north?.zh, '襄陽城北應是漢水').toMatch(/漢水/);
     const qinling = describeBattleSite(...(() => { const a = cityPos(byId['hanzhong']); const b = cityPos(byId['chencang']); return [(a.x + b.x) / 2, (a.y + b.y) / 2] as [number, number]; })());
-    expect(qinling?.zh, '漢中→陳倉之间应是秦岭').toMatch(/秦嶺/);
+    expect(qinling?.zh, '漢中→陳倉之間應是秦嶺').toMatch(/秦嶺/);
     const plain = describeBattleSite(...(() => { const a = cityPos(byId['xuchang']); const b = cityPos(byId['chenliu']); return [(a.x + b.x) / 2, (a.y + b.y) / 2] as [number, number]; })());
-    expect(plain, '許昌—陳留平原应无地名').toBeNull();
+    expect(plain, '許昌—陳留平原應無地名').toBeNull();
   });
 
   it('the enclosure always has a rear route — no hard-stall without siege gear', () => {
@@ -150,7 +150,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
         queue.push(n);
       }
     }
-    expect(reached, '攻方无器械也必须能绕进城(后巷)').toBe(true);
+    expect(reached, '攻方無器械也必須能繞進城(后巷)').toBe(true);
   });
 
   it('an attacking siege engine rolls toward the gate and batters it', () => {
@@ -179,7 +179,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
     const battered = JSON.stringify(battle.wallHp) !== hpBefore;
     // After a few turns the engine must have closed on the gate (or already
     // be chipping fortifications down).
-    expect(after < before || battered, `器械应逼近城门(${before}→${after})或已开砸`).toBe(true);
+    expect(after < before || battered, `器械應逼近城門(${before}→${after})或已開砸`).toBe(true);
   });
 
   it('圍困 starves the garrison; 水攻 washes out walls and drowns defenders', () => {
@@ -209,7 +209,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
       battleGeo: siegeGeo('liyang', 'ye'), siegeWorks: 'flood',
     });
     const wallCount = (b: typeof storm) => b.tiles.filter((t) => t.terrain === 'wall').length;
-    expect(wallCount(flood), '决堤应冲垮墙段').toBeLessThan(wallCount(storm));
+    expect(wallCount(flood), '決堤應冲垮牆段').toBeLessThan(wallCount(storm));
     const floodDef = flood.units.filter((u) => u.side === 'defender');
     const stormDef = storm.units.filter((u) => u.side === 'defender');
     expect(floodDef[0].troops).toBeLessThan(stormDef[0].troops);
@@ -280,7 +280,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
     const distBefore = Math.min(...battle.units.filter((u) => u.side === 'defender').map((u) => hexDistance(u.coord, alley)));
     const after = aiTakeTurn(battle, officers, () => 0.5, { skill: 1 }).battle;
     const distAfter = Math.min(...after.units.filter((u) => u.side === 'defender').map((u) => hexDistance(u.coord, alley)));
-    expect(distAfter, `守军应逼近后巷堵口 (${distBefore}→${distAfter})`).toBeLessThan(distBefore);
+    expect(distAfter, `守軍應逼近后巷堵口 (${distBefore}→${distAfter})`).toBeLessThan(distBefore);
   });
 
   it('AI attackers pick siege works in auto-resolved marches; players do not', () => {
@@ -301,7 +301,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
       { type: 'march', cityId: 'xinye', targetCityId: 'xiangyang', officerId: 'gen-1', troops: 8000 } as never,
       { ...baseCtx, cities: mkCities() } as never,
     );
-    expect(flood.entries.some((e) => (e.textZh ?? '').includes('水攻')), 'AI 应对临水大城用水攻').toBe(true);
+    expect(flood.entries.some((e) => (e.textZh ?? '').includes('水攻')), 'AI 應對临水大城用水攻').toBe(true);
     expect(flood.cities['xinye'].gold).toBe(5000 - 400);
 
     // AI invests the grain-poor inland city of 許昌.
@@ -309,7 +309,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
       { type: 'march', cityId: 'chenliu', targetCityId: 'xuchang', officerId: { ...officer, locationCityId: 'chenliu' } && 'gen-1', troops: 8000 } as never,
       { ...baseCtx, cities: mkCities() } as never,
     );
-    expect(invest.entries.some((e) => (e.textZh ?? '').includes('圍困')), 'AI 应围困缺粮之城').toBe(true);
+    expect(invest.entries.some((e) => (e.textZh ?? '').includes('圍困')), 'AI 應圍困缺糧之城').toBe(true);
 
     // The player's own auto-marches stay plain storms.
     const player = handleMarch(
@@ -347,7 +347,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
       playerForceId: 'me',
       rng: () => 0.5,
     });
-    expect(out.pendingSiegeDefenses?.length, '应转交互守城战').toBe(1);
+    expect(out.pendingSiegeDefenses?.length, '應轉交互守城戰').toBe(1);
     const d = out.pendingSiegeDefenses![0];
     expect(d.targetCityId).toBe('xiangyang');
     expect(d.troops).toBe(6000);
@@ -412,7 +412,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
     // The frozen Yellow River belt: 白馬→黎陽 crossing gets ice tiles in winter.
     const winterGeo = { ...siegeGeo('baima', 'liyang'), season: 'winter' as const };
     const tiles = generateTerrain('liyang', W, H, {}, undefined, winterGeo);
-    expect(tiles.some((t) => t.terrain === 'ice'), '冬季黄河应结冰').toBe(true);
+    expect(tiles.some((t) => t.terrain === 'ice'), '冬季黄河應結冰').toBe(true);
     expect(tiles.some((t) => t.terrain === 'river'), '').toBe(false);
     // Southern waters never freeze: 新野→襄陽 keeps open 漢水.
     const south = generateTerrain('xiangyang', W, H, {}, undefined, { ...siegeGeo('xinye', 'xiangyang'), season: 'winter' as const });
@@ -440,7 +440,7 @@ describe('real-geography battlefields (战斗地图写实)', () => {
     const high = attackUnits(mk({ '2,2': 'hill' }), 'A1', 'D1', officers, () => 0.5);
     const dmgFlat = 5000 - flat.units.find((u) => u.id === 'D1')!.troops;
     const dmgHigh = 5000 - high.units.find((u) => u.id === 'D1')!.troops;
-    expect(dmgHigh, '高地攻击应更痛').toBeGreaterThan(dmgFlat);
+    expect(dmgHigh, '高地攻擊應更痛').toBeGreaterThan(dmgFlat);
   });
 
   it('落石 seals the path; 燒橋 drops the span into the river', async () => {

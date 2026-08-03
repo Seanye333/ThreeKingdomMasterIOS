@@ -534,7 +534,7 @@ export function HexWorldTerrain({ season, cities, forces, territoryOwnership, he
     // tile takes a mottle + relief shading off its north neighbour, and the
     // high ranges a cool atmospheric cast.
     if (!road && !water) {
-      const mottle = Math.abs(Math.sin(t.x * 9.1 + t.z * 4.7)) * 0.06 - 0.03; // 平涂:斑驳减半
+      const mottle = Math.abs(Math.sin(t.x * 9.1 + t.z * 4.7)) * 0.06 - 0.03; // 平涂:斑駁减半
       const ni = tileIndex.get(`${t.c},${t.r - 1}`);
       const northTop = ni !== undefined ? tiles[ni].topY : t.topY;
       const shade = Math.max(-0.1, Math.min(0.1, (t.topY - northTop) * 0.6));

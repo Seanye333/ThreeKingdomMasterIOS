@@ -46,8 +46,8 @@ const PRODIGY_LATENT = 15;
 /** Standard latent runway over base stats for an heir. */
 const HEIR_LATENT = 25;
 
-const FIRST_NAMES_M_ZH = ['偉', '昭', '武', '誠', '安', '允', '寧', '猛', '彦', '徳', '景', '思', '勇', '楓', '玄', '弘', '欣', '謙'];
-const FIRST_NAMES_F_ZH = ['霊', '雯', '麗', '蘭', '芳', '蓮', '玉', '珺', '清', '婉', '彤', '婷', '宛', '艶'];
+const FIRST_NAMES_M_ZH = ['偉', '昭', '武', '誠', '安', '允', '寧', '猛', '彦', '德', '景', '思', '勇', '楓', '玄', '弘', '欣', '謙'];
+const FIRST_NAMES_F_ZH = ['靈', '雯', '麗', '蘭', '芳', '蓮', '玉', '珺', '清', '婉', '彤', '婷', '宛', '艷'];
 const FIRST_NAMES_M_EN = ['Wei', 'Zhao', 'Wu', 'Cheng', 'An', 'Yun', 'Ning', 'Meng', 'Yan', 'De', 'Jing', 'Si', 'Yong', 'Feng', 'Xuan', 'Hong', 'Xin', 'Qian'];
 const FIRST_NAMES_F_EN = ['Ling', 'Wen', 'Li', 'Lan', 'Fang', 'Lian', 'Yu', 'Jun', 'Qing', 'Wan', 'Tong', 'Ting', 'Wan', 'Yan'];
 

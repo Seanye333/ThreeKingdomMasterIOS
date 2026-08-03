@@ -90,7 +90,7 @@ export function PersuasionModal({ onClose }: { onClose: () => void }) {
     k === 'defect' ? { icon: '🎭', zh: '說降', en: 'Defect' } : { icon: '🤝', zh: '結盟', en: 'Ally' };
 
   return (
-    <Modal onClose={onClose} title={t('说客', 'Persuader-Envoy')} icon="🗣" width="min(580px, 100%)" scrollBody>
+    <Modal onClose={onClose} title={t('說客', 'Persuader-Envoy')} icon="🗣" width="min(580px, 100%)" scrollBody>
       <div style={{ fontSize: '0.8rem', color: '#aab6c0', marginBottom: '0.8rem', lineHeight: 1.6 }}>
         {t(`遣善言之士赴鄰境,當面論辯 —— 說降心懷不滿的敵將,或游說諸侯結盟。費 ${PERSUADE_COST} 金(成敗皆耗),勝則棄暗投明、或盟約立成。`,
           `Send a silver tongue to a bordering rival city to talk a disgruntled officer into defecting, or sway a lord into alliance. Costs ${PERSUADE_COST} gold (win or lose); a win lands a defection or an alliance.`)}

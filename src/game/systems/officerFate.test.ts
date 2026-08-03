@@ -20,7 +20,7 @@ describe('doctrineRecruitFit — 良禽擇木', () => {
     expect(spurn.reasonZh).toBeTruthy();
   });
 
-  it('覇道之士 follows the strong', () => {
+  it('霸道之士 follows the strong', () => {
     const hege = mkOfficer({ id: 'h', doctrine: 'hegemonic' as never });
     const strong = mkOfficer({ id: 's', stats: { war: 92, leadership: 88 } as never });
     expect(doctrineRecruitFit(hege, strong, force(), 3).delta).toBeGreaterThan(0);

@@ -71,7 +71,7 @@ export function ChineseRoof3D({ size, color, ornament = false, beasts = false }:
           <meshStandardMaterial color={ridgeC} {...SURFACE.tile} />
         </mesh>
       ))}
-      {/* Hip ridges (戗脊) running apex→corners on grand roofs — the tiled look */}
+      {/* Hip ridges (戧脊) running apex→corners on grand roofs — the tiled look */}
       {ornament && !snowy && [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz], i) => {
         const a = new THREE.Vector3(0, roofH + 0.06, 0);
         const c = new THREE.Vector3(sx * eave * 0.46, 0.12, sz * eave * 0.46);

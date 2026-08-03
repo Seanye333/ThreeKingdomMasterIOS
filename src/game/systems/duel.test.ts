@@ -201,7 +201,7 @@ describe('招式·特技 (taunt / thrust / combo specials)', () => {
     expect(r.bout.aGuard).toBe(0);                      // spent both 氣
   });
 
-  it('缴械 — a parry that holds can disarm the attacker (氣 stripped)', () => {
+  it('繳械 — a parry that holds can disarm the attacker (氣 stripped)', () => {
     const b = { ...initDuelBout(mk(70), mk(95)), aGuard: 2 };
     const r = duelRound(b, 'slash', 'parry', () => 0); // strong defender parries → disarm
     expect(r.disarm).toBe('attacker');

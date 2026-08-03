@@ -18,7 +18,7 @@ const KIND_LABEL: Record<Kind, { zh: string; en: string }> = {
   weapon:   { zh: '武具', en: 'Weapons' },
   armor:    { zh: '甲冑', en: 'Armor' },
   horse:    { zh: '名馬', en: 'Horses' },
-  treasure: { zh: '宝物', en: 'Treasures' },
+  treasure: { zh: '寶物', en: 'Treasures' },
   book:     { zh: '兵書', en: 'Books' },
 };
 

@@ -67,7 +67,7 @@ const MOVES: Array<{ id: DuelMove; zh: string; en: string; kind: MoveKind; cost?
   { id: 'sweep',  zh: '掃', en: 'Sweep',     kind: 'attack',  hint: { zh: '低·掃 — 破格擋', en: 'low — punishes Guard' } },
   { id: 'guard',  zh: '格', en: 'Guard',     kind: 'defense', hint: { zh: '擋斬·劈，攢氣；漏掃', en: 'stops Slash/Cleave, banks 氣; weak vs Sweep' } },
   { id: 'dodge',  zh: '閃', en: 'Dodge',     kind: 'defense', hint: { zh: '閃劈·掃，回氣力；漏斬', en: 'evades Cleave/Sweep, recovers; weak vs Slash' } },
-  { id: 'parry',  zh: '架', en: 'Parry',     kind: 'defense', hint: { zh: '架斬·掃，反擊攢2氣，可缴械；漏劈', en: 'deflects Slash/Sweep, ripostes +2氣, can disarm; weak vs Cleave' } },
+  { id: 'parry',  zh: '架', en: 'Parry',     kind: 'defense', hint: { zh: '架斬·掃，反擊攢2氣，可繳械；漏劈', en: 'deflects Slash/Sweep, ripostes +2氣, can disarm; weak vs Cleave' } },
   { id: 'taunt',  zh: '挑釁', en: 'Taunt',   kind: 'power', bank: true, hint: { zh: '攢2氣+回氣力；若對手進攻則挨實打', en: 'banks 2氣 + recovers; but a foe attack lands clean' } },
   { id: 'thrust', zh: '突刺', en: 'Thrust',  kind: 'power', cost: THRUST_COST, hint: { zh: '耗1氣，破閃·架，唯格可擋', en: '1氣 — slips Dodge/Parry, only Guard stops' } },
   { id: 'combo',  zh: '連擊', en: 'Combo',    kind: 'power', cost: COMBO_COST, hint: { zh: '耗2氣，連環擊，無單防可全擋', en: '2氣 — a flurry no single defense fully stops' } },
@@ -528,7 +528,7 @@ export function DuelGameModal({
       <button
         onClick={() => doAimed('disarm')}
         disabled={usedAimed || bout.over}
-        title={t('擊械:賭一記缴械(勇高易中,落空露破綻),每局一次', 'Aim to disarm: a gamble (a sharper arm lands it; a whiff leaves you open), once per bout')}
+        title={t('擊械:賭一記繳械(勇高易中,落空露破綻),每局一次', 'Aim to disarm: a gamble (a sharper arm lands it; a whiff leaves you open), once per bout')}
         style={{ flex: 1, padding: '0.32rem 0.2rem', borderRadius: 'var(--tkm-radius-sm)', cursor: usedAimed ? 'default' : 'pointer', fontFamily: 'inherit', fontSize: '0.78rem', background: usedAimed ? '#241c12' : 'rgba(20,28,38,0.96)', border: `1px solid ${usedAimed ? '#243240' : '#c86a6a'}`, color: usedAimed ? '#5a4a36' : '#e8b0b0' }}
       >🎯 {t('擊械', 'Disarm')}</button>
       {foeMounted && (

@@ -52,7 +52,7 @@ const sk_cities: Record<string, City> = {
 };
 const sk_forces: Record<string, Force> = { me: mkForce('me', 'lord-me'), wei: mkForce('wei', 'cao-cao') };
 
-describe('说客 — targets', () => {
+describe('說客 — targets', () => {
   it('reach is only rival cities bordering one of yours', () => {
     const reach = reachableRivalCities(sk_cities, 'me');
     expect(reach.has('near')).toBe(true);
@@ -60,7 +60,7 @@ describe('说客 — targets', () => {
     expect(reach.has('home')).toBe(false);
   });
 
-  it('lists disgruntled reachable enemy officers (说降) and reachable rival lords (结盟)', () => {
+  it('lists disgruntled reachable enemy officers (說降) and reachable rival lords (結盟)', () => {
     const officers = {
       'cao-cao': mkOfficer({ id: 'cao-cao', forceId: 'wei', status: 'active', locationCityId: 'near', loyalty: 100, stats: { intelligence: 90, charisma: 90 } as never }),
       grumbler: mkOfficer({ id: 'grumbler', forceId: 'wei', status: 'idle', locationCityId: 'near', loyalty: 40 }),
@@ -75,7 +75,7 @@ describe('说客 — targets', () => {
     expect(ids).not.toContain('defect:content'); // too loyal
     expect(ids).not.toContain('defect:deep');    // unreachable
     expect(ids).not.toContain('defect:mine');    // your own
-    expect(ids).not.toContain('defect:cao-cao'); // a lord allies, isn't 说降'd
+    expect(ids).not.toContain('defect:cao-cao'); // a lord allies, isn't 說降'd
   });
 
   it('skips a force you are already allied with', () => {
@@ -86,7 +86,7 @@ describe('说客 — targets', () => {
   });
 });
 
-describe('说客 — dynamic scenarios', () => {
+describe('說客 — dynamic scenarios', () => {
   it('a defect scenario recruits on a win', () => {
     const sc = buildPersuasionScenario({ kind: 'defect', officerId: 'grumbler', officerName: { zh: '甲', en: 'A' }, forceId: 'wei', forceName: { zh: '魏', en: 'Wei' }, cityId: 'near', cityName: { zh: '近', en: 'Near' }, loyalty: 40, topic: 'interest', difficulty: 'veteran' });
     expect(sc.winEffects.some((e) => e.kind === 'recruit' && e.targetId === 'grumbler')).toBe(true);

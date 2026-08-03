@@ -136,7 +136,7 @@ export const CITY_POLICY_EFFECTS: Partial<Record<PolicyId, CityPolicyEffect>> = 
   'copper-mining': { goldFlat: 50, specialtyRole: 'coin', badge: '銅礦 +50 金' },
   'pearl-trade':  { goldFlat: 60, specialtyRole: 'luxury', badge: '珍珠貿 +60 金' },
   'jade-trade':   { goldFlat: 40, badge: '玉貿 +40 金' },
-  'river-customs': { goldFlat: 50, badge: '関稅 +50 金' },
+  'river-customs': { goldFlat: 50, badge: '關稅 +50 金' },
   'tea-trade':    { goldMul: 0.10, badge: '茶馬 +10% 金' },
   'fish-salt':    { goldFlat: 40, foodMul: 0.15, specialtyRole: 'rations', badge: '漁鹽 +40 金 +15% 糧' },
   'sericulture-tax':  { goldFlat: 35, specialtyRole: 'luxury', badge: '桑稅 +35 金' },
@@ -184,7 +184,7 @@ export interface CombatPolicyEffect {
 const WATER: CombatTerrain[] = ['naval', 'river'];
 
 export const COMBAT_POLICY_EFFECTS: Partial<Record<PolicyId, CombatPolicyEffect>> = {
-  'military-theory':  { attackMul: 0.10, badge: '軍学 +10% 攻' },
+  'military-theory':  { attackMul: 0.10, badge: '軍學 +10% 攻' },
   'camp-discipline':  { moraleFloor: 30, badge: '軍紀 士氣保底 30' },
   'military-academy': { attackMul: 0.08, badge: '武備堂 +8% 攻' },
   'elite-guards':     { defenseMul: -0.15, badge: '親衛 −15% 受傷' },

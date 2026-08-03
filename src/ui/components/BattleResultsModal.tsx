@@ -322,7 +322,7 @@ export function BattleResultsModal({ battle, playerSide, onClose }: Props) {
             {won ? 'Spoils & captives applied to the strategic map.' : 'Your forces retreat to lick their wounds.'}
           </span>
           <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={onClose}>
-            続行 Continue
+            續行 Continue
           </button>
         </div>
       </div>

@@ -20,7 +20,7 @@ const makeCity = (over: Partial<City> = {}): City => ({
   ...over,
 });
 
-describe('専才坐鎮 — specialist officers sharpen a name-good', () => {
+describe('專才坐鎮 — specialist officers sharpen a name-good', () => {
   // 'wuwei' is a `horse` specialty city → warhorse production + gold premium.
   const mkOfficer = (policies: string[]): Officer => ({
     id: 'o1', name: { zh: '某', en: 'X' },

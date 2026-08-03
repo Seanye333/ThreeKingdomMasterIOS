@@ -20,7 +20,7 @@ export const SKILLS: Skill[] = [
   },
   {
     id: 'flying-general',
-    name: { en: 'Flying General', zh: '飛将' },
+    name: { en: 'Flying General', zh: '飛將' },
     category: 'combat',
     description:
       'No mortal can stand against them. +18 war and a 15% chance to triple losses inflicted on the enemy.',
@@ -45,7 +45,7 @@ export const SKILLS: Skill[] = [
   },
   {
     id: 'iron-vow',
-    name: { en: 'Iron Vow', zh: '鉄誓' },
+    name: { en: 'Iron Vow', zh: '鐵誓' },
     category: 'combat',
     description: 'Sworn to victory or death. +8 war and 10% lower own losses.',
     descriptionZh: '誓不勝即死。武力 +8,我方損失 −10%。',
@@ -81,7 +81,7 @@ export const SKILLS: Skill[] = [
   },
   {
     id: 'iron-formation',
-    name: { en: 'Iron Formation', zh: '鉄壁' },
+    name: { en: 'Iron Formation', zh: '鐵壁' },
     category: 'command',
     description: 'Defensive lines unbreakable. +10 leadership and 15% less own losses.',
     descriptionZh: '陣列堅不可破。統率 +10,我方損失 −15%。',
@@ -131,7 +131,7 @@ export const SKILLS: Skill[] = [
   },
   {
     id: 'iron-will',
-    name: { en: 'Iron Will', zh: '剛胆' },
+    name: { en: 'Iron Will', zh: '剛膽' },
     category: 'wisdom',
     description: 'Immune to enemy stratagems. Defense ×1.15.',
     descriptionZh: '不受敵計所惑。防禦 ×1.15。',
@@ -141,7 +141,7 @@ export const SKILLS: Skill[] = [
   // ─────────── Civil & charismatic ───────────
   {
     id: 'benevolent',
-    name: { en: 'Benevolent', zh: '仁徳' },
+    name: { en: 'Benevolent', zh: '仁德' },
     category: 'civil',
     description: 'Beloved of the people. +5 city loyalty per season; +15% recruit success.',
     descriptionZh: '深得民心。所在城每季民忠 +5,徵兵成功率 +15%。',
@@ -231,7 +231,7 @@ export const SKILLS: Skill[] = [
   },
   {
     id: 'pursuit',
-    name: { en: 'Pursuit', zh: '追撃' },
+    name: { en: 'Pursuit', zh: '追擊' },
     category: 'combat',
     description: 'Routed enemies are finished. Enemy losses ×1.12.',
     descriptionZh: '潰兵無處可逃。敵方損失 ×1.12。',
@@ -255,7 +255,7 @@ export const SKILLS: Skill[] = [
   },
   {
     id: 'little-conqueror',
-    name: { en: 'Little Conqueror', zh: '小覇王' },
+    name: { en: 'Little Conqueror', zh: '小霸王' },
     category: 'combat',
     description: 'A conqueror in his youth. +14 war.',
     descriptionZh: '少年霸主。武力 +14。',

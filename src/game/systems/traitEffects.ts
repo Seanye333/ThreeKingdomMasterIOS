@@ -912,7 +912,7 @@ export function traitMechanicalEffects(traitId: string): Array<{ zh: string; en:
   // Tactical specialists (hex battle)
   if (traitId === 'spear-master' || traitId === 'pikeman') out.push({ zh: '統槍兵時傷害 +15%', en: 'Spear units +15% dmg' });
   if (traitId === 'sharpshooter' || traitId === 'crossbow-adept') out.push({ zh: '統弓弩時傷害 +15% · 矢雨 +20%', en: 'Archer units +15% · arrow-volley +20%' });
-  if (traitId === 'cavalryman') out.push({ zh: '統騎兵時傷害 +15% · 突撃 +15%', en: 'Cavalry +15% dmg · charge +15%' });
+  if (traitId === 'cavalryman') out.push({ zh: '統騎兵時傷害 +15% · 突擊 +15%', en: 'Cavalry +15% dmg · charge +15%' });
   if (traitId === 'navy-master') out.push({ zh: '水軍傷害 +20%', en: 'Naval units +20% dmg' });
   if (traitId === 'hill-fighter') out.push({ zh: '山地/丘陵傷害 +20%', en: 'Hill/mountain +20% dmg' });
   if (traitId === 'forest-fighter') out.push({ zh: '森林傷害 +20%', en: 'Forest +20% dmg' });

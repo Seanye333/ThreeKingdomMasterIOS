@@ -26,7 +26,7 @@ export const SHIP_CLASSES: ShipClassDef[] = [
   {
     id: 'flagship',
     name: { zh: '樓船', en: 'Flagship Tower-Ship' },
-    description: '楼船, three-deck command ship — slow to build, dominates naval battles.',
+    description: '樓船, three-deck command ship — slow to build, dominates naval battles.',
     descriptionZh: "樓船三層之指揮巨艦——建造耗時甚久,可主宰水戰。",
     goldCost: 2200,
     seasonsToBuild: 5,

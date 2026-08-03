@@ -19,7 +19,7 @@ const feud = (a: string, b: string): OathBond =>
 const spouse = (a: string, b: string): FamilyRelation =>
   ({ officerA: a, officerB: b, kind: 'spouse' } as FamilyRelation);
 
-describe('連携合擊 — comboBondMul', () => {
+describe('連攜合擊 — comboBondMul', () => {
   it('two strangers get nothing', () => {
     expect(comboBondMul('nobody-a', 'nobody-b')).toBe(1.0);
     expect(comboBondLabel('nobody-a', 'nobody-b')).toBeNull();

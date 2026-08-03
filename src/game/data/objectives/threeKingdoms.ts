@@ -15,7 +15,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       },
       secondary: [
         {
-          title: { zh: '名将発掘', en: 'Recruit a Future Hero' },
+          title: { zh: '名將發掘', en: 'Recruit a Future Hero' },
           description: 'Recruit Cao Cao, Liu Bei, or Sun Jian to your court.',
           descriptionZh: "招攬曹操、劉備或孫堅入仕麾下。",
           goal: { kind: 'recruit-officer', officerId: 'cao-cao' },
@@ -125,7 +125,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-190-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '献帝奉迎', en: 'Shelter the Emperor' },
+        title: { zh: '獻帝奉迎', en: 'Shelter the Emperor' },
         description: "Hold Luoyang and Xuchang by 197 AD.",
         descriptionZh: "於197年前同時據有洛陽與許昌。",
         goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 197 },
