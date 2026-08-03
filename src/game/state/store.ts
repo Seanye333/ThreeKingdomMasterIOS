@@ -379,6 +379,8 @@ import { MAX_CUSTOM_EVENTS } from '../systems/customEvents';
 import { refreshPrestige, prestigeTitleById, TOP_PRESTIGE_IDS } from '../data/prestige';
 import { peerageById } from '../data/peerage';
 import { careerStanding, careerGuardCap } from '../systems/career';
+import { rollFollowers } from '../systems/careerFollowers';
+import { subRng } from './campaignRng';
 import { evaluateGoal, findObjectiveFor } from '../systems/objectives';
 import { applySuccession } from '../systems/succession';
 import {
@@ -6168,6 +6170,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // 一代記 — auto-record chronicle milestones: prestige attained and
         // career rank promotions for the player's chronicle hero.
         let careerModeAfterSeason = state.careerMode;
+        const followerRng = subRng(state, 'career-followers');
         if (state.careerMode) {
           const cid = state.careerMode.officerId;
           const ms: Array<{ title: { zh: string; en: string }; year: number; season: 'spring' | 'summer' | 'autumn' | 'winter' }> = [];
@@ -6210,6 +6213,70 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               textZh: `${postOfficers[cid]?.name.zh ?? '主角'}晉升為${newStanding.status.zh}。`,
             });
           }
+          // ── 投效 ── 主角自己的作為招來的人。
+          // 亂數走 subRng 而不是裸 Math.random —— 否則同一顆種子重跑會分岔,
+          // 平衡鎖與存檔重現都會失效(endTurn 那邊踩過這個坑)。
+          const hero = postOfficers[cid];
+          if (hero && hero.status !== 'dead') {
+            const fr = rollFollowers(
+              {
+                deeds: nextDeeds[cid],
+                charisma: hero.stats.charisma,
+                renown: hero.renown ?? 0,
+                locationCityId: hero.locationCityId,
+                hometownCityId: hero.hometownCityId,
+                privateTroops: hero.privateTroops ?? 0,
+                leadership: hero.stats.leadership,
+              },
+              postOfficers, cid,
+              [followerRng(), followerRng(), followerRng()],
+            );
+            if (fr.levies > 0) {
+              postOfficers[cid] = {
+                ...hero,
+                privateTroops: (hero.privateTroops ?? 0) + fr.levies,
+              };
+              result.report.entries.push({
+                cityId: hero.locationCityId,
+                kind: 'note',
+                text: `${fr.levies} local men take service under ${hero.name.en}.`,
+                textZh: `鄉里${fr.levies}人來投${hero.name.zh}。`,
+              });
+            }
+            if (fr.turnedAway > 0) {
+              // 收不下才是升品的動機 —— 明說出來,別讓玩家以為系統壞了
+              result.report.entries.push({
+                cityId: hero.locationCityId,
+                kind: 'note',
+                text: `${fr.turnedAway} more offered to follow, but your standing keeps no more.`,
+                textZh: `另有${fr.turnedAway}人願附,惜以身份所限,養不得也。`,
+              });
+            }
+            if (fr.recruitId && postOfficers[fr.recruitId]) {
+              const joiner = postOfficers[fr.recruitId];
+              postOfficers[fr.recruitId] = {
+                ...joiner,
+                forceId: hero.forceId,
+                locationCityId: hero.locationCityId,
+                status: 'idle',
+                loyalty: Math.max(joiner.loyalty, fr.viaHometown ? 78 : 68),
+              };
+              ms.push({
+                title: {
+                  zh: `${fr.viaHometown ? '同鄉來投' : '義士來投'} — ${joiner.name.zh}`,
+                  en: `${fr.viaHometown ? 'Townsman joins' : 'A swordsman joins'}: ${joiner.name.en}`,
+                },
+                year: result.date.year, season: result.date.season,
+              });
+              result.report.entries.push({
+                cityId: hero.locationCityId,
+                kind: 'note',
+                text: `${joiner.name.en} pledges to follow ${hero.name.en}${fr.viaHometown ? ' — a fellow townsman.' : '.'}`,
+                textZh: `${joiner.name.zh}願隨${hero.name.zh}${fr.viaHometown ? '——同鄉之誼。' : '。'}`,
+              });
+            }
+          }
+
           if (ms.length > 0) {
             careerModeAfterSeason = { ...state.careerMode, milestones: [...state.careerMode.milestones, ...ms] };
           }

@@ -27,10 +27,27 @@ const CITY_OWNERSHIP_184: Record<string, string> = {
   pingyuan:  'yellow-turban',
   beihai:    'yellow-turban',
   bohai:     'yellow-turban',
-  // Loyalists hold the rest.
+  /*
+   * 皇甫嵩 —— 給他**他真正打過的那條走廊**,不是徐州。
+   *
+   * 原本盤上他據有彭城、下邳(連帶鄰近填充把琅琊、小沛也拉過去)—— 徐州。
+   * 而他 184 年是左中郎將,一支野戰軍:五月長社(潁川)火攻破波才,轉東郡
+   * 倉亭擊卜己,十月代董卓攻廣宗斬張梁,十一月下曲陽斬張寶。他一生沒到過
+   * 徐州;亂平之後領的是冀州牧。184 年的徐州該是朝廷刺史部(陶謙 188 年才
+   * 出任徐州刺史)。
+   *
+   * 更硬的證據在事件表裡:「長社之火」的抉擇者寫的是 huangfu-song,而它
+   * 「堅壁待援」那一選項給的是**許昌**的城防 —— 長社屬潁川,盤上以許昌代表。
+   * 也就是說事件早就預設許昌在他手裡,而歸屬表把許昌給了漢室。
+   *
+   * 改成:許昌(長社)+ 陳留,鄰近填充順勢帶上白馬、延津、官渡 —— 那正是
+   * 洛陽到鄴的走廊,他北上廣宗要走的路。城數 7 → 5,兵 55,675 → 41,575:
+   * 少而精,合乎一支「有兵無土」的中郎將部隊。徐州四城歸還漢室。
+   */
   chenliu:   'huangfu',
-  pengcheng: 'huangfu',
-  xiapi:     'huangfu',
+  xuchang:   'huangfu',
+  pengcheng: 'han',
+  xiapi:     'han',
   // 宛城 —— 春,張曼成殺南陽太守褚貢而據宛。朱儁自五月圍到十一月才拔下它。
   // 這座城**不是朱儁的起點,是他的目標**(見 objectives 的「宛城之圍」)。
   wancheng:  'yellow-turban',
@@ -43,7 +60,6 @@ const CITY_OWNERSHIP_184: Record<string, string> = {
   jincheng:  'dong-184',
   anding:    'dong-184',
   // Han loyalist outposts.
-  xuchang:   'han',
   taiyuan:   'han',
   beiping:   'han',
   yanmen:    'han',

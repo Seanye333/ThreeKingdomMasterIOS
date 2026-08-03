@@ -56,8 +56,12 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
         en: '"The Blue Heaven is dead; the Yellow Heaven shall rise. In the year of jiazi, let the realm rejoice."\n\nYou have hundreds of thousands who come when called. What you do not have: armour, supply lines, anyone who can hold a wall. Thirty-six divisions each fight their own war while the imperial armies gather. This rising either takes Luoyang within the year, or it ends within the year.',
       },
       huangfu: {
-        zh: '你是皇甫嵩,持節,督冀州。天下名將無多,你是其中一個 —— 長社一戰,你順風縱火,以少破多,朝廷因此把北方交給你。\n\n你麾下有個騎都尉叫曹操,二十九歲,洛陽北部尉出身,五色棒打死過蹇碩的叔父。這種人不適合當屬吏。\n\n打完黃巾,你會上表請免冀州一年租賦,百姓為你作歌。然後你會被宦官誣奏,收印綬,削戶邑。這是你最後一次手握重兵。',
-        en: 'You are Huangfu Song, holding the staff of authority over Ji province. The realm has few real generals and you are one — at Changshe you loosed fire downwind and broke a host many times your size, and the court handed you the north for it.\n\nUnder you rides a cavalry colonel named Cao Cao, twenty-nine, once a ward magistrate in Luoyang who beat a eunuch\'s uncle to death with his coloured staves. Men like that do not stay subordinates.\n\nWhen the Turbans are done you will petition to remit a year\'s taxes from Ji, and the people will make songs about you. Then the eunuchs will slander you, your seals will be taken and your fief cut. This is the last time you will hold an army.',
+        // 原文寫「長社一戰,你順風縱火…朝廷因此把北方交給你」—— 而長社之火是第 9–10
+        // 回合才觸發的局內事件(chooser 正是皇甫嵩),序章等於先把玩家的第一場仗
+        // 講完了。「督冀州」也早了半年:他是亂平之後才領冀州牧的。改成前瞻語氣,
+        // 與朱儁、董卓兩篇一致。
+        zh: '你是皇甫嵩,左中郎將,持節,與朱儁分討潁川。天下名將無多,你是其中一個 —— 而你手上是四萬官軍,對面是三十六方裡離京師最近的那一方。\n\n你麾下有個騎都尉叫曹操,二十九歲,洛陽北部尉出身,五色棒打死過蹇碩的叔父。這種人不適合當屬吏。\n\n打完黃巾,你會領冀州牧,上表請免一年租賦,百姓為你作歌。然後你會被宦官誣奏,收印綬,削戶邑。這是你最後一次手握重兵。',
+        en: 'You are Huangfu Song, General of the Household of the Left, holding the staff, sent with Zhu Jun against the Turbans of Yingchuan. The realm has few real generals and you are one — and you have forty thousand imperial troops against the division that stands nearest the capital.\n\nUnder you rides a cavalry colonel named Cao Cao, twenty-nine, once a ward magistrate in Luoyang who beat a eunuch\'s uncle to death with his coloured staves. Men like that do not stay subordinates.\n\nWhen the Turbans are done you will be made Governor of Ji, petition to remit a year\'s taxes, and the people will make songs about you. Then the eunuchs will slander you, your seals will be taken and your fief cut. This is the last time you will hold an army.',
       },
       zhujun: {
         zh: '你是朱儁,右中郎將,督荊州。宛城已陷 —— 張曼成殺南陽太守褚貢據之,而你在新野,手上沒有攻城的器械。\n\n你會拿下它:外圍其城,內起土山以臨之,鳴鼓其西南而自將精卒五千掩其東北。從五月到十一月,六個月 —— 黃巾之亂終於宛城,而終結它的是你。\n\n你帳下的人比城更值得看:涿郡來的織席販履之徒劉備,帶著兩個結義兄弟;下邳來的孫堅,十七歲就在錢塘江上一個人嚇退海賊。他們現在是你的佐吏。\n\n二十年後,一個會在成都稱帝,一個的兒子會在建業稱帝。',

@@ -51,10 +51,10 @@ describe('career rank privileges (品階特權)', () => {
   });
 
   it('私兵上限 is capped by rank, not by leadership alone', () => {
-    // 白身聚不了眾,再能打也一樣
-    expect(careerGuardCap(careerStanding(undefined), 95)).toBe(0);
-    // 部曲十來人;九品一百
-    expect(careerGuardCap(careerStanding({ battlesWon: 2 } as never), 95)).toBe(20);
+    // 白身只養得起幾個賓客
+    expect(careerGuardCap(careerStanding(undefined), 95)).toBe(10);
+    // 部曲五十;九品一百
+    expect(careerGuardCap(careerStanding({ battlesWon: 2 } as never), 95)).toBe(50);
     expect(careerGuardCap(careerStanding({ battlesWon: 5 } as never), 95)).toBe(100);
     // 都督起才吃統率
     expect(careerGuardCap(careerStanding({ citiesTaken: 16 } as never), 80)).toBe(80 * 100 + 6000);

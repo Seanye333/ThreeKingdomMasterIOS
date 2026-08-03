@@ -32,14 +32,14 @@ describe('career ladder — the rungs below office', () => {
 });
 
 describe('私兵上限 — rank is the ceiling, leadership only decides if you reach it', () => {
-  it('a commoner raises no troops however capable', () => {
-    expect(careerGuardCap(careerStanding(undefined), 95)).toBe(0);
+  it('a commoner keeps a few guests, not a company', () => {
+    expect(careerGuardCap(careerStanding(undefined), 95)).toBe(10);
   });
 
-  it('a retainer commands a dozen, not a legion', () => {
+  it('a retainer commands fifty, not a legion', () => {
     const s = careerStanding(deeds({ battlesWon: 2 }));
     expect(s.rank).toBe(RANK_RETAINER);
-    expect(careerGuardCap(s, 95)).toBe(20);
+    expect(careerGuardCap(s, 95)).toBe(50);
   });
 
   it('the ninth rank is a hundred men even for a great captain', () => {

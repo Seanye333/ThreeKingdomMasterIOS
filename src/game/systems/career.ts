@@ -110,7 +110,7 @@ export function careerPrivileges(standing: CareerStanding): CareerPrivilege[] {
   const r = standing.rank;
   return [
     { zh: '游歷、習武、比試', en: 'Travel, train, duel', unlocked: true },
-    { zh: '部曲二十人(部曲)', en: 'A retinue of twenty (Retainer)', unlocked: r <= RANK_RETAINER },
+    { zh: "部曲五十人(部曲)", en: "A retinue of fifty (Retainer)", unlocked: r <= RANK_RETAINER },
     { zh: '受命出陣、私兵百人(九品)', en: 'Take the field, 100 guards (Ninth Rank)', unlocked: r <= RANK_LOWEST_OFFICE },
     { zh: '私兵 +1000、可薦人(大臣)', en: 'Guard +1,000, may recommend (Minister)', unlocked: r <= 7 },
     { zh: '領一城內政、私兵 +3000(太守)', en: 'Govern a city, guard +3,000 (Governor)', unlocked: r <= 5 },
@@ -129,25 +129,15 @@ export function careerPrivileges(standing: CareerStanding): CareerPrivilege[] {
 export function careerGuardCap(standing: CareerStanding, leadership: number): number {
   const byLeadership = leadership * 100;
   const r = standing.rank;
-  if (r >= RANK_COMMONER) return 0;              // 白身不得聚眾
-  if (r >= RANK_RETAINER) return 20;
+  // 白身養得起幾個賓客游俠,但那不是「兵」;部曲才是正式的私兵。
+  // 給白身一個非零的上限,是為了讓投效一開始就看得見 —— 開局完全沒動靜
+  // 會讓人以為系統壞了,而升品的動機該來自「人來了卻收不下」。
+  if (r >= RANK_COMMONER) return 10;
+  if (r >= RANK_RETAINER) return 50;
   const ceiling =
     r <= 3 ? byLeadership + 6000
       : r <= 5 ? byLeadership + 3000
         : r <= 7 ? byLeadership + 1000
           : 100;                                  // 九品/八品:百人隊
   return Math.min(byLeadership + 6000, ceiling);
-}
-
-/**
- * Extra 私兵 capacity the chronicle hero earns from their standing — a
- * renowned commander raises a larger household guard. Added on top of the
- * usual leadership×100 cap, for the career officer only.
- */
-export function careerGuardCapBonus(standing: CareerStanding): number {
-  const r = standing.rank;
-  if (r <= 3) return 6000;
-  if (r <= 5) return 3000;
-  if (r <= 7) return 1000;
-  return 0;
 }
