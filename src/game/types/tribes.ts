@@ -6,7 +6,7 @@ import type { BilingualName, EntityId } from './common';
  * periodically launch raids into specific border cities.
  */
 export type TribeId =
-  | 'nanban'    // 南蛮 — south (Meng Huo)
+  | 'nanban'    // 南蠻 — south (Meng Huo)
   | 'wuhuan'    // 烏桓 — north-east
   | 'xianbei'   // 鮮卑 — far north
   | 'qiang'     // 羌 — north-west

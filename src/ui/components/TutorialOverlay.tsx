@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { useGameStore } from '../../game/state/store';
 import { useT, useLanguage } from '../i18n';
 import { Z } from '../zIndex';
@@ -32,25 +33,25 @@ const TUTORIAL_STEPS: Array<{ titleZh: string; titleEn: string; bodyZh: string; 
   {
     titleZh: '施設與防御',
     titleEn: 'Facilities & Defence',
-    bodyZh: '地圖下方「築堡施設」可在城郊修箭樓/投石臺/陣/防壁:它們每季自動轟擊/補給/拦阻路過的軍隊,開戰時還會出現在戰場上參戰。進城邑地圖可在 8 個方位布置城防,點防御位還能「守城演習」練兵(不損兵將)。',
+    bodyZh: '地圖下方「築堡施設」可在城郊修箭樓/投石臺/陣/防壁:它們每季自動轟擊/補給/攔阻路過的軍隊,開戰時還會出現在戰場上參戰。進城邑地圖可在 8 個方位布置城防,點防御位還能「守城演習」練兵(不損兵將)。',
     bodyEn: 'The Build button raises towers/catapults/camps/barricades near your cities — they shell, resupply or stall passing columns each season, and join battles fought beside them. Inside the city map, place wall defences on 8 approaches; tap a slot to run a no-loss siege drill.',
   },
   {
     titleZh: '觀戰與原地指揮',
     titleEn: 'Watch & Command In Place',
-    bodyZh: '戰斗中點「🌏 大地圖」可縮回世界视角 —— 仗就在大地圖那塊地上繼續打。點棋盤上自己的部隊即可移動/攻擊/放計謀,點 ⚔ 浮標或 ⤢ 隨時回全屏。',
+    bodyZh: '戰斗中點「🌏 大地圖」可縮回世界視角 —— 仗就在大地圖那塊地上繼續打。點棋盤上自己的部隊即可移動/攻擊/放計謀,點 ⚔ 浮標或 ⤢ 隨時回全屏。',
     bodyEn: 'In battle, tap 🌏 to drop back to the world map — the fight keeps playing on the very ground it broke out on. Tap your units on the little board to move/attack/cast, and the ⚔ chip or ⤢ to re-enter fullscreen.',
   },
   {
     titleZh: '棋盤地圖',
     titleEn: 'The Hex Map',
-    bodyZh: '地圖右上「⬡ 棋盤地圖」把整張天下切換成六角地塊風格:勢力疆域染色、國界描邊、道路鋪地。隨時可切回画卷地圖。',
+    bodyZh: '地圖右上「⬡ 棋盤地圖」把整張天下切換成六角地塊風格:勢力疆域染色、國界描邊、道路鋪地。隨時可切回畫卷地圖。',
     bodyEn: 'The ⬡ toggle re-renders the whole realm as a hex-tile board — realms tinted, borders deepened, roads paved into the quilt. Switch back to the painted scroll any time.',
   },
   {
     titleZh: '軍略進階',
     titleEn: 'Deeper Arts of War',
-    bodyZh: '紮營的部隊可「圍城」斷糧迫降、可在林丘「設伏」隱身截擊;遠征三季以上要鋪「兵站」保糧道;临江之城可横「拦江鎖」鎖敵水軍。軍師會在你第一次用得上時點拨提示,完整条目見「記錄→概念」的軍略新篇。',
+    bodyZh: '紮營的部隊可「圍城」斷糧迫降、可在林丘「設伏」隱身截擊;遠征三季以上要鋪「兵站」保糧道;臨江之城可橫「攔江鎖」鎖敵水軍。軍師會在你第一次用得上時點撥提示,完整條目見「記錄→概念」的軍略新篇。',
     bodyEn: 'A camped army can BESIEGE a city into surrender or AMBUSH from cover; long expeditions need supply DEPOTS; riverside cities can chain the water with a BOOM. Your advisor tips each mechanic the first time it matters — full entries live under Records → Concepts.',
   },
   {
@@ -66,6 +67,21 @@ export function TutorialOverlay() {
   const setStep = useGameStore((s) => s.setTutorialStep);
   const t = useT();
   const lang = useLanguage();
+  const boxRef = useRef<HTMLDivElement>(null);
+  /*
+   * 把自己的高度寫進 --tkm-tutorial-h,好讓右下角的浮卡(勳功/賦名)讓位。
+   *
+   * 兩邊本來都貼 bottom:20 / right:20,而浮卡的 z-index 又刻意蓋過教學層,
+   * 於是新手第一次開局就看到三張卡疊在一起、字互相蓋住(2026-08-02 試玩截圖)。
+   * 用變數而不是寫死高度,是因為這張卡的高度隨語言與步數變(雙語模式多兩行)。
+   */
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    if (step === null || !boxRef.current) { root.style.removeProperty('--tkm-tutorial-h'); return; }
+    const h = boxRef.current.getBoundingClientRect().height;
+    root.style.setProperty('--tkm-tutorial-h', `${Math.round(h) + 12}px`);
+    return () => { root.style.removeProperty('--tkm-tutorial-h'); };
+  }, [step, lang]);
   if (step === null) return null;
   const safeStep = Math.max(0, Math.min(TUTORIAL_STEPS.length - 1, step));
   const cur = TUTORIAL_STEPS[safeStep];
@@ -73,6 +89,7 @@ export function TutorialOverlay() {
 
   return (
     <div
+      ref={boxRef}
       style={{
         position: 'fixed',
         bottom: 20,

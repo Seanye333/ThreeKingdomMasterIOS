@@ -234,7 +234,7 @@ export const VOICE_LINES: Record<string, VoiceLineSet> = {
   'cao-cao': {
     spawn: ['天下，盡入吾手。'],
     attack: ['寧可我天下亦背!'],
-    critical: ['乱世之奸雄在此!'],
+    critical: ['亂世之奸雄在此!'],
     duel: ['有趣，吾來會會!'],
     rally: ['進，再進!'],
     lowHp: ['尚未休，尚...'],
@@ -272,8 +272,8 @@ export const VOICE_LINES: Record<string, VoiceLineSet> = {
     duel: ['受立!'],
   },
   'lu-meng': {
-    spawn: ['呂蒙，白衣，脱!'],
-    attack: ['静，確實。'],
+    spawn: ['呂蒙，白衣，脫!'],
+    attack: ['靜，確實。'],
     stratagem: ['策，極。'],
   },
   'sima-yi': {

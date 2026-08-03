@@ -638,7 +638,7 @@ export const HIST_BIOS_4: Record<string, OfficerBiography> = {
   },
   'hist-zhou-chu': {
     era: { zh: '改過自新', en: 'Reformed Man' },
-    zh: '字子隱,義興陽羡人,周魴之子。少時凶橫,鄉里以南山虎、長橋蛟、周處並稱三害。後悟,獨殺虎斬蛟,折節讀書,終為晉名將。元康七年從夏侯駿征齊萬年,孤軍力戰而死。',
+    zh: '字子隱,義興陽羨人,周魴之子。少時凶橫,鄉里以南山虎、長橋蛟、周處並稱三害。後悟,獨殺虎斬蛟,折節讀書,終為晉名將。元康七年從夏侯駿征齊萬年,孤軍力戰而死。',
     en: 'Style Ziyin, of Yangxian in Yixing, son of Zhou Fang. In his wild youth the countryside named "Three Evils": the tiger of the southern hills, the dragon of the long bridge, and Zhou Chu. He awakened, slew the tiger and dragon, bent his neck to study, and rose to be a famed general of Jin. In 297 he campaigned with Xiahou Jun against Qi Wannian; left alone he fought to the death.',
   },
   'hist-yin-hao': {
@@ -859,12 +859,12 @@ export const HIST_BIOS_4: Record<string, OfficerBiography> = {
   // Five Dynasties
   'hist-li-jiqian': {
     era: { zh: '西夏始祖', en: 'Founder of the Western Xia Line' },
-    zh: '党項族,夏州人。北宋初年起兵反宋,據河西。其孫李元昊正式稱帝,建西夏。',
+    zh: '黨項族,夏州人。北宋初年起兵反宋,據河西。其孫李元昊正式稱帝,建西夏。',
     en: 'Of the Tangut people, of Xiazhou. In early Northern Song he rose against Song and held Hexi. His grandson Li Yuanhao formally took the title of emperor and founded the Western Xia.',
   },
   'hist-li-yuanhao': {
     era: { zh: '西夏景宗', en: 'Emperor Jingzong of Western Xia' },
-    zh: '党項族李繼遷之孫。寶元元年稱帝,建大夏(西夏)。創西夏文字,行漢制。三川口、好水川、定川寨三大戰勝宋,迫宋議和。後被太子寧令哥所弒,年四十六。',
+    zh: '黨項族李繼遷之孫。寶元元年稱帝,建大夏(西夏)。創西夏文字,行漢制。三川口、好水川、定川寨三大戰勝宋,迫宋議和。後被太子寧令哥所弒,年四十六。',
     en: 'Tangut, grandson of Li Jiqian. In 1038 he took the imperial title and founded Great Xia (Western Xia). He created the Western Xia script and applied Chinese institutions. At the Three-River Pass, Haoshui River, and Dingchuan Fort he broke the Song three times, forcing peace. His heir Ningling Ge later killed him at forty-six.',
   },
   'hist-li-maozhen': {

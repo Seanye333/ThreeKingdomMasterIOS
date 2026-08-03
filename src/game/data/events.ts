@@ -713,7 +713,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   },
   {
     id: 'evt-liu-bei-dies',
-    name: { en: 'Liu Bei Dies at Baidicheng', zh: '劉備，白帝城没' },
+    name: { en: 'Liu Bei Dies at Baidicheng', zh: '劉備，白帝城沒' },
     yearMin: 223,
     yearMax: 223,
     requires: [

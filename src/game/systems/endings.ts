@@ -151,7 +151,7 @@ function unify(): EndingResult {
     titleZh: '天下統一',
     titleEn: 'Unified the Realm',
     textZh:
-      '漢室傾颓數十年,戰乱無休。今卿一統九州,百姓重見天日。史官將此功記入青史,千秋萬代,永傳其名。',
+      '漢室傾頹數十年,戰亂無休。今卿一統九州,百姓重見天日。史官將此功記入青史,千秋萬代,永傳其名。',
     textEn:
       'For decades the Han crumbled and the realm bled. Now you have brought all nine provinces under one banner. The people see daylight again. The historians enter your name into the record — to be remembered for ten thousand generations.',
   };
@@ -187,7 +187,7 @@ function restoreHan(): EndingResult {
     titleZh: '漢室再興',
     titleEn: 'The Han Restored',
     textZh:
-      '獻帝降詔,大漢中興。卿以宗室之身,聚天下英才,奪三京以复祖业。漢祚再續四百年,后世稱卿為光武之亞。',
+      '獻帝降詔,大漢中興。卿以宗室之身,聚天下英才,奪三京以复祖業。漢祚再續四百年,后世稱卿為光武之亞。',
     textEn:
       'Emperor Xian issues an edict of restoration. As kin of the imperial line, you have gathered the talent of the realm and recovered the three capitals. The Han endures another four hundred years. Later ages will name you second only to Emperor Guangwu.',
   };
@@ -223,7 +223,7 @@ function recluse(): EndingResult {
     titleZh: '隱士退隱',
     titleEn: 'The Sage Retires',
     textZh:
-      '不與天下争鋒,守一隅之地,與親信漁樵山林。 濁世洶湧,而卿之名清如孤云,后人記為隱世名君。',
+      '不與天下爭鋒,守一隅之地,與親信漁樵山林。 濁世洶湧,而卿之名清如孤云,后人記為隱世名君。',
     textEn:
       'You take no part in the contest for the realm. Holding your small corner, you fish and gather firewood in the hills with your closest friends. The world stays muddy, but your name floats clean above it like a single cloud. Later ages remember you as the hidden ruler.',
   };

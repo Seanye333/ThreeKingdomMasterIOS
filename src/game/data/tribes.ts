@@ -7,7 +7,7 @@ import type { Tribe } from '../types';
 export const TRIBES: Tribe[] = [
   {
     id: 'nanban',
-    name: { en: 'Nanman', zh: '南蛮' },
+    name: { en: 'Nanman', zh: '南蠻' },
     description:
       'The southern barbarian tribes of Meng Huo, riding war elephants and venomous beasts out of the jungle.',
     descriptionZh: "孟獲所統的南蠻諸部,駕馭戰象與毒獸出沒於叢林之中。",

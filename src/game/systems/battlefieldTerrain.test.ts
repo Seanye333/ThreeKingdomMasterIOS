@@ -301,7 +301,7 @@ describe('real-geography battlefields (戰斗地圖寫實)', () => {
       { type: 'march', cityId: 'xinye', targetCityId: 'xiangyang', officerId: 'gen-1', troops: 8000 } as never,
       { ...baseCtx, cities: mkCities() } as never,
     );
-    expect(flood.entries.some((e) => (e.textZh ?? '').includes('水攻')), 'AI 應對临水大城用水攻').toBe(true);
+    expect(flood.entries.some((e) => (e.textZh ?? '').includes('水攻')), 'AI 應對臨水大城用水攻').toBe(true);
     expect(flood.cities['xinye'].gold).toBe(5000 - 400);
 
     // AI invests the grain-poor inland city of 許昌.
@@ -408,11 +408,11 @@ describe('real-geography battlefields (戰斗地圖寫實)', () => {
     expect(after3.groundFires ?? []).toHaveLength(0);
   });
 
-  it('冰封 — winter freezes northern waters and shortens 黄河 crossings', () => {
+  it('冰封 — winter freezes northern waters and shortens 黃河 crossings', () => {
     // The frozen Yellow River belt: 白馬→黎陽 crossing gets ice tiles in winter.
     const winterGeo = { ...siegeGeo('baima', 'liyang'), season: 'winter' as const };
     const tiles = generateTerrain('liyang', W, H, {}, undefined, winterGeo);
-    expect(tiles.some((t) => t.terrain === 'ice'), '冬季黄河應結冰').toBe(true);
+    expect(tiles.some((t) => t.terrain === 'ice'), '冬季黃河應結冰').toBe(true);
     expect(tiles.some((t) => t.terrain === 'river'), '').toBe(false);
     // Southern waters never freeze: 新野→襄陽 keeps open 漢水.
     const south = generateTerrain('xiangyang', W, H, {}, undefined, { ...siegeGeo('xinye', 'xiangyang'), season: 'winter' as const });

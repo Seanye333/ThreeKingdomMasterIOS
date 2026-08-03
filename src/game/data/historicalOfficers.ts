@@ -666,7 +666,7 @@ const TPL_JIN: HistoricalOfficerTemplate[] = [
   { id: 'hist-yu-zhun',    dynasty: 'jin', name: { en: 'Yu Zhun',    zh: '庾準' }, courtesyName: { en: 'Daoxing',   zh: '道行' }, birthYear: 158, hometownCityId: 'xuchang',  stats: { leadership: 65, war: 55, intelligence: 78, politics: 75, charisma: 75 } },
   { id: 'hist-huan-qian',  dynasty: 'jin', name: { en: 'Huan Qian', zh: '桓謙' }, courtesyName: { en: 'Jingzhu',   zh: '敬祖' }, birthYear: 156, hometownCityId: 'xiaopei',  stats: { leadership: 70, war: 65, intelligence: 75, politics: 65, charisma: 72 } },
   { id: 'hist-wang-kai',   dynasty: 'jin', name: { en: 'Wang Kai',   zh: '王愷' }, courtesyName: { en: 'Junfu',     zh: '君夫' }, birthYear: 148, hometownCityId: 'linzi',    stats: { leadership: 55, war: 45, intelligence: 65, politics: 60, charisma: 75 } },
-  { id: 'hist-yin-xian',   dynasty: 'jin', name: { en: 'Yin Xian',  zh: '殷羡' }, courtesyName: { en: 'Hongqiao',  zh: '洪喬' }, birthYear: 148, hometownCityId: 'xuchang',  stats: { leadership: 50, war: 40, intelligence: 75, politics: 70, charisma: 72 } },
+  { id: 'hist-yin-xian',   dynasty: 'jin', name: { en: 'Yin Xian',  zh: '殷羨' }, courtesyName: { en: 'Hongqiao',  zh: '洪喬' }, birthYear: 148, hometownCityId: 'xuchang',  stats: { leadership: 50, war: 40, intelligence: 75, politics: 70, charisma: 72 } },
 
 ];
 const TPL_SOUTHERN_NORTHERN: HistoricalOfficerTemplate[] = [

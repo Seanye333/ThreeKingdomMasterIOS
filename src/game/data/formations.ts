@@ -127,7 +127,7 @@ export const FORMATIONS: FormationDef[] = [
   },
   {
     id: 'crescent-withdraw',
-    name: { en: 'Crescent Withdrawal', zh: '却月陣' },
+    name: { en: 'Crescent Withdrawal', zh: '卻月陣' },
     description:
       'Liu Yu\'s riverside formation: armored carts ring a crossbow corps. Archer range +1, archer damage +25%. Movement halved.',
     descriptionZh: '劉裕之沿江陣:鐵車環抱弩兵。弓兵射程 +1、傷害 +25%。移動減半。',

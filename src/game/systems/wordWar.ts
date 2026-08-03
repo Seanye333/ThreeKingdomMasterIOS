@@ -53,7 +53,7 @@ const RIPOSTES: Array<{ zh: string; en: string }> = [
   { zh: '今日讓你見識真功夫!', en: 'Today I show you what real skill looks like!' },
   { zh: '巧言令色,難掩敗象!', en: 'Honeyed words cannot hide the rout to come!' },
   { zh: '黃口小兒,也敢論兵?', en: 'A milk-toothed boy — and you presume to speak of war?' },
-  { zh: '强詞奪理,徒亂軍心!', en: 'Twisting reason only unsettles your own ranks!' },
+  { zh: '強詞奪理,徒亂軍心!', en: 'Twisting reason only unsettles your own ranks!' },
 ];
 
 export function resolveWordWar(

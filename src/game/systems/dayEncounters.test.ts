@@ -84,7 +84,7 @@ describe('computeDayEncounters — 真日級接觸掃描', () => {
   });
 });
 
-describe('resolveSeason — 真日級拦截接入', () => {
+describe('resolveSeason — 真日級攔截接入', () => {
   it('a mid-slice ambush resolves with a 「第X日」 clash entry', () => {
     const { cities, campAt } = fixtures();
     cities['luoyang'] = { ...cities['luoyang'], ownerForceId: 'me', troops: 20000 };

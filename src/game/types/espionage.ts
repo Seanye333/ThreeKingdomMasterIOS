@@ -11,7 +11,7 @@ export type EspionageKind =
   | 'instigate'     // 煽動 — drop city loyalty to provoke rebellion
   | 'sabotage'      // 破壞 — destroy food stocks at target city
   | 'assassinate'   // 暗殺 — attempt to kill a specific enemy officer
-  | 'defect'        // 寝返 — turn an enemy officer to your side
+  | 'defect'        // 寢返 — turn an enemy officer to your side
   | 'frame'         // 離間 — drop loyalty of an enemy officer toward their lord
   | 'sow-discord'   // 離間計 — poison the rapport between two enemy officers
   | 'steal-gold'    // 盜竊金庫 — rob an enemy city's treasury into yours

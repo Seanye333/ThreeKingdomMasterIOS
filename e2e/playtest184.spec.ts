@@ -122,6 +122,27 @@ test('扮黃巾打二十回合', async ({ page }) => {
       });
       await page.waitForTimeout(200);
     }
+    /*
+     * 彈窗佇列要另外清 —— `pendingEvent`(事件)與 `popupQueue`(大圖過場)
+     * 是兩套東西,各有各的關法。第一版只清了前者,於是第 9 回合張角晉品階的
+     * 大圖一路蓋在畫面上到第 20 回合,之後每一張「地圖」截圖其實都是那張彈窗
+     * ——而且季節字是即時渲染的,同一個彈窗在夏、秋各拍到一次,看起來像是
+     * 同一個人晉了兩次品階。差點把它當成遊戲的 bug 去修。
+     */
+    const drained = await page.evaluate(() => {
+      const s = (window as unknown as {
+        __tkm?: { getState: () => { popupQueue?: unknown[]; dismissPopup?: () => void } };
+      }).__tkm;
+      const titles: string[] = [];
+      for (let i = 0; i < 8; i++) {
+        const st = s?.getState();
+        if (!st?.popupQueue?.length) break;
+        titles.push((st.popupQueue[0] as { titleZh?: string }).titleZh ?? '?');
+        st.dismissPopup?.();
+      }
+      return titles;
+    });
+    for (const d of drained) seen.push(`第${t}回合 [過場] ${d}`);
     if (t % 5 === 0) {
       log.push(`第${String(t).padStart(2)}回合 ${JSON.stringify(await ledger(page))}`);
       await shot(page, `turn-${t}`);

@@ -87,7 +87,7 @@ export function rollAIWishFlavor(
         cityId: o.locationCityId,
         kind: 'note',
         text: `${force.name.en}: ${o.name.en} requests promotion; ${force.name.en} declines (loyalty −6).`,
-        textZh: `${force.name.zh}：${o.name.zh}請晉爵，却（忠誠 −6）。`,
+        textZh: `${force.name.zh}：${o.name.zh}請晉爵，卻（忠誠 −6）。`,
       });
       continue;
     }
@@ -98,7 +98,7 @@ export function rollAIWishFlavor(
       loyalty: Math.max(0, Math.min(100, o.loyalty + delta)),
       ...(kind === 'gift' && granted ? { renown: (o.renown ?? 0) + 12 } : {}),
     };
-    const verbZh = granted ? '准' : '却';
+    const verbZh = granted ? '准' : '卻';
     const subjectZh = kind === 'reward' ? '請賞' : kind === 'gift' ? '請賜物' : '請改任';
     const subjectEn = kind === 'reward' ? 'requests reward' : kind === 'gift' ? 'asks for a reward' : 'requests transfer';
     const verbEn = granted ? 'grants' : 'declines';

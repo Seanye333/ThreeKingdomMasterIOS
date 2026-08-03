@@ -849,7 +849,7 @@ export const TACTIC_DESC: Record<string, string> = {
   'india-school':'天竺派 — 象兵與咒術。',
   'tibet-school':'吐蕃派 — 高原騎兵與密宗。',
   'manchu-school':'滿洲派 — 八旗鐵騎，騎射為本。',
-  'tangut-school':'西夏派 — 党項弓兵與重騎。',
+  'tangut-school':'西夏派 — 黨項弓兵與重騎。',
   'jurchen-school':'女真派 — 金朝開國，鐵浮屠拐子馬。',
   'khitan-school':'契丹派 — 遼朝雙軌制，騎兵稱雄。',
   'lubu-flying':'呂布飛將 — 人中呂布馬中赤兔，三國第一武將。',

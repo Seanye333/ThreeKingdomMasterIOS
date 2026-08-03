@@ -43,7 +43,7 @@ export const ESPIONAGE_DEFS: EspionageDef[] = [
   },
   {
     kind: 'defect',
-    name: { en: 'Turn Officer', zh: '寝返' },
+    name: { en: 'Turn Officer', zh: '寢返' },
     description: 'Offer gold, position, and protection to an enemy officer. Works best on those with low loyalty.',
     descriptionZh: "以黃金、官位與庇護招攬敵方武將。對忠誠低下者最為有效。",
     goldCost: 400,

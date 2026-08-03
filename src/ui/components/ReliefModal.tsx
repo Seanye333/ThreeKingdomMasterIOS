@@ -40,9 +40,16 @@ export function ReliefModal({ onClose }: { onClose: () => void }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
           <div>
             <div style={{ fontSize: '1.2rem', color: '#f0c078', letterSpacing: '0.08rem' }}>🌾 {t('賑災', 'Disaster Relief')}</div>
-            <div style={{ fontSize: '0.7rem', color: '#9a8a70' }}>
-              {t('災報既至,郡縣待命 — 主公示下。', 'The disaster reports are in. The prefects await your word.')}
-            </div>
+            {/*
+              * 副標要跟著案件數走。它本來是寫死的,於是把案子全批完之後(或從
+              * 指令選單手動打開時)畫面上就同時寫著「郡縣待命 — 主公示下」與
+              * 「諸災已議,無待決之案」—— 前後打架,2026-08-02 試玩截圖抓到。
+              */}
+            {pendingRelief.length > 0 && (
+              <div style={{ fontSize: '0.7rem', color: '#9a8a70' }}>
+                {t('災報既至,郡縣待命 — 主公示下。', 'The disaster reports are in. The prefects await your word.')}
+              </div>
+            )}
           </div>
           <button aria-label="關閉 Close" onClick={onClose} style={{ background: 'none', border: 'none', color: '#f0c078', fontSize: '1.4rem', cursor: 'pointer' }}>×</button>
         </div>

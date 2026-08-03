@@ -1351,6 +1351,27 @@ export function MapScreen() {
       <CardRevealModal />
       {/* 史官年鑑 — the historian's page for the year just closed (springs) */}
       <YearbookModal />
+      {/*
+        * 右下角浮卡堆疊 —— 勳功/稱號/威名 共用一個容器。
+        *
+        * 三張卡本來各寫各的 bottom 常數(20、130、110 一格),數字彼此對不起來,
+        * 卡片一多就互相重疊;而且沒有一張認得教學浮層,於是新手開局第一屏是
+        * 三張卡疊在教學卡的字上(2026-08-02 試玩截圖)。改成 column-reverse 的
+        * flex:高度讓瀏覽器自己算,整堆再用 --tkm-tutorial-h 讓開教學卡。
+        */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 'calc(20px + var(--tkm-tutorial-h, 0px))',
+          right: 20,
+          zIndex: Z.toast,
+          display: 'flex',
+          flexDirection: 'column-reverse',
+          alignItems: 'flex-end',
+          gap: 10,
+          pointerEvents: 'none',
+        }}
+      >
       {/* Achievement toast — bottom-right when something just unlocked */}
       {recentAchievementUnlocks.length > 0 && (
         <div
@@ -1358,16 +1379,13 @@ export function MapScreen() {
           onClick={acknowledgeAchievements}
           className="tkm-ach-toast"
           style={{
-            position: 'fixed',
-            bottom: 20,
-            right: 20,
+            pointerEvents: 'auto',
             background: 'linear-gradient(160deg,#1b2531,#10161e)',
             border: '2px solid #e6c473',
             padding: '0.7rem 1rem',
             color: '#e6c473',
             fontFamily: 'var(--tkm-font-body)',
             cursor: 'pointer',
-            zIndex: Z.toast, // 蓋過教學浮層(見 ui/zIndex.ts 層級表)
           }}
         >
           <div className="tkm-ach-toast-title" style={{ fontSize: '0.7rem', color: '#c9a64e' }}>
@@ -1386,16 +1404,13 @@ export function MapScreen() {
         <div
           onClick={acknowledgeDeedTitles}
           style={{
-            position: 'fixed',
-            bottom: recentAchievementUnlocks.length > 0 ? 130 : 20,
-            right: 20,
+            pointerEvents: 'auto',
             background: 'linear-gradient(160deg,#1b2531,#10161e)',
             border: '2px solid #c9a64e',
             padding: '0.7rem 1rem',
             color: '#e6c473',
             fontFamily: 'var(--tkm-font-body)',
             cursor: 'pointer',
-            zIndex: Z.toast, // 蓋過教學浮層(見 ui/zIndex.ts 層級表)
             boxShadow: '0 0 14px rgba(193, 154, 59, 0.4)',
             animation: 'tkmFadeIn 0.4s ease-out',
             maxWidth: 280,
@@ -1429,16 +1444,13 @@ export function MapScreen() {
         <div
           onClick={acknowledgePrestige}
           style={{
-            position: 'fixed',
-            bottom: 20 + (recentAchievementUnlocks.length > 0 ? 110 : 0) + (recentDeedTitles.length > 0 ? 110 : 0),
-            right: 20,
+            pointerEvents: 'auto',
             background: 'linear-gradient(160deg,#1b2531,#10161e)',
             border: '2px solid #d96a4a',
             padding: '0.7rem 1rem',
             color: '#e2a07a',
             fontFamily: 'var(--tkm-font-body)',
             cursor: 'pointer',
-            zIndex: Z.toast, // 蓋過教學浮層(見 ui/zIndex.ts 層級表)
             boxShadow: '0 0 14px rgba(217, 106, 74, 0.4)',
             animation: 'tkmFadeIn 0.4s ease-out',
             maxWidth: 280,
@@ -1467,6 +1479,7 @@ export function MapScreen() {
           </div>
         </div>
       )}
+      </div>
       {/* 義結金蘭 ceremony for a bond forged in-play (one at a time, and only
           once the season report / events have been dismissed). */}
       {recentBonds.length > 0 && !ceremonyBlocked && (() => {

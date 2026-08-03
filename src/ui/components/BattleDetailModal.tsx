@@ -88,7 +88,7 @@ export function BattleDetailModal({ battle, onClose }: Props) {
             </span>
           ) : (
             <span className={`${styles.outcome} ${styles.defeat}`}>
-              {lang === 'en' ? 'Attacker repulsed' : '退却'}
+              {lang === 'en' ? 'Attacker repulsed' : '退卻'}
             </span>
           )}
         </div>

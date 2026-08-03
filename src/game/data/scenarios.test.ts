@@ -30,7 +30,7 @@ describe('scenario ownership sanity (新城就近歸屬)', () => {
     expect(owner(SCENARIO_234_WUZHANG, 'wudu')).toBe('liu-bei');
   });
 
-  it('deliberately unclaimed regions stay neutral (没有泛滥)', () => {
+  it('deliberately unclaimed regions stay neutral (沒有泛濫)', () => {
     // 交州 in 190 belongs to nobody — the fill must not flood it.
     expect(owner(SCENARIO_190_ANTI_DONG_ZHUO, 'jiaozhi')).toBeNull();
     expect(owner(SCENARIO_190_ANTI_DONG_ZHUO, 'rinan')).toBeNull();

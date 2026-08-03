@@ -208,7 +208,7 @@ export type TacticId =
   | 'ruse'        // 偽計
   | 'crossbow'    // 連弩
   | 'catapult'    // 投石
-  | 'disorder'    // 攪乱
+  | 'disorder'    // 攪亂
   | 'pitfall'     // 落穴
   | 'ambush'      // 急襲
   | 'curse'       // 罵聲
@@ -498,7 +498,7 @@ export const TACTIC_DEFS: Record<TacticId, { zh: string; en: string }> = {
   ruse:          { zh: '偽計', en: 'Ruse' },
   crossbow:      { zh: '連弩', en: 'Crossbow' },
   catapult:      { zh: '投石', en: 'Catapult' },
-  disorder:      { zh: '攪乱', en: 'Disorder' },
+  disorder:      { zh: '攪亂', en: 'Disorder' },
   pitfall:       { zh: '落穴', en: 'Pitfall' },
   ambush:        { zh: '急襲', en: 'Ambush' },
   curse:         { zh: '罵聲', en: 'Curse' },

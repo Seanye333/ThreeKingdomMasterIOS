@@ -22,7 +22,7 @@ export type FormationId =
   | 'back-to-water'  // 背水 — Han Xin death-or-victory
   | 'ten-ambush'     // 十面埋伏 — Han Xin's surround
   | 'long-snake'     // 長蛇 — column for mountain/pass
-  | 'crescent-withdraw' // 却月 — Liu Yu's cart-crossbow circle
+  | 'crescent-withdraw' // 卻月 — Liu Yu's cart-crossbow circle
   | 'yoke'           // 衡軛 — anti-cavalry V-pikes
   | 'armored-cart'   // 武剛車 — Han-era armored cart line
   | 'seven-star'     // 七星 — Daoist Beidou ritual

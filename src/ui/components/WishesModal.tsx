@@ -88,7 +88,7 @@ export function WishesModal({ onClose }: Props) {
                     background: 'none', border: '1px solid #b8442e', color: '#b8442e',
                     padding: '0.3rem 0.7rem', fontFamily: 'inherit', cursor: 'pointer', fontSize: '0.8rem',
                   }}
-                >{lang === 'en' ? 'Reject all' : '全部却下'}</button>
+                >{lang === 'en' ? 'Reject all' : '全部卻下'}</button>
               </>
             )}
             <button aria-label="關閉 Close"
@@ -200,7 +200,7 @@ export function WishesModal({ onClose }: Props) {
                             padding: '0.3rem 0.8rem', fontFamily: 'inherit', cursor: 'pointer',
                           }}
                         >
-                          却下 Reject
+                          卻下 Reject
                         </button>
                       </>
                     )}

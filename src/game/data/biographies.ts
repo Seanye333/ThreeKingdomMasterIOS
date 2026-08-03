@@ -23,19 +23,19 @@ export interface OfficerBiography {
 export const BIOGRAPHIES: Record<string, OfficerBiography> = {
   'cao-cao': {
     era: { zh: '魏武帝', en: 'Emperor Wu of Wei' },
-    zh: '字孟德,沛國譙縣人。漢相曹參之后。少時機警,有權數,任俠放蕩;許劭評之曰:"治世之能臣,乱世之奸雄。" 起兵討董卓,挾天子以令諸侯,北破袁紹,平定北方,奠定魏國基业。詩文俊爽,以《觀滄海》《短歌行》傳世。',
+    zh: '字孟德,沛國譙縣人。漢相曹參之后。少時機警,有權數,任俠放蕩;許劭評之曰:"治世之能臣,亂世之奸雄。" 起兵討董卓,挾天子以令諸侯,北破袁紹,平定北方,奠定魏國基業。詩文俊爽,以《觀滄海》《短歌行》傳世。',
     en: 'Style name Mengde. A descendant of the Han chancellor Cao Shen. Cunning and unconventional in youth, Xu Shao judged him "a capable minister in peace, a treacherous hero in chaos." He raised troops against Dong Zhuo, took custody of the Han emperor to command the warlords, broke Yuan Shao in the north, and laid the foundation of Wei. His ci poems are first-rate; "Gazing at the Sea" and "Short Song" survive to this day.',
     quote: { zh: '寧我負人,毋人負我。', en: 'Better that I betray the world than the world betray me.' },
   },
   'liu-bei': {
     era: { zh: '蜀漢昭烈帝', en: 'Emperor Zhaolie of Shu Han' },
-    zh: '字玄德,涿郡涿縣人。漢景帝玄孫,中山靖王劉勝之后。少有大志,與關羽，張飛桃園結義。一生顛沛,屢敗屢戰,終入蜀建立漢中之业,稱帝白帝。仁德愛民,以德服人,與曹操形成天下两極。',
+    zh: '字玄德,涿郡涿縣人。漢景帝玄孫,中山靖王劉勝之后。少有大志,與關羽，張飛桃園結義。一生顛沛,屢敗屢戰,終入蜀建立漢中之業,稱帝白帝。仁德愛民,以德服人,與曹操形成天下兩極。',
     en: 'Style name Xuande. A descendant of Emperor Jing of Han through Prince Jing of Zhongshan, Liu Sheng. Ambitious from youth, he swore the Peach Garden Oath with Guan Yu and Zhang Fei. Through a lifetime of defeat and flight, he eventually entered Shu, took Hanzhong, and proclaimed himself emperor at Baidicheng. His benevolence drew men to him; with Cao Cao he formed the two poles of the realm.',
     quote: { zh: '勿以善小而不為,勿以惡小而為之。', en: 'Do no good so small it can be neglected; do no evil so small it can be excused.' },
   },
   'sun-quan': {
     era: { zh: '吳大帝', en: 'Emperor Da of Wu' },
-    zh: '字仲謀,吳郡富春人。孫堅之子,孫策之弟。十九歲繼兄业,内修政理,外結英才,赤壁聯劉抗曹,夷陵破劉備,立國江東五十余年。 曹操嘆曰:"生子當如孫仲謀。"',
+    zh: '字仲謀,吳郡富春人。孫堅之子,孫策之弟。十九歲繼兄業,内修政理,外結英才,赤壁聯劉抗曹,夷陵破劉備,立國江東五十余年。 曹操嘆曰:"生子當如孫仲謀。"',
     en: 'Style name Zhongmou. Son of Sun Jian and younger brother of Sun Ce. At nineteen he inherited the south. He cultivated good government, gathered talent, allied with Liu Bei at Red Cliffs, broke Liu Bei at Yiling, and ruled Jiangdong for over fifty years. Cao Cao sighed: "If one must have a son, let him be a Sun Zhongmou."',
   },
   'guan-yu': {
@@ -46,7 +46,7 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
   },
   'zhang-fei': {
     era: { zh: '萬人敵', en: 'Match for ten thousand men' },
-    zh: '字翼德,涿郡人。豹頭環眼,燕頷虎須。聲若巨雷,勢如奔馬。當陽長坂橋頭獨退曹軍百萬,曹軍莫敢近。粗中有細,義气深重,后為部下所害。',
+    zh: '字翼德,涿郡人。豹頭環眼,燕頷虎須。聲若巨雷,勢如奔馬。當陽長坂橋頭獨退曹軍百萬,曹軍莫敢近。粗中有細,義氣深重,后為部下所害。',
     en: "Style name Yide. Leopard's head, ring eyes, swallow's jaw, tiger's whiskers. His voice was a thunder-clap, his charge a galloping horse. At the bridge of Changban he held back a million of Cao's troops alone, and none dared approach. Rough but not stupid, fiercely loyal — and in the end murdered by his own lieutenants.",
   },
   'zhao-yun': {
@@ -63,7 +63,7 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
   },
   'lu-bu': {
     era: { zh: '飛將', en: 'The Flying General' },
-    zh: '字奉先,五原九原人。弓馬嫻熟,有"人中呂布,馬中赤兔"之譽。事丁原，董卓，王允,三易其主,世人稱"三姓家奴"。轅門射戟,虎牢關戰三英。最后敗于下邳,白門樓為曹操所缢。',
+    zh: '字奉先,五原九原人。弓馬嫻熟,有"人中呂布,馬中赤兔"之譽。事丁原，董卓，王允,三易其主,世人稱"三姓家奴"。轅門射戟,虎牢關戰三英。最后敗于下邳,白門樓為曹操所縊。',
     en: 'Style name Fengxian, of Jiuyuan in Wuyuan. Master of bow and horse, the saying went: "Among men, Lü Bu; among horses, Red Hare." He served Ding Yuan, Dong Zhuo, and Wang Yun in turn — the world called him "the slave of three surnames." He shot the halberd at Yuanmen and held off the three sworn brothers at Hulao Pass. In the end he was strangled by Cao Cao\'s order at White Gate Tower.',
     quote: { zh: '大丈夫生于天地間,豈能郁郁久居人下!', en: 'A real man between heaven and earth — how can he linger long under another?' },
   },
@@ -74,12 +74,12 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
   },
   'sun-ce': {
     era: { zh: '小霸王', en: 'The Little Conqueror' },
-    zh: '字伯符,孫堅長子。英气過人,與周瑜結布衣交。借兵袁術,渡江而東,數年之間尽收江東六郡。 二十六歲中刺客之箭,临終托弟孫權。 曹操嘆:"獅兒難與争鋒!"',
+    zh: '字伯符,孫堅長子。英氣過人,與周瑜結布衣交。借兵袁術,渡江而東,數年之間尽收江東六郡。 二十六歲中刺客之箭,臨終托弟孫權。 曹操嘆:"獅兒難與爭鋒!"',
     en: 'Style name Bofu, eldest son of Sun Jian. Fierce of spirit, sworn friend to Zhou Yu. He borrowed troops from Yuan Shu, crossed the Yangtze, and in a few years conquered all six commanderies of Jiangdong. At twenty-six an assassin\'s arrow brought him down; on his deathbed he passed the south to his brother Sun Quan. Cao Cao sighed: "One cannot contend with that lion-cub."',
   },
   'zhou-yu': {
     era: { zh: '美周郎', en: 'The Handsome Zhou Lang' },
-    zh: '字公瑾,廬江舒縣人。容貌昳丽,精通音律,時人語曰:"曲有誤,周郎顧。" 與孫策為總角之交,助平江東。 赤壁火攻大破曹操,奠定三分。 年三十六卒于巴丘,临終嘆:"既生瑜,何生亮!"',
+    zh: '字公瑾,廬江舒縣人。容貌昳麗,精通音律,時人語曰:"曲有誤,周郎顧。" 與孫策為總角之交,助平江東。 赤壁火攻大破曹操,奠定三分。 年三十六卒于巴丘,臨終嘆:"既生瑜,何生亮!"',
     en: 'Style name Gongjin, of Shu in Lujiang. Strikingly handsome and a master of music — they said, "If a note goes wrong, Zhou Lang will look up." Sworn friend to Sun Ce from boyhood, he helped pacify the south. At Red Cliffs his fire attack broke Cao Cao and divided the realm. He died at thirty-six at Baqiu, crying: "Since heaven gave the world Yu, why also Liang?"',
   },
   'sima-yi': {
@@ -92,16 +92,16 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
     en: 'Style name Wenyuan, of Mayi in Yanmen. He served Lü Bu first, then went over to Cao Cao after defeat. At Hefei he led eight hundred picked men into Sun Quan\'s host of a hundred thousand and nearly took Sun Quan himself; afterward in Jiangdong children would not cry at night for fear of his name.',
   },
   'huang-zhong': {
-    zh: '字漢升,南陽人。 老當益壯,弓馬絕伦。 定軍山一戰斬夏侯淵,蜀漢五虎之一。',
+    zh: '字漢升,南陽人。 老當益壯,弓馬絕倫。 定軍山一戰斬夏侯淵,蜀漢五虎之一。',
     en: 'Style name Hansheng, of Nanyang. He was old, but the older he grew the stronger he became; none could match him with bow or horse. At Mount Dingjun he cut down Xiahou Yuan. One of the Five Tiger Generals of Shu.',
   },
   'ma-chao': {
-    era: { zh: '锦馬超', en: 'Brocade Ma Chao' },
-    zh: '字孟起,扶風茂陵人。馬腾之子,有西涼羌族血脈。驍勇异常,曹操嘆"馬兒不死,吾無葬地"。后歸劉備,蜀漢五虎之一。',
+    era: { zh: '錦馬超', en: 'Brocade Ma Chao' },
+    zh: '字孟起,扶風茂陵人。馬騰之子,有西涼羌族血脈。驍勇異常,曹操嘆"馬兒不死,吾無葬地"。后歸劉備,蜀漢五虎之一。',
     en: 'Style name Mengqi, of Maoling in Fufeng. Son of Ma Teng, with Qiang blood from the western marches. Cao Cao said, "Until that boy of the Ma family dies, I shall have no place to be buried." He went over to Liu Bei and became one of the Five Tiger Generals of Shu.',
   },
   'jiang-wei': {
-    zh: '字伯約,天水冀縣人。諸葛亮死后接掌北伐之业,九伐中原而無功。 蜀漢滅后伪降钟會圖复國,事敗被殺。',
+    zh: '字伯約,天水冀縣人。諸葛亮死后接掌北伐之業,九伐中原而無功。 蜀漢滅后偽降钟會圖复國,事敗被殺。',
     en: 'Style name Boyue, of Tianshui. After Zhuge Liang\'s death he carried on the northern campaigns — nine of them, all without lasting gain. When Shu fell he pretended to surrender to Zhong Hui in a last bid to restore his kingdom; the plot failed and he was killed.',
   },
   'pang-tong': {
@@ -110,7 +110,7 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
     en: 'Style name Shiyuan, of Xiangyang. Reckoned the equal of Zhuge Liang — Sima Hui said, "Of the Sleeping Dragon and the Young Phoenix, one is enough to settle the realm." He devised the Chain Stratagem for Cao Cao\'s navy; later he served Liu Bei and fell at Phoenix Slope, struck through by an arrow.',
   },
   'dian-wei': {
-    zh: '字號"古之惡來",曹操親衛。 雙戟八十斤,有萬夫不當之勇。 宛城之變中為護曹操脱身,死戰不退,身被數十創而絕。',
+    zh: '字號"古之惡來",曹操親衛。 雙戟八十斤,有萬夫不當之勇。 宛城之變中為護曹操脫身,死戰不退,身被數十創而絕。',
     en: 'Nicknamed "the new E Lai" after a legendary brawler of antiquity, he was Cao Cao\'s personal guard. He wielded twin halberds weighing eighty jin and had the courage to face ten thousand. In the mutiny at Wancheng he held the gate so Cao Cao could escape, dying upright under dozens of wounds.',
   },
   'xu-chu': {
@@ -119,12 +119,12 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
     en: 'Style name Zhongkang, of Qiao. So strong he once dragged a bull a hundred paces by its tail. Captain of Cao Cao\'s personal guard. He fought Ma Chao to a draw for two hundred bouts, stripped to the waist, and was famed throughout the world for sheer brawn.',
   },
   'gan-ning': {
-    era: { zh: '锦帆賊', en: 'The Brocade Pirate' },
-    zh: '字興霸,巴郡临江人。 少年游俠,以锦帆系船。 后歸孫權。 百騎劫魏營,孫權嘆:"孟德有張遼,孤有興霸,足相敵也!"',
+    era: { zh: '錦帆賊', en: 'The Brocade Pirate' },
+    zh: '字興霸,巴郡臨江人。 少年游俠,以錦帆系船。 后歸孫權。 百騎劫魏營,孫權嘆:"孟德有張遼,孤有興霸,足相敵也!"',
     en: 'Style name Xingba, of Linjiang in Ba. In his youth a river-knight whose boat trailed a banner of brocade. He went over to Sun Quan; with a hundred riders he raided the Wei camp at night. Sun Quan said: "Mengde has Zhang Liao, I have Xingba — we are matched."',
   },
   'taishi-ci': {
-    zh: '字子義,東萊黄人。 神射手,與孫策一場酣戰至于脛骨皆露。 后歸孫策,鎮守東萊,病卒。 临終嘆:"大丈夫生于乱世,當帶三尺劍,立不世之功!"',
+    zh: '字子義,東萊黃人。 神射手,與孫策一場酣戰至于脛骨皆露。 后歸孫策,鎮守東萊,病卒。 臨終嘆:"大丈夫生于亂世,當帶三尺劍,立不世之功!"',
     en: 'Style name Ziyi, of Huang in Donglai. A peerless archer who once fought Sun Ce until their leg bones showed through the wounds. He went over to Sun Ce, garrisoned Donglai, and died of illness. His last words: "A man born in a chaotic age should bear a three-foot sword and raise an immortal deed!"',
   },
   'lu-meng': {
@@ -142,11 +142,11 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
     en: 'Adopted daughter of Wang Yun, of nation-toppling beauty. The Minister wove the Chain Stratagem with her, turning the foster-son Lü Bu against the tyrant Dong Zhuo. In the moment at Phoenix Pavilion the tyrant fell and the Han line breathed again. One of the four classical beauties of China.',
   },
   'huang-yueying': {
-    zh: '諸葛亮之妻,黄承彦之女。 容貌虽不出眾,而才識過人。 善制木牛流馬，連弩等機械,助孔明經天緯地。',
+    zh: '諸葛亮之妻,黃承彥之女。 容貌雖不出眾,而才識過人。 善制木牛流馬，連弩等機械,助孔明經天緯地。',
     en: "Wife of Zhuge Liang, daughter of Huang Chengyan. Not beautiful in face, but matchless in talent and learning. She devised the Wooden Ox and Flowing Horse carts, the repeating crossbow, and other machines, helping Kongming weave together heaven and earth.",
   },
   'dong-zhuo': {
-    zh: '字仲穎,隴西临洮人。 涼州軍閥,何進招其入京。 廢少帝,立獻帝,焚洛陽遷長安。 殘暴無道,司徒王允以連環計使呂布手刃之。',
+    zh: '字仲穎,隴西臨洮人。 涼州軍閥,何進招其入京。 廢少帝,立獻帝,焚洛陽遷長安。 殘暴無道,司徒王允以連環計使呂布手刃之。',
     en: 'Style name Zhongying, of Lintao in Longxi. A warlord of Liang province summoned to the capital by He Jin. He deposed the young emperor, raised Emperor Xian, and burned Luoyang to flee to Chang\'an. So tyrannical that Wang Yun wove the Chain Stratagem to have Lü Bu strike him down.',
   },
   'yuan-shao': {
@@ -154,7 +154,7 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
     en: 'Style name Benchu, of Ruyang in Runan. Of a family that held the Three Excellencies for four generations. He led the coalition against Dong Zhuo and was acclaimed its leader. Master of the north and most powerful warlord of his day, he was broken by Cao Cao at Guandu and died in despair.',
   },
   'yuan-shu': {
-    zh: '字公路,袁紹异母弟。 據淮南。 得傳國玉璽即僭號稱帝,眾叛親离,嘔血而死。',
+    zh: '字公路,袁紹異母弟。 據淮南。 得傳國玉璽即僭號稱帝,眾叛親離,嘔血而死。',
     en: 'Style name Gonglu, half-brother of Yuan Shao. Master of Huainan. When the imperial seal came to him he proclaimed himself emperor; the world turned away, and he died vomiting blood.',
   },
   'xiahou-dun': {
@@ -172,15 +172,15 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
   },
   'jia-xu': {
     era: { zh: '毒士', en: 'The Poisonous Counselor' },
-    zh: '字文和,武威姑臧人。 算無遺策,屢換其主而善終。 助賈詡獻离間之計破馬超，計敗張繡，保曹丕嗣位。',
+    zh: '字文和,武威姑臧人。 算無遺策,屢換其主而善終。 助賈詡獻離間之計破馬超，計敗張繡，保曹丕嗣位。',
     en: 'Style name Wenhe, of Guzang in Wuwei. His strategies never miscarried, and he served many lords yet died in his bed. He sowed division between Ma Chao and Han Sui, broke Zhang Xiu through a trick, and secured Cao Pi as heir of Wei.',
   },
   'hua-tuo': {
-    zh: '沛國譙縣人,世稱神醫。 創麻沸散,行外科手術。 曹操患頭風請之治,華佗欲開顱,曹操疑其謀害而殺之。 临終焚醫書,世人惜哉。',
+    zh: '沛國譙縣人,世稱神醫。 創麻沸散,行外科手術。 曹操患頭風請之治,華佗欲開顱,曹操疑其謀害而殺之。 臨終焚醫書,世人惜哉。',
     en: 'Of Qiao in Pei, called the Divine Physician. He devised the Mafei powder, the world\'s first anaesthetic, and performed surgery. Summoned to treat Cao Cao\'s headaches, he proposed opening the skull; Cao Cao suspected murder and had him killed. At his death he burned his medical books — the world has mourned him ever since.',
   },
   'lu-su': {
-    zh: '字子敬,临淮東城人。 江東重臣,主張聯劉抗曹,促成赤壁之盟。 一生倡導孫劉聯合,深謀遠略。',
+    zh: '字子敬,臨淮東城人。 江東重臣,主張聯劉抗曹,促成赤壁之盟。 一生倡導孫劉聯合,深謀遠略。',
     en: 'Style name Zijing, of Dongcheng in Linhuai. A pillar of the Wu court. He pressed for the alliance with Liu Bei against Cao Cao that won the Red Cliffs. All his life he argued for unity between Sun and Liu — a deep and far-seeing strategist.',
   },
   'cao-pi': {
@@ -198,11 +198,11 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
   },
   'zhang-jiao': {
     era: { zh: '大賢良師', en: 'The Great Worthy Teacher' },
-    zh: '钜鹿人。 創太平道,以符水治病傳教,聚徒數十萬。 中平元年,以"蒼天已死,黄天當立"為號起義,黃巾之乱遂起。 數月后病死。',
+    zh: '鉅鹿人。 創太平道,以符水治病傳教,聚徒數十萬。 中平元年,以"蒼天已死,黃天當立"為號起義,黃巾之亂遂起。 數月后病死。',
     en: 'Of Julu. Founder of the Way of Great Peace, healing with talisman-water and gathering hundreds of thousands of converts. In the first year of Zhongping he raised his rebellion under the slogan "The Blue Heaven is dead, the Yellow Heaven shall stand" — and the Yellow Turbans rose. Within months he died of illness.',
   },
   'meng-huo': {
-    zh: '南蛮王。 諸葛亮南征,七擒七縱,使其心服。 自此南方歸附,蜀漢再無后顧之憂。',
+    zh: '南蠻王。 諸葛亮南征,七擒七縱,使其心服。 自此南方歸附,蜀漢再無后顧之憂。',
     en: 'King of the Nanman. In Zhuge Liang\'s southern campaign he was captured seven times and released seven times, until at the seventh his heart bent. From then the south was loyal, and Shu had no need to look behind.',
   },
   'deng-ai': {
@@ -698,12 +698,12 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
     en: 'A man of Guanxi (chiefly a Romance figure). Once a leftover Yellow Turban, he met Guan Yu at Mount Sleeping-Ox and threw away his banditry to follow him. He went with Guan Yu through the five passes, joined the flooding of the seven armies, and took Pang De alive. When Guan Yu was driven into Maicheng, Zhou Cang held the wall; hearing that father and son were both dead, he cut his own throat to follow his lord.',
   },
   'zhou-fang': {
-    zh: '字子魚,吳郡陽羡人。性沉密。黃武七年,自稱與曹休有隙,密遣親信七表詐降,引曹休深入。陸遜於石亭大破之,焚輜重逾萬,曹休羞憤而卒。事後孫權贈金千斤。',
+    zh: '字子魚,吳郡陽羨人。性沉密。黃武七年,自稱與曹休有隙,密遣親信七表詐降,引曹休深入。陸遜於石亭大破之,焚輜重逾萬,曹休羞憤而卒。事後孫權贈金千斤。',
     en: 'Style name Ziyu, of Yangxian in Wujun. Deep and close in temper. In 228, claiming to be at odds with Cao Xiu, he sent seven secret memorials feigning surrender and drew Cao Xiu deep into his trap. Lu Xun shattered the Wei host at Shiting, burned over ten thousand wagonloads of stores, and Cao Xiu died of shame and rage soon after. Sun Quan rewarded him a thousand jin of gold.',
   },
   'zhou-chu': {
     era: { zh: '改過自新', en: 'Reformed Man' },
-    zh: '字子隱,義興陽羡人,周魴之子。少時凶橫,鄉里以南山虎、長橋蛟、周處並稱三害。後悟,獨殺虎斬蛟,折節讀書,訪陸機，陸雲於洛陽,終為晉名將。元康七年隨夏侯駿征齊萬年,孤軍力戰而死,贈平西將軍。',
+    zh: '字子隱,義興陽羨人,周魴之子。少時凶橫,鄉里以南山虎、長橋蛟、周處並稱三害。後悟,獨殺虎斬蛟,折節讀書,訪陸機，陸雲於洛陽,終為晉名將。元康七年隨夏侯駿征齊萬年,孤軍力戰而死,贈平西將軍。',
     en: 'Style name Ziyin, of Yangxian in Yixing, son of Zhou Fang. In his wild youth the countryside named "Three Evils": the tiger of the southern hills, the dragon of the long bridge, and Zhou Chu. He awakened, slew the tiger and dragon with his own hand, bent his neck to study, sought out Lu Ji and Lu Yun at Luoyang, and rose to be a famed general of Jin. In 297 he campaigned with Xiahou Jun against Qi Wannian; left alone he fought to the death, and was raised posthumously to General Who Pacifies the West.',
   },
   'zhu-zhi': {
@@ -1965,7 +1965,7 @@ export const BIOGRAPHIES: Record<string, OfficerBiography> = {
     en: 'Younger brother of He Jin, General of Chariots and Cavalry. When He Jin\'s plot against the eunuchs broke, the Ten Attendants killed him first; He Miao was then killed by Yuan Shao on Wu Kuang\'s charge that he had been in secret with the eunuchs.',
   },
   'he-yong': {
-    zh: '字伯求,南陽人。漢末名士,清議領袖。性敏銳,評議朝政無所避。漢末党錮之禍,何顒亡命江湖,獻計袁紹,謀誅宦官。',
+    zh: '字伯求,南陽人。漢末名士,清議領袖。性敏銳,評議朝政無所避。漢末黨錮之禍,何顒亡命江湖,獻計袁紹,謀誅宦官。',
     en: 'Style name Boqiu, of Nanyang. A famed gentleman of late Han and a leader of the "pure judgment" gentry. Sharp-minded, he spoke against court abuses without restraint. In the Disaster of the Faction Proscription he went into hiding among the rivers and lakes, and later gave Yuan Shao the plan to wipe out the eunuchs.',
   },
   'he-qi': {
@@ -3378,27 +3378,27 @@ const SUPPLEMENTAL_QUOTES: Record<string, { zh: string; en: string }> = {
   'zhou-yu':    { zh: '丈夫處世,遇知己之主,外托君臣之義,内結骨肉之恩。', en: 'When a man of parts meets a lord who truly knows him, they are bound outwardly as sovereign and subject, inwardly as kin.' },
   'lu-su':      { zh: '漢室不可复興,曹操不可卒除 —— 為將軍計,惟鼎足江東,以觀天下之釁。', en: 'The Han cannot be revived, nor Cao Cao removed at a stroke. Your best course is to hold Jiangdong as one leg of the tripod and watch for the realm\'s fractures.' },
   'lu-meng':    { zh: '士別三日,即更刮目相待。', en: 'Part from a man three days, and you must look at him with fresh eyes.' },
-  'lu-xun':     { zh: '英雄棋跱,豺狼窺望;克敵寧乱,非眾不濟。', en: 'Heroes ranged like chesspieces, wolves watching all around — to defeat the foe and quiet the chaos takes more than one man\'s strength.' },
-  'gan-ning':   { zh: '虽有十萬之眾,不足懼也 —— 锦帆甘興霸在此!', en: 'Were they a hundred thousand, still no cause for fear — Gan Xingba of the Brocade Sails stands here!' },
-  'zhang-zhao': { zh: '主公承父兄之业,當先保江東,以觀天下之變。', en: 'My lord inherits the work of his father and brother — first secure Jiangdong, then watch how the realm turns.' },
+  'lu-xun':     { zh: '英雄棋跱,豺狼窺望;克敵寧亂,非眾不濟。', en: 'Heroes ranged like chesspieces, wolves watching all around — to defeat the foe and quiet the chaos takes more than one man\'s strength.' },
+  'gan-ning':   { zh: '雖有十萬之眾,不足懼也 —— 錦帆甘興霸在此!', en: 'Were they a hundred thousand, still no cause for fear — Gan Xingba of the Brocade Sails stands here!' },
+  'zhang-zhao': { zh: '主公承父兄之業,當先保江東,以觀天下之變。', en: 'My lord inherits the work of his father and brother — first secure Jiangdong, then watch how the realm turns.' },
   'zhao-yun':   { zh: '國賊是曹操,非孫權也 —— 願以天下為重,勿因私忿而伐吳。', en: 'The traitor to the state is Cao Cao, not Sun Quan. Put the realm first; march not on Wu for private grief.' },
   'zhang-fei':  { zh: '我乃燕人張翼德也!誰敢與我決一死戰?', en: 'I am Zhang Yide of Yan! Who dares fight me to the death?' },
   'huang-zhong':{ zh: '老夫一臂之力,尚開二石之弓,斬萬人之將!', en: 'This old arm still draws a two-picul bow and cuts down commanders of ten thousand!' },
   'ma-chao':    { zh: '父母昆弟并見誅滅,此仇不共戴天。', en: 'My parents and brothers were slaughtered to the last — a hatred with which I cannot share the same sky.' },
-  'wei-yan':    { zh: '若曹操举天下而來,請為大王拒之;偏將十萬之眾至,請為大王吞之。', en: 'Should Cao Cao come with all the realm, I will hold him off for you; should a lesser general bring a hundred thousand, I will swallow them whole.' },
+  'wei-yan':    { zh: '若曹操舉天下而來,請為大王拒之;偏將十萬之眾至,請為大王吞之。', en: 'Should Cao Cao come with all the realm, I will hold him off for you; should a lesser general bring a hundred thousand, I will swallow them whole.' },
   'xu-shu':     { zh: '某縱在曹營,終身不為設一謀。', en: 'Though I sit in Cao\'s camp, I will not devise a single stratagem for him as long as I live.' },
-  'xun-you':    { zh: '公達外愚内智,外怯内勇,外弱内强。', en: 'Gongda seems dull but is wise within, timid without but bold within, frail in seeming but strong at heart.' },
-  'jia-xu':     { zh: '离之而已 —— 一紙涂抹,可破十萬雄兵。', en: 'Simply divide them — a few smeared lines on paper can break an army of a hundred thousand.' },
+  'xun-you':    { zh: '公達外愚内智,外怯内勇,外弱内強。', en: 'Gongda seems dull but is wise within, timid without but bold within, frail in seeming but strong at heart.' },
+  'jia-xu':     { zh: '離之而已 —— 一紙涂抹,可破十萬雄兵。', en: 'Simply divide them — a few smeared lines on paper can break an army of a hundred thousand.' },
   'cao-ren':    { zh: '吾受國厚恩,當死守于此,豈能棄城而走!', en: 'I owe the state a deep debt — I will die holding this place. How could I abandon the city and flee?' },
   'zhong-hui':  { zh: '事成,則得天下;不成,退保蜀漢,亦不失為劉備。', en: 'If it succeeds, the realm is mine; if not, I withdraw to hold Shu — no worse off than Liu Bei.' },
   'zhang-he':   { zh: '郃識變數,善處營陳,料戰勢地形,無不如計。', en: 'Zhang He reads the shifting odds, sets his camps well, and judges terrain and momentum — nothing falls outside his reckoning.' },
   'xu-huang':   { zh: '徐將軍可謂有周亞夫之風矣!', en: '"General Xu has the bearing of Zhou Yafu himself!" — so Cao Cao praised his march.' },
-  'yu-jin':     { zh: '临難毋苟免 —— 惜乎三十年名節,毀于一朝之降。', en: 'In peril, seek no escape by any means — yet alas, thirty years of honor undone by a single surrender.' },
+  'yu-jin':     { zh: '臨難毋苟免 —— 惜乎三十年名節,毀于一朝之降。', en: 'In peril, seek no escape by any means — yet alas, thirty years of honor undone by a single surrender.' },
   'huang-gai':  { zh: '某願行詐降之計,以火破曹 —— 縱受鞭笞,亦所甘心。', en: 'Let me feign surrender and break Cao Cao with fire — I will bear the whip gladly for it.' },
-  'zhou-tai':   { zh: '身被數十創,膚如刻画 —— 皆為主公擋也。', en: 'Scores of wounds, my skin like carved lines — every one of them taken for my lord.' },
+  'zhou-tai':   { zh: '身被數十創,膚如刻畫 —— 皆為主公擋也。', en: 'Scores of wounds, my skin like carved lines — every one of them taken for my lord.' },
   'fa-zheng':   { zh: '法孝直若在,必能制主上,令不東行。', en: '"Had Fa Xiaozhi lived, he could have curbed our lord and stopped this eastern march." — Zhuge Liang, mourning Yiling.' },
-  'diaochan':   { zh: '妾若能報國家,虽萬死不辭。', en: 'If I can repay the state, I would not shrink from ten thousand deaths.' },
-  'lady-zhen':  { zh: '蒲生我池中,其葉何离离 —— 莫以豪賢故,棄捐素所愛。', en: 'Cattails in my pond, their leaves so lush — do not, for the great and worthy, cast off the one you once loved. (from "Tang-shang xing")' },
+  'diaochan':   { zh: '妾若能報國家,雖萬死不辭。', en: 'If I can repay the state, I would not shrink from ten thousand deaths.' },
+  'lady-zhen':  { zh: '蒲生我池中,其葉何離離 —— 莫以豪賢故,棄捐素所愛。', en: 'Cattails in my pond, their leaves so lush — do not, for the great and worthy, cast off the one you once loved. (from "Tang-shang xing")' },
   'cai-wenji':  { zh: '人生幾何時,懷憂終年歲 —— 胡笳一曲,肝腸寸斷。', en: 'How brief this life, yet care fills all its years — one air upon the nomad reed-pipe, and the heart breaks inch by inch.' },
   'lady-sun':   { zh: '侍婢數百,居常帶刀 —— 江東兒女,未必遜于男兒。', en: 'Hundreds of maids about her, a blade always at her side — the daughters of Jiangdong yield nothing to its sons.' },
   'lady-huang': { zh: '莫道婦人無巧思,木牛流馬我能陳。', en: 'Say not a woman has no cunning — the wooden ox and gliding horse, I too can lay them out.' },
@@ -3434,7 +3434,7 @@ export function deriveBiography(stats: {
   const archetype = best[0];
   const lookup: Record<string, OfficerBiography> = {
     war: {
-      zh: `${nameZh},以武勇知名于乱世。三國群雄之中,堪當一陣之將。`,
+      zh: `${nameZh},以武勇知名于亂世。三國群雄之中,堪當一陣之將。`,
       en: `${nameEn} is renowned for martial prowess. Among the heroes of his age, he can stand at the head of a host.`,
     },
     leadership: {

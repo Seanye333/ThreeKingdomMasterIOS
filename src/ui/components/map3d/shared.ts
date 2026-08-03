@@ -192,7 +192,7 @@ const RIVERS_GEO: Array<{
   width_deg: number;
 }> = [
   // 黄河 — source in Qinghai → huge northern loop (Ordos) → east to Bohai
-  { name: 'yellow', nameZh: '黄河', points: [
+  { name: 'yellow', nameZh: '黃河', points: [
     [96, 35], [100, 36], [103, 37], [106, 39], [109, 40.5], [111, 40],
     [110, 38], [110, 36], [112, 35], [114, 35], [117, 36], [119, 37.5],
   ], width_deg: 0.20 },
@@ -278,7 +278,7 @@ const C_SEA       = new THREE.Color('#2c5882');
 const C_SHALLOW   = new THREE.Color('#5a8acf');
 const C_BEACH     = new THREE.Color('#c8b078');
 const C_PLAIN     = new THREE.Color('#7a8a4a');     // 中原/江漢 — fertile olive (mid band)
-const C_LOESS     = new THREE.Color('#b8a566');     // 華北/黄土 — wheat-gold north
+const C_LOESS     = new THREE.Color('#b8a566');     // 華北/黃土 — wheat-gold north
 const C_SOUTH     = new THREE.Color('#577d36');     // 江南 — lush green
 const C_TROPIC    = new THREE.Color('#3d6b2c');     // 嶺南/交州 — deep tropical green
 const C_HILL      = new THREE.Color('#6a7038');

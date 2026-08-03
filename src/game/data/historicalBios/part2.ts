@@ -698,7 +698,7 @@ export const HIST_BIOS_2: Record<string, OfficerBiography> = {
     en: 'Personal name Geng, style Ziniu, of Song, disciple of Confucius. His brother Huan Tui threw Song into chaos and Ziniu was full of grief. He asked the Master about the gentleman; Confucius said: "He neither grieves nor fears."',
   },
   'hist-yan-lu': {
-    zh: '字路,孔子弟子,顏回之父。顏回死,顏路請孔子之車賣為椁,孔子不許。',
+    zh: '字路,孔子弟子,顏回之父。顏回死,顏路請孔子之車賣為槨,孔子不許。',
     en: 'Style Lu, disciple of Confucius and father of Yan Hui. When Yan Hui died, Yan Lu asked the Master\'s carriage to sell for an outer coffin; Confucius would not give it.',
   },
   'hist-shao-gong-shi': {
