@@ -78,6 +78,19 @@ export function rollBehaviorEvent(ctx: BehaviorEventContext): HistoricalEvent | 
   const cities = Object.values(ctx.cities).filter((c) => c.ownerForceId === playerForceId);
   if (cities.length === 0) return null;
   const totalGold = cities.reduce((a, c) => a + c.gold, 0);
+  /*
+   * 「有錢」「沒錢」是**相對於要養多少城**說的,不是一個絕對數字。
+   *
+   * 試玩黃巾之亂抓到的:黃巾十七座城共 14,735 金(每城 866,全盤最窮,序章
+   * 原話是「你沒有的:甲仗、糧道、能守城的人」),而「倉廩盈溢」的門檻寫的是
+   * `totalGold < 8000 return null` —— 於是開局第二回合就彈出「府庫充盈,
+   * 金帛山積」。反過來,「府庫空虛」的門檻是 800,一個三十八座城的朝廷永遠
+   * 跌不到那裡,那條事件對大勢力等於不存在。
+   *
+   * 同一個檔案裡的 §錢法 已經是對的寫法(`totalGold > cities.length * 700`)。
+   * 這兩條補齊。
+   */
+  const goldPerCity = cities.length ? totalGold / cities.length : 0;
   const avgLoyalty = cities.reduce((a, c) => a + c.loyalty, 0) / cities.length;
   const tax = ctx.taxPolicy[playerForceId] ?? 'normal';
   const idleTalent = Object.values(ctx.officers)
@@ -361,18 +374,24 @@ export function rollBehaviorEvent(ctx: BehaviorEventContext): HistoricalEvent | 
     {
       id: 'behavior-treasury',
       build: () => {
-        if (totalGold < 8000) return null;
+        // 每城 2,500 以上才叫「盈溢」;同時保留一個絕對下限,免得一兩座城的
+        // 小勢力靠比例就觸發。
+        if (totalGold < 8000 || goldPerCity < 2500) return null;
+        const feastCost = Math.min(totalGold - 1, Math.max(2000, cities.length * 260));
+        const armCost = Math.min(totalGold - 1, Math.max(3000, cities.length * 390));
         const choices: EventChoice[] = [
           {
             id: 'feast',
             label: { zh: '大宴群臣,與民同樂', en: 'Hold a grand feast for people and court' },
-            effects: [...cityLoyaltyAll(6), { kind: 'force-gold', forceId: playerForceId, delta: -2000 }],
+            // 花費也要隨規模走 —— 否則三十八座城的朝廷擺一場宴只花 2,000,
+            // 那不是抉擇,是白拿民忠。
+            effects: [...cityLoyaltyAll(6), { kind: 'force-gold', forceId: playerForceId, delta: -feastCost }],
           },
           {
             id: 'arm',
             label: { zh: '充實武備,招兵買馬', en: 'Pour it into the army' },
             effects: [
-              { kind: 'force-gold', forceId: playerForceId, delta: -3000 },
+              { kind: 'force-gold', forceId: playerForceId, delta: -armCost },
               { kind: 'force-troops-multiplier', forceId: playerForceId, multiplier: 1.08 },
             ],
           },
@@ -429,20 +448,21 @@ export function rollBehaviorEvent(ctx: BehaviorEventContext): HistoricalEvent | 
     {
       id: 'behavior-treasury-empty',
       build: () => {
-        if (totalGold >= 800 || cities.length < 2) return null;
+        // 每城 250 以下即告罄 —— 大勢力的「空虛」不是 800 金,是養不起它的城。
+        if (goldPerCity >= 250 || cities.length < 2) return null;
         const choices: EventChoice[] = [
           {
             id: 'levy',
             label: { zh: '加徵賦稅,救一時之急', en: 'Raise an emergency levy' },
             effects: [
-              { kind: 'force-gold', forceId: playerForceId, delta: 2000 },
+              { kind: 'force-gold', forceId: playerForceId, delta: Math.max(2000, cities.length * 260) },
               ...cityLoyaltyAll(-6),
             ],
           },
           {
             id: 'sell',
             label: { zh: '變賣官物,聊補府庫', en: 'Sell state property for coin' },
-            effects: [{ kind: 'force-gold', forceId: playerForceId, delta: 1000 }],
+            effects: [{ kind: 'force-gold', forceId: playerForceId, delta: Math.max(1000, cities.length * 130) }],
           },
           {
             id: 'austerity',

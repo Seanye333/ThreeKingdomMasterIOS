@@ -7561,9 +7561,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               const ga = gradeRank(officerGrade(after).grade);
               const gb = gradeRank(officerGrade(before).grade);
               if (ga > gb && ga >= goldRank) {
+                /*
+                 * 道門的晉階不是朝堂封賞。
+                 *
+                 * 試玩黃巾之亂第十回合看到的:張角晉金牌,彈出「晉牌封賞」,
+                 * 配圖是漢家宮殿上天子授金牌給跪伏的臣子 —— 一個造漢家反的
+                 * 太平道教主。`grade-promotion.jpg` 是全勢力共用的一張朝堂圖,
+                 * 而 imperialRank 開局全未設,分不出誰有朝廷名分。
+                 * 可用的信號是治國理念:daoist 的(黃巾、五斗米道)改用天象,
+                 * 名目改「授籙」—— 道門本來就是授籙不是拜官。
+                 */
+                const daoist = state.forces[state.playerForceId!]?.statecraft === 'daoist';
                 officerPopups.push({
-                  key: 'grade-promotion', media: 'image',
-                  titleZh: '晉牌封賞', titleEn: 'A Grade Conferred',
+                  key: daoist ? 'heaven-omen' : 'grade-promotion', media: 'image',
+                  titleZh: daoist ? '黃天授籙' : '晉牌封賞',
+                  titleEn: daoist ? 'The Register Conferred' : 'A Grade Conferred',
                   captionZh: `${after.name.zh} 晉「${gradeMeta(officerGrade(after).grade).name.zh}」品階`,
                   captionEn: `${after.name.en} rises to ${gradeMeta(officerGrade(after).grade).name.en} grade`,
                 });
