@@ -1677,7 +1677,7 @@
 | 偽計 Ruse | 擾敵 |  | confusion | 4 | 0 |
 | 連弩 Crossbow | 遠射 |  | rain-of-arrows | 4 | 1 |
 | 投石 Catapult | 遠射 |  | rain-of-arrows | 4 | 1 |
-| 攪乱 Disorder | 擾敵 |  | confusion | 4 | 0 |
+| 攪亂 Disorder | 擾敵 |  | confusion | 4 | 0 |
 | 落穴 Pitfall | 擾敵 |  | false-retreat | 0 | 0 |
 | 急襲 Ambush | 近戰 |  | charge | 1 | 2 |
 | 罵聲 Curse | 擾敵 |  | confusion | 4 | 0 |

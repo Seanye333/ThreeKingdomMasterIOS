@@ -106,6 +106,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
   onDragLock?: (locked: boolean) => void;
 }) {
   const loreScenarioId = useGameStore((st) => st.scenarioId);
+  const loreYear = useGameStore((st) => st.date.year);
   const cities = useGameStore((s) => s.cities);
   const forces = useGameStore((s) => s.forces);
   const officers = useGameStore((s) => s.officers);
@@ -852,7 +853,7 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
                   garrisons it. Turns the fogged card from a bare "no intel"
                   into a reason to care about the place. */}
               {(() => {
-                const brief = cityLoreBrief(c.id, lang === 'en' ? 'en' : 'zh', 64, loreScenarioId);
+                const brief = cityLoreBrief(c.id, lang === 'en' ? 'en' : 'zh', 64, loreScenarioId, loreYear);
                 if (!brief) return null;
                 return (
                   <div style={{

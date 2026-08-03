@@ -61,6 +61,8 @@ const CITY_TABS: { id: CityTab; zh: string; en: string; playerOnly?: boolean }[]
 
 export function CityPanel() {
   const scenarioId = useGameStore((s) => s.scenarioId);
+  // 風物志按盤面年份取用:184 年的鄴不該講二十六年後的銅雀臺(見 cityLoreEras.ts)。
+  const loreYear = useGameStore((s) => s.date.year);
   const selectedCityId = useGameStore((s) => s.selectedCityId);
   const playerForceId = useGameStore((s) => s.playerForceId);
   const city = useGameStore((s) =>
@@ -300,7 +302,7 @@ export function CityPanel() {
               cities (山川形勝 + 掌故). Read-only flavour; renders only when the
               city carries an entry in cityLore.ts. */}
           {(() => {
-            const lore = cityLore(city.id, scenarioId);
+            const lore = cityLore(city.id, scenarioId, loreYear);
             if (!lore) return null;
             return (
               <div style={{

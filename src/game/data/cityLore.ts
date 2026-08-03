@@ -8,7 +8,10 @@
  * NOT part of the City runtime type or the save format. All 128 cities carry
  * an entry — see cityLore.test.ts, which fails if one goes missing.
  */
-import { loreEraFor, eraCityLore } from './cityLoreEras';
+import {
+  loreEraFor, eraCityLore, lateHanCityLore,
+  POST_184_MARKERS, LORE_GATE_OVERRIDES,
+} from './cityLoreEras';
 export interface CityLore {
   zh: string;
   en: string;
@@ -549,10 +552,39 @@ export const CITY_LORE: Record<string, CityLore> = {
  * bug this replaces had 長安 telling a Warring States player about 李傕郭汜,
  * four centuries early.
  */
-export function cityLore(cityId: string, scenarioId?: string | null): CityLore | null {
+/**
+ * 這座城的三國文本最早何時說得通 —— 由文中的後世人事反推(見 POST_184_MARKERS)。
+ * 沒有任何劇透詞的城回 Infinity 之外的最小值:Infinity 表示任何年份都適用。
+ */
+const gateCache = new Map<string, number>();
+export function loreYearGate(cityId: string): number {
+  const hit = gateCache.get(cityId);
+  if (hit !== undefined) return hit;
+  let gate = LORE_GATE_OVERRIDES[cityId] ?? Infinity;
+  if (LORE_GATE_OVERRIDES[cityId] === undefined) {
+    const zh = CITY_LORE[cityId]?.zh ?? '';
+    for (const [term, year] of Object.entries(POST_184_MARKERS)) {
+      if (year < gate && zh.includes(term)) gate = year;
+    }
+  }
+  gateCache.set(cityId, gate);
+  return gate;
+}
+
+/**
+ * 某城的風物志。
+ *
+ * `year` 是**盤面當下的年份**,不是劇本開局年 —— 於是同一座鄴,184 年講的是
+ * 西門豹鑿十二渠與太平道三十六方,打到 210 年再點開,講的就是銅雀臺了。
+ * 不給 year 的呼叫端(工具、測試)一律拿三國文本,與加這個閘之前同行為。
+ */
+export function cityLore(cityId: string, scenarioId?: string | null, year?: number): CityLore | null {
   const era = loreEraFor(scenarioId);
   if (era) return eraCityLore(era, cityId);
-  return CITY_LORE[cityId] ?? null;
+  const tk = CITY_LORE[cityId] ?? null;
+  if (year === undefined || year >= loreYearGate(cityId)) return tk;
+  // 漢末版沒寫的城照舊出三國文本 —— 留白是更大的退步,而「該寫沒寫」由測試盯著。
+  return lateHanCityLore(cityId) ?? tk;
 }
 
 /**
@@ -565,8 +597,8 @@ export function cityLore(cityId: string, scenarioId?: string | null): CityLore |
  * Falls back to a hard character cap for the rare note whose first sentence
  * runs long, and returns null when the city has no entry.
  */
-export function cityLoreBrief(cityId: string, lang: 'zh' | 'en', maxChars = 64, scenarioId?: string | null): string | null {
-  const note = cityLore(cityId, scenarioId);
+export function cityLoreBrief(cityId: string, lang: 'zh' | 'en', maxChars = 64, scenarioId?: string | null, year?: number): string | null {
+  const note = cityLore(cityId, scenarioId, year);
   if (!note) return null;
   const text = lang === 'en' ? note.en : note.zh;
   // 。for the Chinese notes, ". " for the English ones (a bare "." would cut
