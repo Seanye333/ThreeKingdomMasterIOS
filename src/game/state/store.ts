@@ -378,7 +378,7 @@ import { findChallenge, evaluateChallenge, challengeStars } from '../data/challe
 import { MAX_CUSTOM_EVENTS } from '../systems/customEvents';
 import { refreshPrestige, prestigeTitleById, TOP_PRESTIGE_IDS } from '../data/prestige';
 import { peerageById } from '../data/peerage';
-import { careerStanding, careerGuardCapBonus } from '../systems/career';
+import { careerStanding, careerGuardCap } from '../systems/career';
 import { evaluateGoal, findObjectiveFor } from '../systems/objectives';
 import { applySuccession } from '../systems/succession';
 import {
@@ -17064,13 +17064,17 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           return { ok: false, message: 'Officer must be in one of your cities.' };
         const amt = Math.floor(amount);
         if (!Number.isFinite(amt) || amt <= 0) return { ok: false, message: 'Enter a positive amount.' };
-        // Chronicle heroes raise a larger household guard as they rise in rank.
-        const careerBonus = state.careerMode?.officerId === officerId
-          ? careerGuardCapBonus(careerStanding(state.deeds[officerId]))
-          : 0;
-        const cap = officer.stats.leadership * 100 + careerBonus;
+        // 一代記的私兵上限由品階決定,不是統率 — 白身有九十統率也不該帶九千人走。
+        // 君主模式維持原本的 統率×100。
+        const isCareerHero = state.careerMode?.officerId === officerId;
+        const cap = isCareerHero
+          ? careerGuardCap(careerStanding(state.deeds[officerId]), officer.stats.leadership)
+          : officer.stats.leadership * 100;
         const current = officer.privateTroops ?? 0;
         const room = cap - current;
+        if (cap <= 0) {
+          return { ok: false, message: '白身不得聚眾 — 先掙個出身。 (A commoner may raise no troops.)' };
+        }
         if (room <= 0) return { ok: false, message: `${officer.name.en}'s guard is already at capacity (${cap}).` };
         const take = Math.min(amt, room);
         const GOLD_PER_UNIT = 2;

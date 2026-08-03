@@ -1,6 +1,8 @@
 import { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import { requestMapFocus } from '../components/mapFocusBus';
 import { playSfx } from '../../game/systems/sound';
+import { careerStanding } from '../../game/systems/career';
+import { canCommand } from '../../game/systems/careerAuthority';
 import { useGameStore } from '../../game/state/store';
 import { DEED_TITLES_BY_ID } from '../../game/systems/deedTitles';
 import { prestigeTitleById } from '../../game/data/prestige';
@@ -359,6 +361,9 @@ export function MapScreen() {
   const [showConvoys, setShowConvoys] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const careerMode = useGameStore((s) => s.careerMode);
+  const careerDeeds = useGameStore((s) => (s.careerMode ? s.deeds[s.careerMode.officerId] : undefined));
+  // 一代記的品階 — 決定看得見哪些命令。君主模式維持 null(不設限)。
+  const careerRank = careerMode ? careerStanding(careerDeeds).rank : null;
   const recentAchievementUnlocks = useGameStore((s) => s.recentAchievementUnlocks);
   const acknowledgeAchievements = useGameStore((s) => s.acknowledgeAchievements);
   const recentDeedTitles = useGameStore((s) => s.recentDeedTitles);
@@ -715,7 +720,10 @@ export function MapScreen() {
       { id: 'settings', zh: '設定', en: 'Settings', hint: g.sys, run: () => setShowSettings(true) },
     ];
     if (careerMode) c.push({ id: 'career', zh: '一代記', en: 'Career chronicle', hint: g.people, run: () => setShowCareer(true) });
-    return c;
+    // 一代記:一道命令要多大的官才發得出,就要多大的官才看得見。
+    // 擋在這裡而不是散在 store 的三百個 action 裡 —— 命令面與頂欄選單
+    // 都是同一份宣告渲染的,擋一次就夠。
+    return careerRank === null ? c : c.filter((e) => canCommand(e.id, careerRank));
   })();
 
   // ── 頂欄下拉 — cut by intent: 治國 / 兵事 / 邦交 / 朝儀 / 人 / 翻閱.
@@ -726,12 +734,12 @@ export function MapScreen() {
       label: t('內政', 'Domestic'),
       title: t('內政 — 郡縣、輜重、度支、賑災', 'Domestic — cities, convoys, treasury, relief'),
       items: [
-        { label: t('郡縣', 'Cities'),    onClick: () => setShowCityRoster(true), title: t('全境城池一覽 — 排序、跳轉', 'Every city at a glance — sort & jump') },
-        { label: t('州域', 'Provinces'), onClick: () => setShowProvinces(true), title: t('各州控勢與州牧', 'Provincial control & governors') },
-        { label: t('輜重', 'Convoys'),   onClick: () => setShowConvoys(true), title: t('在途運輸與常運糧道一覽', 'Columns on the road & standing routes') },
-        { label: t('度支', 'Treasury'),  onClick: () => setShowBudget(true), title: t('全國收支簿 — 稅入/俸祿/軍費', 'Realm budget — income & upkeep') },
-        { label: t('國政', 'Statecraft'), onClick: () => setShowStatecraft(true), title: t('律令・徭役・選官・大工 — 制度與全境民政帳', 'Legal code, corvée, selection of officials, great works') },
-        { label: t('賑災', 'Relief'),    onClick: () => setShowRelief(true), badge: pendingReliefCount, title: t('開倉賑濟受災城池', 'Open granaries for stricken cities') },
+        { label: t('郡縣', 'Cities'),    onClick: () => setShowCityRoster(true), gate: 'cities', title: t('全境城池一覽 — 排序、跳轉', 'Every city at a glance — sort & jump') },
+        { label: t('州域', 'Provinces'), onClick: () => setShowProvinces(true), gate: 'provinces', title: t('各州控勢與州牧', 'Provincial control & governors') },
+        { label: t('輜重', 'Convoys'),   onClick: () => setShowConvoys(true), gate: 'convoys', title: t('在途運輸與常運糧道一覽', 'Columns on the road & standing routes') },
+        { label: t('度支', 'Treasury'),  onClick: () => setShowBudget(true), gate: 'budget', title: t('全國收支簿 — 稅入/俸祿/軍費', 'Realm budget — income & upkeep') },
+        { label: t('國政', 'Statecraft'), onClick: () => setShowStatecraft(true), gate: 'statecraft', title: t('律令・徭役・選官・大工 — 制度與全境民政帳', 'Legal code, corvée, selection of officials, great works') },
+        { label: t('賑災', 'Relief'),    onClick: () => setShowRelief(true), gate: 'relief', badge: pendingReliefCount, title: t('開倉賑濟受災城池', 'Open granaries for stricken cities') },
         { label: t('待辦', 'To-Do'),     onClick: () => setShowToDo(true), title: t('本旬該辦之事的提醒清單', 'Reminders for this turn') },
       ],
     },
@@ -740,11 +748,11 @@ export function MapScreen() {
       title: t('軍務 — 軍團、計略、演武場、武備', 'Military — legions, schemes, arenas, armoury'),
       items: [
         { label: t('錦囊', 'Advisor'),    onClick: () => setShowAdvisor(true), title: t('軍師建議 — 當下最值得做的事', "Advisor — what's worth doing now") },
-        { label: t('軍團', 'Legions'),    onClick: () => setShowLegions(true), title: t('委任軍團 — 都督自主征伐', 'Delegated legions under a marshal') },
-        { label: t('陣形', 'Formations'), onClick: () => setShowFormations(true), title: t('演練與指派會戰陣形', 'Drill & assign battle formations') },
-        { label: t('私兵', 'Guard'),      onClick: () => setShowPrivateForces(true), title: t('武將部曲 — 私兵編制', "Officers' private retinues") },
-        { label: t('計略', 'Schemes'),    onClick: () => setShowSchemes(true), title: t('離間/流言/疑兵等謀略', 'Sow discord, rumors, feints…') },
-        { label: t('密偵', 'Espionage'),  onClick: () => setShowEspionage(true), title: t('細作網絡與反間', 'Spy networks & counter-intel') },
+        { label: t('軍團', 'Legions'),    onClick: () => setShowLegions(true), gate: 'legions', title: t('委任軍團 — 都督自主征伐', 'Delegated legions under a marshal') },
+        { label: t('陣形', 'Formations'), onClick: () => setShowFormations(true), gate: 'formations', title: t('演練與指派會戰陣形', 'Drill & assign battle formations') },
+        { label: t('私兵', 'Guard'),      onClick: () => setShowPrivateForces(true), gate: 'guard', title: t('武將部曲 — 私兵編制', "Officers' private retinues") },
+        { label: t('計略', 'Schemes'),    onClick: () => setShowSchemes(true), gate: 'schemes', title: t('離間/流言/疑兵等謀略', 'Sow discord, rumors, feints…') },
+        { label: t('密偵', 'Espionage'),  onClick: () => setShowEspionage(true), gate: 'espionage', title: t('細作網絡與反間', 'Spy networks & counter-intel') },
         { header: t('演武場', 'Arenas') },
         { label: t('演武', 'Sparring'),   onClick: () => setShowTraining(true), title: t('武將切磋練級,不傷和氣', 'Sparring bouts — XP, no blood') },
         { label: t('比武', 'Tournament'), onClick: () => setShowTournament(true), title: t('比武大會 — 奪魁揚名', 'Martial tournament') },
@@ -753,15 +761,15 @@ export function MapScreen() {
         { label: t('武鬥館', 'Hall'),     onClick: () => setShowDuelHall(true), title: t('3D 單挑武鬥館', '3D duel hall') },
         { header: t('武備', 'Smithy') },
         { label: t('寶物', 'Armoury'),    onClick: () => setShowArmoury(true), title: t('寶物庫 — 授予/回收裝備', 'Armoury — grant & reclaim gear') },
-        { label: t('鍛造', 'Forge'),      onClick: () => setShowForge(true), title: t('鍛造/精煉/鑲嵌裝備', 'Forge, refine & socket gear') },
+        { label: t('鍛造', 'Forge'),      onClick: () => setShowForge(true), gate: 'forge', title: t('鍛造/精煉/鑲嵌裝備', 'Forge, refine & socket gear') },
       ],
     },
     {
       label: t('外交', 'Diplomacy'),
       title: t('外交 — 邦交、形勢一覽、關係圖', 'Diplomacy — relations, standings, graph'),
       items: [
-        { label: t('邦交', 'Relations'),     onClick: () => setShowDiplomacy(true), title: t('結盟/停戰/歲幣等外交指令', 'Alliances, truces, tribute…') },
-        { label: t('形勢一覽', 'Standings'), onClick: () => setShowRelations(true), title: t('勢力 × 勢力關係矩陣', 'Force × force relation matrix') },
+        { label: t('邦交', 'Relations'),     onClick: () => setShowDiplomacy(true), gate: 'diplomacy', title: t('結盟/停戰/歲幣等外交指令', 'Alliances, truces, tribute…') },
+        { label: t('形勢一覽', 'Standings'), onClick: () => setShowRelations(true), gate: 'relations', title: t('勢力 × 勢力關係矩陣', 'Force × force relation matrix') },
         { label: t('關係圖', 'Graph'),       onClick: () => setShowDipGraph(true), title: t('邦交關係圖(節點圖)', 'Diplomacy as a node graph') },
       ],
     },
@@ -769,10 +777,10 @@ export function MapScreen() {
       label: t('朝堂', 'Court'),
       title: t('朝堂 — 任官、州牧、考課、朝廷、祭祀', 'Court — appointments, governors, reviews, edicts, rites'),
       items: [
-        { label: t('任官', 'Titles'),    onClick: () => setShowTitles(true), title: t('授予官職與稱號', 'Grant offices & titles') },
-        { label: t('州牧', 'Governors'), onClick: () => setShowGovernors(true), title: t('委任州牧,分州而治', 'Appoint provincial governors') },
-        { label: t('考課', 'Reviews'),   onClick: () => setShowKaoke(true), title: t('太守/州牧政績考評', 'Governor performance reviews') },
-        { label: t('朝廷', 'Court'),     onClick: () => setShowCourt(true), title: t('天子朝廷 — 黨爭/上表/禪讓', 'The imperial court — factions & edicts') },
+        { label: t('任官', 'Titles'),    onClick: () => setShowTitles(true), gate: 'titles', title: t('授予官職與稱號', 'Grant offices & titles') },
+        { label: t('州牧', 'Governors'), onClick: () => setShowGovernors(true), gate: 'governors', title: t('委任州牧,分州而治', 'Appoint provincial governors') },
+        { label: t('考課', 'Reviews'),   onClick: () => setShowKaoke(true), gate: 'kaoke', title: t('太守/州牧政績考評', 'Governor performance reviews') },
+        { label: t('朝廷', 'Court'),     onClick: () => setShowCourt(true), gate: 'courtm', title: t('天子朝廷 — 黨爭/上表/禪讓', 'The imperial court — factions & edicts') },
         { label: t('祭祀', 'Rites'),     onClick: () => setShowRites(true), title: t('郊祀/祈雨/招安/宣撫', 'Rites, rain prayers, pacification') },
       ],
     },
@@ -784,7 +792,7 @@ export function MapScreen() {
         { label: t('結義', 'Bonds'),     onClick: () => setShowBonds(true), title: t('桃園結義 — 義兄弟與師徒', 'Sworn bonds & mentorships') },
         { label: t('威名', 'Prestige'),  onClick: () => setShowPrestige(true), title: t('武將聲望與威名稱號', 'Officer renown & epithets') },
         { label: t('武功', 'Deeds'),     onClick: () => setShowDeeds(true), title: t('斬將/奪城等功業記錄', 'Feats — duels won, cities taken…') },
-        { label: t('書信', 'Letters'),   onClick: () => setShowWishes(true), badge: wishes.length, title: t('武將心願與請命書信', "Officers' wishes & petitions") },
+        { label: t('書信', 'Letters'),   onClick: () => setShowWishes(true), gate: 'letters', badge: wishes.length, title: t('武將心願與請命書信', "Officers' wishes & petitions") },
         { label: t('名將榜', 'Hall of Fame'), onClick: () => setShowHallOfFame(true), title: t('本局名將排行榜', "This campaign's hall of fame") },
         { label: t('列傳', 'Wiki'),      onClick: () => setShowEncyclopedia(true), title: t('人物列傳百科', 'Officer biographies') },
         ...(careerMode
@@ -813,6 +821,17 @@ export function MapScreen() {
       ],
     },
   ];
+  /**
+   * 一代記:把發不出的命令從頂欄拿掉,整組空了就連那一欄都不顯示。
+   * 白身點開「內政」看見一片空白,比看不到那一欄更莫名其妙。
+   */
+  const gatedMenus = careerRank === null ? hudMenus : hudMenus
+    .map((m) => ({
+      ...m,
+      items: m.items.filter((e) => ('gate' in e && e.gate ? canCommand(e.gate, careerRank) : true)),
+    }))
+    .filter((m) => m.items.length > 0);
+
 
   return (
     <div className={styles.root}>
@@ -885,7 +904,7 @@ export function MapScreen() {
             >
               {t('群雄', 'Forces')}
             </button>
-            {hudMenus.map((m) => (
+            {gatedMenus.map((m) => (
               <HudMenu key={m.label} label={m.label} title={m.title} items={m.items} />
             ))}
             {/* ／命令臺 — the fastest path to everything; surface the hotkey. */}
@@ -908,7 +927,7 @@ export function MapScreen() {
             items={[
               { label: t('武將', 'Officers'), onClick: () => setShowOfficers(true) },
               { label: t('群雄', 'Forces'),   onClick: () => setShowForces(true) },
-              ...hudMenus.flatMap((m): MenuEntry[] => [{ header: m.label }, ...m.items]),
+              ...gatedMenus.flatMap((m): MenuEntry[] => [{ header: m.label }, ...m.items]),
             ]}
           />
         )}

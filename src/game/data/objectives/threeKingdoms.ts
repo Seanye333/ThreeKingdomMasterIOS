@@ -47,16 +47,27 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'huangfu',
       primary: {
         title: { zh: '北道之任', en: 'Charge of the Northern Road' },
-        description: 'Break the Yellow Turbans and hold Ye, the seat of Ji province, by 188 AD.',
-        descriptionZh: '於188年前擊潰黃巾,並據有冀州治所鄴城。',
-        goal: { kind: 'defeat-force', forceId: 'yellow-turban', byYear: 188 },
+        /*
+         * 原本主目標是「盡滅黃巾」,而敘述卻寫「並據有鄴城」—— 判定與敘述各說
+         * 各話。改成他真正打的那兩仗:廣宗(張角、張梁)與下曲陽(張寶),
+         * 盤上即鄴與信都。「盡滅黃巾」降為次要 —— 那是漢室的大局,不是北道
+         * 一路將領交得出的差事(體檢五輪,黃巾城數中位數 6,從未歸零)。
+         */
+        /*
+         * 期限 186 → 187。實測五輪只有一輪拿下這兩城,而且是第 110 回合(187 年)
+         * —— 差的不是可行性是時間:他的白馬、延津直接與鄴相鄰,鄴再通信都,
+         * 路是通的,但要連下黃巾兩座最硬的城。
+         */
+        description: 'Take Ye and Xindu by 187 — Guangzong took Zhang Jue\'s brothers, Xiaquyang took Zhang Bao.',
+        descriptionZh: '於187年前攻取鄴與信都 —— 廣宗斬張梁,下曲陽斬張寶,兩役都是他打的。',
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'xindu'], byYear: 187 },
       },
       secondary: [
         {
-          title: { zh: '冀州之鎮', en: 'Seat of Ji Province' },
-          description: 'Hold Ye — Huangfu Song governed Ji after Guangzong and remitted a year of taxes.',
-          descriptionZh: '據有鄴城 —— 廣宗之後皇甫嵩領冀州牧,上表免一年租賦。',
-          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 189 },
+          title: { zh: '盡平其眾', en: 'Finish Them' },
+          description: 'Wipe the Yellow Turban force out entirely by 188 — few commanders ever managed it.',
+          descriptionZh: '於188年前徹底擊潰黃巾軍 —— 能做到的將領不多。',
+          goal: { kind: 'defeat-force', forceId: 'yellow-turban', byYear: 188 },
         },
         {
           title: { zh: '孟德在幕', en: 'Mengde in the Tent' },
@@ -72,9 +83,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhujun',
       primary: {
         title: { zh: '宛城之圍', en: 'The Siege of Wancheng' },
-        description: 'Take and hold Wancheng — the rebellion ended where Zhu Jun ended it.',
-        descriptionZh: '攻取並據守宛城 —— 黃巾之亂終於此城,終結它的是朱儁。',
-        goal: { kind: 'hold-cities', cityIds: ['wancheng'], byYear: 187 },
+        /*
+         * 期限 187 → 185。體檢實測朱儁取宛城的回合是 7 / 20 / 62 / 118 / 119
+         * ——五輪之內遲早都拿得到,期限訂在 187 等於沒訂(引擎判定改成逐回合
+         * 鎖存之後,這條是 5/5)。史實上宛城下於 184 年十一月,就是當年之內;
+         * 給到 185 年底,是「兩個戰季之內結束這場仗」的意思。
+         */
+        description: 'Take Wancheng before 186 — the rebellion ended where Zhu Jun ended it, in the eleventh month of 184.',
+        descriptionZh: '於186年前攻取宛城 —— 黃巾之亂終於此城,史實上是184年十一月。',
+        goal: { kind: 'hold-cities', cityIds: ['wancheng'], byYear: 185 },
       },
       secondary: [
         {
@@ -98,16 +115,24 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'dong-184',
       primary: {
         title: { zh: '擁兵自重', en: 'Keep the Army' },
-        description: 'Still be standing in 189 AD with Liang province in hand — Dong Zhuo lost at Guangzong and kept his troops anyway.',
-        descriptionZh: '撐到189年,且涼州仍在手中 —— 廣宗雖敗,兵權未交。',
-        goal: { kind: 'survive-until', year: 189 },
+        /*
+         * 敘述寫「涼州仍在手中」,而判定只查 survive-until —— 這一家開局十三城、
+         * 自走三跑長到十六城,活著是白送的。改成真的查涼州全境:開局他握有
+         * 六郡,天水、酒泉、敦煌三郡在野,要自己去取。
+         *
+         * 這條目標的張力也對:涼州在西,而洛陽的機會在東 —— 史實上他正是在
+         * 「回涼州保本」與「往東邊等機會」之間選了後者。
+         */
+        description: 'Hold all of Liang province by 189 AD — Dong Zhuo lost at Guangzong and kept his troops anyway.',
+        descriptionZh: '於189年前盡有涼州之地 —— 廣宗雖敗,兵權未交。',
+        goal: { kind: 'control-province', provinceId: 'liang', byYear: 189 },
       },
       secondary: [
         {
-          title: { zh: '涼州之本', en: 'The Liang Holding' },
-          description: 'Hold Wuwei, Jincheng and Anding — the Qiang country that answers to you and not to the court.',
-          descriptionZh: '據有武威、金城、安定 —— 只認你、不認朝廷的羌胡之地。',
-          goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 188 },
+          title: { zh: '不交兵權', en: 'The Army Stays Mine' },
+          description: 'Still be standing in 189 — the court ordered his troops handed to Huangfu Song; he declined.',
+          descriptionZh: '撐到189年 —— 朝廷詔他把兵交給皇甫嵩,他沒交。',
+          goal: { kind: 'survive-until', year: 189 },
         },
         {
           title: { zh: '近水樓臺', en: 'Nearest the Gate' },

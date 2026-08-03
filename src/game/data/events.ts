@@ -3423,8 +3423,58 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.55 },
       { kind: 'mandate-ruler', rulerOfficerId: 'zhang-jiao', delta: -25 },
       // 三十六方失了那一個聲音,邊上的城當季就換了旗。
-      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.30 },
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.40 },
       { kind: 'flag', key: 'yt-zhangjue-dead' },
+    ],
+  },
+  {
+    /*
+     * 崩盤要**持續**,不能只崩一次。
+     *
+     * 加這兩條之前,自走的曲線是:張角一死,城從 17 掉到 12,然後就平了 ——
+     * 甚至長回去(某一輪從 17 長到 18)。黃巾成了一家「兵多一點的普通勢力」,
+     * 而史實上張角死後這場亂是碎掉的:河北餘部散入太行號黑山,朝廷討不了,
+     * 反拜張燕為平難中郎將;其餘散為盜賊,各以山谷為名,再也聚不回三十六方。
+     *
+     * 所以在張角死後再排兩年的侵蝕。兩條都沒有選項 —— 這不是誰的決定,
+     * 是一場失去了唯一那個聲音的運動自己的下場。
+     */
+    id: 'evt-yt-heishan',
+    name: { en: 'The Black Mountain Bands', zh: '黑山之聚' },
+    yearMin: 185,
+    yearMax: 188,
+    season: 'summer',
+    requires: [
+      { kind: 'flag-set', key: 'yt-zhangjue-dead' },
+      { kind: 'flag-unset', key: 'yt-heishan' },
+    ],
+    description:
+      'With Zhang Jue gone, the Hebei remnants do not surrender — they go up into the Taihang. Calling themselves the Black Mountain, they number a hundred thousand and more under Zhang Yan, and no commandery can dig them out. In the end the court gives up and makes Zhang Yan a General of the Household, Pacifier of Difficulties, with the right to nominate officials. Bandits with seals of office: the rising has stopped being a war and become a condition.',
+    descriptionZh: '角既死,河北餘部不降,而入太行。號曰黑山,眾至百萬,張燕為之帥,郡縣不能討。朝廷卒以燕為平難中郎將,使領河北諸山谷事,歲得舉孝廉、計吏 —— 賊而有印綬。自此亂非一戰可平,而成積年之患。',
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.80 },
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.30 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'zhang-jiao', delta: -8 },
+      { kind: 'flag', key: 'yt-heishan' },
+    ],
+  },
+  {
+    id: 'evt-yt-embers',
+    name: { en: 'The Embers', zh: '餘燼' },
+    yearMin: 186,
+    yearMax: 189,
+    season: 'autumn',
+    requires: [
+      { kind: 'flag-set', key: 'yt-heishan' },
+      { kind: 'flag-unset', key: 'yt-embers' },
+    ],
+    description:
+      "What is left takes the names of hills and rivers: the Black Hills, the White Waves, the Yellow Dragon, the Left Cudgel. Each keeps its own valley and its own leader, and none of them answers to another. They still wear yellow on their heads. There is no longer anyone whose word reaches them all.",
+    descriptionZh: '餘部各以山谷為號:黑山、白波、黃龍、左校、於毒、五鹿……各據其谷,各有其帥,而莫相統屬。頭上之黃猶在,而能使三十六方一時俱起的那個聲音,已經沒有了。',
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.85 },
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.25 },
+      { kind: 'flag', key: 'yt-embers' },
     ],
   },
   {

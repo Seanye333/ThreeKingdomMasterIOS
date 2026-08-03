@@ -73,7 +73,15 @@ export function evaluateGoal(
         && ctx.playerForceId != null
         && goal.cityIds.every((id) => initialOwnerOf(ctx.scenarioId, id) === ctx.playerForceId);
       if (!defending) {
-        return allHeld ? { status: 'success', progress } : { status: 'pending', progress };
+        if (allHeld) return { status: 'success', progress };
+        /*
+         * 取得型也會**過期**。原本它只有成功與進行中兩態,於是「於186年前
+         * 攻取洛陽」打到 200 年仍顯示進行中 —— 期限寫了等於沒寫,而
+         * defeat-force / recruit-officer 這兩種早就會過期了,只有這裡不會。
+         * 判 `year > byYear` 而非 `>=`:期限那一年還在期限之內。
+         */
+        const expired = goal.byYear !== undefined && ctx.year > goal.byYear;
+        return { status: expired ? 'failure' : 'pending', progress };
       }
       if (ctx.year >= goal.byYear!) {
         return allHeld ? { status: 'success', progress } : { status: 'failure', progress };
@@ -111,7 +119,9 @@ export function evaluateGoal(
         && ctx.playerForceId != null
         && cityIds.every((id) => initialOwnerOf(ctx.scenarioId, id) === ctx.playerForceId);
       if (!defending) {
-        return allHeld ? { status: 'success', progress } : { status: 'pending', progress };
+        if (allHeld) return { status: 'success', progress };
+        const expired = goal.byYear !== undefined && ctx.year > goal.byYear;
+        return { status: expired ? 'failure' : 'pending', progress };
       }
       return ctx.year >= goal.byYear!
         ? { status: allHeld ? 'success' : 'failure', progress }

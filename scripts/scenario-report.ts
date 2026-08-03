@@ -65,6 +65,8 @@ async function main() {
   const { SCENARIOS } = await import('../src/game/data/scenarios');
   const { SCENARIO_OBJECTIVES } = await import('../src/game/data/objectives');
   const { formatScenarioYear } = await import('../src/game/data/era');
+  const { evaluateGoal } = await import('../src/game/systems/objectives');
+  type ObjectiveGoal = Parameters<typeof evaluateGoal>[0];
 
   const scenarioId = process.argv[2] ?? 'scn-184-yellow-turban';
   const TURNS = Number(process.argv[3] ?? 150);
@@ -108,6 +110,37 @@ async function main() {
     });
   }
   const eventsSeen: Array<{ turn: number; zh: string }> = [];
+  /*
+   * 主目標**逐回合判、判到就鎖存** —— 與遊戲本體一致(store.ts 的 newAchieved
+   * 一旦記上就 `continue`,不再重算)。
+   *
+   * 這裡原本只在終局手抄一份判定,兩個毛病:①抄漏了 control-province,董卓
+   * 改用它之後永遠報 false;②只看終局,於是「188 年集齊涼州九郡、189 年因
+   * 民變掉了兩郡」被記成沒達成 —— 實測第一輪正是這樣。
+   * 現在直接呼叫引擎的 evaluateGoal,少一份會漂走的手抄本。
+   */
+  const objectivesForBoard = (SCENARIO_OBJECTIVES as Record<string, Array<{
+    forceId: string; primary: { title: { zh: string }; goal: ObjectiveGoal };
+  }>>)[scenario.id] ?? [];
+  const metEver: Record<string, boolean> = {};
+  const scoreObjectives = () => {
+    const s = st.getState();
+    const liveForceIds = new Set<string>();
+    for (const c of Object.values(s.cities)) if (c.ownerForceId) liveForceIds.add(c.ownerForceId);
+    for (const obj of objectivesForBoard) {
+      if (metEver[obj.forceId]) continue;
+      const r = evaluateGoal(obj.primary.goal, {
+        scenarioId: scenario.id,
+        playerForceId: obj.forceId,
+        cities: s.cities,
+        officers: s.officers,
+        year: s.date.year,
+        liveForceIds,
+        isEmperor: s.forces[obj.forceId]?.imperialRank === 'emperor',
+      });
+      if (r.status === 'success') metEver[obj.forceId] = true;
+    }
+  };
 
   const snapshot = (turn: number) => {
     const s = st.getState();
@@ -145,14 +178,11 @@ async function main() {
       else s.dismissEvent?.();
     }
     snapshot(t);
+    scoreObjectives();
   }
 
   // ── 這一輪收尾:把結果收進 runs[],然後回到迴圈頂端重跑 ──
   const s = st.getState();
-  const objectives = (SCENARIO_OBJECTIVES as Record<string, Array<{
-    forceId: string;
-    primary: { title: { zh: string }; goal: Record<string, unknown> };
-  }>>)[scenario.id] ?? [];
   const res: RunResult = {
     finalCities: {}, finalTroops: {}, diedTurn: {}, objectiveMet: {},
     brokeTurn: {}, starveTurn: {}, finalMandate: {}, minGold: {},
@@ -172,19 +202,8 @@ async function main() {
     const st = tr.food.findIndex((fd, i) => tr.cities[i] > 0 && fd < tr.troops[i]);
     res.starveTurn[f.id] = st < 0 ? null : st;
     res.diedTurn[f.id] = tr.diedTurn;
-    const obj = objectives.find((o) => o.forceId === f.id);
-    if (!obj) { res.objectiveMet[f.id] = false; continue; }
-    const goal = obj.primary.goal as { kind: string; cityIds?: string[]; forceId?: string; year?: number };
-    let met = false;
-    if (tr.diedTurn !== null) met = false;
-    else if (goal.kind === 'hold-cities' && goal.cityIds) {
-      met = goal.cityIds.every((c) => s.cities[c]?.ownerForceId === f.id);
-    } else if (goal.kind === 'defeat-force' && goal.forceId) {
-      met = !Object.values(s.cities).some((c) => c.ownerForceId === goal.forceId);
-    } else if (goal.kind === 'survive-until') {
-      met = s.date.year >= (goal.year ?? 0);
-    }
-    res.objectiveMet[f.id] = met;
+    // 覆滅的勢力不算達成,其餘讀逐回合鎖存的結果。
+    res.objectiveMet[f.id] = tr.diedTurn === null && !!metEver[f.id];
   }
   runs.push(res);
   }  // ← end of the run loop

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { cityEconCap } from '../../game/systems/citySize';
 import { useGameStore } from '../../game/state/store';
+import { careerStanding } from '../../game/systems/career';
+import { cityAuthority } from '../../game/systems/careerAuthority';
 import { COMMAND_DEFS } from '../../game/systems/commands';
 import { cityPolicyEffects, lockedPolicies } from '../../game/systems/policyEffects';
 import { POLICY_DEFS } from '../../game/data/officerAttributes';
@@ -135,6 +137,17 @@ export function CityPanel() {
 
   const [tab, setTab] = useState<CityTab>('overview');
   const isPlayerCity = !!city && city.ownerForceId === playerForceId;
+  // ── 一代記的城池權限 ──
+  // 太守才管得了一城內政;軍務九品受命就辦得了,但只限自己駐紮的那座城 ——
+  // 不能隔著半個天下調別人的兵。君主模式 careerMode 為 null,一律放行。
+  const careerMode = useGameStore((st) => st.careerMode);
+  const careerDeeds = useGameStore((st) => (st.careerMode ? st.deeds[st.careerMode.officerId] : undefined));
+  const careerHere = useGameStore((st) => (
+    st.careerMode ? st.officers[st.careerMode.officerId]?.locationCityId === st.selectedCityId : false
+  ));
+  const auth = careerMode
+    ? cityAuthority(careerStanding(careerDeeds).rank, isPlayerCity, careerHere)
+    : { domestic: isPlayerCity, military: isPlayerCity };
   // 情報點 — per-city chores surface on the tab strip itself: a warm dot on
   // 內政 while stationed officers sit idle, a red count on 軍務 for captives
   // awaiting a verdict. You see where you're needed without opening the tab.
@@ -160,7 +173,9 @@ export function CityPanel() {
   // 記住分頁 — the chosen tab persists; on an enemy/neutral city the player-only
   // tabs simply render as 總覽 (via effectiveTab) WITHOUT clobbering the memory,
   // so scouting a foe mid-turn and returning to an own city restores 內政/軍務.
-  const effectiveTab: CityTab = (!isPlayerCity && (tab === 'domestic' || tab === 'military')) ? 'overview' : tab;
+  const tabAllowed = (id: CityTab) =>
+    id === 'domestic' ? auth.domestic : id === 'military' ? auth.military : true;
+  const effectiveTab: CityTab = tabAllowed(tab) ? tab : 'overview';
 
   if (!city) {
     return (
@@ -260,7 +275,7 @@ export function CityPanel() {
       </header>
 
       <nav className={styles.tabs}>
-        {CITY_TABS.filter((tb) => !tb.playerOnly || isPlayerCity).map((tb) => (
+        {CITY_TABS.filter((tb) => tabAllowed(tb.id)).map((tb) => (
           <button
             key={tb.id}
             className={effectiveTab === tb.id ? `${styles.tab} ${styles.tabActive}` : styles.tab}
@@ -332,7 +347,7 @@ export function CityPanel() {
         </>
       )}
 
-      {effectiveTab === 'domestic' && isPlayerCity && (
+      {effectiveTab === 'domestic' && auth.domestic && (
         <>
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>{t('內政令', 'Civil Orders')}</h3>
@@ -346,7 +361,7 @@ export function CityPanel() {
         </>
       )}
 
-      {effectiveTab === 'military' && isPlayerCity && (
+      {effectiveTab === 'military' && auth.military && (
         <>
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>{t('軍令', 'Military Orders')}</h3>

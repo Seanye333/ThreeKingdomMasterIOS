@@ -1109,9 +1109,19 @@ export interface ForcePosture {
   loyalty?: number;
 }
 
+/**
+ * 逐城覆寫 —— 姿態之後再蓋一層,用在「這一座城是例外」的地方。
+ *
+ * 姿態刻意只有五個旋鈕,是要一眼讀得懂的東西;但有些城在某個劇本裡就是特例:
+ * 黃巾城防一律 −22,而宛城之圍打了五個月、換過三個渠帥才破 —— 那是整場仗裡
+ * 最硬的一座城,不該跟其他黃巾城同一個數字。這種例外要具名寫在劇本裡。
+ */
+export type CityStatOverride = Partial<CityTemplate['base']>;
+
 export function buildInitialCities(
   ownership: Record<string, string | null>,
   postures?: Record<string, ForcePosture>,
+  overrides?: Record<string, CityStatOverride>,
 ): City[] {
   // Cities a scenario doesn't list inherit the owner of the NEAREST listed
   // city within ~60px (real-geography positions) — so the passes, forts and
@@ -1163,6 +1173,8 @@ export function buildInitialCities(
         b.loyalty = Math.max(0, Math.min(100, b.loyalty + p.loyalty));
       }
     }
+    // 逐城覆寫蓋在姿態之上 —— 例外要壓過通則,不然寫了也被乘回去。
+    if (overrides?.[t.id]) Object.assign(base, overrides[t.id]);
     return {
       id: t.id,
       name: t.name,

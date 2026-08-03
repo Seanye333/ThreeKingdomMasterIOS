@@ -11,6 +11,11 @@ interface MenuItem {
   /** Show a small badge next to the label. */
   badge?: number;
   title?: string;
+  /**
+   * 一代記的權限閘門 — 對應 careerAuthority 的命令 id。
+   * 留空表示個人的事,白身也做得了。過濾在 MapScreen 做,這裡只帶著。
+   */
+  gate?: string;
 }
 
 /** A non-clickable section label inside the dropdown, e.g. 演武場 / 武備. */

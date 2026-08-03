@@ -119,3 +119,47 @@ describe('SCENARIO_OBJECTIVES wiring', () => {
     }
   });
 });
+
+/**
+ * 目標的三態:達成 / 失敗 / 進行中。
+ *
+ * 「取得型」目標(開局不據有那座城)原本只有兩態 —— 拿到就成功,沒拿到永遠
+ * 進行中。於是黃巾的「於186年前攻取洛陽」打到 200 年仍顯示進行中,期限寫了
+ * 等於沒寫;而 defeat-force 與 recruit-officer 這兩種早就會過期,只有它不會。
+ *
+ * 這裡釘住四件事:取得型會過期、期限當年仍在期限內、守成型的判法不變、
+ * 沒給 byYear 的目標永不過期。
+ */
+describe('目標的期限', () => {
+  const ctxAt = (year: number, own: Record<string, string | null>) => ({
+    scenarioId: null,
+    playerForceId: 'me',
+    cities: Object.fromEntries(
+      Object.entries(own).map(([id, o]) => [id, { id, ownerForceId: o } as never]),
+    ),
+    officers: {},
+    year,
+    liveForceIds: new Set(['me', 'foe']),
+    isEmperor: false,
+  });
+  const takeLuoyang: ObjectiveGoal = { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 186 };
+
+  it('取得型目標會過期', async () => {
+    const { evaluateGoal } = await import('../systems/objectives');
+    const notMine = { luoyang: 'foe' };
+    expect(evaluateGoal(takeLuoyang, ctxAt(185, notMine)).status).toBe('pending');
+    expect(evaluateGoal(takeLuoyang, ctxAt(186, notMine)).status).toBe('pending'); // 期限當年仍在期限內
+    expect(evaluateGoal(takeLuoyang, ctxAt(187, notMine)).status).toBe('failure');
+  });
+
+  it('拿到就算數,即使已過期限也不倒扣', async () => {
+    const { evaluateGoal } = await import('../systems/objectives');
+    expect(evaluateGoal(takeLuoyang, ctxAt(200, { luoyang: 'me' })).status).toBe('success');
+  });
+
+  it('沒寫期限的目標永不過期', async () => {
+    const { evaluateGoal } = await import('../systems/objectives');
+    const noDeadline: ObjectiveGoal = { kind: 'hold-cities', cityIds: ['luoyang'] };
+    expect(evaluateGoal(noDeadline, ctxAt(9999, { luoyang: 'foe' })).status).toBe('pending');
+  });
+});

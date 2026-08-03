@@ -356,11 +356,20 @@ function applySingleEffect(
           .map((id) => mut.cities[id])
           .filter((nb) => nb && nb.ownerForceId && nb.ownerForceId !== f.id);
         const to = neighbours.sort((a, b) => (b.troops ?? 0) - (a.troops ?? 0))[0];
+        /*
+         * 反正的城要**守得住**,否則崩盤只是一季的事。
+         *
+         * 原本降卒只留四成、民忠再扣 15,於是反正的城又薄又離心,緊挨著叛軍
+         * 老巢,下一季就被收回去 —— 自走曲線是「張角一死掉五城,然後平回來,
+         * 甚至還長」。史實上這些城是**帶著守軍歸順**的(官軍收其降卒),不是
+         * 空城易幟。留七成兵、民忠只扣 8,崩盤才留得下痕跡。
+         * 無主的流寇之地仍照舊薄弱 —— 那才是真的散掉。
+         */
         mut.cities[c.id] = {
           ...c,
           ownerForceId: to ? to.ownerForceId : null,
-          troops: Math.round((c.troops ?? 0) * 0.4),  // 降卒過半散去
-          loyalty: to ? Math.max(25, (c.loyalty ?? 50) - 15) : 30,
+          troops: Math.round((c.troops ?? 0) * (to ? 0.7 : 0.35)),
+          loyalty: to ? Math.max(25, (c.loyalty ?? 50) - 8) : 30,
         };
       }
       break;
