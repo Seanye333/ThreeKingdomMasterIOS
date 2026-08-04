@@ -3325,6 +3325,62 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
      —— 只要張角/皇甫嵩/盧植這些人還在場。
      ══════════════════════════════════════════════════════════════════ */
   {
+    /*
+     * 184 年最重大的**政治**決定,盤上原本沒有。
+     *
+     * 這條鏈補進來之前,整個 184 年是純軍事的:長社、廣宗、宛城,全是打仗。
+     * 而史實上這一年真正改變走向的一道詔是解黨禁 —— 皇甫嵩上言「宜解黨禁,
+     * 益出中藏錢、西園廄馬以班軍士」,中常侍呂彊也說「黨錮久積,人情怨憤,
+     * 若不赦宥,輕與張角合謀,為變滋大,悔之無救」。靈帝懼而從之。
+     *
+     * 士大夫沒有倒向黃巾,關鍵就在這裡。這是整場亂事最大的一個「差一點」——
+     * 所以它該是一個抉擇,而不是背景設定。
+     *
+     * 抉擇者是漢室(盤上以盧植為君主代表朝廷)。放在春季,早於長社(夏)——
+     * 詔在三月,仗在五月,順序不能顛倒。
+     */
+    id: 'evt-yt-dangjin',
+    name: { en: 'Lift the Proscription', zh: '解黨錮' },
+    yearMin: 184,
+    yearMax: 185,
+    season: 'spring',
+    requires: [
+      { kind: 'officer-active', officerId: 'lu-zhi' },
+      { kind: 'flag-unset', key: 'yt-dangjin' },
+    ],
+    description:
+      "Huangfu Song memorialises the throne: lift the ban on the proscribed, open the inner treasury and the Western Garden stables, and give it all to the troops. Even Lü Qiang — a Regular Palace Attendant, one of the eunuchs who put the ban there — says the same thing: twenty years of grievance is stacked up behind that ban, and if it is not lifted the gentry will go over to Zhang Jue, and then nothing can be mended. The emperor is afraid.",
+    descriptionZh: '皇甫嵩上言:「宜解黨禁,益出中藏錢、西園廄馬以班軍士。」中常侍呂彊亦言 —— 設黨錮的正是他們這些人 ——「黨錮久積,人情怨憤,若不赦宥,輕與張角合謀,為變滋大,悔之無救。」帝懼。',
+    chooserRulerId: 'lu-zhi',
+    choices: [
+      {
+        id: 'lift',
+        label: { zh: '解之 —— 錮二十年的人,不能再推給張角', en: 'Lift it — do not push twenty years of grievance into Zhang Jue\'s arms' },
+        effects: [
+          // 中藏錢與西園廄馬都出了 —— 賣官積下的那筆錢,終於花在了軍士身上。
+          { kind: 'force-gold-ruler', rulerOfficerId: 'lu-zhi', delta: -1800 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'lu-zhi', delta: 10 },
+          // 士大夫沒有倒向太平道 —— 這是黃巾失去的那一半天下。
+          { kind: 'mandate-ruler', rulerOfficerId: 'zhang-jiao', delta: -10 },
+          { kind: 'officer-join-ruler', officerId: 'he-yong', rulerOfficerId: 'lu-zhi' },
+          { kind: 'flag', key: 'yt-dangjin' },
+        ],
+      },
+      {
+        id: 'keep',
+        label: { zh: '不解 —— 黨人終究是黨人', en: 'Keep it — a faction is a faction' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'zhang-jiao', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'lu-zhi', delta: -6 },
+          // 郡國豪右與失意士人各自結部曲,而黃旗是現成的旗。
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 1.08 },
+          { kind: 'flag', key: 'yt-dangjin' },
+        ],
+      },
+    ],
+    effects: [],
+  },
+  {
     id: 'evt-yt-changshe',
     name: { en: 'The Fire at Changshe', zh: '長社之火' },
     yearMin: 184,
