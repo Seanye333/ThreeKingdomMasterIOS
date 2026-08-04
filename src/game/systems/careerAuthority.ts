@@ -38,6 +38,7 @@ export const COMMAND_RANK: Record<string, number> = {
   replays: RANK_ANY,
   settings: RANK_ANY,
   career: RANK_ANY,
+  errands: RANK_ANY,      // 差事 — 白身唯一掙得到功績的路,絕不能擋
 
   // ── 部曲 ── 開始有人聽你的
   guard: RANK_RETAINER,

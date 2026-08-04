@@ -844,6 +844,13 @@ export interface GameStore extends GameState {
   setRefugeePolicy: (policy: import('../systems/refugees').RefugeePolicy) => void;
   /** 一代記落幕 — dismiss the career-run epilogue card. */
   dismissCareerEpilogue: () => void;
+  /**
+   * 接差事 — 一代記主角替人辦一趟活,當場結算。
+   * 白身唯一掙得到功績的路;失手會折兵,大敗會傷到自己。
+   */
+  takeErrand: (errandId: string) => { ok: boolean; message: string };
+  /** 主角所在城此刻可接的差事。與 takeErrand 走同一顆種子,兩邊看到的必然同一批。 */
+  currentErrands: () => import('../systems/careerErrands').Errand[];
   /** 大赦天下 (§1.11) — empty every court in the realm: loyalty everywhere and
    *  the docket wiped, paid for in gold, in the throne's dignity, and in the
    *  men you just let out. Refused if one was proclaimed too recently. */

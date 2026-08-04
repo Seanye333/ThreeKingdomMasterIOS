@@ -11,6 +11,11 @@ import type { EntityId } from './common';
 export interface CareerState {
   /** Officer the player controls. */
   officerId: EntityId;
+  /**
+   * 人情 — 誰欠你多少。替雇主辦成差事會累積,辦砸會倒扣。
+   * 夠厚時那個人會在上頭替你薦舉(careerPatronage.ts)。
+   */
+  favors?: Record<EntityId, number>;
   /** Career milestones reached this campaign. */
   milestones: Array<{
     title: { zh: string; en: string };

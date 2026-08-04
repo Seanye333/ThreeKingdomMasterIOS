@@ -3420,10 +3420,17 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     descriptionZh: '角未破,病死。八月,卒於廣宗城中。太平道一教之眾,所信者一人耳 —— 寶、梁能將兵,不能使三十六方復如臂使指。及嵩拔廣宗,乃發角棺,戮屍,傳首京師。',
     effects: [
       { kind: 'officer-status', officerId: 'zhang-jiao', status: 'dead' },
-      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.55 },
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.45 },
       { kind: 'mandate-ruler', rulerOfficerId: 'zhang-jiao', delta: -25 },
-      // 三十六方失了那一個聲音,邊上的城當季就換了旗。
-      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.40 },
+      /*
+       * 三十六方失了那一個聲音,邊上的城當季就換了旗。
+       *
+       * 幅度從 0.40 提到 0.50、兵從 ×0.55 壓到 ×0.45,是因為把「宛城之圍」改成
+       * 必須真的打下宛城才觸發之後,崩盤整個垮了(黃巾 17→19,反而長大)——
+       * 原來有一大半重量壓在那條無條件觸發的事件上。而史實上瓦解這場運動的是
+       * 張角之死,不是宛城:「太平道一教之眾,所信者一人耳。」重量該在這裡。
+       */
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.50 },
       { kind: 'flag', key: 'yt-zhangjue-dead' },
     ],
   },
@@ -3452,8 +3459,8 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       'With Zhang Jue gone, the Hebei remnants do not surrender — they go up into the Taihang. Calling themselves the Black Mountain, they number a hundred thousand and more under Zhang Yan, and no commandery can dig them out. In the end the court gives up and makes Zhang Yan a General of the Household, Pacifier of Difficulties, with the right to nominate officials. Bandits with seals of office: the rising has stopped being a war and become a condition.',
     descriptionZh: '角既死,河北餘部不降,而入太行。號曰黑山,眾至百萬,張燕為之帥,郡縣不能討。朝廷卒以燕為平難中郎將,使領河北諸山谷事,歲得舉孝廉、計吏 —— 賊而有印綬。自此亂非一戰可平,而成積年之患。',
     effects: [
-      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.80 },
-      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.30 },
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.75 },
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhang-jiao', fraction: 0.35 },
       { kind: 'mandate-ruler', rulerOfficerId: 'zhang-jiao', delta: -8 },
       { kind: 'flag', key: 'yt-heishan' },
     ],
@@ -3483,19 +3490,36 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     yearMin: 184,
     yearMax: 186,
     season: 'winter',   // 十一月,宛城拔,亂事終
+    /*
+     * 這條事件本來沒有查「宛城到底拿下來了沒」。
+     *
+     * 於是兩個毛病:①敘述與選項都在講攻下宛城(「乘城而入」),而效果裡沒有
+     * 任何一項把城交給朱儁 —— 玩家讀到自己破了城,地圖上城還在黃巾手裡;
+     * ②「納降」那一項給宛城 +10 民忠,**那個效果只有在宛城已經是他的時候才
+     * 說得通**,否則是在替敵城加民心。
+     *
+     * 兩個毛病指向同一個答案:它本來就是「攻下之後」的善後抉擇,只是條件漏
+     * 寫了。條件表裡正好有 city-owner-ruler,註解寫著「conquest payoffs」——
+     * 就是為這種事準備的。
+     *
+     * 補上之後因果也對了:黃巾的大規模反正(0.45/0.55)從「時間到就發生」變成
+     * 「有人真的去終結了它才發生」。史實上這場亂正是終於宛城,而終結它的是朱儁。
+     * 刻意**不**讓選項直接授城 —— 那會讓朱儁的主目標白送。城要自己打。
+     */
     requires: [
       { kind: 'officer-active', officerId: 'zhu-jun' },
+      { kind: 'city-owner-ruler', cityId: 'wancheng', rulerOfficerId: 'zhu-jun' },
       { kind: 'flag-set', key: 'yt-zhangjue-dead' },
       { kind: 'flag-unset', key: 'yt-wancheng' },
     ],
     description:
-      'Wancheng will not fall to assault. Zhu Jun rings the city, raises earth-mounds inside the ring to look down into it, beats the drums in the northwest and goes in over the southeast wall. The rebellion that began in eight provinces ends at one city gate.',
-    descriptionZh: '朱儁攻宛,不能拔。乃圍城,起土山以臨之,鳴鼓攻其西南,賊悉眾赴之 —— 儁自將精卒五千,掩其東北,乘城而入。起於八州之亂,終於一城之門。',
+      "Wancheng would not fall to assault. Zhu Jun ringed the city, raised earth-mounds inside the ring to look down into it, beat his drums in the southwest until the rebels all ran to meet them, then went in over the northeast wall with five thousand picked men. Sun Xia broke out and was run down at Jingshan. Tens of thousands are left, kneeling with their hands bound, asking for terms.",
+    descriptionZh: '朱儁攻宛,不能拔。乃圍城,起土山以臨之,鳴鼓攻其西南,賊悉眾赴之 —— 儁自將精卒五千,掩其東北,乘城而入。孫夏走,追至西鄂精山,大破之。餘眾數萬,面縛請降。',
     chooserRulerId: 'zhu-jun',
     choices: [
       {
         id: 'storm',
-        label: { zh: '聲東擊西,乘城而入', en: 'Feint west, go in from the northeast' },
+        label: { zh: '不許 —— 受降則無以懲惡', en: 'Refuse — mercy now teaches rebellion' },
         effects: [
           { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.7 },
           { kind: 'mandate-ruler', rulerOfficerId: 'zhu-jun', delta: 8 },
@@ -3508,7 +3532,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       },
       {
         id: 'accept-surrender',
-        label: { zh: '納降 —— 圍師必闕', en: 'Take the surrender — leave the ring open' },
+        label: { zh: '許之 —— 編其降眾為己用', en: 'Accept — take them into your own ranks' },
         effects: [
           { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhu-jun', multiplier: 1.12 },
           { kind: 'city-loyalty', cityId: 'wancheng', delta: 10 },

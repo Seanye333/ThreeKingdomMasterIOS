@@ -2,6 +2,7 @@ import { lazy, Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import { requestMapFocus } from '../components/mapFocusBus';
 import { playSfx } from '../../game/systems/sound';
 import { careerStanding } from '../../game/systems/career';
+import { ErrandsModal } from '../components/ErrandsModal';
 import { canCommand } from '../../game/systems/careerAuthority';
 import { useGameStore } from '../../game/state/store';
 import { DEED_TITLES_BY_ID } from '../../game/systems/deedTitles';
@@ -191,6 +192,7 @@ export function MapScreen() {
   const [showEncyclopedia, setShowEncyclopedia] = useState(false);
   const [showDipGraph, setShowDipGraph] = useState(false);
   const [showCareer, setShowCareer] = useState(false);
+  const [showErrands, setShowErrands] = useState(false);
   const [showBonds, setShowBonds] = useState(false);
   const [showPrivateForces, setShowPrivateForces] = useState(false);
   const [showPrestige, setShowPrestige] = useState(false);
@@ -720,6 +722,7 @@ export function MapScreen() {
       { id: 'settings', zh: '設定', en: 'Settings', hint: g.sys, run: () => setShowSettings(true) },
     ];
     if (careerMode) c.push({ id: 'career', zh: '一代記', en: 'Career chronicle', hint: g.people, run: () => setShowCareer(true) });
+    if (careerMode) c.push({ id: 'errands', zh: '差事 — 受雇辦事', en: 'Errands', hint: g.people, run: () => setShowErrands(true) });
     // 一代記:一道命令要多大的官才發得出,就要多大的官才看得見。
     // 擋在這裡而不是散在 store 的三百個 action 裡 —— 命令面與頂欄選單
     // 都是同一份宣告渲染的,擋一次就夠。
@@ -1246,6 +1249,7 @@ export function MapScreen() {
       {showCourt && <CourtModal onClose={() => setShowCourt(false)} />}
       {showWishes && <WishesModal onClose={() => setShowWishes(false)} />}
       {showCareer && <CareerModal onClose={() => setShowCareer(false)} />}
+      {showErrands && <ErrandsModal onClose={() => setShowErrands(false)} />}
       {showSettings && <SettingsModal onClose={() => {
         setShowSettings(false);
         // Sync any chrome/immersive prefs the Settings modal changed (e.g. the

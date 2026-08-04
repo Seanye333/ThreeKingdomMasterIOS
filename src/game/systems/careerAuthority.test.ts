@@ -57,7 +57,7 @@ describe('私兵上限 — rank is the ceiling, leadership only decides if you r
 
 describe('權限閘門', () => {
   it('personal pursuits are open to a commoner', () => {
-    for (const id of ['training', 'duel-hall', 'wiki', 'advisor', 'career']) {
+    for (const id of ['training', 'duel-hall', 'wiki', 'advisor', 'career', 'errands']) {
       expect(canCommand(id, RANK_COMMONER)).toBe(true);
     }
   });

@@ -380,6 +380,8 @@ import { refreshPrestige, prestigeTitleById, TOP_PRESTIGE_IDS } from '../data/pr
 import { peerageById } from '../data/peerage';
 import { careerStanding, careerGuardCap } from '../systems/career';
 import { rollFollowers } from '../systems/careerFollowers';
+import { errandsAt, resolveErrand, mergeDeeds, favorDelta } from '../systems/careerErrands';
+import { addFavor, rollRecommendation, spendFavor, recommendThreshold } from '../systems/careerPatronage';
 import { subRng } from './campaignRng';
 import { evaluateGoal, findObjectiveFor } from '../systems/objectives';
 import { applySuccession } from '../systems/succession';
@@ -6213,6 +6215,44 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               textZh: `${postOfficers[cid]?.name.zh ?? '主角'}晉升為${newStanding.status.zh}。`,
             });
           }
+          // ── 薦舉 ── 人情夠厚,便有人在上頭替你說話。
+          // 這比自己掙功績快,但不受你控制 —— 獎勵的是「你替誰辦過事」,
+          // 而不是「你刷了多少活」。把全縣得罪光的人,武藝再高也升不上去。
+          const favors = state.careerMode.favors;
+          if (favors && Object.keys(favors).length) {
+            const rec = rollRecommendation({
+              favors,
+              officers: postOfficers,
+              heroDeeds: nextDeeds[cid],
+              roll: followerRng(),
+            });
+            if (rec) {
+              const patron = postOfficers[rec.patronId];
+              nextDeeds[cid] = {
+                ...(nextDeeds[cid] ?? {}),
+                civicWorks: ((nextDeeds[cid]?.civicWorks) ?? 0) + rec.merit,
+              } as typeof nextDeeds[typeof cid];
+              const need = recommendThreshold(careerStanding(state.deeds[cid]).rank);
+              careerModeAfterSeason = {
+                ...(careerModeAfterSeason ?? state.careerMode),
+                favors: spendFavor(favors, rec.patronId, need),
+              };
+              ms.push({
+                title: {
+                  zh: `薦舉 — ${patron?.name.zh ?? '某公'}`,
+                  en: `Recommended by ${patron?.name.en ?? 'a patron'}`,
+                },
+                year: result.date.year, season: result.date.season,
+              });
+              result.report.entries.push({
+                cityId: postOfficers[cid]?.locationCityId ?? null,
+                kind: 'note',
+                text: `${patron?.name.en ?? 'A patron'} speaks for you above.`,
+                textZh: `${patron?.name.zh ?? '某公'}於上薦舉你。`,
+              });
+            }
+          }
+
           // ── 投效 ── 主角自己的作為招來的人。
           // 亂數走 subRng 而不是裸 Math.random —— 否則同一顆種子重跑會分岔,
           // 平衡鎖與存檔重現都會失效(endTurn 那邊踩過這個坑)。
@@ -14505,6 +14545,88 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       }),
 
       dismissCareerEpilogue: () => set({ careerEpilogue: null }),
+
+      currentErrands: () => {
+        const state = get();
+        if (!state.careerMode) return [];
+        const hero = state.officers[state.careerMode.officerId];
+        const city = hero?.locationCityId ? state.cities[hero.locationCityId] : null;
+        if (!hero || !city || hero.status === 'dead') return [];
+        const rank = careerStanding(state.deeds[hero.id]).rank;
+        return errandsAt({
+          city, year: state.date.year, season: state.date.season, rank,
+          roll: subRng(state, `errands-${city.id}-${state.date.year}-${state.date.season}`),
+          officers: state.officers, heroId: hero.id,
+        });
+      },
+
+      takeErrand: (errandId) => {
+        const state = get();
+        if (!state.careerMode) return { ok: false, message: '非一代記模式。' };
+        const heroId = state.careerMode.officerId;
+        const hero = state.officers[heroId];
+        if (!hero || hero.status === 'dead') return { ok: false, message: '主角不在。' };
+        if (hero.status === 'wounded') return { ok: false, message: '傷未癒,辦不了差。' };
+        const cityId = hero.locationCityId;
+        const city = cityId ? state.cities[cityId] : null;
+        if (!city) return { ok: false, message: '不在城中。' };
+
+        const standing = careerStanding(state.deeds[heroId]);
+        // 差事清單同城同季恆定 — 用同一顆種子重算,玩家刷不出更好的活
+        const listRng = subRng(state, `errands-${cityId}-${state.date.year}-${state.date.season}`);
+        const errand = errandsAt({
+          city, year: state.date.year, season: state.date.season,
+          rank: standing.rank, roll: listRng,
+          officers: state.officers, heroId,
+        }).find((e) => e.id === errandId);
+        if (!errand) return { ok: false, message: '沒有這件差事。' };
+
+        const outRng = subRng(state, `errand-do-${errandId}-${state.date.year}-${state.date.season}`);
+        const out = resolveErrand({ errand, hero, deeds: state.deeds[heroId], roll: outRng });
+
+        const troops = hero.privateTroops ?? 0;
+        const nextHero: typeof hero = {
+          ...hero,
+          privateTroops: Math.max(0, troops - out.losses),
+          renown: Math.max(0, (hero.renown ?? 0) + out.renown),
+        };
+        if (out.wounded > 0) {
+          nextHero.status = 'wounded';
+          nextHero.woundedSeasons = out.wounded;
+          nextHero.woundSeverity = out.wounded >= 3 ? 'serious' : 'minor';
+        }
+
+        const nextCities = out.gold > 0
+          ? { ...state.cities, [city.id]: { ...city, gold: city.gold + out.gold } }
+          : state.cities;
+
+        // 人情 — 替誰辦的,誰記著。這是薦舉那條線的起點。
+        const nextCareer = errand.patronId
+          ? {
+            ...state.careerMode,
+            favors: addFavor(state.careerMode.favors, errand.patronId,
+                             favorDelta(out.grade, errand.tier)),
+          }
+          : state.careerMode;
+
+        set({
+          officers: { ...state.officers, [heroId]: nextHero },
+          cities: nextCities,
+          deeds: { ...state.deeds, [heroId]: mergeDeeds(state.deeds[heroId], out.deeds) },
+          careerMode: nextCareer,
+        });
+
+        const bits = [out.textZh];
+        if (errand.patronId) {
+          const pn = state.officers[errand.patronId]?.name.zh;
+          const d = favorDelta(out.grade, errand.tier);
+          if (pn) bits.push(d >= 0 ? `${pn}記你一份人情` : `${pn}記恨於你`);
+        }
+        if (out.gold > 0) bits.push(`得金 ${out.gold}`);
+        if (out.losses > 0) bits.push(`折兵 ${out.losses}`);
+        if (out.wounded > 0) bits.push(`身負傷 ${out.wounded} 季`);
+        return { ok: out.grade >= 2, message: bits.join(' · ') };
+      },
 
       // 行賞 (§4.10) — 賞不逾時. Pays out of the capital's treasury; an unpaid
       // ledger is what erodes a great officer's loyalty every season.
