@@ -4,7 +4,7 @@ import { Html, Line, OrbitControls } from '@react-three/drei';
 import { ScenePostFx } from './ScenePostFx';
 import { seasonGrade, seasonTone } from '../sceneGrade';
 import { SkyEnvironment } from './SkyEnvironment';
-import {RENDER_HI, GFX } from '../renderQuality';
+import { getGfxPrefs, RENDER_HI, GFX } from '../renderQuality';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
 import { hasEscapeLayers } from '../hooks/useEscapeKey';
 import { WORLD_SCALE, hexAt as geoHexAt, hexCenter as geoHexCenter } from '../../game/data/geography';
@@ -1815,7 +1815,27 @@ export function StrategicMap3D() {
               the whole frame with the year. Dropped whole the moment
               FrameRateWatch degrades — a full-screen post pass costs more than
               everything it lights up. */}
-          {!gfxDegraded && (
+          {/*
+            * ⚠ 大地圖的後處理**預設關閉** —— 開著會在平移後把地圖畫壞
+            *   (2026-08-03,使用者回報「拉拽地圖變成一層層疊上去」)。
+            *
+            * 重現與量測見 `e2e/mapDragSmear.spec.ts`:往北拖兩次,地圖區的
+            * 逐列差異從 13 升到 58(乾淨 ≈ 13),放大看是地形被壓成一列列的
+            * 碎塊,原圖認不出來。基準六跑五壞。
+            *
+            * 已排除的(每項都以六樣本、每次重建 dist 量過):陰影、N8AO、
+            * Bloom、鏡頭光暈、四時之色分級、AgX 色調映射、SMAA、多重取樣
+            * (0→4)、相機近平面(0.5→3)、海面高度、離屏目標格式
+            * (HalfFloat→UnsignedByte)。**連完全清空 effects 的 composer 都照壞**,
+            * 而相機三階段的俯角與距離全程恆定(52.1°、130),開關後處理的
+            * 終點座標一模一樣 —— 所以不是相機、不是任何單一效果,是走離屏
+            * 目標這條路徑本身。根因尚未找到。
+            *
+            * 取捨與「水面鏡面」那條同型(見 renderQuality.ts):整幀壞掉比
+            * 少一層色調重要得多。想要的人可到 設定 → 畫面 → 後處理 明確打開。
+            * 城內與戰場不受影響 —— 它們沒有這個症狀。
+            */}
+          {!gfxDegraded && getGfxPrefs().postfx === 'on' && (
             <ScenePostFx
               mobile={IS_MOBILE}
               ao={{ radius: 2.6, intensity: 1.6 }}
