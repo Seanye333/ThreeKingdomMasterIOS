@@ -5854,6 +5854,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             cities: postCities,
             officers: postOfficers,
             year: result.date.year,
+            mandateByForce: state.mandate.byForce,
             forces: postForces,
             ports: nextPorts,
             aggression: nextAggression,
@@ -16491,6 +16492,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
               rulerCharisma: ruler?.stats.charisma ?? 50,
               hermitIntelligence: hermit.stats.intelligence,
               visit,
+              mandate: state.mandate.byForce[state.playerForceId],
               rng: Math.random,
             });
             if (recruited) {

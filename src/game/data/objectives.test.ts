@@ -162,4 +162,25 @@ describe('目標的期限', () => {
     const noDeadline: ObjectiveGoal = { kind: 'hold-cities', cityIds: ['luoyang'] };
     expect(evaluateGoal(noDeadline, ctxAt(9999, { luoyang: 'foe' })).status).toBe('pending');
   });
+
+  /*
+   * 擊破 —— 「亂平了沒」與「他死了沒」是兩個問題。184 年的朝廷問的是前者:
+   * 餘部入太行號黑山,活過了這個王朝,而八州之亂確實在當年冬天就破了。
+   * 這條也順帶不在乎是誰打的 —— 皇甫嵩軍打下的城不記在漢室名下。
+   */
+  const breakFoe: ObjectiveGoal = { kind: 'break-force', forceId: 'foe', maxCities: 2, byYear: 186 };
+  it('擊破:壓到門檻以內即算數,不必殲滅', async () => {
+    const { evaluateGoal } = await import('../systems/objectives');
+    expect(evaluateGoal(breakFoe, ctxAt(185, { a: 'foe', b: 'foe', c: 'foe' })).status).toBe('pending');
+    expect(evaluateGoal(breakFoe, ctxAt(185, { a: 'foe', b: 'foe', c: 'me' })).status).toBe('success');
+    // 城歸誰無關緊要 —— 盟軍打下的也算
+    expect(evaluateGoal(breakFoe, ctxAt(185, { a: 'foe', b: 'ally', c: 'ally' })).status).toBe('success');
+  });
+
+  it('擊破:期限一過仍未壓下去就是失敗', async () => {
+    const { evaluateGoal } = await import('../systems/objectives');
+    const still = { a: 'foe', b: 'foe', c: 'foe' };
+    expect(evaluateGoal(breakFoe, ctxAt(186, still)).status).toBe('pending');
+    expect(evaluateGoal(breakFoe, ctxAt(187, still)).status).toBe('failure');
+  });
 });

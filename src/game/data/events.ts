@@ -3459,6 +3459,63 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     effects: [],
   },
   {
+    /*
+     * 鏈子上少的那一節 —— 董卓在廣宗打輸了,而北道之任因此落到皇甫嵩手上。
+     *
+     * 原本這條鏈是「盧植下獄(廣宗易帥)→ 張角病死 → 黑山之聚」,中間那個
+     * 代盧植去打、打不下來、被免官的人整個不見。可是他就在盤上,而且他自己的
+     * 目標註解裡寫著「史實上他這一仗打輸了」—— 事件表卻從沒演過這一仗。
+     *
+     * 補上之後兩件事同時說得通:①董卓的「擁兵自重」有了來由 —— 他這一趟是
+     * 賠本的,回涼州保本才成為選擇;②皇甫嵩的主目標(於187年前取鄴與信都)
+     * 有了本錢。體檢五輪,他從沒拿下過那兩座城 —— 五城四萬兵去打黃巾最硬的
+     * 兩座老巢,本來就不夠。史實上他是**接了董卓的兵**才北上的:十月代卓擊
+     * 廣宗斬張梁,十一月下曲陽斬張寶。兵是朝廷的,不是他自己帶去的。
+     */
+    id: 'evt-yt-dongzhuo-fails',
+    name: { en: 'Dong Zhuo Achieves Nothing at Guangzong', zh: '卓無功,嵩代之' },
+    yearMin: 184,
+    yearMax: 185,
+    season: 'winter',   // 十月,以皇甫嵩代董卓
+    requires: [
+      { kind: 'flag-set', key: 'yt-guangzong' },
+      { kind: 'officer-active', officerId: 'dong-zhuo' },
+      { kind: 'officer-active', officerId: 'huangfu-song' },
+      { kind: 'flag-unset', key: 'yt-dongzhuo-failed' },
+    ],
+    description:
+      "Dong Zhuo took Lu Zhi's command at Guangzong with a staff of authority and a free hand. The walls did not fall. He sat before them into the tenth month and was recalled — tried, and let off one degree short of death. The court sent Huangfu Song north in his place, with the army Dong Zhuo had been given. Song stormed Guangzong, killed Zhang Liang, and took thirty thousand heads; fifty thousand more went into the river.",
+    descriptionZh: '卓拜東中郎將,持節,代盧植擊角於廣宗 —— 而壘不能拔。相持至十月,徵還,坐減死罪一等。朝廷乃以皇甫嵩代之,兵如故。嵩夜勒兵,雞鳴陳,大戰至晡,斬張梁,獲首三萬,赴河死者五萬許。十一月,又與鉅鹿太守郭典攻張寶於下曲陽,斬之。',
+    chooserRulerId: 'dong-zhuo',
+    choices: [
+      {
+        id: 'hold',
+        label: { zh: '持重不進 —— 兵者國之大事,不可以求功輕擲', en: 'Hold. An army is not spent chasing merit.' },
+        effects: [
+          // 兵留住了,名聲賠光 —— 這正是他日後「擁兵自重」的本錢與理由。
+          { kind: 'mandate-ruler', rulerOfficerId: 'dong-zhuo', delta: -12 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'huangfu-song', multiplier: 1.28 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'huangfu-song', delta: 6 },
+          { kind: 'flag', key: 'yt-dongzhuo-failed' },
+        ],
+      },
+      {
+        id: 'storm',
+        label: { zh: '強攻廣宗 —— 縱不拔,亦要朝廷看見我攻過', en: 'Storm it — let the court see the attempt, whatever it costs' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'dong-zhuo', multiplier: 0.84 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhang-jiao', multiplier: 0.93 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'dong-zhuo', delta: -5 },
+          // 接手的軍隊已被他打薄了一層。
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'huangfu-song', multiplier: 1.14 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'huangfu-song', delta: 4 },
+          { kind: 'flag', key: 'yt-dongzhuo-failed' },
+        ],
+      },
+    ],
+    effects: [],
+  },
+  {
     /* 這條沒有選項 —— 病死不是誰的決定。它也是這張盤的平衡樞紐:
        黃巾的兵力在此腰斬,滾雪球到此為止。 */
     id: 'evt-yt-zhangjue-dies',

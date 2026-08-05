@@ -157,6 +157,20 @@ export function rollHermitRecruit(args: {
   hermitIntelligence: number;
   /** 三顧 — how many times you've now called (1-based); sincerity tells. */
   visit?: number;
+  /**
+   * 名分 —— 招賢之主的天命(0–100)。不給則不計此項。
+   *
+   * 加這一項之前,自走體檢裡「黃巾於水鏡莊延攬司馬徽入幕」「黃巾於高密鄭玄
+   * 延攬鄭玄入幕」四輪出現三次 —— 漢末經學宗師與清流名士,投了太平道。
+   * 追下去發現這條路只看魅力,而張角魅力 95 是全盤最高:純魅力模型裡,
+   * 他請隱士比任何人都容易。
+   *
+   * 缺的那一項是名分。史書恰恰記了反面:「黃巾過高密,相約不敢入玄鄉」——
+   * 賊眾敬鄭玄敬到繞道,而不是請他入幕。天命 60 為平(皇甫嵩/朱儁 61),
+   * 低於此逐步難請(黃巾 42、董卓 47);高於此不另加成 —— 加成是三顧之誠
+   * 的事,名分只決定人家肯不肯開門。
+   */
+  mandate?: number;
   rng: () => number;
 }): boolean {
   const { envoyCharisma, rulerCharisma, hermitIntelligence, rng } = args;
@@ -168,7 +182,13 @@ export function rollHermitRecruit(args: {
   // nearly always draws him out (三顧茅廬).
   const visit = Math.max(1, args.visit ?? 1);
   const visitBonus = visit >= 3 ? 0.45 : visit === 2 ? 0.12 : -0.15;
+  const namePenalty = args.mandate === undefined
+    ? 0
+    : Math.max(-0.30, Math.min(0, (args.mandate - 60) / 70));
   const cap = visit >= 3 ? 0.97 : 0.9;
-  const chance = Math.max(0.05, Math.min(cap, (persuasion - hermitIntelligence * 0.5) / 70 + 0.35 + visitBonus));
+  const chance = Math.max(
+    0.05,
+    Math.min(cap, (persuasion - hermitIntelligence * 0.5) / 70 + 0.35 + visitBonus + namePenalty),
+  );
   return rng() < chance;
 }

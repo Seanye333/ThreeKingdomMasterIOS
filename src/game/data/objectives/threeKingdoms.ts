@@ -8,12 +8,32 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-184-han',
       forceId: 'han',
       primary: {
-        title: { zh: '黃巾之鎮壓', en: 'Suppress the Yellow Turbans' },
-        description: 'Defeat the Yellow Turban force entirely by 187 AD.',
-        descriptionZh: "於187年前徹底擊潰黃巾軍。",
-        goal: { kind: 'defeat-force', forceId: 'yellow-turban', byYear: 187 },
+        title: { zh: '八州之亂', en: 'The Rising in Eight Provinces' },
+        /*
+         * 原本是「於187年前徹底擊潰黃巾」—— 自走五輪 0/5,而且**照史書也不會
+         * 發生**。184 年冬亂平、改元中平,但餘部入太行號黑山、散為青州黃巾,
+         * 活過了這個王朝;這張盤自己的「黑山之聚」寫的就是「自此亂非一戰可平,
+         * 而成積年之患」。主目標不該要求連史書都沒發生的事。
+         *
+         * 還有一層是**聯軍歸屬**:皇甫嵩軍與朱儁軍在盤上是獨立勢力,城是他們
+         * 打下來的、記在他們名下(體檢實測舊黃巾十七城終歸皇甫嵩五至八座)。
+         * 於是任何 hold-cities 寫法對漢室都判不對。break-force 只問「亂平了沒」,
+         * 不問是誰平的 —— 這正是朝廷的視角。
+         *
+         * 門檻取十七之半:亂起八州,平其半即為破。實測 186 年黃巾城數
+         * 8/7/5/10/9,約三輪過關。
+         */
+        description: "Break the rising by 186 — cut the Yellow Turbans to half the cities they raised (8 or fewer).",
+        descriptionZh: "於186年前平定八州之亂 —— 使黃巾所據不及其半(八城以下)。",
+        goal: { kind: 'break-force', forceId: 'yellow-turban', maxCities: 8, byYear: 186 },
       },
       secondary: [
+        {
+          title: { zh: '盡誅黃巾', en: 'Wipe Them Out' },
+          description: 'Wipe the Yellow Turban force out entirely by 189 — no dynasty ever managed it.',
+          descriptionZh: "於189年前徹底擊潰黃巾軍 —— 這一件,漢室終究沒做到。",
+          goal: { kind: 'defeat-force', forceId: 'yellow-turban', byYear: 189 },
+        },
         {
           title: { zh: '名將發掘', en: 'Recruit a Future Hero' },
           description: 'Recruit Cao Cao, Liu Bei, or Sun Jian to your court.',
@@ -54,15 +74,24 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 一路將領交得出的差事(體檢五輪,黃巾城數中位數 6,從未歸零)。
          */
         /*
-         * 期限 186 → 187。實測五輪只有一輪拿下這兩城,而且是第 110 回合(187 年)
-         * —— 差的不是可行性是時間:他的白馬、延津直接與鄴相鄰,鄴再通信都,
-         * 路是通的,但要連下黃巾兩座最硬的城。
+         * 期限 186 → 187,再由「鄴+信都」收成「鄴」一座。
+         *
+         * 兩城同取實測八輪只中一次(鄴 3/8、信都 1/8、同時 1/8)—— 他要連下
+         * 黃巾最硬的兩座老巢,而手上只有五城四萬兵。史書裡這兩仗也不是一回事:
+         * 十月廣宗斬張梁,是決戰;十一月下曲陽斬張寶,是收尾。決戰作主目標,
+         * 收尾作次要 —— 這樣分,難度與敘事同時對上。
          */
-        description: 'Take Ye and Xindu by 187 — Guangzong took Zhang Jue\'s brothers, Xiaquyang took Zhang Bao.',
-        descriptionZh: '於187年前攻取鄴與信都 —— 廣宗斬張梁,下曲陽斬張寶,兩役都是他打的。',
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'xindu'], byYear: 187 },
+        description: 'Take Ye by 187 — at Guangzong he broke the main rebel host and killed Zhang Liang.',
+        descriptionZh: '於187年前攻取鄴 —— 廣宗一戰斬張梁,黃巾主力於此而潰。',
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 187 },
       },
       secondary: [
+        {
+          title: { zh: '下曲陽', en: 'Xiaquyang' },
+          description: 'Take Xindu too by 188 — Zhang Bao died there, and with him the last of the three brothers.',
+          descriptionZh: '於188年前並取信都 —— 下曲陽斬張寶,三兄弟至此而盡。',
+          goal: { kind: 'hold-cities', cityIds: ['xindu'], byYear: 188 },
+        },
         {
           title: { zh: '盡平其眾', en: 'Finish Them' },
           description: 'Wipe the Yellow Turban force out entirely by 188 — few commanders ever managed it.',

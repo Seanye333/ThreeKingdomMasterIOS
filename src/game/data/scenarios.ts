@@ -54,6 +54,28 @@ const CITY_OWNERSHIP_184: Record<string, string> = {
   xinye:     'zhujun',
   fancheng:  'zhujun',
   xiangyang: 'zhujun',
+  /*
+   * 朱儁的南線到江陵為止 —— 三峽口那一段還給荊州刺史部。
+   *
+   * 只寫了新野、樊城、襄陽三座,鄰近填充卻順手把整個南郡西部拉了進來:
+   * 夷陵、西陵、猇亭、麥城、長坂、新城,十座城七萬兵。而他 184 年是右中郎將,
+   * 先與皇甫嵩同討潁川,再南下攻宛 —— 一支圍城的野戰軍,不是荊州的方面之主。
+   * 那六座城裡還有四座是**後來的戰場地名**:長坂(208)、麥城(219)、
+   * 猇亭(222),新城郡更是 220 年曹丕才置。184 年的荊州刺史是徐璆,南郡是
+   * 朝廷實土。
+   *
+   * 留下江陵:那是南郡治所,也是他圍宛時的糧道所出(次要目標「荊南之定」
+   * 講的正是「你圍城時背後的江漢之地」)。四城三萬九千兵,與皇甫嵩的五城
+   * 四萬相稱 —— 兩支中郎將部隊,一南一北,體量該是一樣的。
+   */
+  jiangling: 'zhujun',
+  yiling:    'han',
+  gongan:    'han',   // 209 年劉備才名之曰公安,此時是油江口
+  xiling:    'han',
+  xiaoting:  'han',
+  maicheng:  'han',
+  changban:  'han',
+  xincheng:  'han',
   // Dong Zhuo in the west.
   changan:   'dong-184',
   wuwei:     'dong-184',
@@ -133,6 +155,15 @@ const OFFICER_ASSIGNMENTS_184: Record<string, OfficerAssignment> = {
   'jian-shuo':    { forceId: 'han',          cityId: 'luoyang', loyalty: 40 },   // 五年後就要謀殺何進
   // 鄒靖 —— 幽州校尉,劉備最初就是率義兵從他。
   'zou-jing':     { forceId: 'han',          cityId: 'beiping' },
+  /* 禁中 —— 天子與兩宮。
+     這三個人本來也躺在 unsearched 池裡,而池裡沒有本貫的人是「四海皆可遇」的
+     後備池:自走體檢於是跑出「渡頭逢人 — 黎陽渡口之畔,偶遇漢靈帝」,接著
+     「月旦評 — 王允品漢靈帝為可觀之才」,最後漢靈帝入了黃巾的幕府。
+     在位的天子不是在野之士。184 年靈帝在洛陽,何皇后與董太后同在禁中。
+     忠誠給高:這三位不會被誰策反 —— 他們就是朝廷本身。 */
+  'liu-hong-em':  { forceId: 'han',          cityId: 'luoyang', loyalty: 100 },
+  'he-hou':       { forceId: 'han',          cityId: 'luoyang', loyalty: 90 },
+  'dong-taihou':  { forceId: 'han',          cityId: 'luoyang', loyalty: 90 },
 };
 
 const DEAD_BY_184: string[] = [];

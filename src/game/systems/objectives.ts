@@ -95,6 +95,16 @@ export function evaluateGoal(
       if (expired) return { status: 'failure' };
       return { status: 'pending' };
     }
+    case 'break-force': {
+      // 亂平與否,不在乎是誰打的 —— 只看那一家還據著幾座城。
+      const held = Object.values(ctx.cities).filter(
+        (c) => c.ownerForceId === goal.forceId,
+      ).length;
+      const progress = `${held}→≤${goal.maxCities}`;
+      if (held <= goal.maxCities) return { status: 'success', progress };
+      const expired = goal.byYear !== undefined && ctx.year > goal.byYear;
+      return { status: expired ? 'failure' : 'pending', progress };
+    }
     case 'recruit-officer': {
       const o = ctx.officers[goal.officerId];
       const recruited = !!o && o.forceId === ctx.playerForceId;

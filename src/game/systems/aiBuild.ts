@@ -480,6 +480,8 @@ export function planAIFrontierExploits(ctx: {
   officers: Record<EntityId, Officer>;
   /** 當前年份 —— 訪賢與招降都要看年紀,不給則不設門檻(comingOfAge.ts)。 */
   year?: number;
+  /** 各家天命 —— 名所隱士看名分,不給則不計(見 rollHermitRecruit)。 */
+  mandateByForce?: Record<string, number>;
   forces: Record<EntityId, Force>;
   ports: Record<EntityId, Port>;
   aggression: Record<string, number>;
@@ -546,6 +548,7 @@ export function planAIFrontierExploits(ctx: {
           envoyCharisma: envoy.stats.charisma,
           rulerCharisma: ruler?.stats.charisma ?? 50,
           hermitIntelligence: hermit.stats.intelligence,
+          mandate: ctx.mandateByForce?.[force.id],
           rng: ctx.rng,
         });
         if (won) {
