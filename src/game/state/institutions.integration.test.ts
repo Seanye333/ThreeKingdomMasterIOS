@@ -56,7 +56,13 @@ describe('制度批整合 — the meters actually move', () => {
     // 無甲 penalty. Local smiths must carry it.
     const before = own().map((c) => c.armaments ?? 0);
     expect(Math.max(...before)).toBe(0);
-    seasons(6);
+    /*
+     * 2 季就夠,不必 6 季 —— 這一條斷言的是「離得開 0」,不是爬到多高。
+     * 實測逐季 0.7 / 1.9 / 3.2 / 4.5 / 5.8 / 7.2,單調遞增,兩季已離 0 甚遠。
+     * 六季是 54 次真的季結算,在忙碌的機器上量到 25 秒;砍成 18 次,測的東西
+     * 一模一樣(見本檔頂的逾時說明)。
+     */
+    seasons(2);
     const after = own().map((c) => c.armaments ?? 0);
     expect(Math.max(...after)).toBeGreaterThan(0);
     // …and it stays inside its band.
@@ -128,19 +134,25 @@ describe('制度批整合 — the meters actually move', () => {
   });
 
   it('大錢 really does raise inflation over a few seasons', () => {
+    /*
+     * 兩趟 2 季,不是兩趟 8 季 —— 這一條斷言的是**方向**,不是量值。
+     *
+     * 原本兩趟各 8 季 = 144 次真的季結算,是全套裡最重的一條;機器一忙就從
+     * 5 秒漲到 20 秒以上,連改兩次逾時都追不上(量到同一支腳本在閒與忙的機器
+     * 上差五倍:1663ms vs 8691ms)。追逾時是追不完的,**把工作量砍掉才是解**。
+     * 實測 2/3/4 季三檔:大錢 4.60/6.90/9.20,糧帛恆為 0 —— 兩季就分得開,
+     * 而且差距隨季數線性拉大,沒有「季數不夠所以偶爾翻盤」的風險。
+     */
     const fid = st.getState().playerForceId!;
     st.getState().setCoinStandard('daqian');
-    seasons(8);
+    seasons(2);
     const debased = st.getState().inflationByForce[fid] ?? 0;
     st.getState().loadScenario(SCENARIOS[0], SCENARIOS[0].forces[0].id, 'normal');
     st.getState().setCoinStandard('grainCloth');
-    seasons(8);
+    seasons(2);
     const sound = st.getState().inflationByForce[fid] ?? 0;
     expect(debased).toBeGreaterThan(sound);
-    // Two full 8-season runs plus a scenario reload — measured at ~5.1s on a
-    // loaded machine, i.e. right on vitest's 5s default. Give it real headroom
-    // so a busy CI box doesn't fail this for timing rather than for behaviour.
-  }, 20000);
+  });
 
   it('軍功簿 is derived from deeds, so an unrewarded officer owes from turn one', async () => {
     const { outstandingMerit } = await import('../systems/militaryLaw');

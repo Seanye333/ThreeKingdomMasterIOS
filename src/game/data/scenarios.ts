@@ -281,7 +281,7 @@ const FORCES_190: Force[] = [
   { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍'   }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
   { id: 'yuan-shao', name: { en: 'Yuan Shao',   zh: '袁紹軍'   }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', isPlayer: false },
   { id: 'yuan-shu',  name: { en: 'Yuan Shu',    zh: '袁術軍'   }, rulerOfficerId: 'yuan-shu',    capitalCityId: 'shouchun', color: '#c03a6a', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Jian',    zh: '孫堅軍'   }, rulerOfficerId: 'sun-jian',    capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Jian',    zh: '孫堅軍'   }, rulerOfficerId: 'sun-jian',    capitalCityId: 'changsha',   color: '#2f8e6f', isPlayer: false },
   { id: 'dong',      name: { en: 'Dong Zhuo',   zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'luoyang',  color: '#6a3d8a', isPlayer: false },
   { id: 'liu-biao',  name: { en: 'Liu Biao',    zh: '劉表軍'   }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
   { id: 'liu-yan',   name: { en: 'Liu Yan',     zh: '劉焉軍'   }, rulerOfficerId: 'liu-yan',     capitalCityId: 'chengdu',  color: '#c8692a', isPlayer: false },
@@ -291,7 +291,7 @@ const FORCES_190: Force[] = [
   { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍'   }, rulerOfficerId: 'ma-teng',     capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
 ];
 
-const CITY_OWNERSHIP_190: Record<string, string> = {
+const CITY_OWNERSHIP_190: Record<string, string | null> = {
   // Cao Cao
   xuchang:   'cao',
   // Yuan Shao
@@ -302,18 +302,62 @@ const CITY_OWNERSHIP_190: Record<string, string> = {
   wancheng:  'yuan-shu',
   runan:     'yuan-shu',
   hefei:     'yuan-shu',
-  // Sun Jian
-  jianye:    'sun',
+  /*
+   * 孫堅 —— 190 年他是**長沙太守**,不是江東之主。
+   *
+   * 原本給他建業、豫章、無錫、柴桑、巴丘、鄱陽、廣陵、廬陵、丹陽 —— 那是
+   * 孫策 195 年以後打下來的江東,而孫策此時十六歲,還在他父親軍中。建業之名
+   * 更要等到 229 年孫權遷都才有(此時是秣陵)。
+   *
+   * 他真正的地盤是長沙,以及他以長沙太守身分越境討過的零陵、桂陽(區星之亂,
+   * 周朝、郭石)。三郡二萬八千兵,與陶謙(四城)、孔融(二城)同一個量級。
+   * 而他 190 年人在魯陽,隨袁術北上討董 —— 盤上以「隸於袁術」的同盟關係表達。
+   */
   changsha:  'sun',
-  yuzhang:   'sun',
+  lingling:  'sun',
+  guiyang:   'sun',
+  // 江東諸城 190 年各有太守自守,不屬任何一家 —— 那是孫策五年後的事
+  jianye:    null,
+  yuzhang:   null,
+  wuxi:      null,
+  chaisang:  null,
+  baqiu:     null,
+  poyang:    null,
+  guangling: null,
+  luling:    null,
+  danyang:   null,
   // Dong Zhuo
   luoyang:   'dong',
   changan:   'dong',
-  // Liu Biao
+  /*
+   * 劉表 —— 190 年他**單馬入宜城**,靠蒯良蒯越誘殺宗賊帥五十五人才領得荊州。
+   *
+   * 原本盤上給他十八座城、十四萬八千兵,是全盤最大的一家 —— 而他史實上連討董
+   * 都沒去。那十八座裡還有六座是**後世的戰場地名**:長阪坡(208)、赤壁(208)、
+   * 公安(209 劉備所名)、麥城(219)、猇亭(222)、武昌(221 孫權改鄂縣),
+   * 新城郡更是 220 年才置;桂林根本在交州。
+   *
+   * 收成荊州刺史部的實土:襄陽(治所)、江陵(南郡)、江夏(黃祖)、樊城、
+   * 夷陵。江南三郡此時是孫堅的長沙一線,南陽在袁術手裡 —— 新野歸袁術,
+   * 這樣 191 年袁術遣孫堅攻劉表的那條戰線,開局就擺在盤面上了。
+   */
   xiangyang: 'liu-biao',
   jiangxia:  'liu-biao',
-  lingling:  'liu-biao',
-  xinye:     'liu-biao',
+  jiangling: 'liu-biao',
+  fancheng:  'liu-biao',
+  yiling:    'liu-biao',
+  xinye:     'yuan-shu',   // 南陽郡,袁術屯魯陽
+  // 後世戰場地名與交州之地,190 年不該屬荊州任何一家
+  maicheng:  null,
+  xiaoting:  null,
+  changban:  null,
+  xincheng:  null,
+  gongan:    null,
+  chibi:     null,
+  wuchang:   null,
+  xiling:    null,
+  guilin:    null,
+  wuling:    null,   // 190 年武陵太守曹寅自守
   // Liu Yan
   chengdu:   'liu-yan',
   yongan:    'liu-yan',
@@ -331,8 +375,6 @@ const CITY_OWNERSHIP_190: Record<string, string> = {
   chenliu:   'cao',
   // Gongsun Zan / Liu Bei historical seat
   pingyuan:  'gongsun',
-  // Liu Biao southern Jing
-  wuling:    'liu-biao',
   // Liu Yan's east Sichuan
   jiangzhou: 'liu-yan',
   // Neutral: taiyuan, yanmen, jincheng, hanzhong, wu, jiaozhi,
@@ -365,15 +407,36 @@ const OFFICER_ASSIGNMENTS_190: Record<string, OfficerAssignment> = {
   'yuan-shu':    { forceId: 'yuan-shu',  cityId: 'shouchun' },
   'ji-ling':     { forceId: 'yuan-shu',  cityId: 'wancheng' },
   // Sun
-  'sun-jian':    { forceId: 'sun',       cityId: 'jianye' },
-  'cheng-pu':    { forceId: 'sun',       cityId: 'jianye' },
+  'sun-jian':    { forceId: 'sun',       cityId: 'changsha' },
+  'cheng-pu':    { forceId: 'sun',       cityId: 'changsha' },
   'huang-gai':   { forceId: 'sun',       cityId: 'changsha' },
-  'zhou-tai':    { forceId: 'sun',       cityId: 'jianye' },
-  'han-dang':    { forceId: 'sun',       cityId: 'yuzhang' },
-  // Dong
+  'zhou-tai':    { forceId: 'sun',       cityId: 'guiyang' },
+  'han-dang':    { forceId: 'sun',       cityId: 'lingling' },
+  /* 董卓 —— 這張盤的頭號人物,原本帳下只有三個人(卓、布、儒),而曹操有九個。
+     涼州兵團與朝堂那一整套都躺在 unsearched 池裡:於是「溫酒斬華雄」斬的是
+     盤上不存在的人,「王允連環計」的司徒在太原當在野之士,而討董聯軍要打的
+     那道關口沒有守將。忠誠依史實給:西涼舊部死忠,被脅迫入朝的那幾位不是。 */
   'dong-zhuo':   { forceId: 'dong',      cityId: 'luoyang' },
-  'lu-bu':       { forceId: 'dong',      cityId: 'luoyang' },
-  'li-ru':       { forceId: 'dong',      cityId: 'changan' },
+  'lu-bu':       { forceId: 'dong',      cityId: 'luoyang', loyalty: 55 },  // 認賊作父,而父可再認
+  'li-ru':       { forceId: 'dong',      cityId: 'luoyang' },               // 郎中令,鴆弘農王於洛陽
+  // 西涼舊部 —— 卓死之後正是這幾個人反攻長安
+  'li-jue':      { forceId: 'dong',      cityId: 'luoyang' },
+  'guo-si':      { forceId: 'dong',      cityId: 'luoyang' },
+  'zhang-ji':    { forceId: 'dong',      cityId: 'changan' },
+  'fan-chou':    { forceId: 'dong',      cityId: 'changan' },
+  'zhang-xiu':   { forceId: 'dong',      cityId: 'changan' },  // 張濟從子
+  'niu-fu':      { forceId: 'dong',      cityId: 'changan' },  // 卓婿,屯陝
+  'jia-xu':      { forceId: 'dong',      cityId: 'changan', loyalty: 60 },  // 討虜校尉,在牛輔軍中
+  'duan-wei':    { forceId: 'dong',      cityId: 'tongguan' },  // 屯華陰
+  // 關前 —— 聯軍要撞的那道門
+  'hua-xiong':   { forceId: 'dong',      cityId: 'hulao' },   // 都督,汜水關前
+  'xu-rong':     { forceId: 'dong',      cityId: 'hulao' },   // 中郎將,滎陽敗曹操
+  'hu-zhen':     { forceId: 'dong',      cityId: 'hulao' },   // 大督護,陽人之戰
+  'li-su-dz':    { forceId: 'dong',      cityId: 'luoyang', loyalty: 45 },  // 誅卓那日的內應
+  /* 朝堂 —— 名義上是漢臣,實際上在董卓手裡。忠誠給低:這兩個人隨時會反。
+     王允原本掛在太原的在野池裡,而 190 年他是司徒守尚書令,人在朝中。 */
+  'wang-yun':    { forceId: 'dong',      cityId: 'luoyang', loyalty: 20 },
+  'cai-yong':    { forceId: 'dong',      cityId: 'luoyang', loyalty: 35 },  // 三日周歷三台,而心不在此
   // Liu Biao
   'liu-biao':    { forceId: 'liu-biao',  cityId: 'xiangyang' },
   // Liu Yan
@@ -394,6 +457,56 @@ export const SCENARIO_190_ANTI_DONG_ZHUO: Scenario = {
     'A coalition of regional lords assembles to depose him. 30 cities, 11 warlords vie for the empire.',
   descriptionZh: "公元190年春。董卓挾持漢室於洛陽，以暴虐震懾天下。各路州牧諸侯歃血為盟，誓討此賊。三十座城池，十一路群雄，逐鹿中原。",
   startDate: { year: 190, season: 'spring' },
+  /*
+   * 一張叫「反董卓聯軍」的盤,盤上**沒有聯軍** —— 開局十一家兩兩皆中立。
+   *
+   * 補上開局外交之後要先決定一件事:聯軍到底有幾路。演義寫十八路諸侯歃血
+   * 為盟,而《魏書》裡真正起兵的是關東那一串太守刺史;這張盤上的十一家裡,
+   * **只有四家真的在討董的隊伍中** —— 曹操(行奮武將軍)、袁紹(盟主,渤海
+   * 太守)、袁術(後將軍,屯魯陽)、孫堅(長沙太守,隸袁術)。
+   *
+   * 其餘六家史實上都沒來:劉表 190 年才單馬入宜城,忙著收荊州,還替袁術堵
+   * 後路;劉焉在益州斷絕棧道,自為一國;公孫瓚在幽州對付烏桓與劉虞;陶謙
+   * 保徐州;孔融正被青州黃巾圍著;馬騰在涼州。讓他們全體結盟,是把這張盤
+   * 拍平成「十家打一家」。不結盟,盤面才有「你得先說服誰」這件事。
+   *
+   * 幾條負分也是有出處的,而且都在一兩年內就要爆:袁紹與公孫瓚 191 年界橋
+   * 開戰;袁術與劉表 191 年結怨,孫堅正是攻劉表時中流矢而死;袁紹袁術兄弟
+   * 190 年尚未翻臉,但已互相提防(給 45,盟而不篤)。
+   */
+  openingRelations: [
+    // ── 討董的那四路 ──
+    { a: 'cao', b: 'yuan-shao', score: 80, status: 'allied' },        // 少年之交,同舉義兵
+    { a: 'yuan-shu', b: 'sun', score: 85, status: 'allied' },         // 孫堅隸於袁術,表為破虜將軍
+    { a: 'cao', b: 'yuan-shu', score: 50, status: 'allied' },
+    { a: 'cao', b: 'sun', score: 50, status: 'allied' },
+    { a: 'yuan-shao', b: 'sun', score: 45, status: 'allied' },
+    { a: 'yuan-shao', b: 'yuan-shu', score: 45, status: 'allied' },   // 兄弟鬩牆之前
+    // ── 沒來的六家:與聯軍互不侵犯,而非同盟 ──
+    { a: 'cao', b: 'tao', score: 20, status: 'non-aggression' },
+    { a: 'cao', b: 'kong-rong', score: 30, status: 'non-aggression' },
+    { a: 'yuan-shao', b: 'kong-rong', score: 25, status: 'non-aggression' },
+    { a: 'yuan-shao', b: 'liu-biao', score: 35, status: 'non-aggression' },  // 遠交近攻,劉表牽制袁術
+    { a: 'tao', b: 'kong-rong', score: 40, status: 'non-aggression' },
+    { a: 'gongsun', b: 'tao', score: 30, status: 'non-aggression' },
+    { a: 'liu-yan', b: 'liu-biao', score: 25, status: 'non-aggression' },
+    // ── 一兩年內就要打起來的 ──
+    { a: 'yuan-shao', b: 'gongsun', score: -35, status: 'neutral' },  // 191 界橋
+    { a: 'yuan-shu', b: 'liu-biao', score: -45, status: 'neutral' },  // 191 孫堅攻劉表,中流矢死
+    { a: 'yuan-shu', b: 'gongsun', score: 30, status: 'non-aggression' }, // 遠交:共制袁紹
+    { a: 'ma-teng', b: 'dong', score: -20, status: 'neutral' },       // 同出涼州,而非同心
+    // ── 董卓與四路義兵 ──
+    { a: 'dong', b: 'cao', score: -85, status: 'neutral' },
+    { a: 'dong', b: 'yuan-shao', score: -90, status: 'neutral' },
+    { a: 'dong', b: 'yuan-shu', score: -80, status: 'neutral' },
+    { a: 'dong', b: 'sun', score: -85, status: 'neutral' },
+    // 沒起兵的那幾家對董卓也談不上友善 —— 他挾天子,而他們奉的是漢
+    { a: 'dong', b: 'liu-biao', score: -30, status: 'neutral' },
+    { a: 'dong', b: 'liu-yan', score: -30, status: 'neutral' },
+    { a: 'dong', b: 'gongsun', score: -30, status: 'neutral' },
+    { a: 'dong', b: 'tao', score: -25, status: 'neutral' },
+    { a: 'dong', b: 'kong-rong', score: -40, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_190),
   forces: FORCES_190,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_190),
