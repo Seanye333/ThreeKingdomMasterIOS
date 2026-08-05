@@ -58,6 +58,23 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           descriptionZh: '同時據有鄴、北海、平原 —— 起事之初真正控住的三州之地。',
           goal: { kind: 'hold-cities', cityIds: ['ye', 'beihai', 'pingyuan'], byYear: 187 },
         },
+        /*
+         * 五家裡只有黃巾一條次要目標,其餘二到三條 —— 補上他們的南線。
+         *
+         * 春,張曼成殺南陽太守褚貢而據宛;朱儁自五月圍到十一月,張曼成死了換
+         * 趙弘,趙弘死了換韓忠,韓忠降而復叛又換孫夏,三易其帥才拔。守住宛城
+         * 就是守住這場仗的南半邊,而它正對著朱儁的主目標 —— 兩家的主線在同一
+         * 座城上撞頭,這是這張盤上唯一一組正面對衝的目標。
+         *
+         * 開局即據有,期限 186:守成型判法(見 objectives.ts)—— 要撐到那一年
+         * 才算數。體檢實測朱儁十二輪裡九輪拿得下宛城,所以這條約四分之一機會。
+         */
+        {
+          title: { zh: '南陽不下', en: 'Nanyang Holds' },
+          description: 'Still hold Wancheng and Runan in 186 — the southern half of the rising, and the city Zhu Jun is coming for.',
+          descriptionZh: '至186年仍據宛城與汝南 —— 起事的南半邊,而朱儁的大軍正衝著宛城來。',
+          goal: { kind: 'hold-cities', cityIds: ['wancheng', 'runan'], byYear: 186 },
+        },
       ],
     },
     /* 皇甫嵩軍 — 長社已勝,朝廷把北方交給他。他手上最值錢的不是八座城,

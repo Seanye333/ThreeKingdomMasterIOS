@@ -42,18 +42,10 @@ const own = (): City[] => {
 const seasons = (n: number) => { for (let i = 0; i < n * 9; i++) st.getState().endSeason(); };
 
 /*
- * 這一檔要放寬逾時 —— 它跑的是**真的季結算**,不是純函式。
- *
- * 「軍器 climbs from zero」一條要 seasons(6) = 54 次 endSeason,而 endSeason
- * 要解算整盤(SCENARIOS[0] 是隋末群雄逐鹿,城多)。單獨跑量到 1.7–2.1 秒,
- * 離預設的 5 秒還有餘裕;但整套 314 個檔案並行時 CPU 被瓜分,同一條就會踩線
- * —— 同一份程式碼連跑五次,失敗三次、通過兩次。
- *
- * (踩到過的坑:第一次看到它紅,以為是自己那一批改動造成的。實際上這一檔用的
- *  是 SCENARIOS[0],跟被改的 184 盤毫無關係,而且改動前後量到的 54 次結算是
- *  1663ms vs 1789ms —— 在雜訊之內。要歸因,先量。)
+ * 這一檔跑的是**真的季結算**,54 次 endSeason 起跳 —— 逾時由 vitest.config.ts
+ * 全域放寬到 20 秒,原因與踩過的坑寫在那裡。
  */
-describe('制度批整合 — the meters actually move', { timeout: 20_000 }, () => {
+describe('制度批整合 — the meters actually move', () => {
   beforeEach(() => {
     st.getState().loadScenario(SCENARIOS[0], SCENARIOS[0].forces[0].id, 'normal');
   });
