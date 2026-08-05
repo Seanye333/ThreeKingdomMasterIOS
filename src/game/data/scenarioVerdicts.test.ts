@@ -78,7 +78,14 @@ describe('戰役落幕文本(敗亡變體 / 史官論曰)', () => {
     expect(ending?.textZh).not.toContain('劉備');
   });
 
-  /** 沒寫過的盤照舊走通用結局 —— 這是刻意的,別讓它變成空白。 */
+  /*
+   * 沒寫過的盤照舊走通用結局 —— 這是刻意的,別讓它變成空白。
+   *
+   * scenarioId 用一個**不存在的假 id**,不是隨手挑一張真盤:原本這裡寫的是
+   * scn-190-anti-dong-zhuo,而 190 一寫上落幕文本,這條測試就紅了 ——
+   * 它測的是「查不到就退回通用」這條路,不是那張盤。假 id 永遠不會被寫上,
+   * 於是這條測試也永遠不會因為別人做了他該做的事而失敗。
+   */
   it('boards without a verdict fall back to the generic ending', () => {
     const forces: Record<EntityId, Force> = {
       cao: { id: 'cao', name: { en: 'Cao', zh: '曹操軍' }, rulerOfficerId: 'cao-cao', capitalCityId: 'xuchang', color: '#3a7dd9', isPlayer: true } as Force,
@@ -90,7 +97,7 @@ describe('戰役落幕文本(敗亡變體 / 史官論曰)', () => {
       forces,
       playerForceId: 'cao',
       date: { year: 200, month: 1, phase: 0 } as never,
-      scenarioId: 'scn-190-anti-dong-zhuo',
+      scenarioId: 'scn-verdictless-fixture',
     });
     expect(ending?.kind).toBe('defeat');
     expect(ending?.titleZh).toBe('流亡天涯');

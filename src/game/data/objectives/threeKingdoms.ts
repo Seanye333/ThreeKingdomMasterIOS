@@ -214,10 +214,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-190-gongsun',
       forceId: 'gongsun',
       primary: {
-        title: { zh: '略地青徐', en: 'Reach South to Xuzhou' },
-        description: 'Hold Pengcheng + Xiapi by 198 AD.',
-        descriptionZh: "於198年前同時據有彭城與下邳,自幽州南下青徐。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 198 },
+        title: { zh: '南下爭河北', en: 'The Fight for Hebei' },
+        /*
+         * 原本是「於198年前取彭城與下邳」—— 徐州。而公孫瓚一生的戰場在河北:
+         * 190 年他屯磐河,191 年破青州黃巾三十萬於東光,192 年與袁紹戰於界橋,
+         * 白馬義從喪盡於麴義八百先登之下,此後五年皆與袁紹相持,終困死易京。
+         * 他從沒有向徐州用兵,而徐州在盤面另一頭 —— 體檢十二輪 0 中。
+         *
+         * 換成他真正爭的那一塊:鄴。冀州五城,開局他據其三、袁紹據其二 ——
+         * 這條目標與袁紹的「盡取冀州」是同一塊地的兩面,兩家必有一戰。
+         */
+        description: 'Take Ye by 196 — Gongsun Zan spent his life fighting Yuan Shao for Hebei, not for Xu province.',
+        descriptionZh: '於196年前攻取鄴 —— 磐河、東光、界橋,他一生的仗都在河北打,一次也沒去過徐州。',
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 196 },
       },
       secondary: [
         {
@@ -294,25 +303,72 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 197 },
       },
     },
+    /* 孫堅 —— 諸侯之中唯一真的打進洛陽的人。 */
     {
       id: 'obj-190-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '江東統一', en: 'Unify Jiangdong' },
-        description: 'Control the Yang province cities.',
-        descriptionZh: "掌控揚州諸城。",
-        goal: { kind: 'control-province', provinceId: 'yang', byYear: 200 },
+        title: { zh: '掃除宗廟', en: 'Sweep the Ancestral Shrines' },
+        /*
+         * 原本是「掌控揚州諸城」—— 那是孫策 195 年以後的事,而盤上把孫堅的
+         * 地盤從江東十城改回長沙三郡之後(見 scenarios.ts),這條目標連地理
+         * 都對不上了:他人在荊南,而揚州在千里之外。
+         *
+         * 換成他 190 年真正做的那件事:諸侯高會於酸棗,唯堅獨進 —— 破華雄於
+         * 陽人,敗呂布於洛陽城下,入洛之日掃除漢家宗廟、平塞諸陵而後還軍。
+         * 期限 193:過了那一年他已死於峴山。
+         */
+        description: 'Take Luoyang by 193 — of all the lords, only Sun Jian actually got there.',
+        descriptionZh: '於193年前攻取洛陽 —— 諸侯高會,唯堅獨進,入洛之日掃除宗廟、平塞諸陵。',
+        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 193 },
       },
+      secondary: [
+        {
+          title: { zh: '傳國之璽', en: 'The Seal of State' },
+          description: 'Hold Luoyang and Changsha together — the seal came out of a well in the ruins, and he carried it home.',
+          descriptionZh: '同時據有洛陽與長沙 —— 玉璽出於城南甄官井中,而他帶著它回了江南。',
+          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changsha'], byYear: 194 },
+        },
+        {
+          title: { zh: '峴山之讎', en: 'The Debt at Xian Mountain' },
+          description: 'Break Liu Biao — the arrow that killed Sun Jian came from Huang Zu\'s men in the bamboo.',
+          descriptionZh: '擊潰劉表 —— 殺孫堅的那一箭,出自黃祖部曲藏身的竹林。',
+          goal: { kind: 'defeat-force', forceId: 'liu-biao' },
+        },
+      ],
     },
+    /* 董卓 —— 他不是被聯軍打倒的,是被自己人殺的。 */
     {
       id: 'obj-190-dong',
       forceId: 'dong',
       primary: {
-        title: { zh: '長安遷都', en: 'Hold Chang\'an' },
-        description: 'Hold Chang\'an through 195 AD.',
-        descriptionZh: "於195年前持續據有長安。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 195 },
+        title: { zh: '挾天子而令天下', en: 'The Emperor in Your Hands' },
+        /*
+         * 原本只查長安一城,而他開局就據有 —— 守成型判法之下,體檢十二輪
+         * 十一輪達成。一個 92% 的主目標等於沒有目標。
+         *
+         * 加上洛陽:史實上他 190 年焚洛陽、遷都長安,兩京都在他手裡(留董越、
+         * 段煨守之),而關東之兵始終沒能進洛陽 —— 進去的只有孫堅一個人,
+         * 而那時城已成墟。要兩京俱在,才叫「挾天子而令天下」。
+         */
+        description: "Hold both capitals — Luoyang and Chang'an — through 195.",
+        descriptionZh: '至195年仍兩京俱在手 —— 焚洛陽、遷長安,而洛陽不可棄:棄之則關東長驅。',
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 195 },
       },
+      secondary: [
+        {
+          title: { zh: '郿塢之積', en: 'The Stores at Mei' },
+          description: 'Still hold Mei in 195 — seventy feet of wall and thirty years of grain, and he never got to use them.',
+          descriptionZh: '至195年仍據有郿 —— 塢高七丈,積穀三十年,而他一日也沒用上。',
+          goal: { kind: 'hold-cities', cityIds: ['mei'], byYear: 195 },
+        },
+        {
+          title: { zh: '關東之兵', en: 'The Armies of the East' },
+          description: 'Break Yuan Shao — the coalition had a chief, and cutting off its head ends it.',
+          descriptionZh: '擊潰袁紹 —— 聯軍有盟主,盟主既去,盟自解矣。',
+          goal: { kind: 'defeat-force', forceId: 'yuan-shao' },
+        },
+      ],
     },
     /* 孔融 — 兩座城、四個人,而且他不是武人。所以主要目標是活著:史實上
        他撐到 196 年被袁譚攻破北海,妻子被擄,他自己隻身逃奔許都。 */
