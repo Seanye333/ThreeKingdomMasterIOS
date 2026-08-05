@@ -1,10 +1,10 @@
 import { Suspense, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, Line, OrbitControls } from '@react-three/drei';
 import { ScenePostFx } from './ScenePostFx';
 import { seasonGrade, seasonTone } from '../sceneGrade';
 import { SkyEnvironment } from './SkyEnvironment';
-import { getGfxPrefs, RENDER_HI, GFX } from '../renderQuality';
+import { RENDER_HI, GFX } from '../renderQuality';
 import { setMapFocusHandler, requestMapFocus } from './mapFocusBus';
 import { hasEscapeLayers } from '../hooks/useEscapeKey';
 import { WORLD_SCALE, hexAt as geoHexAt, hexCenter as geoHexCenter } from '../../game/data/geography';
@@ -879,6 +879,28 @@ function MapScene({ overlayMode, onPortClick, onFortClick, onTribeClick, onSiteC
    screen. Hostile city: a single 全軍集結 button (armed by a first tap so
    a stray click can't commit the whole realm to war). */
 
+/**
+ * 每幀先清一次預設 framebuffer —— composer 在跑的時候沒有別人會清它。
+ *
+ * 大地圖的 <Canvas> 開了 preserveDrawingBuffer: true(📷 天下大勢那顆鈕要讀回
+ * 畫面),意思是「合成之後不要丟棄繪圖緩衝」—— 於是沒有任何人會在下一幀開始
+ * 時把它清乾淨。走一般渲染路徑看不出來:three 的 autoClear 每次 render() 都會
+ * 清。但 composer 接管之後,畫面靠最後一個 pass 的全螢幕四邊形貼上去,那條路徑
+ * 從頭到尾沒有「清除」。沒被蓋到的像素就留著上一幀,平移時一層層疊起來 ——
+ * 使用者原話:「拉拽地圖變成一層層疊下去」。
+ *
+ * ⚠ **位置敏感**:同一段程式放進 ScenePostFx(與 <EffectComposer> 同層)就
+ * 完全無效,12 跑全壞;放在這裡(<Canvas> 直屬層、掛在場景之前)才有效。
+ * 補了 setRenderTarget(null) 也救不回來,所以差別不只是綁定狀態,推測與
+ * useFrame 在同一 priority 內的訂閱順序有關。**要動它請先跑
+ * `e2e/mapDragSmear.spec.ts --repeat-each=6`** —— 這個 bug 的漏檢率約六分之一,
+ * 單跑看不出來。
+ */
+function ClearFrame() {
+  useFrame(({ gl }) => { gl.clear(true, true, true); }, 0);
+  return null;
+}
+
 export function StrategicMap3D() {
   const [overlayMode, setOverlayMode] = useState<OverlayMode>('none');
   const [selectedPortId, setSelectedPortId] = useState<string | null>(null);
@@ -1739,6 +1761,7 @@ export function StrategicMap3D() {
             35/33 FPS 回到 53/55(不再有著色器重編譯的抖動)。
             drei 10.7.7(當前最新)仍帶著這段,**升 drei 前不要加回來**。
             守衛:e2e/cityRenderBudget.spec.ts 斷言 LINK_STATUS 全數成功。 */}
+        <ClearFrame />
         <BattleCinematics trigger={cine} />
         {/* Shed the expensive layers if the frame rate stays down, rather
             than riding it into a context loss. */}
@@ -1816,26 +1839,12 @@ export function StrategicMap3D() {
               FrameRateWatch degrades — a full-screen post pass costs more than
               everything it lights up. */}
           {/*
-            * ⚠ 大地圖的後處理**預設關閉** —— 開著會在平移後把地圖畫壞
-            *   (2026-08-03,使用者回報「拉拽地圖變成一層層疊上去」)。
-            *
-            * 重現與量測見 `e2e/mapDragSmear.spec.ts`:往北拖兩次,地圖區的
-            * 逐列差異從 13 升到 58(乾淨 ≈ 13),放大看是地形被壓成一列列的
-            * 碎塊,原圖認不出來。基準六跑五壞。
-            *
-            * 已排除的(每項都以六樣本、每次重建 dist 量過):陰影、N8AO、
-            * Bloom、鏡頭光暈、四時之色分級、AgX 色調映射、SMAA、多重取樣
-            * (0→4)、相機近平面(0.5→3)、海面高度、離屏目標格式
-            * (HalfFloat→UnsignedByte)。**連完全清空 effects 的 composer 都照壞**,
-            * 而相機三階段的俯角與距離全程恆定(52.1°、130),開關後處理的
-            * 終點座標一模一樣 —— 所以不是相機、不是任何單一效果,是走離屏
-            * 目標這條路徑本身。根因尚未找到。
-            *
-            * 取捨與「水面鏡面」那條同型(見 renderQuality.ts):整幀壞掉比
-            * 少一層色調重要得多。想要的人可到 設定 → 畫面 → 後處理 明確打開。
-            * 城內與戰場不受影響 —— 它們沒有這個症狀。
+            * 2026-08-03 使用者回報「拉拽地圖變成一層層疊上去」,一度把這層
+            * 整個預設關掉當繞過;08-04 定位到根因並修好(見 ScenePostFx 的
+            * ClearDefaultFramebuffer),這層就還回來了 —— 真因是
+            * preserveDrawingBuffer 開著而 composer 那條路徑從不清畫面。
             */}
-          {!gfxDegraded && getGfxPrefs().postfx === 'on' && (
+          {!gfxDegraded && (
             <ScenePostFx
               mobile={IS_MOBILE}
               ao={{ radius: 2.6, intensity: 1.6 }}

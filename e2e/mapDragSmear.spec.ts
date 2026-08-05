@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 /**
  * 重現「拖曳大地圖時畫面一層層疊上去」的回報(2026-08-03)。
@@ -18,7 +18,12 @@ test('拖曳大地圖不該留下殘影', async ({ page }) => {
   test.setTimeout(300_000);
   mkdirSync(SHOTS, { recursive: true });
   const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+  // WebGL 的抱怨多半只出現在 console(warning 等級),不會變成 pageerror。
+  page.on('console', (m) => {
+    const t = m.type();
+    if (t === 'error' || t === 'warning') errors.push(`${t}: ${m.text().slice(0, 300)}`);
+  });
 
   // 執行期二分:TKM_GFX=low 走無後處理/無陰影的低畫質管線。
   // 用字串而非函式 —— addInitScript 傳函式會被 tsx 的 __name 注入弄壞(舊坑)。
@@ -154,14 +159,86 @@ test('拖曳大地圖不該留下殘影', async ({ page }) => {
     path: `${SHOTS}/06-zoom-${Math.round(streak)}.png`, timeout: 8000,
     clip: { x: cb.x + cb.width * 0.15, y: cb.y + cb.height * 0.62, width: 340, height: 230 },
   }).catch(() => {});
+  // 最近鄰放大 8 倍 —— 原生像素的裁切太小,看不出碎塊是什麼。
+  // 沿螢幕高度取四塊,看 corruption 是否隨距離(越上面越遠)加劇
+  const bands = await page.evaluate(() => {
+    const c = document.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!c) return null;
+    const W = 200, H = 60;
+    const out: Array<{ at: string; d: number }> = [];
+    for (const f of [0.30, 0.50, 0.70, 0.90]) {
+      const off = document.createElement('canvas');
+      off.width = W; off.height = H;
+      const ctx = off.getContext('2d')!;
+      ctx.drawImage(c, Math.round(c.width * 0.25), Math.round(c.height * f), W, H, 0, 0, W, H);
+      const d = ctx.getImageData(0, 0, W, H).data;
+      let acc = 0, n = 0;
+      for (let y = 1; y < H; y++) for (let x = 0; x < W; x += 2) {
+        const i = (y * W + x) * 4, j = ((y - 1) * W + x) * 4;
+        acc += Math.abs(d[i] - d[j]) + Math.abs(d[i + 1] - d[j + 1]) + Math.abs(d[i + 2] - d[j + 2]);
+        n++;
+      }
+      out.push({ at: `y${Math.round(f * 100)}%`, d: +(acc / n).toFixed(1) });
+    }
+    return out;
+  });
+  console.log('  分帶', JSON.stringify(bands));
+
+  // 時間穩定性 —— 相機不動,連拍三張比對。每幀都變 = 雜訊/未初始化;不變 = 幾何/貼圖。
+  const sig = () => page.evaluate(() => {
+    const c = document.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!c) return '';
+    const off = document.createElement('canvas');
+    off.width = 64; off.height = 64;
+    const ctx = off.getContext('2d')!;
+    ctx.drawImage(c, Math.round(c.width * 0.3), Math.round(c.height * 0.8), 64, 64, 0, 0, 64, 64);
+    const d = ctx.getImageData(0, 0, 64, 64).data;
+    let h = 0;
+    for (let i = 0; i < d.length; i += 4) h = (h * 31 + d[i] * 7 + d[i + 1] * 3 + d[i + 2]) >>> 0;
+    return String(h);
+  });
+  const s1 = await sig(); await page.waitForTimeout(400);
+  const s2 = await sig(); await page.waitForTimeout(400);
+  const s3 = await sig();
+  // 強制整幀重畫(改視窗大小 → canvas resize → 全清全畫)。
+  // 若 corruption 是「舊像素沒被清掉」,這一步就會把它抹掉。
+  const vp = page.viewportSize()!;
+  await page.setViewportSize({ width: vp.width - 40, height: vp.height - 30 });
+  await page.waitForTimeout(1200);
+  const afterResize = await measure();
+  await page.setViewportSize(vp);
+  await page.waitForTimeout(1200);
+  console.log(`  改尺寸後條紋度 ${afterResize}`);
+
+  console.log('  三幀指紋', s1 === s2 && s2 === s3 ? '相同(靜態)' : `不同(逐幀變)${s1}/${s2}/${s3}`);
+
+  const micro = await page.evaluate(() => {
+    const c = document.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!c) return null;
+    const SW = 96, SH = 64, K = 8;
+    const off = document.createElement('canvas');
+    off.width = SW * K; off.height = SH * K;
+    const ctx = off.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(c, Math.round(c.width * 0.28), Math.round(c.height * 0.72), SW, SH,
+                  0, 0, SW * K, SH * K);
+    return off.toDataURL('image/png');
+  });
+  if (micro) {
+    writeFileSync(`${SHOTS}/07-micro-${Math.round(streak)}.png`,
+      Buffer.from(micro.split(',')[1], 'base64'));
+  }
   console.log(`條紋度 拖前=${before0} 一拖=${after1} 二拖=${streak}  (gfx=${process.env.TKM_GFX ?? 'default'} flags=${process.env.TKM_GFXFLAGS ?? '-'})`);
 
   /*
    * 守衛 —— 乾淨的地形逐列差異穩定在 13~16,壞掉時是 55~67,中間沒有灰帶。
    * 門檻取 30,離兩邊都遠。
    */
-  expect(streak, `拖曳後地圖畫壞了(條紋度 ${streak},乾淨應 <30)—— 見 ${SHOTS}/06-zoom-*.png`)
-    .toBeLessThan(30);
+  // 只在**預設設定**下斷言 —— 查因時會用 TKM_GFXFLAGS 把後處理強制開回來重現。
+  if (!process.env.TKM_GFXFLAGS) {
+    expect(streak, `拖曳後地圖畫壞了(條紋度 ${streak},乾淨應 <30)—— 見 ${SHOTS}/06-zoom-*.png`)
+      .toBeLessThan(30);
+  }
 
-  console.log('頁面錯誤:', errors.length ? errors.slice(0, 5).join('\n') : '(無)');
+  console.log('主控台:', errors.length ? `\n  ${[...new Set(errors)].slice(0, 20).join('\n  ')}` : '(無)');
 });
