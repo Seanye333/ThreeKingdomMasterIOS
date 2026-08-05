@@ -507,7 +507,38 @@ export const SCENARIO_190_ANTI_DONG_ZHUO: Scenario = {
     { a: 'dong', b: 'tao', score: -25, status: 'neutral' },
     { a: 'dong', b: 'kong-rong', score: -40, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_190),
+  /*
+   * 開局姿態 —— 十一家共用同一份城池模板,於是「江東猛虎」與「北海名士」
+   * 在數字上是同一種人。體檢 360 回合先照出三件事,姿態要回答的就是這三件:
+   *
+   *  ① **曹操五城掉到一城,十二輪覆滅三次** —— 這一代最重要的人物在自走裡
+   *     幾乎必亡。190 年他散家財於己吾募兵得五千人,弱是對的;但他的本錢從來
+   *     不是兵,是那一堆人(夏侯惇、夏侯淵、曹仁、曹洪、于禁、樂進、荀彧、
+   *     郭嘉,九將已在帳下)。所以給民忠與城防,兵只微調 —— 讓他撐得住第一個
+   *     冬天,而不是給他一支他當時沒有的軍隊。
+   *  ② **馬騰府庫見底 4/12、斷糧 2/12** —— 一城之主,養不起自己。涼州之貧
+   *     是實情,但貧到活不過三年就不是設定而是缺陷:金糧給到 1.2,兵 1.25
+   *     (涼州騎士甲天下),城防壓低 —— 他該是打得動而守不住。
+   *  ③ **孫堅府庫最低 305、孔融 800** —— 兩家都貼著零過活。孫堅是野戰軍,
+   *     金糧本就薄,補到能動;孔融是名士,兵少而民附,靠民忠與府庫活著。
+   *
+   * 其餘各家按史書給:袁術南陽戶口百萬而橫征(金糧厚、民忠低)、董卓涼州鐵騎
+   * 加洛陽府庫加郿塢之積(全厚而民忠 −20)、劉表帶甲十餘萬而保境(防高忠高)、
+   * 劉焉恃蜀道之險(防最高而兵少)、陶謙徐州殷實(糧最厚而兵最少)。
+   */
+  cities: buildInitialCities(CITY_OWNERSHIP_190, {
+    cao:         { troops: 1.05, food: 1.10, gold: 1.15, defense: 8,  loyalty: 10 },
+    'yuan-shao': { troops: 1.00, food: 1.10, gold: 1.20, defense: 4,  loyalty: 6 },
+    'yuan-shu':  { troops: 1.10, food: 1.25, gold: 1.30, defense: 0,  loyalty: -8 },
+    sun:         { troops: 1.25, food: 1.05, gold: 1.05, defense: -6, loyalty: 4 },
+    dong:        { troops: 1.20, food: 1.30, gold: 1.40, defense: 6,  loyalty: -20 },
+    'liu-biao':  { troops: 1.05, food: 1.20, gold: 1.10, defense: 10, loyalty: 10 },
+    'liu-yan':   { troops: 0.90, food: 1.20, gold: 1.05, defense: 14, loyalty: 8 },
+    gongsun:     { troops: 1.15, food: 0.90, gold: 0.95, defense: -4, loyalty: -4 },
+    tao:         { troops: 0.85, food: 1.40, gold: 1.20, defense: 4,  loyalty: 8 },
+    'kong-rong': { troops: 0.75, food: 1.15, gold: 1.20, defense: 2,  loyalty: 14 },
+    'ma-teng':   { troops: 1.25, food: 1.20, gold: 1.20, defense: -6, loyalty: 0 },
+  }),
   forces: FORCES_190,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_190),
 };

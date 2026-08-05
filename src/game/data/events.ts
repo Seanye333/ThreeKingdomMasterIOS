@@ -402,13 +402,23 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'Dong Zhuo Burns Luoyang', zh: '董卓焚洛陽' },
     yearMin: 190,
     yearMax: 191,
-    season: 'summer',
-    requires: [{ kind: 'force-alive', forceId: 'force-dong-zhuo' }],
+    /*
+     * 夏 → 冬,且須聯軍已起。原本無條件觸發,於是關東還沒起兵,董卓就先把
+     * 洛陽燒了 —— 焚都遷都是**被逼出來的**,不是他的日程表。
+     * 排在虎牢關(秋)之後:汜水、虎牢兩關既撞,而後西遷。
+     */
+    season: 'winter',
+    requires: [
+      { kind: 'force-alive', forceId: 'force-dong-zhuo' },
+      { kind: 'flag-set', key: 'coalition-formed' },
+    ],
     description:
       'Pressed by the coalition, Dong Zhuo torches the imperial capital and flees with the boy emperor to Chang\'an. Luoyang lies in ruins; loyalty collapses across the Central Plain.',
     descriptionZh: "迫於聯軍壓境,董卓焚毀帝都,挾少帝西遷長安。洛陽化為廢墟,中原民心崩潰。",
     effects: [
-      { kind: 'city-loyalty', cityId: 'city-luoyang', delta: -40 },
+      // ⚠ 原本寫的是 'city-luoyang' —— 盤上沒有這個 id(城 id 就叫 luoyang),
+      //   於是「焚洛陽」這條效果十年來一次也沒生效過。全庫僅此一處。
+      { kind: 'city-loyalty', cityId: 'luoyang', delta: -40 },
       { kind: 'flag', key: 'luoyang-burned' },
     ],
   },
@@ -1617,6 +1627,12 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'The Coalition Against Dong Zhuo', zh: '十八路諸侯討董' },
     yearMin: 190,
     yearMax: 190,
+    /*
+     * 190 年正月,關東州郡起兵。鎖春是整條鏈的起點 —— 這一鏈原本一節都沒鎖
+     * 季節,體檢十二輪跑出來的是:討董在第 2 回合、三英第 4、玉璽第 6、
+     * 焚洛陽第 9 —— 兩年多的事,十一個旬就演完了。
+     */
+    season: 'spring',
     requires: [
       { kind: 'officer-active', officerId: 'dong-zhuo' },
       { kind: 'officer-active', officerId: 'yuan-shao' },
@@ -1637,10 +1653,20 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'Three Heroes Battle Lü Bu', zh: '三英戰呂布' },
     yearMin: 190,
     yearMax: 191,
+    season: 'autumn',   // 汜水關既破,而後虎牢
+    /*
+     * 這個場面原本在事件表裡有**兩條**(另一條是 evt-three-heroes-lu-bu),
+     * 名字一字不差。互斥只做了一半:後者查 flag-unset sanying-lubu,而前者
+     * 不查後者的旗標 —— 於是呂布若正好負傷(前者要 active,後者只要 alive),
+     * 後者先演,旗標沒設,等呂布傷癒前者再演一次,虎牢關前打兩場。
+     * 現在併成一條:取兩者條件的聯集(三英俱在、呂布尚存),刪掉重複的那條。
+     */
     requires: [
-      { kind: 'officer-active', officerId: 'lu-bu' },
+      { kind: 'flag-set', key: 'hua-xiong-slain' },
+      { kind: 'officer-alive', officerId: 'lu-bu' },
       { kind: 'officer-active', officerId: 'liu-bei' },
       { kind: 'officer-active', officerId: 'guan-yu' },
+      { kind: 'officer-active', officerId: 'zhang-fei' },
     ],
     description:
       "Before Hulao Pass, Lü Bu cuts down champion after champion of the coalition; none can stand against him. Zhang Fei charges with his spear — fifty bouts, no decision; Guan Yu joins with his blade — thirty more; then Liu Bei draws his twin swords into the fray. The three ring the Marquis of Wen, who can no longer parry, and breaks for the pass. From that day the realm knows the valour of the Peach Garden.",
@@ -1648,8 +1674,13 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       "虎牢關前,呂布連斬諸侯上將,無人能敵。張飛挺矛直取,鬥五十合不分;關羽舞刀夾攻,又三十合;劉備掣雙股劍助戰。三英環戰溫侯,呂布遮攔不住,望關而走。天下由是知桃園之勇。",
     effects: [
       { kind: 'mandate-ruler', rulerOfficerId: 'dong-zhuo', delta: -3 },
+      // 三英各得其分 —— 併掉的那條給三兄弟各 +3,這裡一併收下,不讓合併吃掉效果。
       { kind: 'officer-loyalty', officerId: 'zhang-fei', delta: 5 },
+      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 3 },
+      { kind: 'officer-loyalty', officerId: 'liu-bei', delta: 3 },
       { kind: 'flag', key: 'sanying-lubu' },
+      // 舊旗標一併設上 —— 存檔或成就若引用過它,合併之後仍讀得到。
+      { kind: 'flag', key: 'three-heroes-vs-lu-bu' },
     ],
     mood: 'martial',
   },
@@ -2082,8 +2113,22 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     id: 'evt-sun-jian-imperial-seal',
     name: { en: 'The Imperial Seal', zh: '孫堅得玉璽' },
     yearMin: 190,
-    yearMax: 191,
-    requires: [{ kind: 'officer-active', officerId: 'sun-jian' }],
+    /*
+     * 三處要改:
+     *  ① 條件只有「孫堅還活著」—— 於是他人在長沙、洛陽還沒燒,井裡就撈出了
+     *     玉璽(體檢十二輪全在第 6 回合觸發,而焚洛陽在第 9)。璽出於洛陽宮中
+     *     甄官井,要城已焚、而孫堅入了城,才有這一撈。
+     *  ② 期限 191 → 193:他的主目標是「於193年前攻取洛陽」,兩者要對得上,
+     *     否則打下洛陽而戲已過期。
+     *  ③ 補一句「不敢有」的後果 —— 史書裡孫堅得璽而還之,袁術取璽而稱帝;
+     *     這條事件是那一整條線的起點,所以旗標留著給後面用。
+     */
+    yearMax: 193,
+    requires: [
+      { kind: 'officer-active', officerId: 'sun-jian' },
+      { kind: 'flag-set', key: 'luoyang-burned' },
+      { kind: 'city-owner-ruler', cityId: 'luoyang', rulerOfficerId: 'sun-jian' },
+    ],
     description:
       'Amid the ruins of burned Luoyang, Sun Jian\'s men draw a glittering object from a palace well — the Imperial Hereditary Seal of the Han. The Tiger of Jiangdong pockets the mandate of heaven, and with it, a fatal ambition.',
     descriptionZh: "洛陽焚餘之廢墟,孫堅軍自宮中枯井打撈得一璀璨之物——傳國玉璽。江東猛虎私納天命於懷,亦自此種下取禍之心。",
@@ -2352,7 +2397,9 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'Slaying Hua Xiong While the Wine Is Warm', zh: '溫酒斬華雄' },
     yearMin: 190,
     yearMax: 191,
+    season: 'summer',   // 汜水關 —— 聯軍既集,而後有這一場
     requires: [
+      { kind: 'flag-set', key: 'coalition-formed' },
       { kind: 'officer-active', officerId: 'guan-yu' },
       { kind: 'officer-alive', officerId: 'hua-xiong' },
     ],
@@ -2363,29 +2410,6 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'officer-status', officerId: 'hua-xiong', status: 'dead' },
       { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 5 },
       { kind: 'flag', key: 'hua-xiong-slain' },
-    ],
-  },
-  {
-    id: 'evt-three-heroes-lu-bu',
-    name: { en: 'Three Heroes Battle Lü Bu', zh: '三英戰呂布' },
-    yearMin: 190,
-    yearMax: 191,
-    /* 與 evt-sanying-lubu 同一個場面,互斥(否則虎牢關前會打兩次)。 */
-    requires: [
-      { kind: 'flag-unset', key: 'sanying-lubu' },
-      { kind: 'officer-active', officerId: 'liu-bei' },
-      { kind: 'officer-active', officerId: 'guan-yu' },
-      { kind: 'officer-active', officerId: 'zhang-fei' },
-      { kind: 'officer-alive', officerId: 'lu-bu' },
-    ],
-    description:
-      'Before Hulao Gate, Lü Bu on Red Hare scatters all challengers — until Zhang Fei roars out with his serpent spear, Guan Yu joins with Green Dragon, and Liu Bei closes the triangle with his twin blades. The three brothers whirl around the lone rider in the most storied duel of the age.',
-    descriptionZh: "虎牢關前,呂布乘赤兔,戟挑諸侯眾將,無人可敵。張飛挺丈八蛇矛大喝出馬,戰五十合;關羽舞青龍偃月刀夾攻;劉備掣雙股劍而上——三英圍呂布,轉燈般廝殺,天下第一武勇之戰。",
-    effects: [
-      { kind: 'officer-loyalty', officerId: 'liu-bei', delta: 3 },
-      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 3 },
-      { kind: 'officer-loyalty', officerId: 'zhang-fei', delta: 3 },
-      { kind: 'flag', key: 'three-heroes-vs-lu-bu' },
     ],
   },
   {
