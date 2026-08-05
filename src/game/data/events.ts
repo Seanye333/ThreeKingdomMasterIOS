@@ -1628,11 +1628,16 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     yearMin: 190,
     yearMax: 190,
     /*
-     * 190 年正月,關東州郡起兵。鎖春是整條鏈的起點 —— 這一鏈原本一節都沒鎖
-     * 季節,體檢十二輪跑出來的是:討董在第 2 回合、三英第 4、玉璽第 6、
-     * 焚洛陽第 9 —— 兩年多的事,十一個旬就演完了。
+     * 這一鏈原本一節都沒鎖季節,體檢十二輪跑出來是:討董第 2 回合、三英第 4、
+     * 玉璽第 6、焚洛陽第 9 —— 兩年多的事,十一個旬演完,而且玉璽比洛陽起火
+     * 還早三回合撈上來。節奏由**下游**四節的季節鎖來扛(夏華雄、秋三英、
+     * 冬焚洛陽),而這一節是整條鏈的**開關**,刻意不鎖季節:
+     *
+     * 一度也給它鎖了春(190 正月起兵),六輪追下來有一輪整條鏈沒演 ——
+     * 春天只有九個旬,而每旬只放行一個事件,它得跟同期的其他事件搶。開關
+     * 一旦沒開,底下四節全靜默(都要 coalition-formed)。給它一整年,
+     * 開關就不會漏,而順序仍由下游的季節鎖決定。
      */
-    season: 'spring',
     requires: [
       { kind: 'officer-active', officerId: 'dong-zhuo' },
       { kind: 'officer-active', officerId: 'yuan-shao' },
@@ -2120,6 +2125,11 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
      *     甄官井,要城已焚、而孫堅入了城,才有這一撈。
      *  ② 期限 191 → 193:他的主目標是「於193年前攻取洛陽」,兩者要對得上,
      *     否則打下洛陽而戲已過期。
+     *     ⚠ 一度把條件綁成「孫堅**據有**洛陽」(照 184 宛城之圍的做法),
+     *     六輪追下來這一幕 **0/6** —— 他的地盤在荊南,而洛陽在千里之外,
+     *     自走十二輪一次也沒打到。而且史書裡他也不曾據有洛陽:董卓西遷後
+     *     他入的是一座空城,掃除宗廟、平塞諸陵而後**引軍還**。所以只留
+     *     「城已焚」這一道 —— 順序對了,那才是原本壞掉的地方。
      *  ③ 補一句「不敢有」的後果 —— 史書裡孫堅得璽而還之,袁術取璽而稱帝;
      *     這條事件是那一整條線的起點,所以旗標留著給後面用。
      */
@@ -2127,7 +2137,6 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     requires: [
       { kind: 'officer-active', officerId: 'sun-jian' },
       { kind: 'flag-set', key: 'luoyang-burned' },
-      { kind: 'city-owner-ruler', cityId: 'luoyang', rulerOfficerId: 'sun-jian' },
     ],
     description:
       'Amid the ruins of burned Luoyang, Sun Jian\'s men draw a glittering object from a palace well — the Imperial Hereditary Seal of the Han. The Tiger of Jiangdong pockets the mandate of heaven, and with it, a fatal ambition.',
