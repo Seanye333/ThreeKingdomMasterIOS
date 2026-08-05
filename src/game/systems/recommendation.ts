@@ -11,6 +11,7 @@
  */
 import type { EntityId, Officer } from '../types';
 import { relationsOf } from './relationshipEffects';
+import { hasComeOfAge } from './comingOfAge';
 
 export interface Recommendation {
   recommenderId: EntityId;
@@ -33,11 +34,15 @@ export function rollRecommendations(ctx: {
   /** 選官之制 — added discernment 0–1 when picking from the open pool (a graded
    *  system names better men than a dinner-party recommendation). Default 0. */
   discernBonus?: number;
+  /** 當前年份 —— 用來擋下未及元服者。不給則不設年齡門檻(既有測試如此)。 */
+  year?: number;
 }): Recommendation[] {
   if (!ctx.forceId) return [];
   const all = Object.values(ctx.officers);
   const unsearched = all.filter(
-    (o) => o.status === 'unsearched' && !o.id.startsWith('commoner-') && !o.id.startsWith('custom-'),
+    (o) => o.status === 'unsearched' && !o.id.startsWith('commoner-') && !o.id.startsWith('custom-')
+      // 薦舉薦的是「已成童而未仕」的人,不是鄉里的孩子(comingOfAge.ts)。
+      && (ctx.year === undefined || hasComeOfAge(o, ctx.year)),
   );
   if (unsearched.length === 0) return [];
   const unsearchedById = new Map(unsearched.map((o) => [o.id, o]));

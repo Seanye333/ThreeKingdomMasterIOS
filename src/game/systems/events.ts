@@ -7,6 +7,7 @@ import type {
 } from '../types';
 import { isPhysician, medicalSkillOf, MEDICAL_SKILL_MAX } from './medicalSkill';
 import { cultureTalentWeight } from './culture';
+import { hasComeOfAge } from './comingOfAge';
 
 /**
  * 醫者防疫 — the best physician posted in a city, and the outbreak-mitigation
@@ -25,6 +26,8 @@ export function cityPhysician(cityId: EntityId, officers: Record<EntityId, Offic
 
 export interface EventsInput {
   season: Season;
+  /** 當前年份 —— 遊俠現身要看年紀,不給則不設門檻(comingOfAge.ts)。 */
+  year?: number;
   cities: Record<EntityId, City>;
   officers: Record<EntityId, Officer>;
   /** 防災工程 — granary/infirmary/levee levels mitigate disasters. */
@@ -266,7 +269,9 @@ export function rollEvents(input: EventsInput): EventsOutput {
   // Global event: wandering talent appears at an inn / tavern / market.
   if (input.rng() < WANDERING_TALENT_CHANCE) {
     const unsearched = Object.values(officers).filter(
-      (o) => o.status === 'unsearched',
+      // 客舍裡遇見的是遊俠,不是三歲的諸葛亮(comingOfAge.ts)。
+      (o) => o.status === 'unsearched'
+        && (input.year === undefined || hasComeOfAge(o, input.year)),
     );
     const occupiedCities = Object.values(cities).filter(
       (c) => c.ownerForceId !== null,

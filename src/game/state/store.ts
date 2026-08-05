@@ -120,6 +120,7 @@ import {
 import { expeditionLegSeasons } from '../systems/expedition';
 import { getEmbassyTarget, embassyLegSeasons, realmTradeIncome, realmTitle, realmPatronPrestige, envoyCompetence, routeDisruptionChance, realmAidProfile, isHorseRealm, realmTradeHorses, naturalizedName } from '../systems/foreignRealm';
 import { generateFictionalOfficer } from '../systems/officerGen';
+import { hasComeOfAge } from '../systems/comingOfAge';
 import { FOREIGN_REALMS_BY_ID } from '../data/foreignRealms';
 import { terrainTypeAt, isRiverside, WORLD_SCALE, hexAt, hexNeighbors, hexCenter, isLand, terrainMarchCost, battleGroundAt, geoToPixel } from '../data/geography';
 import { FAMILY_LINEAGE } from '../data/familyLineage';
@@ -5852,6 +5853,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           const fx = planAIFrontierExploits({
             cities: postCities,
             officers: postOfficers,
+            year: result.date.year,
             forces: postForces,
             ports: nextPorts,
             aggression: nextAggression,
@@ -6513,6 +6515,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             for (const r of rollRecommendations({
               officers: officersWithMarchTask, forceId: force.id, rng,
               chanceMul: selEffRec.recommendMul, discernBonus: selEffRec.discernBonus,
+              year: result.date.year,
             })) {
               const rec = officersWithMarchTask[r.recommenderId];
               const found = officersWithMarchTask[r.revealedId];
@@ -10705,7 +10708,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const cap = capId ? state.cities[capId] : undefined;
         if (!cap || cap.ownerForceId !== state.playerForceId) return { ok: false, message: '須有都城作祭。' };
         if (cap.gold < FESTIVAL_GOLD_COST) return { ok: false, message: `金不足(需 ${FESTIVAL_GOLD_COST})。` };
-        const pool = festivalPool(state.officers);
+        const pool = festivalPool(state.officers, state.date.year);
         const drawn = festivalDraw(pool, state.festivalPity, Math.random);
         if (!drawn) return { ok: false, message: '四海賢士已盡現於世 — 無人可召。' };
         const isGoldPlus = pool.goldPlus.some((o) => o.id === drawn.id);
@@ -15871,6 +15874,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         if (r.win && tribe.chieftainId && !mengHuo && tribe.id !== 'nanban') {
           const chief = state.officers[tribe.chieftainId];
           if (chief && chief.forceId === null && (chief.status === 'idle' || chief.status === 'unsearched')
+              && hasComeOfAge(chief, state.date.year)
               && Math.random() < 0.45) {
             codexMarkRecruited(chief.id);
             updates.officers = {
@@ -16475,7 +16479,9 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         let recruited = false;
         if (site.hermitId) {
           const hermit = state.officers[site.hermitId];
-          if (hermit && hermit.forceId === null && (hermit.status === 'idle' || hermit.status === 'unsearched')) {
+          if (hermit && hermit.forceId === null && (hermit.status === 'idle' || hermit.status === 'unsearched')
+              // 三顧訪的是隱居的名士,不是尚未元服的少年(comingOfAge.ts)。
+              && hasComeOfAge(hermit, state.date.year)) {
             const force = state.forces[state.playerForceId];
             const ruler = force ? state.officers[force.rulerOfficerId] : null;
             const visit = (state.scenicVisits[siteId] ?? 0) + 1;

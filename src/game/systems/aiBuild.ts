@@ -23,6 +23,7 @@ import { TRIBES } from '../data/tribes';
 import { resolveTribePunitive } from './tribes';
 import { SCENIC_SITES, rollHermitRecruit } from '../data/scenicSites';
 import { portUpgradeCost, PORT_MAX_NAVAL_TIER } from '../data/ships';
+import { hasComeOfAge } from './comingOfAge';
 
 /**
  * AI building priorities per ruler personality. The list is consulted top-down;
@@ -477,6 +478,8 @@ export interface AIFrontierOutput {
 export function planAIFrontierExploits(ctx: {
   cities: Record<EntityId, City>;
   officers: Record<EntityId, Officer>;
+  /** 當前年份 —— 訪賢與招降都要看年紀,不給則不設門檻(comingOfAge.ts)。 */
+  year?: number;
   forces: Record<EntityId, Force>;
   ports: Record<EntityId, Port>;
   aggression: Record<string, number>;
@@ -534,6 +537,8 @@ export function planAIFrontierExploits(ctx: {
         const hermit = officers[site.hermitId];
         if (!hermit || hermit.forceId !== null) continue;
         if (!(hermit.status === 'idle' || hermit.status === 'unsearched')) continue;
+        // 隆中的臥龍要到 197 年才二十七歲 —— 三顧訪的不是三歲小兒。
+        if (ctx.year !== undefined && !hasComeOfAge(hermit, ctx.year)) continue;
         if (!reaches(force.id, site.guards)) continue;
         const envoy = pickEnvoy(force.id, site.guards, (o) => o.stats.charisma);
         if (!envoy) continue;
@@ -584,7 +589,8 @@ export function planAIFrontierExploits(ctx: {
         // 招降 — a crushing win may bring the chief over if still free.
         if (r.win && tribe.chieftainId) {
           const chief = officers[tribe.chieftainId];
-          if (chief && chief.forceId === null && (chief.status === 'idle' || chief.status === 'unsearched') && ctx.rng() < 0.45) {
+          if (chief && chief.forceId === null && (chief.status === 'idle' || chief.status === 'unsearched')
+              && (ctx.year === undefined || hasComeOfAge(chief, ctx.year)) && ctx.rng() < 0.45) {
             officers[chief.id] = { ...chief, forceId: force.id, locationCityId: src.id, status: 'idle', loyalty: 70 };
           }
         }

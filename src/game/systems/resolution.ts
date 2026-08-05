@@ -4008,6 +4008,7 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
   if (seasonBoundary) {
     const eventResult = rollEvents({
       season: input.date.season,
+      year: input.date.year,
       cities,
       officers,
       buildings: input.buildings,

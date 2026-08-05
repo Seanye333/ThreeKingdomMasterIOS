@@ -19,6 +19,7 @@ import { diluteDelta, CONSCRIPT_QUALITY } from './reorganization';
 import { pairKey } from '../types/diplomacy';
 import type { WeatherKind } from './weather';
 import { graftClawback, graftCleared } from './graft';
+import { SERVICE_AGE } from './comingOfAge';
 
 /** 同心／嫌隙 — how well an assistant's season meshes with the lead officer's,
  *  by their rapport (好感). A warm 搭檔 pulls in the same direction (up to ×1.5);
@@ -951,7 +952,8 @@ export interface SearchInput {
 }
 
 /** Officers younger than this (in the current year) aren't discoverable yet. */
-const MIN_RECRUIT_AGE = 15;
+/** 元服之年 —— 現由 comingOfAge.ts 統一提供,各條招攬路徑共用同一條線。 */
+const MIN_RECRUIT_AGE = SERVICE_AGE;
 
 export interface SearchOutput {
   officers: Record<EntityId, Officer>;

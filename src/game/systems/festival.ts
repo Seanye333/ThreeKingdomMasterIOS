@@ -1,5 +1,6 @@
 import type { EntityId, Officer } from '../types';
 import { officerGrade, gradeRank } from './officerGrade';
+import { hasComeOfAge } from './comingOfAge';
 
 /**
  * 求賢祭 — the collection game's ceremonial "pull". Once a season, the court
@@ -22,8 +23,11 @@ export interface FestivalPool {
 }
 
 /** The festival's candidate pool — every living undiscovered officer. */
-export function festivalPool(officers: Record<EntityId, Officer>): FestivalPool {
-  const all = Object.values(officers).filter((o) => o.status === 'unsearched');
+export function festivalPool(officers: Record<EntityId, Officer>, year?: number): FestivalPool {
+  // 求賢祭召的是四海賢士 —— 尚未元服的人還在鄉里,召不到(comingOfAge.ts)。
+  const all = Object.values(officers).filter(
+    (o) => o.status === 'unsearched' && (year === undefined || hasComeOfAge(o, year)),
+  );
   const goldPlus = all.filter((o) => gradeRank(officerGrade(o).grade) >= gradeRank('gold'));
   return { all, goldPlus, odds: { goldPlus: all.length > 0 ? goldPlus.length / all.length : 0, total: all.length } };
 }
