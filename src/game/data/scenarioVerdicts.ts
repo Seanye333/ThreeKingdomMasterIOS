@@ -3205,6 +3205,226 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: an eldest son passed over has caused a great deal of trouble in every age. But whether it becomes trouble depends less on who is chosen than on whether the choice was made openly.',
     },
   },
+  /* ── 192 王允連環計 ───────────────────────────────────────────── */
+  'scn-192-wangyun': {
+    han: {
+      defeat: {
+        titleZh: '關東鼠子,豈能為我患',
+        titleEn: 'Rats of the East',
+        textZh:
+          '卓死,長安士庶咸相慶賀,諸阿附卓者皆下獄死。'
+          + '而蔡邕以嘆息坐之 —— 允曰:「昔武帝不殺司馬遷,'
+          + '使作謗書,流於後世。方今國祚中衰,戎馬在郊,'
+          + '不可令佞臣執筆在幼主左右。」邕遂死獄中。\n\n'
+          + '涼州兵求赦,允曰:「今歲不可再赦。」'
+          + '賈詡說李傕曰:「聞長安中議欲盡誅涼州人,'
+          + '而諸君棄眾單行,即一亭長能束君矣。'
+          + '不如率眾而西,所在收兵,以攻長安。」\n\n'
+          + '傕等從之。允死於宣平門外。',
+        textEn:
+          "Zhuo was dead, and the people of Chang'an congratulated one another; everyone who had attached himself to Zhuo was thrown into prison and died there. Cai Yong was condemned for a sigh — Wang Yun said: \"Emperor Wu once spared Sima Qian, and let him write a book of slanders that has come down to later ages. Now the fortune of the state is at its ebb and cavalry are in the suburbs. We cannot have a flatterer holding a brush beside a young sovereign.\" And Yong died in gaol.\n\n"
+          + 'The Liang province soldiers asked for an amnesty, and Yun refused. Jia Xu said to Li Jue: "It is said they mean to kill every man from Liang province in the capital. If you gentlemen abandon your troops and travel alone, one village constable could arrest you. Better to march west, pick up soldiers wherever you pass, and attack Chang\'an."\n\n'
+          + 'They did. Wang Yun died outside the Xuanping gate.',
+      },
+      verdictZh:
+        '論曰:允之誅卓,天下之功也;而其後不能安涼州之眾,'
+        + '一言之吝,而身與國俱亡。\n'
+        + '夫大事既成,最難者不在成之,在**善其後** ——'
+        + '赦一人易,赦一軍難;而不赦一軍者,即以一軍為敵。',
+      verdictEn:
+        'The historian says: killing Dong Zhuo was a service to the realm, and afterwards he could not settle the Liang province soldiers — one refusal, and he and the state went together. When a great thing has been done, the hard part is not doing it but finishing it properly. Pardoning one man is easy and pardoning an army is not; and to refuse to pardon an army is to make an army your enemy.',
+      verdictLostZh:
+        '論曰:賈詡一言而傾長安,其後自以為悔 ——'
+        + '而當日之勢,涼州人不反則死,詡不過說出了他們已經想到的事。',
+      verdictLostEn:
+        "The historian says: one speech of Jia Xu's overturned Chang'an, and he regretted it afterwards. But as things stood the men of Liang would die if they did not revolt, and he had only said aloud what they had already worked out.",
+    },
+    lubu: {
+      defeat: {
+        titleZh: '奉先何在',
+        titleEn: 'Where Is Fengxian?',
+        textZh:
+          '卓自知凶恣,每懷猜畏,行止常以布自衛 ——'
+          + '然卓性剛而褊,忿不思難,嘗小失意,拔手戟擲布。'
+          + '布拳捷避之,為卓顧謝,卓意亦解。由是陰怨卓。\n\n'
+          + '允以是告布使為內應。布曰:「奈如父子何!」'
+          + '允曰:「君自姓呂,本非骨肉。今憂死不暇,何謂父子?」\n\n'
+          + '布遂許之。及卓入,布持矛刺之,卓大呼曰:'
+          + '「呂布何在!」布曰:「有詔討賊臣!」',
+        textEn:
+          'Zhuo knew how savagely he had behaved and lived in constant suspicion, keeping Bu about him as a bodyguard — but Zhuo was violent and narrow, and did not think ahead when angry: once, over some small thing, he threw a hand-halberd at Bu. Bu was quick enough to dodge it and apologised, and Zhuo\'s temper passed. Bu resented him from then on.\n\n'
+          + 'Wang Yun heard of it and asked him to act from inside. "But what about father and son?" said Bu. And Yun said: "Your surname is Lü. There was never any blood between you. He is worrying about his own life at this moment. What father and son?"\n\n'
+          + 'So Bu agreed. When Zhuo came in, Bu ran him through with a spear, and Zhuo cried out: "Where is Lü Bu?" And Bu said: "There is an edict for the punishment of a traitor."',
+      },
+      verdictZh:
+        '論曰:布之殺卓,天下快之;而其所以殺者,'
+        + '不過一戟之忿與一女之私。\n'
+        + '故其後之棄劉備、叛袁術,皆同此理 ——'
+        + '所行雖或合於義,而其發動未嘗出於義。',
+      verdictEn:
+        'The historian says: the realm was delighted when Bu killed Dong Zhuo, and what moved him to it was a thrown halberd and a private affair. His later abandonment of Liu Bei and betrayal of Yuan Shu came from the same place. His actions sometimes happened to be right; the impulse behind them never was.',
+      verdictLostZh:
+        '論曰:「君自姓呂,本非骨肉」—— 王允一語破之。'
+        + '凡以父子之名結人者,其結亦止於一名。',
+      verdictLostEn:
+        'The historian says: "Your surname is Lü. There was never any blood between you." One sentence undid it. Bonds made out of the words father and son go no further than the words.',
+    },
+    lijue: {
+      defeat: {
+        titleZh: '率眾而西',
+        titleEn: 'March West and Pick Up Troops',
+        textZh:
+          '你們本欲解散,各自逃亡。而賈詡曰:'
+          + '「不如率眾而西,所在收兵,以攻長安,為董公報仇。'
+          + '幸而事濟,奉國家以征天下;若不濟,走未後也。」\n\n'
+          + '比至長安,眾十餘萬。八日而城陷。\n\n'
+          + '而後你與郭汜爭權,相攻於長安中,'
+          + '死者萬餘人。天子播越,百官暴骨。',
+        textEn:
+          'You were about to disband and scatter. And Jia Xu said: "Better to march west, gathering soldiers as you go, and attack Chang\'an in the Grand Preceptor\'s name. If it comes off, you hold the state and campaign in its name; if it does not, running away is still available."\n\n'
+          + 'By the time you reached Chang\'an you had over a hundred thousand. The city fell in eight days.\n\n'
+          + 'And then you and Guo Si fought each other for control inside the city, and more than ten thousand died. The emperor fled from place to place and the bones of his officials lay in the open.',
+      },
+      verdictZh:
+        '論曰:傕汜之得長安,以詡之一言;其失天下,以其無所欲。'
+        + '得政而不知所為,則爭權而已;'
+        + '爭權而後,城中相攻,天子播越 ——'
+        + '漢之最後一點體面,盡於此二年。',
+      verdictEn:
+        'The historian says: Li Jue and Guo Si took Chang\'an on one piece of advice and lost the realm because they wanted nothing in particular. Having got the government they had no idea what to do with it, so they fought over it; and after that they fought inside the city, and the emperor was a fugitive. Whatever dignity Han had left was used up in those two years.',
+      verdictLostZh:
+        '論曰:詡後自言:「此救命之計,何功之有!」'
+        + '——謀之為禍,有時謀者亦不能預。',
+      verdictLostEn:
+        'The historian says: Jia Xu said afterwards, "That was a plan to save my own life. What merit is there in it?" The harm a piece of advice can do is sometimes beyond the man who gives it.',
+    },
+  },
+  /* ── 199 易京之戰 ─────────────────────────────────────────────── */
+  'scn-199-yijing': {
+    gongsun: {
+      defeat: {
+        titleZh: '百樓不攻',
+        titleEn: 'A Hundred Towers Cannot Be Stormed',
+        textZh:
+          '瓚曰:「昔謂天下事可指麾而定,今日視之,'
+          + '非我所決,不如休兵力耕,以救凶年。'
+          + '兵法百樓不攻。今吾樓櫓千重,食盡此穀,足知天下之事矣。」\n\n'
+          + '於是不復救諸將,曰:「救一人,使後將恃救不肯力戰。」\n\n'
+          + '及紹來攻,諸將果無鬥志,或降或走。'
+          + '瓚穿地道至高樓下,火燒其柱,樓輒傾倒 ——'
+          + '瓚知必敗,盡殺其妻子,乃自殺。',
+        textEn:
+          'Zan said: "I used to think the business of the realm could be settled with a wave of the hand. Looking at it now, it is not mine to settle. Better to rest the troops and farm hard and get through the lean years. The art of war says a hundred towers cannot be stormed. I have a thousand tiers of them; by the time this grain is eaten I shall know how the realm turned out."\n\n'
+          + 'So he stopped relieving his own commanders: "Relieve one, and the next will count on relief instead of fighting."\n\n'
+          + 'When Yuan Shao came, his commanders had no fight in them, and surrendered or ran. Tunnels were driven to the foot of the great tower and the pillars fired, and the tower came down. Knowing it was finished, he killed his wife and children and then himself.',
+      },
+      verdictZh:
+        '論曰:瓚之不救諸將,其言似有理,而其效必至於無人肯戰。'
+        + '夫恃險者棄人,棄人者無險可恃 ——'
+        + '易京之樓千重,而破之者不過一條地道。',
+      verdictEn:
+        'The historian says: his reason for not relieving his commanders sounded plausible and guaranteed that nobody would fight. A man who trusts in works discards people, and a man who discards people has no works worth trusting. A thousand tiers at Yijing, and one tunnel brought it down.',
+      verdictLostZh:
+        '論曰:白馬義從縱橫塞外十餘年,而終於一座樓裡。'
+        + '將之失其所長,常自以為得計。',
+      verdictLostEn:
+        'The historian says: the White Horse Volunteers ranged the frontier for over a decade and it ended inside a tower. When a commander gives up the thing he is good at, he usually thinks he has been clever.',
+    },
+    'yuan-shao': {
+      defeat: {
+        titleZh: '穿地及樓',
+        titleEn: 'Tunnels to the Tower',
+        textZh:
+          '瓚遣子求救於黑山諸帥,欲自將突騎出,'
+          + '傍西山以擾其後 —— 長史關靖諫曰:'
+          + '「今將軍將士,皆已土崩瓦解,其所以能相守者,'
+          + '顧戀其居處老小,而恃將軍為主故耳。'
+          + '將軍堅守曠日,袁紹要當自退。若捨之而出,'
+          + '後無鎮重,易京之危,可立而待也。」\n\n'
+          + '瓚乃止。而紹漸增兵,穿地道直至樓下,火燒其柱。',
+        textEn:
+          'Zan sent his son to ask the Black Mountain chiefs for relief and meant to take his cavalry out himself and work round the western hills against Shao\'s rear — and his chief clerk Guan Jing remonstrated: "Your officers and men have already come apart. The only reason they still hold together is that they are attached to their houses and families here and are counting on Your Excellency as their master. Hold out long enough and Yuan Shao will have to withdraw. Leave them and go out, and with nothing solid behind them the fall of Yijing can be timed."\n\n'
+          + 'So Zan stayed. And Shao brought up more troops, drove a tunnel to the foot of the tower, and fired its pillars.',
+      },
+      verdictZh:
+        '論曰:紹之取幽州,積四年之功 ——'
+        + '界橋一勝,而後乃能言取;易京一破,而後河北無敵。\n'
+        + '然其取之也緩,而失之也速:'
+        + '明年官渡,四州之力,一戰而空。',
+      verdictEn:
+        'The historian says: it took him four years to take You province — the win at Jieqiao made it discussable, the fall of Yijing left him without a rival in Hebei. He acquired it slowly and lost it quickly: the next year at Guandu, four provinces\' strength emptied out in one battle.',
+      verdictLostZh:
+        '論曰:公孫既滅,紹地最廣而心最驕 ——'
+        + '田豐沮授之諫,自此不入。',
+      verdictLostEn:
+        'The historian says: with Gongsun gone, Shao had the widest lands and the highest opinion of himself. Tian Feng and Ju Shou were never listened to again.',
+    },
+  },
+  /* ── 207 白狼山·北征烏桓 ──────────────────────────────────────── */
+  'scn-207-bailang': {
+    cao: {
+      defeat: {
+        titleZh: '虜卒聞之',
+        titleEn: 'The Tribes Heard of It Suddenly',
+        textZh:
+          '諸將皆曰:「袁尚亡虜耳,夷狄貪而無親,豈能為尚用?」'
+          + '郭嘉曰:「胡恃其遠,必不設備。因其無備,卒然擊之,'
+          + '可破滅也。」\n\n'
+          + '行至無終,值夏水,傍海道不通。田疇獻策:'
+          + '「舊北平郡治在平岡,道出盧龍,達於柳城。'
+          + '自建武以來,陷壞斷絕,垂二百載,而尚有微徑可從。」\n\n'
+          + '塹山堙谷五百餘里,卒登白狼山,與虜遇。'
+          + '眾甚盛,而軍在後,被甲者少 ——'
+          + '公登高望之,見虜陣不整,乃縱兵擊之,使張遼為先鋒。',
+        textEn:
+          'The generals all said: "Yuan Shang is a fugitive. The tribes are greedy and have no attachments — what would they do anything for him for?" And Guo Jia said: "The Hu rely on their distance and will certainly not be prepared. Strike suddenly at their unpreparedness and they can be destroyed."\n\n'
+          + 'The march reached Wuzhong and the summer floods closed the coast road. Tian Chou offered a route: "The old seat of Beiping commandery was at Pinggang; the road runs out through Lulong and reaches Liucheng. It has been broken and disused since the Jianwu era, nearly two hundred years, and there is still a faint track."\n\n'
+          + 'Cutting through hills and filling valleys for five hundred li, they came up suddenly onto White Wolf Mountain and into contact. The tribal host was very large; his own column was strung out behind and few of his men were in armour — he climbed for a look, saw the tribal line was ragged, and loosed his troops with Zhang Liao at the point.',
+      },
+      verdictZh:
+        '論曰:北征之役,諸將皆以為不可,而操獨行之 ——'
+        + '所恃者郭嘉一言:「因其無備,卒然擊之。」\n'
+        + '然還師之日,操自論之曰:「孤前行,乘危以徼幸,'
+        + '雖得之,天所佐也,顧不可以為常。」'
+        + '**賞諫者而不賞從者** —— 此其所以為操。',
+      verdictEn:
+        'The historian says: every general said the northern campaign could not be done and he did it anyway, on one line of Guo Jia\'s: strike suddenly at their unpreparedness. And on the way home he judged himself: "I went out and gambled on danger. I got away with it, and Heaven helped me, but it cannot be made a habit." Then he rewarded the men who had advised against it, and not the men who had agreed. That is why he was Cao Cao.',
+      verdictLostZh:
+        '論曰:郭嘉卒於柳城,年三十八。'
+        + '操後於赤壁敗,嘆曰:「郭奉孝在,不使孤至此。」',
+      verdictLostEn:
+        'The historian says: Guo Jia died at Liucheng, aged thirty-eight. After the defeat at Red Cliffs Cao sighed: "Had Guo Fengxiao been alive, he would not have let me come to this."',
+    },
+    wuhuan: {
+      defeat: {
+        titleZh: '白狼山下',
+        titleEn: 'Below White Wolf Mountain',
+        textZh:
+          '你是三郡烏丸之主,袁氏之婿黨。'
+          + '袁尚兄弟來奔,你欲為之復河北 ——'
+          + '如當年冒頓之於漢。\n\n'
+          + '而曹操自盧龍塞出,塹山堙谷五百餘里,'
+          + '卒然而至。你的陣還沒有整好。\n\n'
+          + '虜眾大崩,你死於陣中。胡漢降者二十餘萬口。',
+        textEn:
+          'You were lord of the Wuhuan of three commanderies and a marriage-ally of the house of Yuan. When the Yuan brothers came to you, you meant to win Hebei back for them, as the Xiongnu had once done for a Han claimant.\n\n'
+          + 'And Cao Cao came out through the Lulong pass, cutting hills and filling valleys for five hundred li, and arrived suddenly. Your line was not yet formed.\n\n'
+          + 'The host broke utterly and you died in the ranks. Two hundred thousand Hu and Han came in and surrendered.',
+      },
+      verdictZh:
+        '論曰:蹋頓以一部之眾,當中國之師,'
+        + '所為者非其國之利,是袁氏之讎 ——'
+        + '代人受禍者,雖強必亡。\n'
+        + '自此三郡烏丸為天下名騎,而其名在魏,不在烏丸。',
+      verdictEn:
+        'The historian says: Tadun took the field against the armies of the middle realm with one people\'s strength, and not for his own people\'s interest but for the Yuan family\'s quarrel. Whoever takes another\'s calamity on himself is destroyed however strong he is. After that the Wuhuan of the three commanderies were the most famous cavalry in the realm — famous in Wei\'s service, not their own.',
+      verdictLostZh:
+        '論曰:遼西之敗,不在兵少,在無備 ——'
+        + '恃遠者,以遠為備;而遠者,終有人走得到。',
+      verdictLostEn:
+        'The historian says: the defeat in Liaoxi was not for want of numbers but for want of preparation. Men who rely on distance use distance as their defence — and distance is something somebody eventually walks.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
