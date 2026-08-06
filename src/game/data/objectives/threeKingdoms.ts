@@ -208,9 +208,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 所以主目標改成他真正做到的那件事:**守住核心**。取洛陽奉天子降為
          * 次要 —— 那是 196 年的事,是熬過這一關之後的獎賞,不是入場券。
          */
-        description: 'Still hold Xuchang and Chenliu in 196 — in 194 his own province turned on him and left him three cities.',
-        descriptionZh: '至196年仍據有許昌與陳留 —— 194年張邈陳宮迎呂布,兗州郡縣皆應,他只剩三座城。',
-        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'chenliu'], byYear: 196 },
+        /*
+         * 兩城 → 三城(補上官渡)。第一版只查許昌與陳留,體檢十二輪 **12/12**
+         * —— 那兩座是他的腹地,守成判法之下等於白送;而他真正會丟的是外圍。
+         * 加上官渡:實測他在多輪裡於第 80–122 回合失去它,而那正是史實裡
+         * 兗州之叛的形狀 —— 腹地還在,四邊全反。官渡日後也正是他與袁紹決勝
+         * 之地,守住它才算「熬過那一關」。
+         */
+        description: 'Still hold Xuchang, Chenliu and Guandu in 196 — in 194 his own province turned on him and left him three cities.',
+        descriptionZh: '至196年仍據有許昌、陳留與官渡 —— 194年張邈陳宮迎呂布,兗州郡縣皆應,他只剩三座城。',
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'chenliu', 'guandu'], byYear: 196 },
       },
       secondary: [
         {
