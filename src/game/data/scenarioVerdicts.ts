@@ -3425,6 +3425,299 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: the defeat in Liaoxi was not for want of numbers but for want of preparation. Men who rely on distance use distance as their defence — and distance is something somebody eventually walks.',
     },
   },
+  /* ── 241 芍陂之戰 ─────────────────────────────────────────────── */
+  'scn-241-shaopi': {
+    cao: {
+      defeat: {
+        titleZh: '力戰連日',
+        titleEn: 'Days of Hard Fighting',
+        textZh:
+          '吳人四道並出:朱然圍樊,諸葛瑾攻柤中,'
+          + '全琮攻芍陂,朱異襲樊城外圍。\n\n'
+          + '王淩與孫禮戰於芍陂,力戰連日 ——'
+          + '所爭者不過一道堤、一片陂水,'
+          + '而淮南之田盡在其下。\n\n'
+          + '吳軍退走。是歲,魏於淮南廣開屯田,'
+          + '自鍾離而南,橫石以西,盡沘水四百餘里,'
+          + '五里置一營,營六十人,且佃且守。',
+        textEn:
+          'Wu came out along four roads at once: Zhu Ran invested Fan, Zhuge Jin struck at Zuzhong, Quan Cong went for the Shaobei reservoir and Zhu Yi at the outworks of Fan.\n\n'
+          + 'Wang Ling and Sun Li fought at Shaobei for days on end — what was at stake was an embankment and a sheet of water, and every field in Huainan lay below it.\n\n'
+          + 'The Wu army withdrew. That year Wei opened the Huainan military colonies wide: from Zhongli south, from Hengshi west, four hundred li along the Bi river, a camp every five li and sixty men to a camp, farming and holding the line at once.',
+      },
+      verdictZh:
+        '論曰:芍陂之爭,不在城,在水 ——'
+        + '陂決則淮南無田,無田則壽春不可守。\n'
+        + '魏之所以能久制江北者,'
+        + '非以其兵多,以其**兵能自食** ——'
+        + '五里一營,且佃且守,'
+        + '故吳人歲歲而來,歲歲而無所得。',
+      verdictEn:
+        'The historian says: the fight at Shaobei was not over a city but over water — breach the embankment and Huainan has no fields, and without fields Shouchun cannot be held. Wei kept the north bank not because it had more soldiers but because its soldiers fed themselves: a camp every five li, farming and holding at once. So Wu came every year and every year got nothing.',
+      verdictLostZh:
+        '論曰:淮南一失,壽春為孤城;'
+        + '壽春為孤城,而合肥、鍾離不能獨立 ——'
+        + '一堤之下,系四百里之地。',
+      verdictLostEn:
+        'The historian says: lose Huainan and Shouchun is an island; with Shouchun an island, Hefei and Zhongli cannot stand alone. Four hundred li of country hung below one embankment.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '四道並出',
+        titleEn: 'Four Roads at Once',
+        textZh:
+          '赤烏四年,你發四路之師 ——'
+          + '這是你這一代人最後一次有力氣同時打四個方向。\n\n'
+          + '朱然圍樊城,幾拔之;'
+          + '而司馬懿自將救之,然退。'
+          + '諸葛瑾病卒於柤中軍中。全琮不能過芍陂。\n\n'
+          + '是歲,太子孫登卒,年三十三。'
+          + '臨終上疏,言陸遜、諸葛瑾可任 ——'
+          + '而後二宮並闕,江東自相攻十餘年。',
+        textEn:
+          'In the fourth year of Chiwu you sent out four columns — the last time your generation had the strength to push in four directions at once.\n\n'
+          + 'Zhu Ran nearly took Fan; then Sima Yi came down in person and Ran withdrew. Zhuge Jin died of illness in camp at Zuzhong. Quan Cong could not get past Shaobei.\n\n'
+          + 'That year the heir apparent Sun Deng died, aged thirty-three. His last memorial named Lu Xun and Zhuge Jin as men to be trusted — and after him came the rivalry of the two palaces, and Wu spent over a decade fighting itself.',
+      },
+      verdictZh:
+        '論曰:吳之北伐,自建安至赤烏,無歲不出,而無一歲有功。'
+        + '非將不勇,地形使然:'
+        + '出江則舍其所長,登陸則失其舟楫。\n'
+        + '而是歲之真敗不在芍陂,在建業 ——'
+        + '孫登既卒,二宮構隙,'
+        + '**外不能取一城,內先折其半國**。',
+      verdictEn:
+        'The historian says: Wu campaigned north every year from Jian\'an to Chiwu and never once profited by it. Not for want of brave commanders — the ground decided it: leave the river and you give up what you are good at; go ashore and your ships are no use to you. And the real defeat that year was not at Shaobei but at Jianye. With Sun Deng dead the two palaces fell out, and having failed to take a single city abroad, Wu broke half of itself at home.',
+      verdictLostZh:
+        '論曰:陸遜以二宮之爭憤恚而卒。'
+        + '吳之名將,死於魏者少,死於朝議者多。',
+      verdictLostEn:
+        "The historian says: Lu Xun died of vexation over the quarrel of the two palaces. Fewer of Wu's great commanders were killed by Wei than by discussions at court.",
+    },
+  },
+  /* ── 244 興勢之戰 ─────────────────────────────────────────────── */
+  'scn-244-xingshi': {
+    cao: {
+      defeat: {
+        titleZh: '牛馬騾驢多死',
+        titleEn: 'The Oxen and Mules Died',
+        textZh:
+          '爽欲立威名於天下,西征蜀漢,發卒十餘萬,'
+          + '自駱谷入。\n\n'
+          + '而蜀已據興勢 —— 王平曰:'
+          + '「若賊分向黃金,我防之不及。'
+          + '宜先遣劉護軍、杜參軍據興勢,'
+          + '吾為後拒。若賊分向黃金,吾自率千人下自臨之。」\n\n'
+          + '關中及氐、羌轉輸不能供,'
+          + '牛馬騾驢多死,民夷號泣道路。'
+          + '爽乃引還 —— 費禕已據三嶺以截其後,'
+          + '爭嶮乃得過,失亡甚眾。',
+        textEn:
+          'Cao Shuang wanted a great name in the realm, so he campaigned west against Shu with over a hundred thousand men, entering by the Luo valley.\n\n'
+          + 'Shu already held Xingshi. Wang Ping had said: "If they turn aside for Huangjin I cannot cover it in time. Send Protector Liu and Adjutant Du to hold Xingshi first, and I will be the rearguard. If they do turn for Huangjin, I will take a thousand men down myself and meet them."\n\n'
+          + 'The transport of Guanzhong and of the Di and Qiang could not keep up; the oxen, horses, mules and asses died in numbers, and Chinese and tribesmen alike wept along the roads. Shuang turned back — and Fei Yi had already taken the three ridges across his line of retreat. He got through only by fighting for the high ground, and lost heavily.',
+      },
+      verdictZh:
+        '論曰:爽之伐蜀,不為地,不為敵,為名 ——'
+        + '「欲立威名於天下」六字,已是敗辭。\n'
+        + '軍出而關中虛耗,氐羌怨叛,'
+        + '自是爽之威望日損,而司馬懿之望日隆;'
+        + '五年之後高平陵之變,'
+        + '其種**播於駱谷之中**。',
+      verdictEn:
+        'The historian says: Cao Shuang invaded Shu not for ground and not for an enemy but for a reputation — "wanting a great name in the realm" is already the language of defeat. The army marched, Guanzhong was drained, the Di and Qiang turned resentful; from then on Shuang\'s standing fell as fast as Sima Yi\'s rose. Five years later came the coup at Gaoping Tombs, and its seed was sown in the Luo valley.',
+      verdictLostZh:
+        '論曰:懿與爽書曰:「昔武皇帝再入漢中,幾至大敗,君所知也。'
+        + '今興平路勢至嶮,蜀已先據;若進不獲戰,退見徼絕,'
+        + '覆軍必矣。」爽不聽。',
+      verdictLostEn:
+        'The historian says: Sima Yi wrote to Shuang: "The Martial Emperor went into Hanzhong twice and came near to disaster — you know this. The road now is of the most dangerous kind and Shu has got there first. If you advance and cannot bring them to battle, and retreat to find the way cut, your army is certainly lost." Shuang did not listen.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '據險而已',
+        titleEn: 'Hold the Narrows, Nothing More',
+        textZh:
+          '諸將或曰:「今力不足以拒敵,聽當固守漢、樂二城,'
+          + '遇賊令入,比爾間,涪軍足得至關。」\n\n'
+          + '王平曰:「不然。漢中去涪垂千里,賊若得關,便為禍也。」\n\n'
+          + '於是據興勢,多張旗幟,彌亙百餘里。'
+          + '費禕自成都赴援 —— 臨行,與來敏圍棋,'
+          + '意色不變。敏曰:「吾聊觀試君耳!'
+          + '君信可人,必能辦賊者也。」',
+        textEn:
+          'Some of the officers said: "We have not the strength to stop them. We should hold the two fortified towns of Han and Le, let the enemy come in, and in the meantime the army from Fu can reach the pass."\n\n'
+          + 'Wang Ping said: "No. Hanzhong is nearly a thousand li from Fu. If they get the pass, the harm is already done."\n\n'
+          + 'So they held Xingshi and set out banners over a hundred li of ridge. Fei Yi came up from Chengdu — and before he left he played a game of weiqi with Lai Min without a flicker of expression. Min said: "I was only testing you. You will do; you are certainly the man to deal with them."',
+      },
+      verdictZh:
+        '論曰:蜀之能立四十年於一州之地,'
+        + '不在其能出,在其**能守** ——'
+        + '守之要,又不在城,在道:'
+        + '陽平、興勢、劍閣,三處而已。\n'
+        + '故王平之言勝於眾議者一句:'
+        + '「賊若得關,便為禍也。」'
+        + '後二十年鄧艾自陰平入,亦正坐此。',
+      verdictEn:
+        'The historian says: Shu lasted forty years on one province not because it could attack but because it could defend, and defence there was never a matter of cities but of roads — Yangping, Xingshi, Jiange, and that is all. Which is why Wang Ping\'s one sentence beat the whole staff: "If they get the pass, the harm is already done." Twenty years later Deng Ai came in by Yinping, and the principle held.',
+      verdictLostZh:
+        '論曰:費禕之赴援,不急一日之程,而急一局之棋 ——'
+        + '**將帥之定,軍之所恃**。'
+        + '禕在,則蜀之守猶可為;禕死於歲首之會,而蜀事始不可支。',
+      verdictLostEn:
+        "The historian says: Fei Yi, going up to the relief, would not hurry a day's march but would finish a game of weiqi — a commander's composure is what an army leans on. While Yi lived, Shu could still be defended; he was murdered at a New Year banquet, and after that nothing there held together.",
+    },
+  },
+  /* ── 252 東興之戰 ─────────────────────────────────────────────── */
+  'scn-252-dongxing': {
+    sun: {
+      defeat: {
+        titleZh: '雪中短兵',
+        titleEn: 'Short Blades in the Snow',
+        textZh:
+          '恪築東興堤,左右結山,俠築兩城。'
+          + '魏以為侵軼,三道並進,'
+          + '胡遵、諸葛誕率眾七萬攻兩城。\n\n'
+          + '時天寒雪,魏諸將會飲,見前部兵少,'
+          + '笑而不設備。丁奉謂諸將曰:'
+          + '「今日之事,取封侯爵賞之時也!」'
+          + '乃使兵解鎧著胄,持短兵。魏軍益笑之。\n\n'
+          + '兵得上,便鼓譟亂斫。魏軍驚擾散走,'
+          + '爭渡浮橋,橋壞絕,自投於水,更相蹈藉,'
+          + '死者數萬。',
+        textEn:
+          'Zhuge Ke raised the Dongxing embankment, anchored it on the hills at either end, and built a fort at each side. Wei took it for an encroachment and came on by three roads, Hu Zun and Zhuge Dan bringing seventy thousand against the two forts.\n\n'
+          + 'It was cold and snowing, and the Wei commanders were at a drinking party; seeing how few men were in the leading party they laughed and took no precautions. Ding Feng said to the other officers: "Today is the day one earns a marquisate." He had his men take off their armour, keep their helmets, and carry short blades. The Wei troops laughed harder.\n\n'
+          + 'Once up, they raised a shout and cut in among them. The Wei army broke in confusion, crowded onto the pontoon bridge, the bridge gave way and they went into the water and trampled one another. Tens of thousands died.',
+      },
+      verdictZh:
+        '論曰:東興之捷,吳自赤壁以來未有也。'
+        + '而恪由此輕魏 —— 明年興二十萬眾出新城,'
+        + '士卒疲病,還而見殺。\n'
+        + '**一勝之害,有時甚於一敗**:'
+        + '敗者知懼,勝者不知止。',
+      verdictEn:
+        'The historian says: Wu had had no such victory since Red Cliffs. And it made Zhuge Ke contemptuous of Wei — the next year he took two hundred thousand out to New Hefei, his troops sickened and broke down, and he was murdered on his return. A win can do more harm than a loss: a beaten man knows fear, a winner does not know when to stop.',
+      verdictLostZh:
+        '論曰:丁奉解鎧而勝,非勇於無甲,是知雪中之戰,'
+        + '甲重則不能疾 ——'
+        + '將之所以異於卒者,在此一念之間。',
+      verdictLostEn:
+        'The historian says: Ding Feng won by taking his armour off — not from bravado, but because he knew that in snow armour makes you slow. That single judgement is the whole difference between a commander and a soldier.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '見前部兵少',
+        titleEn: 'So Few in the Leading Party',
+        textZh:
+          '王昶攻南郡,毌丘儉向武昌,'
+          + '胡遵、諸葛誕率七萬攻東興二城 ——'
+          + '三道並進,兵勢極盛。\n\n'
+          + '而堤上二城,各留千人。魏軍造浮橋以渡,'
+          + '陳於堤上,分兵攻兩城 —— 城在高峻,不可卒拔。\n\n'
+          + '諸軍聞前敗,各燒屯走。是役,'
+          + '樂安太守桓嘉沒,前將軍韓綜死,'
+          + '喪失車乘牛馬騾驢各數千,資器山積。\n\n'
+          + '司馬昭以監軍失利,削爵。',
+        textEn:
+          'Wang Chang went at Nan commandery, Guanqiu Jian towards Wuchang, Hu Zun and Zhuge Dan with seventy thousand at the two forts of Dongxing — three roads at once, and a great weight of troops.\n\n'
+          + 'But the two forts on the embankment had a thousand men each. The Wei army threw a pontoon bridge, drew up along the dyke, and detached troops against the forts — which stood high and could not be rushed.\n\n'
+          + 'When the other columns heard of the defeat in front, each burned its camp and left. In that action the Grand Administrator of Le\'an, Huan Jia, was lost and the General of the Van, Han Zong, killed; several thousand each of carts, oxen, horses, mules and asses were lost, and the stores lay in heaps.\n\n'
+          + 'Sima Zhao was stripped of his title for the failure as army supervisor.',
+      },
+      verdictZh:
+        '論曰:三道並進而敗於一堤者,'
+        + '兵多而心不一也。\n'
+        + '諸葛誕、胡遵、王昶、毌丘儉皆一時之選,'
+        + '而無一人總之 —— **無主之師,勝則爭功,敗則爭走**。'
+        + '此後淮南三叛,四人之中三人在其列,'
+        + '亦可知魏之淮南,將帥各為身謀久矣。',
+      verdictEn:
+        'The historian says: three columns beaten by one embankment — plenty of troops and no single mind. Zhuge Dan, Hu Zun, Wang Chang and Guanqiu Jian were all first-rate men, and nobody was over them. An army without a master competes for credit when it wins and competes to get away when it loses. Three of those four appear in the later Huainan revolts, which tells you how long the commanders there had been looking after themselves.',
+      verdictLostZh:
+        '論曰:昭既削爵,而問於眾曰:「誰任其咎?」'
+        + '王儀曰:「責在元帥。」昭怒曰:「司馬欲委罪於孤邪!」'
+        + '遂殺之。—— 敗軍之責,自此無人敢言。',
+      verdictLostEn:
+        'The historian says: stripped of his title, Sima Zhao asked his staff, "Whose fault was it?" Wang Yi said, "The responsibility lies with the commander-in-chief." Zhao said furiously, "Does the marshal mean to put the blame on me?" and had him killed. After that nobody spoke about who had lost a battle.',
+    },
+  },
+  /* ── 253 合肥新城之戰 ─────────────────────────────────────────── */
+  'scn-253-hefei': {
+    cao: {
+      defeat: {
+        titleZh: '被攻過百日',
+        titleEn: 'Attacked Past the Hundredth Day',
+        textZh:
+          '恪興二十萬眾圍新城。城中三千人耳。\n\n'
+          + '守將張特拒之數月,城將陷,乃謂吳人曰:'
+          + '「今我無心復戰也。然魏法,被攻過百日而救不至者,'
+          + '雖降,家不坐也。自受敵以來,已九十餘日矣。'
+          + '此城中本有四千餘人,戰死者已過半,'
+          + '城雖陷,尚有半人不欲降,我當還差錄之,'
+          + '明日早送名,且持我印綬去以為信。」\n\n'
+          + '乃投其印綬以與之。吳人聽之而不取其印。'
+          + '特乃夜徹諸屋材柵,補其缺為二重。\n\n'
+          + '明日謂曰:「我但有鬥死耳!」',
+        textEn:
+          'Zhuge Ke invested New Hefei with two hundred thousand. There were three thousand men inside.\n\n'
+          + 'The commandant Zhang Te held out for months, and when the place was about to fall he said to the men of Wu: "I have no heart left for fighting. But the law of Wei is that if a garrison is attacked past a hundred days and no relief comes, then even if it surrenders its families are not punished. It is over ninety days since I was first engaged. There were four thousand-odd men here and more than half are dead; even when the city falls, half of the rest do not want to surrender, so I must go back and take their names. I will send you the roll in the morning, and here is my seal of office as a pledge."\n\n'
+          + 'And he threw down his seal to them. The men of Wu listened, and did not pick up the seal. That night Te pulled down the timbers and palisades of the houses and built the breach up double.\n\n'
+          + 'In the morning he said: "All I have left is to die fighting."',
+      },
+      verdictZh:
+        '論曰:三千人守二十萬,不以城堅,以其**知法** ——'
+        + '百日之限,本為恤降者而設,'
+        + '而特用之以誑敵,遂為守城之奇。\n'
+        + '然其所以敢誑者,亦坐吳人急於一日之功;'
+        + '**急者可欺,緩者不可欺**。',
+      verdictEn:
+        'The historian says: three thousand held off two hundred thousand not because the walls were strong but because the commandant knew the law. The hundred-day rule existed to spare men who surrendered, and he used it to deceive an enemy — which made it one of the great defences. But he dared it only because Wu was in a hurry for a result. The impatient can be tricked; the patient cannot.',
+      verdictLostZh:
+        '論曰:司馬孚將二十萬赴救,而諸將請速進,孚曰:'
+        + '「夫攻者,借人之力以為功;今圍城已久,'
+        + '不如緩之。」—— 待其自敝而已。',
+      verdictLostEn:
+        'The historian says: Sima Fu marched two hundred thousand to the relief, and when his officers pressed him to hurry he said: "An attacker borrows other men\'s strength to make his success. They have been at that siege a long time now; better to go slowly." He was simply waiting for them to wear out.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '因暑飲水',
+        titleEn: 'They Drank in the Heat',
+        textZh:
+          '大臣以為民疲,勸恪不可。恪不聽,'
+          + '違眾出軍,大發州郡二十萬眾,百姓騷動。\n\n'
+          + '圍新城數月,不拔。士卒疲勞,因暑飲水,'
+          + '泄下流腫,病者大半,死傷塗地。'
+          + '諸營吏日白病者多,恪以為詐,欲斬之,自是無敢言。\n\n'
+          + '恪內惟失計,而恥城不下,忿形於色。'
+          + '及退,傷病流曳,或頓仆道路,或見略獲 ——'
+          + '而恪晏然自若,出住江渚一月,圖起田於潯陽。\n\n'
+          + '孫峻因民之多怨,眾之所嫌,'
+          + '構恪欲為變,與亮謀,置酒請恪。',
+        textEn:
+          'The senior ministers thought the people were exhausted and urged him not to go. Ke would not listen; he went out against everyone\'s advice, levied two hundred thousand from the provinces and commanderies, and the country was in an uproar.\n\n'
+          + 'He lay before New Hefei for months and could not take it. The troops wore out, drank in the heat, and came down with dysentery and swellings; more than half were sick and the dead and injured lay everywhere. The camp officers reported the numbers of sick daily and Ke said they were lying and meant to behead one, and after that nobody dared say anything.\n\n'
+          + 'Inwardly he knew he had miscalculated, and was ashamed the place had not fallen, and it showed in his face. On the retreat the sick and wounded dragged themselves along, dropped in the road, or were taken — while Ke went on unruffled, halted a month on an island in the river, and drew up plans for opening farmland at Xunyang.\n\n'
+          + 'Sun Jun, using the general resentment and the general dislike, framed him for plotting a coup, arranged it with the young emperor, and invited him to a banquet.',
+      },
+      verdictZh:
+        '論曰:恪之敗,不敗於張特,敗於**不肯聽壞消息** ——'
+        + '諸營日白病者多,而以為詐;'
+        + '既知失計,而恥形於色,'
+        + '則左右皆知其不可諫矣。\n'
+        + '故一軍之潰,常先潰於中軍之帳;'
+        + '而恪之死,亦不在酒中,在新城之下。',
+      verdictEn:
+        'The historian says: Zhuge Ke was not beaten by Zhang Te but by his refusal to hear bad news. The camps reported their sick daily and he called it a lie; he knew he had miscalculated and let his shame show, and everyone around him understood he could no longer be advised. An army usually collapses first inside the commander\'s tent. And Ke did not die at that banquet; he died under the walls of New Hefei.',
+      verdictLostZh:
+        '論曰:東興大捷在前,新城大敗在後,相去一年。'
+        + '吳人殺恪,夷三族;而其後孫峻、孫綝相繼專朝,'
+        + '所殺者皆宗室大臣 —— **江東自是無可用之人**。',
+      verdictLostEn:
+        'The historian says: the great victory at Dongxing and the disaster at New Hefei were one year apart. Wu killed Zhuge Ke and exterminated his kin to the third degree; then Sun Jun and Sun Chen held the court in turn, and what they killed were the imperial clansmen and senior ministers. After that there was nobody left in the southeast to use.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
