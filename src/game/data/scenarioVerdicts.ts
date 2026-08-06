@@ -1720,6 +1720,213 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: unification is the work of tidying up. Whether the tidied thing can be kept is a separate question entirely.',
     },
   },
+  /* ── 249 高平陵之變 ───────────────────────────────────────────── */
+  'scn-249-gaopingling': {
+    sima: {
+      defeat: {
+        titleZh: '正始十年正月甲午',
+        titleEn: 'The Sixth Day of the First Month',
+        textZh:
+          '曹爽兄弟從天子謁高平陵,司馬懿以皇太后令閉諸城門,'
+          + '勒兵據武庫,授兵出屯洛水浮橋。\n\n'
+          + '奏爽曰:「但以免官,以侯就第。」蔣濟亦為書喻之,'
+          + '指洛水為誓。爽終夜不決,以刀築地曰:'
+          + '「我不失作富家翁!」桓範哭曰:「曹子丹佳人,'
+          + '生汝兄弟,犢耳!」\n\n'
+          + '爽兄弟既歸第,有司奏其謀反,誅之,夷三族。'
+          + '洛水之誓,自此不足信於天下。',
+        textEn:
+          'The Cao Shuang brothers went with the emperor to the tombs at Gaoping, and Sima Yi, using an order from the Empress Dowager, shut the city gates, took the arsenal under guard, and drew up troops on the floating bridge over the Luo.\n\n'
+          + 'He memorialised concerning Shuang: only dismissal, and retirement to his marquisate. Jiang Ji wrote to him too, swearing by the Luo. Shuang could not decide all night, and struck the ground with his sword: "I shall still be a rich gentleman!" Huan Fan wept: "Cao Zidan was a fine man, and he fathered you two — calves!"\n\n'
+          + 'Once the brothers were back at their houses the officials memorialised that they had plotted rebellion, and they were executed to three degrees of kin. From that day the oath sworn by the Luo was not worth anything in the realm.',
+      },
+      verdictZh:
+        '論曰:高平陵之事,一日而魏祚移。'
+        + '而所以能成者,不在兵,在爽之不決 ——'
+        + '桓範勸挾天子幸許昌,發四方兵,此上策也;而爽計之一夜,'
+        + '所計者惟富家翁三字。\n'
+        + '夫人主之權,一日不執,則終身不復執。',
+      verdictEn:
+        "The historian says: in a single day at Gaoping the fortune of Wei changed houses — and what made it possible was not troops but Shuang's indecision. Huan Fan urged him to take the emperor to Xuchang and call up the armies of the four quarters; that was the right move. Shuang thought about it all night, and what he thought about was the phrase 'rich gentleman'. Power let go of for one day is never taken up again.",
+      verdictLostZh:
+        '論曰:指洛水為誓而後夷其三族 —— 自是之後,魏之君臣相與,'
+        + '無一言可信者。司馬氏得天下之速,亦以此;失人心之久,亦以此。',
+      verdictLostEn:
+        'The historian says: he swore by the Luo and then exterminated three degrees of the family. After that nothing said between sovereign and minister in Wei could be believed. The house of Sima got the realm quickly because of it, and was distrusted for a very long time because of it.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '我不失作富家翁',
+        titleEn: 'I Shall Still Be a Rich Gentleman',
+        textZh:
+          '大司農桓範出城,以太后令召之,不從而奔爽 ——'
+          + '「今卿與天子相隨,令於天下,誰敢不應者?」\n\n'
+          + '爽默然。範又謂羲曰:「此事昭然,卿用讀書何為邪!'
+          + '於今日卿門戶倒矣!」\n\n'
+          + '自甲夜至五鼓,爽乃投刀於地曰:'
+          + '「司馬公正當欲奪吾權耳。吾得以侯還第,不失作富家翁。」\n\n'
+          + '範哭曰:「曹子丹佳人,生汝兄弟,犢耳!'
+          + '何圖今日坐汝等族滅矣!」',
+        textEn:
+          'Huan Fan, the Minister of Agriculture, got out of the city — summoned by the Dowager\'s order, he ignored it and rode to Shuang instead. "You have the Son of Heaven with you. Give orders to the realm and who will dare not obey?"\n\n'
+          + 'Shuang said nothing. Fan turned to Xi: "This is perfectly plain. What have you been reading books for? Today your house falls!"\n\n'
+          + 'From the first watch to the fifth Shuang sat, and then threw his sword down: "The Sima gentleman only wants my authority. If I go back to my house as a marquis I shall still be a rich gentleman."\n\n'
+          + 'And Fan wept: "Cao Zidan was a fine man, and he fathered you two — calves! Who would have thought I should be wiped out with your family today?"',
+      },
+      verdictZh:
+        '論曰:爽之敗,非才不足,是志不足。'
+        + '兵在手而不知用,天子在側而不知挾 ——'
+        + '所求者一身之安,而一身之安,正是他唯一得不到的東西。',
+      verdictEn:
+        'The historian says: Shuang did not fall short in ability but in will. He had troops in hand and did not know how to use them, the Son of Heaven at his elbow and did not know how to hold him. What he wanted was his own safety — and his own safety was the one thing he was never going to get.',
+      verdictLostZh:
+        '論曰:桓範之策,行之則魏未必亡;不行,則一夜而畢。'
+        + '謀之在人,而決之在主 —— 決者一人,故國之興亡常在一人之一夜。',
+      verdictLostEn:
+        'The historian says: had Huan Fan\'s plan been carried out, Wei might not have ended. It was not, and the thing was over in a night. Plans come from many; the decision comes from one. That is why the fate of a state so often turns on one man\'s single night.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '姜維聞之,乃出隴右',
+        titleEn: 'Jiang Wei Heard, and Went Out to Longyou',
+        textZh:
+          '魏之政變,蜀人聞之而喜:曹爽既誅,夏侯霸懼而來奔 ——'
+          + '姜維以為魏方多事,可以有為,乃連年出兵。\n\n'
+          + '而司馬氏之立,魏之內爭反而止;蜀所遇者,'
+          + '從此是一個比曹爽更難對付的對手。',
+        textEn:
+          "Word of the coup reached Shu and was welcome: Cao Shuang was dead and Xiahou Ba, frightened, came over to them. Jiang Wei reckoned Wei had trouble enough at home for something to be made of it, and went out year after year.\n\n"
+          + 'But the rise of the Sima ended Wei\'s internal quarrels. From then on what Shu faced was an opponent considerably harder to deal with than Cao Shuang.',
+      },
+      verdictZh:
+        '論曰:敵國之亂,未必己之利。'
+        + '曹爽在,則魏之政出於二;司馬氏專,則魏之政出於一。'
+        + '姜維喜其亂而不知其將定 —— 九伐中原,自此無一功。',
+      verdictEn:
+        "The historian says: disorder in an enemy state is not automatically to your advantage. While Cao Shuang lived, Wei's government came from two places; once the Sima held it alone, it came from one. Jiang Wei was pleased by the disorder and did not see that it was about to settle. Nine campaigns north, and not one of them achieved anything.",
+      verdictLostZh:
+        '論曰:夏侯霸之奔蜀,蜀人以為得一將;'
+        + '而魏人以為去一患。',
+      verdictLostEn:
+        'The historian says: when Xiahou Ba fled to Shu, Shu thought it had gained a general. Wei thought it had shed a problem.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '二宮之爭',
+        titleEn: 'The Quarrel of the Two Palaces',
+        textZh:
+          '魏有高平陵,吳有二宮 —— 太子和與魯王霸並寵,'
+          + '朝臣分為兩部,陸遜、顧譚、吾粲皆坐之。\n\n'
+          + '遜屢書諫爭,權遣中使責問,遜憤恚致卒,年六十三。\n\n'
+          + '而後廢太子,賜魯王死。一國之中,同時失去一個儲君、一個宗王、'
+          + '和一個丞相。',
+        textEn:
+          'Wei had Gaoping; Wu had the two palaces — the heir apparent He and the Prince of Lu, Ba, favoured equally, the court split in two, and Lu Xun, Gu Tan and Wu Can all caught in it.\n\n'
+          + 'Xun wrote again and again to remonstrate. Quan sent a palace envoy to reprimand him, and Xun died of rage and grief at sixty-three.\n\n'
+          + 'Then the heir was deposed and the Prince of Lu ordered to die. In one country, at one time: an heir, a prince of the blood, and a chancellor, all gone.',
+      },
+      verdictZh:
+        '論曰:權之晚年,信讒賊,興大獄,二宮之爭幾亡其國。'
+        + '夫創業者能忍辱,而守成者不能忍疑 ——'
+        + '陸遜死於一封責問的詔書,而吳之柱石自此空。',
+      verdictEn:
+        'The historian says: in his last years Quan listened to slanderers and raised great prosecutions, and the quarrel of the two palaces nearly ended his state. The man who founds can swallow humiliation; the man who inherits cannot swallow suspicion. Lu Xun died of a reprimanding edict, and the pillar of Wu was gone.',
+      verdictLostZh:
+        '論曰:敵國方變,而己國方亂 —— 兩家皆內耗,'
+        + '而先定者勝。魏先定,故三十年後晉滅吳。',
+      verdictLostEn:
+        'The historian says: the enemy state was convulsing and so was his own. Both were consuming themselves, and the one that settled first won. Wei settled first — and thirty years later Jin destroyed Wu.',
+    },
+  },
+  /* ── 219 漢中王 ───────────────────────────────────────────────── */
+  'scn-219-hanzhong': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '水淹七軍,而後白衣渡江',
+        titleEn: 'Seven Armies Drowned, and Then the White Robes',
+        textZh:
+          '關羽圍樊,漢水暴溢,于禁七軍皆沒,龐德死之 ——'
+          + '威震華夏,曹操議徙許都以避其銳。\n\n'
+          + '而呂蒙稱疾還建業,陸遜代之,遺羽書,辭甚謙下。'
+          + '羽意大安,稍撤兵以赴樊。\n\n'
+          + '蒙至尋陽,盡伏其精兵舠䑡中,使白衣搖櫓,作商賈人服 ——'
+          + '晝夜兼行,至羽所置江邊屯候,盡收縛之,是故羽不聞知。\n\n'
+          + '荊州降。走麥城,至臨沮,為潘璋司馬馬忠所獲。',
+        textEn:
+          'Guan Yu invested Fan; the Han river burst its banks and all seven of Yu Jin\'s armies went under, and Pang De died — his name shook the realm, and Cao Cao debated moving the capital out of his way.\n\n'
+          + 'And Lü Meng pleaded illness and went back to Jianye, and Lu Xun replaced him and wrote to Yu in the humblest terms. Yu was much reassured and drew troops off to Fan.\n\n'
+          + 'Meng reached Xunyang, hid all his best men in the covered boats, and had them row in white civilian clothes dressed as merchants — travelling day and night, taking and binding every watch-post Yu had set along the river, so that Yu heard nothing.\n\n'
+          + 'Jing province surrendered. He fell back on Maicheng, and at Linju was taken by Ma Zhong, an officer of Pan Zhang.',
+      },
+      verdictZh:
+        '論曰:漢中王之立,蜀之極盛也;而極盛之日,即荊州之失。'
+        + '羽剛而自矜,善待卒伍而驕於士大夫 ——'
+        + '糜芳、傅士仁之降,非一日之故。\n'
+        + '夫兩線之業,恃盟而已;盟一旦翻,則首尾皆敵。',
+      verdictEn:
+        'The historian says: taking the title of King of Hanzhong was the height of Shu — and on that same height Jing province was lost. Yu was hard and full of himself, good to his soldiers and arrogant with the gentry; the surrender of Mi Fang and Shi Ren was not the work of one day. An enterprise on two fronts rests on an alliance, and when the alliance turns over, both ends are enemies.',
+      verdictLostZh:
+        '論曰:失荊州者,失的不是一州,是隆中對的那一半 ——'
+        + '「命一上將將荊州之軍以向宛洛」,自此無人可命,亦無軍可將。',
+      verdictLostEn:
+        'The historian says: losing Jing province was not losing a province. It was losing half of the Longzhong plan — "let one senior general take the army of Jing towards Wan and Luo." After that there was no general to send and no army to send.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '白衣渡江',
+        titleEn: 'Crossing in White',
+        textZh:
+          '權內憚羽,外欲以為己功,箋與曹公,乞以討羽自效。\n\n'
+          + '蒙曰:「今征虜守南郡,潘璋住白帝,蔣欽將游兵萬人循江上下,'
+          + '應敵所在,而蒙為國家前據襄陽,如此,何憂於操,何賴於羽?」\n\n'
+          + '羽之死,吳得荊州全境 —— 而自是與蜀為讎,'
+          + '夷陵之師,即在三年之後。',
+        textEn:
+          'Quan feared Guan Yu at home and wanted the credit abroad, and wrote to Cao offering to punish Yu as his own service.\n\n'
+          + 'Meng said: "Let Zhengly hold Nan commandery, Pan Zhang sit at Baidi, Jiang Qin take ten thousand mobile troops up and down the river to meet whatever comes — and let me take Xiangyang for the state in front. Do that, and what is there to fear from Cao, and what do we need Guan Yu for?"\n\n'
+          + 'Yu died and Wu had the whole of Jing province — and from then on Shu was an enemy. The army at Yiling came three years later.',
+      },
+      verdictZh:
+        '論曰:取荊州者,吳之必爭也 —— 全據長江,而後可守。'
+        + '然取之而失盟,遂啟夷陵之師;夷陵雖勝,而三分之勢亦自此僵。'
+        + '故曰:得地而失援,其得未必為得。',
+      verdictEn:
+        'The historian says: Wu had to have Jing province — the whole length of the river, or the river could not be held. But taking it cost the alliance and brought on the army at Yiling; and though Yiling was a victory, the three-way balance froze from that point. Hence: ground gained at the price of an ally is not necessarily a gain.',
+      verdictLostZh:
+        '論曰:呂蒙之計,十全者也;而其後三年,吳與蜀皆不能北向一步。',
+      verdictLostEn:
+        "The historian says: Lü Meng's plan was flawless. And for three years after it, neither Wu nor Shu could take a single step northward.",
+    },
+    cao: {
+      defeat: {
+        titleZh: '議徙許都',
+        titleEn: 'They Talked of Moving the Capital',
+        textZh:
+          '羽威震華夏,操議徙許都以避其銳。'
+          + '司馬懿、蔣濟諫曰:「于禁等為水所沒,非戰攻之失,'
+          + '於國家大計未足有損。劉備、孫權,外親內疏,'
+          + '羽之得意,權必不願也。可遣人勸權躡其後,'
+          + '許割江南以封權,則樊圍自解。」\n\n'
+          + '操從之。而後羽死,荊州歸吳。\n\n'
+          + '一封信解了一座城的圍,也把三分之勢釘死了二十年。',
+        textEn:
+          'Guan Yu\'s name shook the realm, and Cao debated moving the capital out of his way. Sima Yi and Jiang Ji remonstrated: "Yu Jin and the rest were lost to floodwater, not to a failure of arms; the state\'s position is not really damaged. Liu Bei and Sun Quan are close on the surface and estranged underneath. Yu\'s success is the last thing Quan wants. Send someone to urge Quan to come in behind him, and promise to cede the land south of the river to him as his fief — and the siege of Fan lifts of itself."\n\n'
+          + 'Cao did it. Yu died, and Jing province went to Wu.\n\n'
+          + 'One letter lifted the siege of one city, and nailed the three-way split in place for twenty years.',
+      },
+      verdictZh:
+        '論曰:魏之解樊圍,不以兵,以一封書 ——'
+        + '「劉備、孫權,外親內疏」八字,是三分之世最貴的一句話。'
+        + '夫敵之盟,不必以兵破之,示之以利可也。',
+      verdictEn:
+        'The historian says: Wei lifted the siege of Fan not with troops but with a letter — and the eight words "Liu Bei and Sun Quan are close on the surface and estranged underneath" were the most valuable sentence of the age. An enemy alliance need not be broken by force. Show it an advantage and it breaks itself.',
+      verdictLostZh:
+        '論曰:割江南以封權,虛言也;而權受之 ——'
+        + '非不知其虛,是他本來就想要那塊地。',
+      verdictLostEn:
+        'The historian says: the offer to cede the south was empty words, and Quan took it — not because he could not see it was empty, but because he wanted that land anyway.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
