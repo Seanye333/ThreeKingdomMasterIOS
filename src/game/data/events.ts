@@ -622,6 +622,8 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     // Legacy one-shot, now the fallback behind the evt-maolu-* chain: if
     // the player walked away (maolu-abandoned), history finds another way.
     id: 'evt-three-visits-to-thatched-cottage',
+    // 三顧正鏈(evt-maolu-1/2/3)沒走成時的**退路**,靠 flag-unset maolu-visit-1
+    // 與鏈末那一節互斥。同名是刻意的 —— 見 eventExclusivity.test.ts 的說明。
     name: { en: 'Three Visits to the Thatched Cottage', zh: '三顧茅廬' },
     yearMin: 207,
     yearMax: 211,
@@ -1913,6 +1915,10 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     yearMin: 201,
     yearMax: 207,
     requires: [
+      // 互斥要**雙向**:另一條同場面的事件(evt-liu-bei-tan-stream)查了
+      // flag-unset maleap-tanxi,而這一條原本沒查它的旗標 —— 於是那一條先演
+      // 的時候,這一條照樣會再演一次。與三英戰呂布、白馬斬顏良同一個毛病。
+      { kind: 'flag-unset', key: 'tan-stream-leap' },
       { kind: 'officer-active', officerId: 'liu-bei' },
       { kind: 'officer-alive', officerId: 'liu-biao' },
     ],
@@ -2211,6 +2217,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   },
   {
     id: 'evt-liu-bei-tan-stream',
+    // 與 evt-maleap-tanxi 同一個場面;互斥已補成**雙向**(見該條的註解)。
     name: { en: 'The Leap across Tan Stream', zh: '馬躍檀溪' },
     yearMin: 201,
     yearMax: 206,
@@ -2697,6 +2704,8 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   },
   {
     id: 'evt-jieting-2',
+    // §8.1 抉擇鏈的結果(要 flag-set jieting-masu);evt-jieting-ma-su 是鏈沒走時
+    // 的退路(要 flag-unset jieting-chain-started)。同名刻意,互斥見該測試。
     name: { en: 'Tears for Ma Su', zh: '揮淚斬馬謖' },
     yearMin: 228,
     yearMax: 230,

@@ -581,7 +581,17 @@ const CITY_OWNERSHIP_200: Record<string, string> = {
   luoyang:   'cao',
   wancheng:  'cao',
   runan:     'cao',
-  xinye:     'cao',
+  /*
+   * 新野與博望還給劉表 —— 200 年它們是荊州的北界,不是曹操的南界。
+   * 建安六年(201)劉表才使劉備屯新野;博望坡之戰(202)是夏侯惇自葉縣
+   * **打進去**的,不是守自己的城。
+   *
+   * 盤面上也對得上:曹操原本十四城,其中新野、博望兩座深入荊州,體檢五輪
+   * 追蹤裡博望在第 1–2 回合就被劉表拿走(四輪如此)—— 那是送城,不是防線。
+   * 收回之後他十二城,南門在樊城,那才是史實的形狀。
+   */
+  xinye:     'liu-biao',
+  bowang:    'liu-biao',
   // Yuan Shao (absorbed Gongsun Zan + Kong Rong + Han north)
   ye:        'yuan-shao',
   beiping:   'yuan-shao',

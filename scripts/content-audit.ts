@@ -49,16 +49,27 @@ async function main() {
     yearMax: number;
   }>;
 
-  // ① 同名事件 —— 兩條中文名一字不差的事件,幾乎都是同一個場面寫了兩次
+  /*
+   * ① 同名事件 —— **只報數,不判錯**。
+   *
+   * 專案對這件事已有明文決定(見 `src/game/data/eventExclusivity.test.ts`):
+   * 同名是允許的,因為「鏈 + 退路」兩份本來就是同一個場面的兩種寫法
+   * (三顧茅廬的簡述版給沒走過該鏈的盤用)。**該釘的是互斥,不是名字。**
+   * 那條測試已經逐對檢查旗標互斥並在 CI 跑,這裡再判一次錯只會兩支工具
+   * 互相打架 —— 所以這裡只列出來供人翻查。
+   *
+   * (我一度把三組同名事件改了名讓這裡歸零,結果打掉那條測試的
+   *  「同名組數 > 0」守衛 —— 那個守衛正是為了防止它自己變成空測試。
+   *  改名已還原;真正的修正是把馬躍檀溪的**單向**互斥補成雙向。)
+   */
   const byName = new Map<string, string[]>();
   for (const e of evts) {
     const k = e.name.zh;
     byName.set(k, [...(byName.get(k) ?? []), e.id]);
   }
-  for (const [zh, ids] of byName) {
-    if (ids.length > 1) {
-      findings.push({ level: 'error', where: `events/${ids.join(' + ')}`, what: `同名事件「${zh}」×${ids.length} —— 互斥若沒做全,同一個場面會演兩次` });
-    }
+  const dupes = [...byName.entries()].filter(([, ids]) => ids.length > 1);
+  if (dupes.length) {
+    findings.push({ level: 'warn', where: 'events', what: `${dupes.length} 組同名事件(互斥由 eventExclusivity.test.ts 把關):${dupes.map(([zh, ids]) => `${zh}×${ids.length}`).join('、')}` });
   }
 
   // ② 旗標:被 requires 讀,而全庫沒有任何 effects 寫得上去
