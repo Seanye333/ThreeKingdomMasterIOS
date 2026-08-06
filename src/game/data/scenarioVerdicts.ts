@@ -5929,6 +5929,377 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: Jia Yi wrote: "One man raised a difficulty and the seven ancestral temples came down; the ruler died at another\'s hands and became the laughing-stock of the world. Why? Because humanity and right were not practised, and because the conditions of attack and of holding what you have are not the same."',
     },
   },
+  /* ── 楚漢·還定三秦 ────────────────────────────────────────────── */
+  'scn-ch-sanqin': {
+    han: {
+      defeat: {
+        titleZh: '國士無雙',
+        titleEn: 'No Second Man Like Him',
+        textZh:
+          '信度何等已數言上,上不我用,即亡。'
+          + '何聞信亡,不及以聞,自追之。'
+          + '人有言上曰:「丞相何亡。」'
+          + '上大怒,如失左右手。\n\n'
+          + '居一二日,何來謁上。上且怒且喜,'
+          + '罵何曰:「若亡,何也?」\n'
+          + '何曰:「臣不敢亡也,臣追亡者。」'
+          + '「若所追者誰?」曰:「韓信也。」\n\n'
+          + '上復罵曰:「諸將亡者以十數,'
+          + '公無所追;追信,詐也。」\n\n'
+          + '何曰:「諸將易得耳。'
+          + '至如信者,國士無雙。\n'
+          + '王必欲長王漢中,無所事信;'
+          + '必欲爭天下,非信無所與計事者。」',
+        textEn:
+          'Han Xin reckoned that Xiao He had spoken for him several times and the King was not going to use him, so he left. He Heard of it, and without waiting to report went after him himself. Somebody told the King: "The Chancellor He has deserted." And the King was as furious as a man who has lost both hands.\n\n'
+          + 'A day or two later He came to court. The King was angry and glad at once, and swore at him: "You deserted. Why?" And He said: "I did not desert. I went after a deserter." — "And who was it you went after?" — "Han Xin."\n\n'
+          + 'The King swore again: "Commanders have deserted by the dozen and you did not go after any of them. Going after Xin is a story."\n\n'
+          + 'And He said: "Commanders are easy to come by. Of men like Xin there is no second one. If Your Majesty means to be king of Hanzhong for good, you have no use for Xin. If you mean to contend for the empire, there is nobody but Xin to plan it with."',
+      },
+      verdictZh:
+        '論曰:漢之得天下,起於一次追亡 ——'
+        + '而何之所以追,不在信之才,'
+        + '在**他先問清楚了漢王要的是漢中還是天下**。\n'
+        + '故信登壇,首言者亦此:'
+        + '「今大王舉而東,三秦可傳檄而定也。」\n'
+        + '**用人之先,必先定所欲**:'
+        + '所欲小,則國士亦冗員。',
+      verdictEn:
+        'The historian says: the Han dynasty began with a man chasing a deserter — and Xiao He went after him not because of Han Xin\'s ability but because he had first established whether the King wanted Hanzhong or the empire. Which is what Han Xin himself opened with on the platform: "Move east now and the three Qin kingdoms can be settled by circular letter." Before employing men, settle what you want: where what you want is small, the finest man in the realm is surplus staff.',
+      verdictLostZh:
+        '論曰:信曰:「項王所過無不殘滅者,'
+        + '天下多怨,百姓不親附,特劫於威彊耳。'
+        + '名雖為霸,實失天下心,故曰其彊易弱。\n'
+        + '——今大王誠能反其道:'
+        + '任天下武勇,何所不誅!'
+        + '以天下城邑封功臣,何所不服!'
+        + '以義兵從思東歸之士,何所不散!」',
+      verdictLostEn:
+        'The historian says: Han Xin said: "Wherever the King of Chu passes he leaves ruin; the empire is full of resentment, the people are not attached to him, and they are held only by force. He has the name of hegemon and has really lost the empire\'s heart, and that is why I say his strength is easily weakened. If Your Majesty will do the opposite — employ the brave men of the empire, and what will not be destroyed? enfeoff your meritorious officers with the empire\'s cities, and what will not submit? lead men who long to go home east, in a righteous army, and what will not scatter before you?"',
+    },
+    yong: {
+      defeat: {
+        titleZh: '三秦',
+        titleEn: 'The Three Kingdoms of Qin',
+        textZh:
+          '項王恐諸侯叛之,乃陰謀曰:'
+          + '「巴、蜀道險,秦之遷人皆居蜀。」'
+          + '乃曰:「巴、蜀亦關中地也。」'
+          + '故立沛公為漢王,王巴、蜀、漢中,都南鄭。\n\n'
+          + '而三分關中,王秦降將以距塞漢王:'
+          + '章邯為雍王,司馬欣為塞王,董翳為翟王。\n\n'
+          + '——而秦父兄怨此三人,痛入骨髓。\n\n'
+          + '故信曰:「三秦王為秦將,'
+          + '將秦子弟數歲矣,所殺亡不可勝計;'
+          + '又欺其眾降諸侯,至新安,'
+          + '項王詐阬秦降卒二十餘萬,'
+          + '唯獨邯、欣、翳得脫。'
+          + '秦父兄怨此三人,痛入骨髓。」',
+        textEn:
+          'Fearing the other lords would turn on him, the King of Chu reasoned privately: "The roads into Ba and Shu are dangerous, and Qin has always sent its exiles to Shu." So he announced that Ba and Shu were also part of the Guanzhong region, and made the Duke of Pei King of Han over Ba, Shu and Hanzhong, with his capital at Nanzheng.\n\n'
+          + 'And he divided Guanzhong three ways among the surrendered Qin generals to keep the King of Han bottled up: Zhang Han as King of Yong, Sima Xin as King of Sai, Dong Yi as King of Di.\n\n'
+          + 'And the elders of Qin hated those three men to the marrow.\n\n'
+          + 'As Han Xin said: "The three kings of Qin were generals of Qin and led the sons of Qin for years, and the dead cannot be counted; and then they deceived their own men into surrendering, and at Xin\'an the King of Chu treacherously buried two hundred thousand Qin men who had given themselves up, and only Han, Xin and Yi got away. The elders of Qin hate those three to the marrow."',
+      },
+      verdictZh:
+        '論曰:項王之封三秦,慮不可謂不密 ——'
+        + '塞其道、分其地、王其降將。\n'
+        + '而所忘者一事:**這三個人是關中人恨的人**。\n'
+        + '故漢王一出陳倉,三秦傳檄而定;'
+        + '守土者無民,則山川之險皆虛設。\n'
+        + '——**封疆之固,不在誰把守,在守者身後站著誰**。',
+      verdictEn:
+        'The historian says: the King of Chu\'s arrangement of the three Qin kingdoms was not carelessly made — he blocked the roads, split the territory, and enthroned the surrendered generals. He forgot one thing: those three were the men Guanzhong hated. So the King of Han came out at Chencang and the three kingdoms were settled by circular letter. Where the holder of the ground has no people behind him, the passes and rivers are decoration. What makes a frontier solid is not who garrisons it but who is standing behind the garrison.',
+      verdictLostZh:
+        '論曰:漢王之入武關也,秋毫無所害,'
+        + '除秦苛法,與秦民約,法三章耳:'
+        + '殺人者死,傷人及盜抵罪。'
+        + '——**約法三章者,亦一種佈陣**。',
+      verdictLostEn:
+        'The historian says: when the King of Han came in through the Wu pass he did not harm so much as a hair, repealed the harsh laws of Qin and made a covenant with its people of three articles only: death for murder, and penalties in proportion for injury and theft. Three articles of law are also a way of deploying an army.',
+    },
+  },
+  /* ── 楚漢·彭城之戰 ────────────────────────────────────────────── */
+  'scn-ch-pengcheng': {
+    han: {
+      defeat: {
+        titleZh: '睢水為之不流',
+        titleEn: 'The Sui River Stopped Flowing',
+        textZh:
+          '漢王部五諸侯兵,凡五十六萬人,東伐楚。\n'
+          + '項王聞之,令諸將擊齊,而自以精兵三萬人南從魯出胡陵。\n\n'
+          + '漢王入彭城,收其貨寶美人,日置酒高會。\n\n'
+          + '項王晨擊漢軍而東,至彭城,日中,大破漢軍。'
+          + '漢軍皆走,相隨入穀、泗水,殺漢卒十餘萬人。'
+          + '漢卒皆南走山,楚又追擊至靈壁東睢水上。'
+          + '漢軍卻,為楚所擠,多殺,'
+          + '漢卒十餘萬人皆入睢水,睢水為之不流。\n\n'
+          + '圍漢王三匝。'
+          + '——於是大風從西北而起,折木發屋,揚沙石,'
+          + '窈冥晝晦,逢迎楚軍。楚軍大亂,壞散,'
+          + '而漢王乃得與數十騎遁去。',
+        textEn:
+          'The King of Han put together the armies of five lords, five hundred and sixty thousand in all, and marched east against Chu. Hearing of it, the King of Chu ordered his generals to go on with Qi and took thirty thousand picked men south from Lu by way of Huling.\n\n'
+          + 'The King of Han entered Pengcheng, took its treasure and its women, and held drinking parties daily.\n\n'
+          + 'The King of Chu attacked at dawn, drove east, and by midday at Pengcheng had broken the Han army. The Han troops all ran, went into the Gu and Si rivers one after another, and a hundred thousand of them were killed. The rest ran south into the hills and Chu pursued to the Sui river east of Lingbi. The Han army fell back, was crowded together by Chu and cut down in numbers, and a hundred thousand men went into the Sui, and the Sui stopped flowing.\n\n'
+          + 'They had the King of Han surrounded three deep — and a great wind got up out of the northwest, breaking trees and stripping roofs and flinging sand and stones, and the day went dark, and it blew straight into the faces of the Chu army. Chu fell into confusion and came apart, and the King of Han got away with a few dozen horsemen.',
+      },
+      verdictZh:
+        '論曰:五十六萬敗於三萬,'
+        + '不敗於眾寡,敗於**入城之後那幾日**。\n'
+        + '收貨寶、置酒高會者,非一人之過,'
+        + '是五諸侯之兵各有所取 ——'
+        + '**合眾人之兵者,必先合眾人之所欲;'
+        + '所欲既得,則軍自散**。\n'
+        + '故此後漢王不復合諸侯,'
+        + '而以韓信別將北略,彭越擾其後,'
+        + '英布叛其南 —— 三面之勢,自彭城一敗而定。',
+      verdictEn:
+        'The historian says: five hundred and sixty thousand beaten by thirty thousand — not by the odds, but by the few days after entering the city. Collecting treasure and holding drinking parties was not one man\'s fault: five lords\' armies each had something to take. Whoever combines several men\'s armies must first combine what those men want; once they have what they wanted, the army dissolves itself. So the King of Han never again fought as a coalition. He sent Han Xin off north on a separate command, had Peng Yue harass the rear and Ying Bu revolt in the south — the three-sided strategy was settled by the defeat at Pengcheng.',
+      verdictLostZh:
+        '論曰:楚騎追漢王,漢王急,'
+        + '推墮孝惠、魯元車下,滕公常下收載之。'
+        + '如是者三。曰:'
+        + '「雖急不可以驅,奈何棄之?」'
+        + '——**史不諱其推,亦不諱其收**。',
+      verdictLostEn:
+        'The historian says: with Chu cavalry on him and no time, the King of Han pushed the future Emperor Hui and Princess Yuan off the carriage, and Lord Teng got down and picked them up and put them back. Three times. And said: "We are pressed, but we cannot make the horses go faster than they can. Why abandon them?" The record does not conceal the pushing off, and does not conceal the picking up.',
+    },
+    chu: {
+      defeat: {
+        titleZh: '三萬破五十六萬',
+        titleEn: 'Thirty Thousand Against Half a Million',
+        textZh:
+          '項王聞漢王入彭城,'
+          + '令諸將擊齊,而自以精兵三萬人南下。\n\n'
+          + '晨擊漢軍,日中而大破之。\n\n'
+          + '——此項王一生用兵之極。\n\n'
+          + '然勝而不能追亡:'
+          + '漢王遁去,收兵於滎陽,'
+          + '蕭何發關中老弱未傅者悉詣滎陽,漢軍復振。\n\n'
+          + '而項王之後方,彭越已數絕其糧道;'
+          + '其側,英布已叛;'
+          + '其北,韓信已略趙、代、燕。\n\n'
+          + '——一日之捷,而三面之敵成矣。',
+        textEn:
+          'Hearing that the King of Han had entered Pengcheng, the King of Chu left his generals to deal with Qi and came south himself with thirty thousand picked men.\n\n'
+          + 'He attacked at dawn and by midday had broken them utterly.\n\n'
+          + 'It is the high point of his career as a soldier.\n\n'
+          + 'And he could not follow the victory up. The King of Han got away and reassembled at Xingyang, and Xiao He sent every man in Guanzhong too old or too young for the register to Xingyang, and the Han army was on its feet again.\n\n'
+          + 'Meanwhile in his rear Peng Yue had already cut his supply road several times; on his flank Ying Bu had revolted; to the north Han Xin had overrun Zhao, Dai and Yan.\n\n'
+          + 'One day\'s victory, and enemies on three sides.',
+      },
+      verdictZh:
+        '論曰:項王戰未嘗敗,而終於亡 ——'
+        + '所以然者,**其勝皆在戰,其敗皆在戰外**:\n'
+        + '關中不都而都彭城,失地利;'
+        + '阬降卒而屠城邑,失人和;'
+        + '疑范增而逐之,失謀;'
+        + '封諸侯而自為霸,失名。\n'
+        + '故太史公曰:「自矜功伐,奮其私智而不師古,'
+        + '謂霸王之業,欲以力征經營天下,'
+        + '五年卒亡其國。」',
+      verdictEn:
+        'The historian says: the King of Chu never lost a battle and was destroyed all the same — because his victories were all in the fighting and his defeats all outside it. He would not make his capital in Guanzhong and made it at Pengcheng, and lost the advantage of ground; he buried prisoners and sacked towns, and lost the people; he suspected Fan Zeng and drove him off, and lost his counsel; he parcelled out kingdoms and made himself hegemon, and lost the name of it. So the Grand Historian wrote: "He was vain of his own conquests, pushed his private cleverness and would not learn from antiquity, called it the work of a hegemon-king, and meant to run the empire by force of arms — and in five years he had lost his state."',
+      verdictLostZh:
+        '論曰:范增曰:「豎子不足與謀!'
+        + '奪項王天下者,必沛公也。'
+        + '吾屬今為之虜矣!」'
+        + '——後果為漢所間,增疽發背而死於道。',
+      verdictLostEn:
+        'The historian says: Fan Zeng said: "The boy is not worth planning with. The man who takes the empire from the King of Chu will be the Duke of Pei, and we shall all be his prisoners." Han later set them against each other, and Fan Zeng died of a carbuncle on the road home.',
+    },
+  },
+  /* ── 楚漢·井陘之戰 ────────────────────────────────────────────── */
+  'scn-ch-jingxing': {
+    han: {
+      defeat: {
+        titleZh: '背水為陣',
+        titleEn: 'Drawn Up With the River Behind',
+        textZh:
+          '信使人間視,知廣武君策不用,還報,則大喜,'
+          + '乃敢引兵遂下。\n\n'
+          + '未至井陘口三十里,止舍。夜半傳發,'
+          + '選輕騎二千人,人持一赤幟,從間道萆山而望趙軍,'
+          + '誡曰:「趙見我走,必空壁逐我,'
+          + '若疾入趙壁,拔趙幟,立漢赤幟。」\n\n'
+          + '乃使萬人先行,出,背水陳。趙軍望見而大笑。\n\n'
+          + '既戰,佯敗走,趙果空壁爭漢鼓旗。'
+          + '——漢軍皆殊死戰,不可敗。'
+          + '而二千騎共候趙空壁逐利,則馳入,'
+          + '拔趙幟,立漢赤幟二千。\n\n'
+          + '趙軍已不勝,欲還歸壁,壁皆漢赤幟,大驚,遂亂。',
+        textEn:
+          'Han Xin sent men to look, learned that the Lord of Guangwu\'s plan had not been adopted, and on that report was delighted and dared bring his army down.\n\n'
+          + 'Thirty li short of the Jingxing defile he halted. At midnight the order went round; two thousand light horse were picked, each with a red banner, and sent by a side track to lie under cover and watch the Zhao camp, with these instructions: "When Zhao sees us run they will empty the camp to chase us. Get into the camp at speed, pull down the Zhao banners and set up the red banners of Han."\n\n'
+          + 'Then ten thousand men went out ahead and drew up with the river behind them, and the Zhao army looked at it and laughed out loud.\n\n'
+          + 'When the fighting started the Han troops feigned defeat and ran, and Zhao did empty the camp to scramble for the Han drums and standards — and the Han troops fought to the death and could not be broken. And the two thousand horsemen, waiting for the camp to empty, galloped in, pulled down the Zhao banners and set up two thousand red ones.\n\n'
+          + 'Zhao, unable to win in front, wanted to get back to camp; the camp was all red Han banners; and in their fright they came apart.',
+      },
+      verdictZh:
+        '論曰:諸將問曰:「兵法右倍山陵,前左水澤,'
+        + '今者將軍令臣等反背水陳,曰破趙會食,'
+        + '臣等不服,然竟以勝,此何術也?」\n\n'
+        + '信曰:「此在兵法,顧諸君不察耳。'
+        + '兵法不曰『陷之死地而後生,置之亡地而後存』?'
+        + '且信非得素拊循士大夫也,'
+        + '此所謂『驅市人而戰之』,'
+        + '其勢非置之死地,使人人自為戰;'
+        + '今予之生地,皆走,寧尚可得而用之乎!」\n\n'
+        + '——**背水者,非賭,是知道自己帶的是什麼兵**。',
+      verdictEn:
+        'The historian says: his officers asked: "The manuals say keep hills on your right and water in front and to the left. You made us draw up with our backs to the river and said we would dine after breaking Zhao, and we did not believe it, and we won. What is the method?"\n\n'
+          + 'And Han Xin said: "It is in the manuals; you simply did not look. Do they not say, throw them into ground where they must die and they will live; put them where they must perish and they will survive? Besides, I have not had these men long enough to have won them over. This is what is meant by driving the men of the marketplace into battle. Unless they are put where they must die, so that every man fights for himself, giving them ground to live on means they all run — and then what use are they to me?"\n\n'
+          + 'Fighting with the river behind you is not a gamble. It is knowing what kind of troops you have.',
+      verdictLostZh:
+        '論曰:信募生得廣武君者予千金。'
+        + '既縛至,信解其縛,東鄉坐,師事之。'
+        + '廣武君辭曰:「敗軍之將,不可以言勇;'
+        + '亡國之大夫,不可以圖存。」\n'
+        + '信曰:「僕聞之,百里奚居虞而虞亡,'
+        + '在秦而秦霸,非愚於虞而智於秦也,'
+        + '用與不用,聽與不聽也。'
+        + '……僕委心歸計,願足下勿辭。」',
+      verdictLostEn:
+        'The historian says: Han Xin offered a thousand in gold for the Lord of Guangwu taken alive, and when he was brought in bound, untied him, seated him facing east and treated him as a teacher. The Lord of Guangwu declined: "The commander of a beaten army cannot speak of courage; the minister of a destroyed state cannot plan for survival." And Xin said: "I have heard that Baili Xi was in Yu and Yu was destroyed, and was in Qin and Qin became hegemon — he was not stupid in Yu and clever in Qin. It was a matter of being employed or not, of being listened to or not... I put my mind in your hands. Do not refuse me."',
+    },
+    zhao: {
+      defeat: {
+        titleZh: '義兵不用詐謀',
+        titleEn: 'A Righteous Army Uses No Tricks',
+        textZh:
+          '廣武君李左車說成安君曰:'
+          + '「井陘之道,車不得方軌,騎不得成列,'
+          + '行數百里,其勢糧食必在其後。\n'
+          + '願足下假臣奇兵三萬人,從間道絕其輜重;'
+          + '足下深溝高壘,堅營勿與戰。\n'
+          + '彼前不得鬥,退不得還,'
+          + '吾奇兵絕其後,使野無所掠,'
+          + '不至十日,而兩將之頭可致於麾下。」\n\n'
+          + '成安君,儒者也,常稱義兵不用詐謀奇計,曰:\n'
+          + '「兵法十則圍之,倍則戰。'
+          + '今韓信兵號數萬,其實不過數千。'
+          + '能千里而襲我,亦已罷極。'
+          + '今如此避而不擊,後有大者,何以加之!'
+          + '則諸侯謂吾怯,而輕來伐我。」\n\n'
+          + '不聽廣武君策。',
+        textEn:
+          'Li Zuoche, Lord of Guangwu, put it to the Lord of Cheng\'an: "In the Jingxing defile carts cannot go two abreast and cavalry cannot form line. Marching several hundred li, their food must necessarily be strung out behind them.\n\n'
+          + 'Give me thirty thousand men on a separate command and let me cut their baggage by the side tracks; dig deep, build high, hold the camp and refuse battle.\n\n'
+          + 'Then they cannot fight in front and cannot get back, my detachment is across their rear, and there is nothing in the countryside to plunder. In under ten days the heads of both their generals can be laid before you."\n\n'
+          + 'The Lord of Cheng\'an was a Confucian and always maintained that a righteous army uses no tricks or unorthodox devices, and said: "The manuals say surround at ten to one and give battle at two to one. Han Xin\'s army is called tens of thousands and is really a few thousand, and to have come a thousand li to attack us it must be worn out. If we avoid a force like this and do not strike it, what shall we do when a larger one comes? The other lords will call us cowards and think us cheap enough to attack."\n\n'
+          + 'And he did not take the advice.',
+      },
+      verdictZh:
+        '論曰:成安君非愚,是**以兵法之數為兵法** ——'
+        + '十則圍之、倍則戰,說的是勢,不是戒律。\n'
+        + '而其所畏者,亦非韓信,是「諸侯謂吾怯」:\n'
+        + '**畏人議者,必為敵所用**;\n'
+        + '故韓信不必勝趙之兵,只須勝趙之議。',
+      verdictEn:
+        'The historian says: the Lord of Cheng\'an was not a fool; he took the numbers in the manuals for the manuals themselves. Surround at ten to one, give battle at two to one — those describe a situation, not a commandment. And what he was afraid of was not Han Xin but being called a coward by the other lords. A man who fears what people will say can be used by his enemy. Han Xin did not have to beat Zhao\'s army; he only had to beat Zhao\'s staff meeting.',
+      verdictLostZh:
+        '論曰:信之所以敢下井陘,'
+        + '正因**先探得廣武君策不用** ——'
+        + '間諜所報者,非敵之兵,是敵之議。',
+      verdictLostEn:
+        "The historian says: what made Han Xin willing to come down the Jingxing defile was learning first that the Lord of Guangwu's plan had been rejected. What his spies brought back was not the enemy's order of battle but the enemy's staff discussion.",
+    },
+  },
+  /* ── 楚漢·濰水之戰 ────────────────────────────────────────────── */
+  'scn-ch-weishui': {
+    han: {
+      defeat: {
+        titleZh: '囊沙壅水',
+        titleEn: 'Sandbags in the River',
+        textZh:
+          '楚使龍且將兵二十萬救齊。\n\n'
+          + '或說龍且曰:「漢兵遠鬥窮戰,其鋒不可當。'
+          + '齊、楚自居其地戰,兵易敗散。'
+          + '不如深壁,令齊王使其信臣招所亡城,'
+          + '亡城聞其王在,楚來救,必反漢。'
+          + '——漢兵二千里客居,齊城皆反之,其勢無所得食,'
+          + '可無戰而降也。」\n\n'
+          + '龍且曰:「吾平生知韓信為人,易與耳。'
+          + '且夫救齊不戰而降之,吾何功?'
+          + '今戰而勝之,齊之半可得。」\n\n'
+          + '——信乃夜令人為萬餘囊,盛沙壅濰水上流,'
+          + '引軍半渡,擊龍且,佯不勝,還走。'
+          + '龍且果喜曰:「固知信怯也。」遂追渡水。'
+          + '信使人決壅囊,水大至。',
+        textEn:
+          'Chu sent Long Ju with two hundred thousand to save Qi.\n\n'
+          + 'Somebody advised him: "The Han troops are fighting far from home with nothing behind them and their edge cannot be met. Qi and Chu are fighting on their own ground and their soldiers scatter easily. Better to hold behind deep works and have the King of Qi send trusted men to call back the towns he has lost; hearing that their king is alive and that Chu has come to the rescue, they will certainly turn against Han. Han is two thousand li from home; with every town in Qi against them there is nothing for them to eat and they can be made to surrender without a battle."\n\n'
+          + 'And Long Ju said: "I have known Han Xin all my life. He is easy to handle. And if I relieve Qi by making them surrender without a battle, where is my credit? Beat them in the field and half of Qi is mine."\n\n'
+          + 'So in the night Han Xin had ten thousand bags filled with sand and dammed the upper Wei, brought his army half across, attacked Long Ju, pretended to lose and ran. And Long Ju was delighted: "I always knew he was a coward," and pursued across the water. And Han Xin had the bags cut open and the water came down.',
+      },
+      verdictZh:
+        '論曰:濰水之勝,勝於**龍且要的是功,不是齊** ——'
+        + '深壁不戰則齊自復,而龍且無功;'
+        + '故彼必戰。\n'
+        + '知敵之所欲,而後可以設餌。\n'
+        + '龍且既死,項王大懼,'
+        + '使武涉往說信 ——'
+        + '天下之勢,自此三分而系於一人。',
+      verdictEn:
+        'The historian says: the Wei river was won because what Long Ju wanted was credit, not Qi. Hold behind works without fighting and Qi recovers itself and Long Ju has nothing to show — so he had to fight. Know what your enemy wants and you can set a bait. With Long Ju dead the King of Chu took fright and sent Wu She to talk Han Xin over: from then on the balance of the empire was in three parts and hung on one man.',
+      verdictLostZh:
+        '論曰:蒯通說信曰:「當今兩主之命縣於足下。'
+        + '足下為漢則漢勝,與楚則楚勝。'
+        + '……莫若兩利而俱存之,三分天下,鼎足而居。」\n'
+        + '信曰:「漢王遇我甚厚,'
+        + '載我以其車,衣我以其衣,食我以其食。'
+        + '吾聞之,乘人之車者載人之患,'
+        + '衣人之衣者懷人之憂,'
+        + '食人之食者死人之事,吾豈可以鄉利倍義乎!」',
+      verdictLostEn:
+        'The historian says: Kuai Tong said to Han Xin: "The lives of both rulers hang on you at this moment. Side with Han and Han wins; side with Chu and Chu wins... Better to let both live and profit, and divide the empire three ways and stand like the legs of a tripod." And Xin said: "The King of Han has treated me generously — carried me in his own carriage, clothed me in his own clothes, fed me from his own table. I have heard that a man who rides in another\'s carriage carries that man\'s troubles, that a man who wears another\'s clothes takes that man\'s cares to heart, and that a man who eats another\'s food dies in his cause. How could I turn my back on right for profit?"',
+    },
+    qi: {
+      defeat: {
+        titleZh: '烹酈生',
+        titleEn: 'The Envoy in the Cauldron',
+        textZh:
+          '酈食其說齊王曰:「王知天下之所歸乎?」'
+          + '王曰:「不知也。」'
+          + '曰:「王知天下之所歸,則齊國可得而有也;'
+          + '若不知天下之所歸,即齊國未可得保也。」\n\n'
+          + '——齊王田廣以為然,乃聽酈生,'
+          + '罷歷下兵守戰備,與酈生日縱酒。\n\n'
+          + '而韓信引兵東,將擊齊。'
+          + '聞酈食其已說下齊,欲止。'
+          + '蒯通說信曰:「將軍受詔擊齊,'
+          + '而漢獨發間使下齊,寧有詔止將軍乎?'
+          + '……且酈生一士,伏軾掉三寸之舌,下齊七十餘城;'
+          + '將軍將數萬眾,歲餘乃下趙五十餘城。'
+          + '為將數歲,反不如一豎儒之功乎!」\n\n'
+          + '信然之,遂渡河襲齊。'
+          + '齊王以為酈生賣己,乃烹之。',
+        textEn:
+          'Li Yiji said to the King of Qi: "Does Your Majesty know where the empire is going?" — "I do not." — "If Your Majesty knows where the empire is going, Qi can be kept; if not, Qi cannot be held."\n\n'
+          + 'King Tian Guang thought he was right, listened to him, stood down the troops and works at Lixia, and drank with him daily.\n\n'
+          + 'And Han Xin was marching east to attack Qi, and hearing that Li Yiji had already talked Qi into coming over, meant to stop. Kuai Tong said to him: "The general has an edict to attack Qi, and Han sends a private envoy of its own and Qi comes over. Is there an edict telling the general to stop? ... Besides, Li Yiji is one man; leaning on his carriage rail and wagging a three-inch tongue he has brought in seventy cities of Qi, and the general with tens of thousands took over a year to reduce fifty in Zhao. Some years a general, and less to show for it than one contemptible scholar?"\n\n'
+          + 'Han Xin took the point and crossed the river against Qi. And the King of Qi, thinking Li Yiji had sold him, boiled him alive.',
+      },
+      verdictZh:
+        '論曰:齊之亡,亡於**同時信了兩件事**:'
+        + '信酈生之說,而罷歷下之備。\n'
+        + '——降者可以不備兵,而未降之敵不因你的降而止步:'
+        + '韓信所受之詔未改,則其兵必至。\n'
+        + '**與一國議和,而不問其將是否同意,則和即為陷阱**。\n'
+        + '酈生之死,亦死於此:'
+        + '他所許的,不是他能兌現的。',
+      verdictEn:
+        'The historian says: Qi was destroyed by believing two things at once — believing Li Yiji, and standing down the defences at Lixia. A state that has come over need not keep its army in the field; but an enemy who has not yet been told does not stop because you surrendered. Han Xin\'s orders had not been changed, so his army was coming. Make peace with a country without asking whether its general agrees, and the peace is a trap. And Li Yiji died of the same thing: what he promised was not his to deliver.',
+      verdictLostZh:
+        '論曰:酈生將烹,曰:「舉大事不細謹,盛德不辭讓。'
+        + '而公不為若更言!」遂烹酈生。'
+        + '——漢定天下,封其弟酈商為列侯,'
+        + '而高祖每念酈生,未嘗不欷歔。',
+      verdictLostEn:
+        'The historian says: about to be boiled, Li Yiji said: "A man engaged in great affairs does not fuss over details, and great virtue does not stand on ceremony. I am not going to change my story for you." And they boiled him. When Han had settled the empire, his younger brother Li Shang was made a marquis, and the founding emperor never thought of Li Yiji without sighing.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
