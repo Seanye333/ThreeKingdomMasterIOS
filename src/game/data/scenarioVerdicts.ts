@@ -2387,6 +2387,273 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: Hu asked to invade and the court refused; after he died they did what he had said. Things in this world are commonly accomplished after the man who proposed them is dead.',
     },
   },
+  /* ── 218 定軍山·漢中之戰 ──────────────────────────────────────── */
+  'scn-218-dingjun': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '男子當戰,女子當運',
+        titleEn: 'The Men Fight and the Women Carry',
+        textZh:
+          '法正曰:「曹操一舉而降張魯,定漢中,不因此勢以圖巴蜀,'
+          + '而留夏侯淵、張郃屯守,身遽北還 —— 此非其智不逮而力不足也,'
+          + '必將內有憂偪故耳。」\n\n'
+          + '黃忠推鋒必進,一戰而斬淵。及操自來爭,'
+          + '先主曰:「曹公雖來,無能為也,我必有漢川矣。」'
+          + '斂眾拒險,終不交鋒 ——\n\n'
+          + '蜀中發兵者眾,男子當戰,女子當運。'
+          + '操積月不拔,亡者日多,遂引軍還。',
+        textEn:
+          'Fa Zheng said: "Cao Cao took Zhang Lu\'s surrender and settled Hanzhong in one stroke, and then did not use the position to move on Ba and Shu — he left Xiahou Yuan and Zhang He to garrison it and went hurrying north himself. That is not because his judgement failed or his strength was short. He must have trouble at home."\n\n'
+          + 'Huang Zhong drove his point in and killed Yuan in a single fight. When Cao came himself to contest it, the First Lord said: "Cao may come; he can do nothing. Hanchuan is mine." And he drew his men in behind the passes and would not engage —\n\n'
+          + 'Shu was sending everything it had: the men fighting, the women carrying. Cao spent months without taking anything, losing more men every day, and led his army home.',
+      },
+      verdictZh:
+        '論曰:漢中之得,蜀之極盛;而「男子當戰,女子當運」八字,'
+        + '亦是蜀之極限。一州之力,傾國而戰,勝之而國已疲 ——'
+        + '故王業之基雖立,而其後六出祁山,終不能再有一個漢中。',
+      verdictEn:
+        'The historian says: taking Hanzhong was the height of Shu — and the eight words about the men fighting and the women carrying are also the measure of its ceiling. One province, everything thrown in, a victory that left the country exhausted. The foundation of a royal enterprise was laid; and in six later campaigns out of Qishan there was never another Hanzhong.',
+      verdictLostZh:
+        '論曰:操之棄漢中,曰「雞肋」—— 食之無所得,棄之如可惜。'
+        + '而先主之取漢中,傾一國以就之。同一塊地,二人所計不同,'
+        + '故所得亦不同。',
+      verdictLostEn:
+        'The historian says: Cao called Hanzhong a chicken rib — nothing on it worth eating, and a pity to throw away. Liu Bei emptied a country to get it. The same piece of ground: two men reckoned it differently, and got correspondingly different things.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '雞肋',
+        titleEn: 'Chicken Ribs',
+        textZh:
+          '王欲還,出令曰「雞肋」。官屬不知所謂。'
+          + '主簿楊修便自嚴裝,人驚問之,修曰:'
+          + '「夫雞肋,棄之如可惜,食之無所得,以比漢中,知王欲還也。」\n\n'
+          + '而夏侯淵已死於定軍山下 —— 淵為督帥,'
+          + '而自將四百兵行鹿角,分兵半助張郃,'
+          + '黃忠乘高鼓譟而下,一戰斬之。\n\n'
+          + '操聞之曰:「當固守,何以行鹿角!」',
+        textEn:
+          'The king meant to withdraw and gave out the watchword "chicken ribs." His staff did not know what he meant. The recorder Yang Xiu packed his own baggage, and when people asked in astonishment he said: "A chicken rib is a pity to throw away and has nothing on it to eat. Compared to Hanzhong, that means the king intends to go home."\n\n'
+          + 'And Xiahou Yuan was already dead below Dingjun mountain — the commander-in-chief, going out himself with four hundred men to repair the abatis, half his force detached to help Zhang He, when Huang Zhong came down off the high ground shouting and killed him in one fight.\n\n'
+          + 'Cao heard of it and said: "He should have held his position. What was he doing repairing abatis?"',
+      },
+      verdictZh:
+        '論曰:淵之死,死於督帥而自行小役。'
+        + '操嘗戒之曰:「為將當有怯弱時,不可但恃勇也。」而淵不改。\n'
+        + '至於漢中之棄,則非戰之罪:'
+        + '**一州之地,爭之者傾國,守之者分兵** —— 遠者常負。',
+      verdictEn:
+        'The historian says: Xiahou Yuan died because a commander-in-chief went out to do a working party\'s job. Cao had warned him: "A general must know when to be timid; courage alone will not do." He did not change. As for giving up Hanzhong, that was not a failure of arms: **the side contesting a province empties itself into it, and the side holding it must divide** — and distance loses.',
+      verdictLostZh:
+        '論曰:雞肋之令,楊修解之而先自嚴裝 —— 後坐是死。'
+        + '知主之意者,不必說出來。',
+      verdictLostEn:
+        'The historian says: Yang Xiu read the watchword and packed first — and was executed for it later. Knowing your lord\'s mind does not oblige you to say so out loud.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '合肥之後,濡須之前',
+        titleEn: 'After Hefei, before Ruxu',
+        textZh:
+          '曹劉爭漢中,而你在東邊修濡須塢。\n\n'
+          + '三年前逍遙津那一場,張遼八百人衝了你十萬眾 ——'
+          + '自此江北之地,你不再輕出。\n\n'
+          + '而荊州還在關羽手裡。你在等的不是漢中的結果,'
+          + '是那個人什麼時候把兵調去打樊城。',
+        textEn:
+          'Cao and Liu were fighting over Hanzhong, and you were building the works at Ruxu in the east.\n\n'
+          + 'Three years before at Xiaoyaojin, Zhang Liao had charged your hundred thousand with eight hundred men. You did not go lightly north of the river after that.\n\n'
+          + 'And Jing province was still in Guan Yu\'s hands. What you were waiting for was not the outcome in Hanzhong. It was the day that man moved his troops off to attack Fan.',
+      },
+      verdictZh:
+        '論曰:漢中之役,吳未出一兵,而所得最多 ——'
+        + '曹劉相持而俱疲,關羽北伐而後方虛,'
+        + '呂蒙之計,正生於此二年之間。'
+        + '故曰:三分之世,善為國者,不必在戰場上。',
+      verdictEn:
+        'The historian says: Wu sent not one soldier to the Hanzhong campaign and got the most out of it. Cao and Liu wore each other down; Guan Yu went north and left his rear empty; and Lü Meng\'s plan was born in exactly those two years. In an age of three powers, the man who runs his state best is not necessarily on a battlefield.',
+      verdictLostZh:
+        '論曰:逍遙津之後,權不復輕合肥;'
+        + '而不輕者,乃能待其可乘之時。',
+      verdictLostEn:
+        'The historian says: after Xiaoyaojin, Quan never took Hefei lightly again — and a man who stops taking things lightly is a man who can wait for his moment.',
+    },
+  },
+  /* ── 215 合肥之戰 ─────────────────────────────────────────────── */
+  'scn-215-hefei': {
+    sun: {
+      defeat: {
+        titleZh: '逍遙津上',
+        titleEn: 'At Xiaoyao Ford',
+        textZh:
+          '權率十萬眾圍合肥,而城中七千人。\n\n'
+          + '遼夜募敢從之士,得八百人,椎牛饗將士,明日大戰。'
+          + '平旦,遼被甲持戟,先登陷陣,殺數十人,斬二將,'
+          + '大呼自名,衝壘入,至權麾下 —— 權大驚,走登高冢,以長戟自守。\n\n'
+          + '圍十餘日,城不可拔,乃引退。'
+          + '而權留逍遙津北,遼覘望知之,即將步騎奄至。'
+          + '權乘駿馬上津橋,橋南已見徹,丈餘無版 ——'
+          + '谷利在馬後,使權持鞍緩控,利於後著鞭,以助馬勢,遂得超度。',
+        textEn:
+          'Quan came against Hefei with a hundred thousand. There were seven thousand men in the city.\n\n'
+          + 'Liao spent the night calling for volunteers and got eight hundred, killed oxen to feast them, and at first light went out. In armour with his halberd he was first into the line, killed dozens, cut down two generals, shouted his own name, broke through the works and came right up to Quan\'s standard — Quan bolted for a high mound and held it with a long halberd.\n\n'
+          + 'After ten days and more the city would not fall and he withdrew. And Quan lingered north of Xiaoyao ford; Liao saw it and came down on him with horse and foot at once. Quan put his good horse at the ford bridge and the southern span had already been broken — ten feet with no planking. Gu Li was behind him: he had Quan take the saddle and slacken the rein, and laid on with the whip from behind to give the horse its head, and so they got across.',
+      },
+      verdictZh:
+        '論曰:以十萬攻七千而不能拔,又幾為八百人所擒 ——'
+        + '權之短於將略,自此天下知之。\n'
+        + '然亦自此,吳之為國,由攻轉守:'
+        + '不能北取,則專力於江 —— 三分之勢,由此而固。',
+      verdictEn:
+        'The historian says: a hundred thousand could not carry seven thousand, and the commander was nearly taken by eight hundred men. Everyone in the realm learned that day that Quan was no field general. But from that day Wu also turned from attacking to holding: unable to take the north, it put everything into the river — and the three-way balance hardened.',
+      verdictLostZh:
+        '論曰:張遼之八百,非以少勝多,是以**先**勝眾 ——'
+        + '「賊至乃發」四字,是曹操留下的教令。',
+      verdictLostEn:
+        'The historian says: Zhang Liao\'s eight hundred did not beat numbers with fewness. They beat numbers with being first — "when the enemy arrives, go out" was the standing order Cao Cao had left in a sealed box.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '教與函,賊至乃發',
+        titleEn: 'The Sealed Box',
+        textZh:
+          '操征張魯,教與護軍薛悌,署函邊曰「賊至乃發」。'
+          + '及權至,發教,曰:「若孫權至者,張、李將軍出戰,'
+          + '樂將軍守,護軍勿得與戰。」\n\n'
+          + '諸將皆疑。遼曰:「公遠征在外,比救至,彼破我必矣。'
+          + '是以教指及其未合逆擊之,折其盛勢,以安眾心,然後可守也。'
+          + '成敗之機,在此一戰,諸君何疑?」',
+        textEn:
+          'Cao was campaigning against Zhang Lu and left instructions with the army protector Xue Ti, marked on the outside of the box: open when the enemy arrives. When Quan came they opened it: "If Sun Quan comes, Generals Zhang and Li go out and fight; General Yue holds the city; the army protector is not to take part."\n\n'
+          + 'The generals were all doubtful. Liao said: "His Excellency is far away on campaign. By the time relief comes they will certainly have broken us. That is why the instruction says to strike them before they concentrate — blunt their momentum, settle our own men\'s minds, and then the place can be held. Success or failure turns on this one fight. What is there for you gentlemen to doubt?"',
+      },
+      verdictZh:
+        '論曰:操之教,不在多,在**時**——「賊至乃發」四字,'
+        + '是把一個決定留在最需要它的那一刻。\n'
+        + '夫遠征者最忌遙制,而操以一函制之:所制者非其行,是其疑。',
+      verdictEn:
+        'The historian says: the value of Cao\'s instruction was not in its content but its timing — "open when the enemy arrives" put a decision in the hands of the men who needed it at the moment they needed it. Commanding a distant garrison from far away is the classic mistake, and he did it with one sealed box: what he controlled was not their movements but their hesitation.',
+      verdictLostZh:
+        '論曰:七千守十萬,而合肥終魏之世不失 ——'
+        + '一城之固,有時不在城。',
+      verdictLostEn:
+        'The historian says: seven thousand held off a hundred thousand, and Hefei never fell for as long as Wei lasted. What makes a city hold is sometimes not the city.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '湘水為界',
+        titleEn: 'The Xiang as the Border',
+        textZh:
+          '孫權遣呂蒙襲取長沙、零陵、桂陽三郡。'
+          + '先主引兵五萬下公安,關羽入益陽 ——\n\n'
+          + '而曹操定漢中之訊至。先主懼失益州,'
+          + '乃遣使求和,分荊州:以湘水為界,'
+          + '長沙、江夏、桂陽以東屬權,南郡、零陵、武陵以西屬備。\n\n'
+          + '同盟未破,而已經需要劃界了。',
+        textEn:
+          'Sun Quan sent Lü Meng to seize Changsha, Lingling and Guiyang. The First Lord brought fifty thousand men down to Gong\'an and Guan Yu moved into Yiyang —\n\n'
+          + 'and then word came that Cao Cao had settled Hanzhong. Fearing for Yi province, the First Lord sent for terms and divided Jing: the Xiang river as the boundary, Changsha, Jiangxia and Guiyang eastward to Quan, Nan commandery, Lingling and Wuling westward to Bei.\n\n'
+          + 'The alliance was not broken. It had merely reached the point of needing a surveyed line.',
+      },
+      verdictZh:
+        '論曰:湘水之分,盟之始裂也。'
+        + '夫同盟至於畫地,則已非同盟,是兩國之界約耳。'
+        + '四年之後,呂蒙白衣渡江,所渡者正是這一條界。',
+      verdictEn:
+        'The historian says: the division at the Xiang was where the alliance began to split. When allies get to the point of drawing a line on the ground they are no longer allies but two states with a border treaty. Four years later Lü Meng crossed in white robes — and what he crossed was that line.',
+      verdictLostZh:
+        '論曰:兩線之國,必有一線受屈。'
+        + '先主之屈於湘水者,為漢中;而漢中既得,荊州遂失。',
+      verdictLostEn:
+        'The historian says: a state fighting on two fronts must give way on one. The First Lord gave way at the Xiang in order to have Hanzhong — and having got Hanzhong, he lost Jing.',
+    },
+  },
+  /* ── 214 入主西川 ─────────────────────────────────────────────── */
+  'scn-214-xichuan': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '雒城一年',
+        titleEn: 'A Year before Luocheng',
+        textZh:
+          '龐統中流矢卒,年三十六。先主進圍雒城,一年乃拔。'
+          + '諸葛亮、張飛、趙雲將兵溯流定白帝、江州、江陽 ——'
+          + '而後合圍成都。\n\n'
+          + '城中尚有精兵三萬人,穀帛支一年,吏民咸欲死戰。'
+          + '而璋曰:「百姓攻戰三年,肌膏草野者,以璋故也,何心能安!」'
+          + '遂開城出降。群下莫不流涕。',
+        textEn:
+          'Pang Tong was killed by a stray arrow at thirty-six. The First Lord closed on Luocheng and took a year over it. Zhuge Liang, Zhang Fei and Zhao Yun came up the river settling Baidi, Jiangzhou and Jiangyang — and then the ring closed on Chengdu.\n\n'
+          + 'There were still thirty thousand good troops inside and a year of grain and cloth, and the officials and people all wanted to fight to the death. And Zhang said: "The people have been fighting three years, and their flesh has manured the wild grass, because of Zhang. How can I be easy?" And opened the gates. Not a man of his household could keep from weeping.',
+      },
+      verdictZh:
+        '論曰:先主之取益州,以客而奪主 ——'
+        + '龐統勸之,法正應之,而先主猶豫者累日。'
+        + '及既得之,西土人士皆有次序,而蜀之基定。\n'
+        + '然此後二十年,蜀人未嘗以外來者視之 ——'
+        + '所以能然者,以其入城之日不殺一人。',
+      verdictEn:
+        'The historian says: he took Yi province as a guest displacing a host — Pang Tong urged it, Fa Zheng answered for it, and the First Lord hesitated for days. Once he had it, the men of the west were all placed in proper order and the foundation of Shu was laid. And for twenty years afterwards the people of Shu never treated him as an outsider — which was possible because on the day he entered the city he killed nobody.',
+      verdictLostZh:
+        '論曰:一年之雒城,三年之攻戰 —— 而成都不戰而下。'
+        + '取一國者,末後一步常不在兵。',
+      verdictLostEn:
+        'The historian says: a year at Luocheng, three years of fighting — and Chengdu came without a battle. In taking a country the last step is usually not a military one.',
+    },
+    'liu-zhang': {
+      defeat: {
+        titleZh: '開城',
+        titleEn: 'The Gates',
+        textZh:
+          '你有三萬精兵,一年之糧,和一城願意為你死戰的吏民。\n\n'
+          + '你都不要了。',
+        textEn:
+          'You had thirty thousand good troops, a year of grain, and a city full of officials and people who wanted to fight to the death for you.\n\n'
+          + 'You declined all of it.',
+      },
+      verdictZh:
+        '論曰:璋之降,史書譏其闇弱;而闇弱者不當有此語。'
+        + '「百姓攻戰三年,肌膏草野者,以璋故也」——'
+        + '一國之主而肯把帳算在自己頭上,亂世之中,'
+        + '這是第二個人做到的事。',
+      verdictEn:
+        'The historian says: the histories call his surrender weakness, and a weak man does not produce that sentence. "The people have fought three years and their flesh has manured the wild grass, because of Zhang." A ruler willing to put the account in his own name — in that age he was the second man to manage it.',
+      verdictLostZh:
+        '論曰:引劉備者,張松法正;而開城者,璋也。'
+        + '亡國之罪,史書歸於前二人,而璋自認之。',
+      verdictLostEn:
+        'The historian says: Zhang Song and Fa Zheng brought Liu Bei in; Liu Zhang opened the gates. The histories put the blame for the state\'s fall on the first two. He put it on himself.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '既得隴,復望蜀',
+        titleEn: 'Having Long, He Wanted Shu',
+        textZh:
+          '劉曄勸曰:「今破漢中,蜀人震恐,其勢自傾。'
+          + '以公之神明,因其傾而壓之,無不克也。'
+          + '若小緩之,諸葛亮明於治而為相,關羽、張飛勇冠三軍而為將,'
+          + '蜀民既定,據險守要,則不可犯矣。」\n\n'
+          + '操曰:「人苦無足,既得隴右,復欲得蜀!」\n\n'
+          + '居七日,蜀降者說:「蜀中一日數十驚,備雖斬之而不能安。」'
+          + '操復問曄,曄曰:「今已小定,未可擊也。」',
+        textEn:
+          'Liu Ye urged him: "We have broken Hanzhong and the people of Shu are terrified; the place is toppling of its own weight. With Your Excellency\'s judgement, press on it while it is toppling and nothing will hold. Delay a little and Zhuge Liang, who is brilliant at government, will be chancellor, and Guan Yu and Zhang Fei, the bravest men in any army, will be his generals; once the people of Shu are settled and they hold the passes, the place cannot be touched."\n\n'
+          + 'And Cao said: "Men suffer from never having enough. Having got Longyou, now you want Shu as well!"\n\n'
+          + 'Seven days later a defector from Shu reported: "There are dozens of panics a day in Shu; Bei is executing people and cannot settle it." Cao asked Ye again, and Ye said: "It has steadied a little now. It cannot be struck."',
+      },
+      verdictZh:
+        '論曰:七日之間,可擊者變為不可擊 ——'
+        + '兵機之速如此。操以一言辭之,而後二十年不能入蜀。\n'
+        + '夫「既得隴復望蜀」者,譏貪也;而當日之勢,'
+        + '貪者得之,不貪者失之。',
+      verdictEn:
+        'The historian says: in seven days a thing that could be struck became a thing that could not. That is how fast a military opening closes. Cao turned it down with one remark, and for twenty years afterwards he could not get into Shu. "Having Long he wanted Shu" is a jibe at greed — and on that particular day, the greedy man would have had it and the ungreedy one lost it.',
+      verdictLostZh:
+        '論曰:曄之策,操不用;而曄未嘗以此自伐 ——'
+        + '謀臣之難,不在獻策,在策不用而心不怨。',
+      verdictLostEn:
+        'The historian says: Cao did not take Liu Ye\'s advice, and Ye never made anything of it afterwards. The hard part of being a strategist is not producing the plan. It is having it refused and not resenting it.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
