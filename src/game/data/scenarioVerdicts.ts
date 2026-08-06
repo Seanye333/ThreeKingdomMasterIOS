@@ -4032,6 +4032,331 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: Shu fell in a single winter, three men divided the credit for it, and within a month the three had destroyed one another. Some things in this world do not need doing; they need waiting for.',
     },
   },
+  /* ── 197 渤海戰線 ─────────────────────────────────────────────── */
+  'scn-197-bohai': {
+    cao: {
+      defeat: {
+        titleZh: '失不便取其質',
+        titleEn: 'I Failed to Take Hostages',
+        textZh:
+          '南征張繡,繡舉眾降。既而悔之,復叛。'
+          + '公與戰,軍敗,為流矢所中,'
+          + '長子昂、弟子安民遇害。\n\n'
+          + '典韋戰於門中,賊不得入。'
+          + '韋被數十創,短兵接戰,手殺數人。'
+          + '創重,發怒,瞋目大罵而死。\n\n'
+          + '公至舞陰,謂諸將曰:「吾降張繡等,'
+          + '失不便取其質,以至於此。吾知所以敗。'
+          + '諸卿觀之,自今已後不復敗矣。」',
+        textEn:
+          'He campaigned south against Zhang Xiu, who surrendered his whole force — and then regretted it and revolted again. Cao Cao fought him and was beaten, hit by a stray arrow, and lost his eldest son Ang and his nephew Anmin.\n\n'
+          + 'Dian Wei fought in the gateway and they could not get in. Wounded dozens of times, he closed to short weapons and killed several with his hands. When the wounds told he flew into a rage, glared and cursed them, and died.\n\n'
+          + 'At Wuyin, Cao said to his officers: "I accepted Zhang Xiu\'s surrender and failed to take hostages from him, and this is where it has brought me. I know why I was beaten. Watch, gentlemen — from now on I shall not be beaten again."',
+      },
+      verdictZh:
+        '論曰:宛城一敗,喪長子、愛將、良騎,'
+        + '而操之言不及一恨字,只論其所以敗。\n'
+        + '**敗而能自數其故者,天下無幾人** ——'
+        + '割髮代首在明年,官渡在三年之後;'
+        + '此一敗,實為其後二十年之學。\n'
+        + '而張繡終復來降,操執其手,為子均娶其女 ——'
+        + '殺子之讎而納之,亦非常人所能。',
+      verdictEn:
+        'The historian says: at Wan he lost his eldest son, his favourite guardsman and his best horse, and not a word of what he said afterwards was regret — only an account of why he had lost. Very few men can itemise their own defeat. Cutting off his hair in place of his head came the next year, Guandu three years later; that one defeat was the schooling for the next twenty. And Zhang Xiu did come over again in the end, and Cao took him by the hand and married his daughter to his own son — receiving the man who had killed his son, which is also not ordinary.',
+      verdictLostZh:
+        '論曰:操後行經襄邑,設祭於典韋墓,'
+        + '下車哭之而後過。年年如此。',
+      verdictLostEn:
+        "The historian says: afterwards, whenever he passed Xiangyi, Cao set out an offering at Dian Wei's grave, got down from his carriage and wept before going on. Every year.",
+    },
+    'yuan-shu': {
+      defeat: {
+        titleZh: '代漢者當塗高',
+        titleEn: 'He Who Replaces Han Stands High on the Road',
+        textZh:
+          '術以讖文云「代漢者,當塗高也」,'
+          + '自以名字應之;又以袁氏出陳,為舜後,'
+          + '以黃代赤,德運之次 —— 遂建號仲氏。\n\n'
+          + '呂布斬其使韓胤,孫策以書絕之。'
+          + '曹操南征,術棄軍走。\n\n'
+          + '後士眾饑困,不能自立,'
+          + '欲往青州就袁譚,道路不得過。\n\n'
+          + '問廚下,尚有麥屑三十斛。'
+          + '時盛暑,欲得蜜漿,又無蜜。'
+          + '坐櫺床上,嘆息良久,乃大咤曰:'
+          + '「袁術至於此乎!」因頓伏床下,'
+          + '嘔血斗餘而死。',
+        textEn:
+          'Yuan Shu took the prophecy "he who replaces Han stands high on the road" to point at his own name, and made much of the Yuan family\'s descent from the sages of Chen and of yellow succeeding red in the sequence of the elements — and proclaimed the Zhong dynasty.\n\n'
+          + 'Lü Bu beheaded his envoy Han Yin and Sun Ce broke with him by letter. Cao Cao came south and Shu abandoned his army and ran.\n\n'
+          + 'Later his men were starving and he could not hold anything together, and tried to reach Yuan Tan in Qing province, and could not get through.\n\n'
+          + 'He asked the kitchen what there was: thirty measures of barley husks. It was high summer and he wanted honey water, and there was no honey. He sat on the slatted couch, sighed a long while, and then cried out: "Has it come to this for Yuan Shu?" — pitched forward off the couch, vomited a gallon of blood and died.',
+      },
+      verdictZh:
+        '論曰:術之稱帝,不因其強,因其信讖。\n'
+        + '天下方以奉天子為名,而術獨自為天子 ——'
+        + '**於是所有人都有了討伐他的理由**。\n'
+        + '故其亡也,不待一戰:'
+        + '呂布斬其使,孫策絕其書,'
+        + '部曲自散,而後饑死於床下。',
+      verdictEn:
+        'The historian says: Yuan Shu declared himself emperor not because he was strong but because he believed a prophecy. Everyone else in the realm was operating in the emperor\'s name, and he alone became one — which handed every man in China a reason to attack him. So his end needed no battle: Lü Bu beheaded his envoy, Sun Ce broke with him in writing, his troops melted away, and he starved to death beside a couch.',
+      verdictLostZh:
+        '論曰:術之敗,人以為驕;而其實是**急** ——'
+        + '諸雄皆知漢可代,而皆待其時;'
+        + '術獨不待,遂為天下先亡者。',
+      verdictLostEn:
+        'The historian says: people call it arrogance; it was really impatience. Every warlord knew Han could be replaced and every one of them was waiting for the moment. Shu would not wait, and so he was the first of them to die.',
+    },
+    'lu-bu': {
+      defeat: {
+        titleZh: '轅門射戟',
+        titleEn: 'The Halberd at the Gate',
+        textZh:
+          '術遣紀靈步騎三萬攻備,備求救於布。'
+          + '諸將謂布曰:「將軍常欲殺備,今可假手於術。」\n\n'
+          + '布曰:「不然。術若破備,則北連太山諸將,'
+          + '吾為在術圍中,不得不救也。」\n\n'
+          + '乃屯於城西南一里,請靈等與備會。'
+          + '布令門候於營門中舉一隻戟,曰:'
+          + '「諸君觀布射戟小支,一發中者諸君當解去,'
+          + '不中可留決鬥。」\n\n'
+          + '布舉弓射戟,正中小支。諸將皆驚,言「將軍天威也」。',
+        textEn:
+          'Yuan Shu sent Ji Ling with thirty thousand horse and foot against Liu Bei, and Bei asked Lü Bu for help. Bu\'s officers said: "You have always wanted Liu Bei dead. Now you can have Yuan Shu do it for you."\n\n'
+          + 'Bu said: "No. If Shu destroys Bei he will link up with the Taishan commanders in the north and I shall be inside Shu\'s ring. I have to relieve him."\n\n'
+          + 'So he camped a li southwest of the city and invited Ji Ling and Liu Bei to meet him. He had the gate-warden set a halberd upright in the camp entrance and said: "Gentlemen, watch me shoot at the small side-blade of that halberd. If I hit it with one arrow you will all break off and go; if I miss, stay and fight it out."\n\n'
+          + 'Bu raised his bow and put the arrow through the small blade. His officers were astonished and said, "That is the general\'s heavenly power."',
+      },
+      verdictZh:
+        '論曰:射戟一節,人皆以為戲;'
+        + '而布之言最明:「術若破備,'
+        + '則北連太山諸將,吾為在術圍中。」\n'
+        + '——**這是呂布一生唯一一次算對了形勢**。\n'
+        + '然其後仍與術通婚,又絕之;'
+        + '襲劉備而奪徐州,終為曹操所擒。'
+        + '知勢而不能守勢,與不知同。',
+      verdictEn:
+        'The historian says: everyone treats the halberd shot as a party trick, and Bu\'s reasoning was the clearest thing he ever said: "If Shu destroys Bei he will link up with the Taishan commanders and I shall be inside Shu\'s ring." It is the one time in his life Lü Bu read a situation correctly. And then he made a marriage alliance with Shu, and broke it; raided Liu Bei and took Xu province; and ended in Cao Cao\'s hands. To see the shape of things and be unable to hold to it is the same as not seeing it.',
+      verdictLostZh:
+        '論曰:陳登父子言於操曰:「養呂布,譬如養虎,'
+        + '當飽其肉,不飽則將噬人。」'
+        + '操曰:「不如卿言。譬如養鷹,飢即為用,飽則颺去。」',
+      verdictLostEn:
+        'The historian says: Chen Deng and his father said to Cao Cao: "Keeping Lü Bu is like keeping a tiger — he must be fed full on meat, and if he is not he will eat people." Cao said: "Not quite. It is like keeping a hawk. Hungry, it works for you; full, it flies away."',
+    },
+    'yuan-shao': {
+      defeat: {
+        titleZh: '四州之地',
+        titleEn: 'Four Provinces',
+        textZh:
+          '你已據冀、青、并三州,'
+          + '而幽州只剩易京一座樓。\n\n'
+          + '沮授進言:「將軍弱冠登朝,則播名海內;'
+          + '值廢立之際,則忠義奮發;'
+          + '單騎出奔,則董卓懷怖;'
+          + '濟河而北,則勃海稽首 ——'
+          + '振一郡之卒,撮冀州之眾,'
+          + '威震河朔,名重天下。\n'
+          + '雖黃巾猾亂,黑山跋扈,舉軍東向,則青州可定;'
+          + '還討黑山,則張燕可滅;'
+          + '回眾北首,則公孫必喪;'
+          + '震脅戎狄,則匈奴必從。\n'
+          + '橫大河之北,合四州之地,'
+          + '收英雄之才,擁百萬之眾 ——'
+          + '迎大駕於西京,復宗廟於洛邑,'
+          + '號令天下,以討未復,'
+          + '以此爭鋒,誰能敵之!」\n\n'
+          + '——四州之地,你都拿到了。'
+          + '而迎大駕的是曹操。',
+        textEn:
+          'You already held Ji, Qing and Bing provinces, and all that was left of You province was one tower at Yijing.\n\n'
+          + 'Ju Shou had laid it out for you: "Your Excellency entered court at twenty and your name went round the seas; at the crisis of the deposition your loyalty rose up; when you rode out alone Dong Zhuo was afraid of you; when you crossed the river north, Bohai bowed its head. With one commandery\'s troops you gathered the men of Ji province and your name weighed on the realm. Turn the army east and Qing province can be settled; turn back on the Black Mountain and Zhang Yan can be destroyed; face the army north and Gongsun must fall; overawe the tribes and the Xiongnu must follow. Lie across the north of the Yellow River, join four provinces, gather the talent of the age and a million men — then fetch the imperial carriage from the western capital, restore the ancestral temples at Luoyang, and issue orders to the realm to punish those who have not submitted. Contend on those terms, and who can stand against you?"\n\n'
+          + 'You got the four provinces. Somebody else fetched the emperor.',
+      },
+      verdictZh:
+        '論曰:沮授之策,一字不誤,而紹行其半 ——'
+        + '取四州而不迎天子。\n'
+        + '郭圖等言:「若迎天子以自近,'
+        + '動輒表聞,從之則權輕,違之則拒命。」'
+        + '紹以為然。\n'
+        + '**以權輕為患者,終無權** ——'
+        + '三年之後,曹操以天子詔書責紹,'
+        + '紹上書自訟而已。',
+      verdictEn:
+        'The historian says: Ju Shou\'s plan was correct in every particular and Shao carried out half of it — he took the four provinces and did not fetch the emperor. Guo Tu and others argued: "Bring the emperor close and every move has to be reported. Obey him and our authority shrinks; disobey and we are refusing an imperial order." Shao thought they were right. A man who fears his authority shrinking ends with no authority: three years later Cao Cao rebuked him by imperial edict, and all Shao could do was submit a memorial in his own defence.',
+      verdictLostZh:
+        '論曰:紹之所有,皆沮授所畫;'
+        + '而授終以諫死於官渡之後。'
+        + '**用其策而不用其人**,河北之亡在此。',
+      verdictLostEn:
+        'The historian says: everything Yuan Shao had, Ju Shou had drawn for him, and Ju Shou died after Guandu for remonstrating. Use the plan and not the man — that is how Hebei was lost.',
+    },
+  },
+  /* ── 207 三顧茅廬 ─────────────────────────────────────────────── */
+  'scn-207-three-visits': {
+    'liu-biao': {
+      defeat: {
+        titleZh: '不用玄德之言',
+        titleEn: 'I Did Not Take Xuande\'s Advice',
+        textZh:
+          '曹公北征烏丸,劉備說表襲許,表不能用。\n\n'
+          + '公之南征也,表病篤。'
+          + '謂備曰:「我兒不才,而諸將並零落,'
+          + '我死之後,卿便攝荊州。」\n\n'
+          + '備曰:「諸子自賢,君其憂病。」\n\n'
+          + '表既卒,琮舉州降。備曰:'
+          + '「吾不忍也。」乃過辭表墓,涕泣而去。\n\n'
+          + '——荊州帶甲十萬,一日而屬人。',
+        textEn:
+          'While Cao Cao was north against the Wuhuan, Liu Bei urged Liu Biao to strike at Xu, and Biao could not bring himself to do it.\n\n'
+          + 'When Cao came south, Biao was gravely ill. He said to Bei: "My son has no ability and my commanders are all gone or falling away. After I die, take Jing province yourself."\n\n'
+          + 'And Bei said: "Your sons are able enough. Trouble yourself about your illness."\n\n'
+          + 'When Biao died, Cong surrendered the province. Bei said: "I cannot bring myself to do it," and stopped at Biao\'s grave to take his leave, and went away weeping.\n\n'
+          + 'A hundred thousand men under arms in Jing province, and in one day it belonged to somebody else.',
+      },
+      verdictZh:
+        '論曰:表據荊州二十年,'
+        + '地方數千里,帶甲十餘萬,'
+        + '而終無所為 ——\n'
+        + '非不能戰,是**不肯決**:'
+        + '袁曹相持而不助,劉備請襲而不許,'
+        + '欲觀天下之變,而天下之變不待人觀。\n'
+        + '故其國不亡於兵,亡於一紙降書。',
+      verdictEn:
+        'The historian says: Liu Biao held Jing province for twenty years, several thousand li of country and over a hundred thousand men under arms, and did nothing with it. Not that he could not fight — he would not decide. He helped neither side while Yuan and Cao were locked together, and refused Liu Bei\'s raid, wanting to watch how the realm turned out. The realm does not wait to be watched. So his state fell not to an army but to one letter of surrender.',
+      verdictLostZh:
+        '論曰:表之未死也,備嘗於坐間起至廁,'
+        + '見髀裡肉生,慨然流涕。'
+        + '表怪問備,備曰:「吾常身不離鞍,髀肉皆消。'
+        + '今不復騎,髀裡肉生。日月若馳,老將至矣,'
+        + '而功業不建,是以悲耳。」',
+      verdictLostEn:
+        'The historian says: while Biao was still alive, Liu Bei got up from the table one day and went out, and seeing the flesh grown on his thighs, wept. Biao asked what was wrong, and Bei said: "I used never to be out of the saddle and the flesh was all worn off my thighs. Now I do not ride, and it has grown back. The days and months run on and age is coming, and nothing has been achieved. That is why I am sad."',
+    },
+    cao: {
+      defeat: {
+        titleZh: '緩之則自相圖',
+        titleEn: 'Go Slowly and They Will Turn on Each Other',
+        textZh:
+          '袁尚、袁熙奔遼東,眾尚有數千騎。'
+          + '諸將皆曰:「今不因而伐之,後必為患。」\n\n'
+          + '公曰:「吾方使康斬送尚、熙首,不煩兵矣。」'
+          + '九月,引兵自柳城還。康即斬尚、熙,傳其首。\n\n'
+          + '諸將或問:「公還而康斬送尚、熙,何也?」\n\n'
+          + '公曰:「彼素畏尚等,吾急之則並力,'
+          + '緩之則自相圖,其勢然也。」\n\n'
+          + '——是歲,郭嘉卒於柳城,年三十八。',
+        textEn:
+          'Yuan Shang and Yuan Xi fled to Liaodong with some thousands of horse still. The generals all said: "If we do not go after them now they will be trouble later."\n\n'
+          + 'And Cao said: "I am about to have Gongsun Kang behead them and send the heads. No troops required." In the ninth month he brought the army back from Liucheng, and Kang beheaded them at once and forwarded the heads.\n\n'
+          + 'One of the officers asked: "You came away, and Kang killed them and sent the heads. Why?"\n\n'
+          + 'And Cao said: "He has always been afraid of the Yuans. Press them and they combine; leave them alone and they turn on each other. It follows from the situation."\n\n'
+          + 'That year Guo Jia died at Liucheng, aged thirty-eight.',
+      },
+      verdictZh:
+        '論曰:「急之則並力,緩之則自相圖」——'
+        + '此一語可蔽操之用兵。\n'
+        + '**外壓所以合人,去壓所以離人**:'
+        + '袁譚袁尚之相攻,公孫康之斬尚,'
+        + '皆同一理。\n'
+        + '然明年赤壁,操以八十萬臨江,'
+        + '孫劉本仇,乃因此而合 —— '
+        + '同一理,反用於己。',
+      verdictEn:
+        'The historian says: "Press them and they combine; leave them alone and they turn on each other" — that one line covers the whole of Cao Cao\'s art. Outside pressure joins men together and removing it drives them apart: the Yuan brothers fighting each other, Gongsun Kang beheading Shang, all the same principle. And the next year at Red Cliffs he came down to the river with eight hundred thousand, and Sun and Liu, who had every reason to hate each other, joined together because of it. The same principle, applied to him.',
+      verdictLostZh:
+        '論曰:嘉臨終,操曰:「諸君年皆孤輩也,'
+        + '唯奉孝最少。天下事竟,欲以後事屬之,'
+        + '而中年夭折,命也夫!」',
+      verdictLostEn:
+        'The historian says: at Guo Jia\'s death Cao said: "You gentlemen are all of my own generation; only Fengxiao was much younger. When the business of the realm was finished I meant to hand what came after to him. And he is dead in his middle years. Well — it is fate."',
+    },
+    sun: {
+      defeat: {
+        titleZh: '西勢',
+        titleEn: 'The Western Leverage',
+        textZh:
+          '甘寧陳計曰:「今漢祚日微,曹操彌憍,終為篡盜。'
+          + '南荊之地,山陵形便,江川流通,'
+          + '誠是國之西勢也。\n'
+          + '寧已觀劉表,慮既不遠,兒子又劣,'
+          + '非能承業傳基者也。\n'
+          + '至尊當早規之,不可後操。\n'
+          + '圖之之計,宜先取黃祖。'
+          + '祖今年老,昏耄已甚,財穀並乏,'
+          + '左右欺弄,務於貨利,'
+          + '侵求吏士,吏士心怨,'
+          + '舟船戰具,頓廢不修 ——'
+          + '至尊今往,其破可必。」\n\n'
+          + '權深納之。',
+        textEn:
+          'Gan Ning laid out his plan: "The fortune of Han fades daily and Cao Cao grows more overbearing; he will end by usurping. The land of southern Jing has hills that suit us and rivers that connect — it is the western leverage of this state.\n\n'
+          + 'I have looked Liu Biao over. He does not see far and his sons are poor stuff; he is not a man to hand an inheritance on.\n\n'
+          + 'Your Lordship should plan for it early and not be behind Cao Cao.\n\n'
+          + 'And the way to plan for it is to take Huang Zu first. Zu is old now and very far gone, short of money and grain, cheated by his own people, taken up with profit and squeezing his officers and men, so that they resent him, while the ships and the fighting gear lie neglected and unrepaired. Go now and his defeat is certain."\n\n'
+          + 'And Sun Quan took it deeply to heart.',
+      },
+      verdictZh:
+        '論曰:江東之圖荊州,自甘寧此策始,'
+        + '至呂蒙白衣渡江而成,凡十三年。\n'
+        + '**其所以能久者,以其所欲者一** ——'
+        + '孫氏三世,所爭無非上游一線:'
+        + '得之則建業安,不得則建業為敵之下流。\n'
+        + '故赤壁可以合劉,而荊州終不可以與劉。',
+      verdictEn:
+        'The historian says: the southeast\'s design on Jing province began with this plan of Gan Ning\'s and was completed thirteen years later when Lü Meng crossed in white clothes. It lasted because they only ever wanted one thing. Three generations of Suns fought over nothing but the upper river: hold it and Jianye is safe; lose it and Jianye sits downstream of an enemy. Which is why they could ally with Liu Bei at Red Cliffs and could never leave Jing province in his hands.',
+      verdictLostZh:
+        '論曰:寧,巴郡人,少為輕俠,'
+        + '止則接輕俠,遊則鈴鈴有聲 ——'
+        + '所過皆知「錦帆賊」至。'
+        + '而其獻策乃有國士之慮。**人不可以其少時定**。',
+      verdictLostEn:
+        'The historian says: Gan Ning came from Ba commandery and ran with bravos in his youth; when he stopped somewhere the bravos gathered, and when he travelled there were bells ringing, so everywhere he passed knew the Brocade-Sail bandit had come. And the plan he offered is the thinking of a statesman. You cannot judge a man by what he was young.',
+    },
+    'gongsun-du': {
+      defeat: {
+        titleZh: '斬首而送之',
+        titleEn: 'Behead Them and Send the Heads',
+        textZh:
+          '袁尚、袁熙來奔,眾尚數千騎。\n\n'
+          + '初,你聞曹操北征,恐其襲己,'
+          + '欲與尚等併力拒之。\n\n'
+          + '而操引兵還。'
+          + '——於是你先埋伏精勇於馬廄之中,'
+          + '然後請尚、熙入,未及坐,'
+          + '叱伏兵禽之,坐於凍地。\n\n'
+          + '尚曰:「未死之間,寒不可忍,'
+          + '可相與席乎?」\n'
+          + '康曰:「卿頭顱方行萬里,何席之為!」\n\n'
+          + '遂斬之。',
+        textEn:
+          'Yuan Shang and Yuan Xi came to you as fugitives, still with some thousands of horse.\n\n'
+          + 'At first, hearing that Cao Cao was campaigning north, you were afraid he would come for you and thought of joining the Yuans to resist him.\n\n'
+          + 'And then Cao took his army home.\n\n'
+          + 'So you put picked men in the stables, invited Shang and Xi in, and before they could sit down called the ambush out and had them seized and set down on the frozen ground.\n\n'
+          + 'Shang said: "Since we are not dead yet — the cold is past bearing. Might we have a mat between us?"\n\n'
+          + 'And Kang said: "Your skulls are about to travel ten thousand li. What do you want with a mat?"\n\n'
+          + 'And beheaded them.',
+      },
+      verdictZh:
+        '論曰:康之斬尚,非忠於魏,是畏於魏 ——'
+        + '而操之不攻,正為使其畏。\n'
+        + '**遼東之存,存於中原之無暇**:'
+        + '故公孫氏三世據之,'
+        + '而終於司馬懿一征而滅。\n'
+        + '塞外之國,其命不在己,在關內誰當國。',
+      verdictEn:
+        'The historian says: Gongsun Kang beheaded the Yuans not out of loyalty to Wei but out of fear of it — and Cao Cao\'s refusal to attack was exactly what produced the fear. Liaodong survived because the central plain had no time for it. Three generations of the Gongsun family held it, and one campaign by Sima Yi finished it. A frontier state\'s life is not in its own hands but in the question of who is running things inside the passes.',
+      verdictLostZh:
+        '論曰:尚、熙之來,挾數千騎;'
+        + '而康懼其為變,先發制之。'
+        + '**亡人不可久寄**:'
+        + '客大於主,則主必殺客。',
+      verdictLostEn:
+        'The historian says: the Yuans arrived with thousands of horsemen, and Kang, afraid of what they might do, moved first. A fugitive cannot lodge anywhere long: when the guest is larger than the host, the host kills the guest.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
