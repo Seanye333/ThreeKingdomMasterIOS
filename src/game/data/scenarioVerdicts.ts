@@ -3020,6 +3020,191 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         "The historian says: Chen Gong's plan was a good one, and the man he entrusted it to was Lü Bu. Whether a plan is good in the end depends on who carries it out.",
     },
   },
+  /* ── 198 下邳之圍 ─────────────────────────────────────────────── */
+  'scn-198-xiapi': {
+    cao: {
+      defeat: {
+        titleZh: '決泗沂之水',
+        titleEn: 'They Turned the Rivers on It',
+        textZh:
+          '攻之不拔,連戰,士卒疲,欲還。'
+          + '荀攸、郭嘉曰:「呂布勇而無謀,今三戰皆北,其銳氣衰矣。'
+          + '三軍以將為主,主衰則軍無奮意。夫陳宮有智而遲,'
+          + '今及布氣之未復,宮謀之未定,進急攻之,布可拔也。」\n\n'
+          + '乃引沂、泗灌城。月餘,布將侯成、宋憲、魏續縛陳宮,'
+          + '將其眾降。布與麾下登白門樓,兵圍急,乃下降。',
+        textEn:
+          'The assaults failed, the fighting dragged, the men were worn out, and he thought of going home. Xun You and Guo Jia said: "Lü Bu is brave and has no plan. He has been beaten three times and his edge has gone. An army takes its spirit from its commander, and when the commander flags there is no fight in the ranks. Chen Gong has judgement and is slow with it. Press the attack now, while Bu\'s spirit has not come back and Gong\'s plan is not settled, and Bu can be taken."\n\n'
+          + 'So they turned the Yi and the Si into the city. A month later Bu\'s own officers Hou Cheng, Song Xian and Wei Xu tied up Chen Gong and surrendered with their troops. Bu went up the White Gate Tower with his household, and with the ring closing, came down and gave himself up.',
+      },
+      verdictZh:
+        '論曰:下邳之克,不在水,在**攸嘉之言**——'
+        + '三戰皆北而銳氣衰,主衰則軍無奮意;'
+        + '此非料城,是料人。\n'
+        + '而操之欲還,亦見用兵者未有不疲之時 ——'
+        + '所異者,身邊有沒有人肯說「再攻一次」。',
+      verdictEn:
+        'The historian says: Xiapi was not carried by water but by what Xun You and Guo Jia said — three defeats and the edge is gone; when the commander flags there is no fight in the ranks. That is not reading a city, it is reading a man. And that Cao wanted to go home shows there is no campaign without a moment of exhaustion. The difference is whether anyone beside you is willing to say: attack once more.',
+      verdictLostZh:
+        '論曰:布縛而請曰「明公所患不過於布,今已服矣」——'
+        + '操顧劉備,備曰:「明公不見布之事丁建陽及董太師乎!」'
+        + '一言而決其死。',
+      verdictLostEn:
+        'The historian says: bound, Bu said: "What Your Excellency feared was only me, and I have submitted." Cao looked at Liu Bei, and Bei said: "Has Your Excellency not seen how he served Ding Jianyang and the Grand Preceptor Dong?" One sentence settled it.',
+    },
+    lubu: {
+      defeat: {
+        titleZh: '白門樓',
+        titleEn: 'The White Gate Tower',
+        textZh:
+          '陳宮勸你出屯於外,與城中為犄角 ——'
+          + '而妻曰:「昔曹氏待公台如赤子,猶舍而來投將軍。'
+          + '今將軍厚公台不過於曹公,而欲委全城,捐妻子,'
+          + '孤軍遠出,若一旦有變,妾豈得為將軍妻哉!」\n\n'
+          + '你乃止。\n\n'
+          + '侯成、宋憲、魏續縛陳宮以降。你登白門樓,'
+          + '謂左右曰:「卿曹無相困,我當自首明公。」',
+        textEn:
+          'Chen Gong urged you to camp outside and make a pincer with the city — and your wife said: "Cao once treated Gongtai like his own child, and Gongtai still left him and came to you. Now you do not treat Gongtai better than Cao did, and you propose to hand him the whole city, abandon your wife and children, and go off alone with an army. If anything changes, how am I to remain your wife?"\n\n'
+          + 'So you stayed.\n\n'
+          + 'Hou Cheng, Song Xian and Wei Xu tied Chen Gong up and surrendered. You went up the White Gate Tower and said to those around you: "Do not distress yourselves, gentlemen. I shall surrender to His Excellency myself."',
+      },
+      verdictZh:
+        '論曰:布之敗,不敗於曹操,敗於不能用陳宮。'
+        + '宮之策再三,而布再三不用 —— 一因妻言,一因將疑,'
+        + '一因自負其勇。\n'
+        + '故曰:有謀臣而不能用,與無謀臣同;'
+        + '而有謀臣不用者,其罪又浮於無。',
+      verdictEn:
+        "The historian says: Lü Bu was not beaten by Cao Cao but by his inability to use Chen Gong. Gong offered plans three times and three times they were not taken — once because of a wife's words, once because of suspicion of his officers, once out of confidence in his own arm. To have a strategist and not use him is the same as having none — except that it is worse, because you had the choice.",
+      verdictLostZh:
+        '論曰:陳宮死時,操泣而問其母妻,宮曰:'
+        + '「聞將以孝治天下者,不害人之親。」遂就刑,顧不還。\n'
+        + '一敗之下,主辱而臣不辱者,此類是也。',
+      verdictLostEn:
+        'The historian says: when Chen Gong was put to death Cao wept and asked about his mother and wife, and Gong said: "I have heard that a man who governs the realm by filial piety does not harm another man\'s kin." And went to the execution ground without looking back. In defeat, the lord may be disgraced and the officer not — this was such a case.',
+    },
+    'yuan-shao': {
+      defeat: {
+        titleZh: '公孫瓚未死',
+        titleEn: 'Gongsun Zan Is Not Dead Yet',
+        textZh:
+          '曹操圍下邳,而你在易京。\n\n'
+          + '田豐勸你襲許,曰:「與公爭天下者,曹操也。'
+          + '今操東擊呂布,許下空虛。」而你以子疾辭。\n\n'
+          + '豐舉杖擊地曰:「夫遭難遇之機,而以嬰兒之病失其會,'
+          + '惜哉!」',
+        textEn:
+          'Cao Cao was investing Xiapi, and you were at Yijing.\n\n'
+          + 'Tian Feng urged you to strike at Xu: "The man contending with Your Excellency for the realm is Cao Cao. He has gone east against Lü Bu, and Xu is empty." And you declined on the ground that your son was ill.\n\n'
+          + 'Feng struck the ground with his staff: "An opening like this comes once, and to lose it over a child\'s illness — what a pity!"',
+      },
+      verdictZh:
+        '論曰:紹之失許,以子疾;而子疾者,一時之私也。'
+        + '夫爭天下者,不得有一時之私 ——'
+        + '兩年之後,操以此二年所得,拒之於官渡。',
+      verdictEn:
+        'The historian says: he lost Xu over a sick child — a private matter of one moment. A man contending for the realm cannot afford one private moment. Two years later Cao held him at Guandu with what those two years had bought.',
+      verdictLostZh:
+        '論曰:機不可失者,以其不再來;'
+        + '而人主之所以失機,常不因大事,因小事。',
+      verdictLostEn:
+        'The historian says: an opening must not be missed because it does not come again — and what makes a ruler miss one is usually not a great matter but a small one.',
+    },
+  },
+  /* ── 204 鄴城陷落 ─────────────────────────────────────────────── */
+  'scn-204-yecheng': {
+    cao: {
+      defeat: {
+        titleZh: '決漳水灌城',
+        titleEn: 'The Zhang River into the City',
+        textZh:
+          '圍鄴,為土山、地道。審配夜出兵擊,為伏所破。'
+          + '乃鑿塹圍城,周四十里,初令淺,示若可越 ——'
+          + '配望而笑之,不出爭利。\n\n'
+          + '公一夜浚之,廣深二丈,決漳水灌城,城中餓死者過半。\n\n'
+          + '八月,審配兄子榮夜開所守城東門內兵。配拒戰城中,'
+          + '生禽配。辛毗等舉刀撾其頭,配罵曰:'
+          + '「汝等破我冀州,唯恨死之晚也!」\n\n'
+          + '公謂曰:「知我來何以多弩?」配曰:「恨少!」',
+        textEn:
+          'He invested Ye with earthworks and tunnels. Shen Pei came out at night and was cut up by an ambush. Then he dug a ring of trench forty li round, shallow at first so that it looked crossable — and Pei looked at it, laughed, and did not come out to contest it.\n\n'
+          + 'In one night the trench was deepened to twenty feet by twenty, and the Zhang river was let into the city, and more than half the people inside starved.\n\n'
+          + 'In the eighth month Shen Pei\'s nephew Rong opened the east gate he was holding and let the troops in. Pei fought on inside and was taken alive. Xin Pi and others struck his head with the flats of their blades, and he cursed them: "You people wrecked my Ji province. My only regret is dying so late."\n\n'
+          + 'Cao said to him: "Did you know how many crossbows I came with?" And Pei said: "Too few!"',
+      },
+      verdictZh:
+        '論曰:鄴城之克,在一夜浚塹。'
+        + '示之以淺而後深之 —— 兵者詭道,而詭之所施,在敵已笑之後。\n'
+        + '審配死而不屈,操欲活之而不可得 ——'
+        + '故取一城易,取一城之人心難。',
+      verdictEn:
+        'The historian says: Ye fell on one night\'s digging. Show them something shallow and then deepen it — war is the way of deception, and deception works best after the enemy has already laughed. Shen Pei died unbending; Cao wanted to keep him alive and could not. Taking a city is easy. Taking the loyalty inside it is not.',
+      verdictLostZh:
+        '論曰:袁氏之亡,不亡於操,亡於兄弟。'
+        + '譚尚相攻,而操坐收 —— 郭嘉之言:'
+        + '「急之則相持,緩之而後爭心生。」',
+      verdictLostEn:
+        'The historian says: the house of Yuan fell not to Cao but to its own brothers. Tan and Shang fought each other and Cao gathered the pieces — as Guo Jia had said: press them and they hold together; ease off and the quarrel starts.',
+    },
+    'yuan-shang': {
+      defeat: {
+        titleZh: '兄弟相攻',
+        titleEn: 'Brother against Brother',
+        textZh:
+          '父卒,審配、逢紀矯遺命奉你為嗣。'
+          + '譚自稱車騎將軍,屯黎陽 —— 兄在外而弟在內。\n\n'
+          + '曹操渡河攻譚,譚求救於你。你不欲多與之兵,'
+          + '而自將攻譚 —— 譚敗,走平原,遣辛毗詣操請降。\n\n'
+          + '操曰:「今兄弟相攻,非有他志,顧欲併吞天下耳。」'
+          + '而許之。',
+        textEn:
+          'When your father died, Shen Pei and Feng Ji produced a will making you the heir. Tan styled himself General of Chariots and Cavalry and camped at Liyang — the elder brother outside and the younger inside.\n\n'
+          + 'Cao Cao crossed the river against Tan, and Tan asked you for help. You did not care to give him many troops, and went to attack him yourself — Tan was beaten, fled to Pingyuan, and sent Xin Pi to Cao to offer surrender.\n\n'
+          + 'And Cao said: "The brothers are fighting each other with no larger design; each simply means to swallow the other." And accepted.',
+      },
+      verdictZh:
+        '論曰:袁氏之敗,不在官渡,在官渡之後。'
+        + '紹死而嗣不定,審配、逢紀立尚,郭圖、辛評立譚 ——'
+        + '一家而二黨,則外敵不必攻,自攻可也。\n'
+        + '故曰:立嗣不定者,國之大禍,'
+        + '而其禍常發於父既沒之後。',
+      verdictEn:
+        'The historian says: the Yuan were not destroyed at Guandu but after it. Shao died with the succession unsettled, Shen Pei and Feng Ji set up Shang, Guo Tu and Xin Ping set up Tan — one house with two factions, and no outside enemy needs to attack; it attacks itself. An unsettled succession is a state\'s great calamity, and the calamity usually breaks out after the father is in the ground.',
+      verdictLostZh:
+        '論曰:河北之地,四州也;而二子分之,則各不足以當一操。',
+      verdictLostEn:
+        'The historian says: Hebei was four provinces. Split between two sons, neither half was a match for one Cao Cao.',
+    },
+    'yuan-tan': {
+      defeat: {
+        titleZh: '請降於操',
+        titleEn: 'Surrendering to Cao',
+        textZh:
+          '你是長子,而嗣立者是弟。\n\n'
+          + '你求兵於尚而不得,乃攻之;敗走平原,'
+          + '遣辛毗請降於曹操 —— 操以女妻譚子,而後絕婚,'
+          + '進軍攻之。\n\n'
+          + '南皮之戰,你單馬奔陣而死。'
+          + '你這一生所借的每一支兵,最後都用來打自己家的人。',
+        textEn:
+          'You were the eldest son, and the succession went to your brother.\n\n'
+          + 'You asked him for troops and did not get them, so you attacked him; beaten, you fled to Pingyuan and sent Xin Pi to surrender to Cao Cao — who married a daughter to your son, and then broke the match and marched against you.\n\n'
+          + 'At Nanpi you charged the line alone and died. Every soldier you ever borrowed was used in the end against your own family.',
+      },
+      verdictZh:
+        '論曰:譚之降操,以攻其弟;而操之受降,以待其自弊。'
+        + '兄弟之爭,外人未有不利之者 ——'
+        + '故曰:內爭者,以己之力為人之資。',
+      verdictEn:
+        "The historian says: Tan surrendered to Cao in order to attack his brother, and Cao accepted the surrender in order to let them wear each other out. An outsider never loses by a quarrel between brothers. Internal war converts your own strength into someone else's resources.",
+      verdictLostZh:
+        '論曰:長子而不得立,古今之亂多出於此;'
+        + '然亂之成否,不在立誰,在**立之明否**。',
+      verdictLostEn:
+        'The historian says: an eldest son passed over has caused a great deal of trouble in every age. But whether it becomes trouble depends less on who is chosen than on whether the choice was made openly.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
