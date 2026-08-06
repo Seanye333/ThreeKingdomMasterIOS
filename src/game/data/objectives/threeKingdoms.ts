@@ -267,10 +267,26 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       primary: {
         title: { zh: '盟主之實', en: 'Make the Alliance Real' },
         description: 'Control Ji province by 199 — a chief of the alliance needs land of his own.',
-        descriptionZh: "於199年前盡取冀州 —— 盟主之名,終須有盟主之土。",
-        goal: { kind: 'control-province', provinceId: 'ji', byYear: 199 },
+        /*
+         * 「於199年前盡取冀州」十二輪 0 中。冀州盤上五城:鄴、渤海是他的,
+         * 平原、南皮、博陵在公孫瓚手裡 —— 全取等於九年之內把公孫瓚打乾淨,
+         * 而公孫瓚終局有十四城,是北方最厚的一家。史實上那一仗打到 199 年
+         * 易京自焚才了,是他一生最長的一場。
+         *
+         * 主目標收成第一步:平原。那是公孫瓚在冀州最南的一座,也是劉備當年
+         * 為相之地 —— 界橋之後袁紹南下,先動的就是這一線。盡取冀州與掃平
+         * 公孫瓚都留在次要,那才是九年之功。
+         */
+        descriptionZh: "於196年前攻取平原 —— 界橋既勝,河北之爭自此城始。",
+        goal: { kind: 'hold-cities', cityIds: ['pingyuan'], byYear: 196 },
       },
       secondary: [
+        {
+          title: { zh: '盟主之土', en: 'A Chief Needs Land' },
+          description: 'Control Ji province by 199 — the name of alliance-chief must in the end have soil under it.',
+          descriptionZh: '於199年前盡取冀州 —— 盟主之名,終須有盟主之土。',
+          goal: { kind: 'control-province', provinceId: 'ji', byYear: 199 },
+        },
         {
           title: { zh: '掃平公孫', en: 'Sweep Away Gongsun Zan' },
           description: 'Destroy the Gongsun Zan force.',
@@ -334,12 +350,26 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-190-liuyan',
       forceId: 'liu-yan',
       primary: {
-        title: { zh: '益州天府', en: 'The Storehouse of Heaven' },
-        description: 'Control Yi province by 200 — shut the passes and wait.',
-        descriptionZh: "於200年前盡有益州 —— 閉關守險,坐待天下之變。",
-        goal: { kind: 'control-province', provinceId: 'yi', byYear: 200 },
+        title: { zh: '閉關守險', en: 'Shut the Passes' },
+        /*
+         * 「於200年前盡有益州」十二輪 0 中 —— 益州十五城裡他只據四座,其餘
+         * 十一座是無主的南中、雲南、永昌、越巂那一片,自走十年也走不到。
+         * (郿與武關原本也算在益州,那一條已另外修掉,見 provinces.ts。)
+         *
+         * 主目標改成他真正做的事:閉關。成都、江州、永安 —— 蜀中三處要害,
+         * 守住它們就是「坐待天下之變」。盡有益州留在次要。
+         */
+        description: 'Still hold Chengdu, Jiangzhou and Yong\'an in 197 — cut the roads and wait for the realm to change.',
+        descriptionZh: '至197年仍據成都、江州、永安 —— 閉關守險,坐待天下之變。',
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'yongan'], byYear: 197 },
       },
       secondary: [
+        {
+          title: { zh: '益州天府', en: 'The Storehouse of Heaven' },
+          description: 'Control Yi province by 200.',
+          descriptionZh: '於200年前盡有益州。',
+          goal: { kind: 'control-province', provinceId: 'yi', byYear: 200 },
+        },
         {
           title: { zh: '斷絕閣道', en: 'Cut the Plank Roads' },
           description: 'Take Hanzhong by 194 — he sent Zhang Lu to hold it and cut the Xie valley road, and after that no envoy of the Han came through.',
@@ -393,9 +423,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 陽人,敗呂布於洛陽城下,入洛之日掃除漢家宗廟、平塞諸陵而後還軍。
          * 期限 193:過了那一年他已死於峴山。
          */
-        description: 'Take Luoyang by 193 — of all the lords, only Sun Jian actually got there.',
-        descriptionZh: '於193年前攻取洛陽 —— 諸侯高會,唯堅獨進,入洛之日掃除宗廟、平塞諸陵。',
-        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 193 },
+        /*
+         * 主次對調(2026-08-05 二次)。「於193年前攻取洛陽」十二輪 0 中 ——
+         * 他的地盤在荊南,而洛陽在千里之外,中間隔著袁術與劉表;史實上他能
+         * 到洛陽,是因為他以長沙太守的身分**隨袁術屯魯陽**當前鋒,而盤上
+         * 表達不了「借道盟友」這件事。
+         *
+         * 所以主目標換成他在這張盤上真的走得到的那一步:襄陽。191 年袁術遣堅
+         * 征荊州擊劉表,那是他最後一戰,也是他唯一與非盟友接壤的方向。
+         * 掃除宗廟留作次要 —— 名場面該是獎賞,不是入場券。
+         */
+        description: 'Take Xiangyang by 195 — Yuan Shu sent him against Liu Biao, and that road ended at Xian mountain.',
+        descriptionZh: '於195年前攻取襄陽 —— 袁術遣堅征荊州擊劉表,而這條路的盡頭是峴山。',
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 195 },
       },
       secondary: [
         /*
@@ -404,10 +444,10 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 而襄陽正在他長沙以北。史書裡他就是死在這條路上的。
          */
         {
-          title: { zh: '征荊州', en: 'The Campaign into Jing' },
-          description: 'Take Xiangyang by 195 — Yuan Shu sent him against Liu Biao, and that road ended at Xian mountain.',
-          descriptionZh: '於195年前攻取襄陽 —— 袁術遣堅征荊州擊劉表,而這條路的盡頭是峴山。',
-          goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 195 },
+          title: { zh: '掃除宗廟', en: 'Sweep the Ancestral Shrines' },
+          description: 'Take Luoyang by 195 — of all the lords, only Sun Jian actually got there.',
+          descriptionZh: '於195年前攻取洛陽 —— 諸侯高會,唯堅獨進,入洛之日掃除宗廟、平塞諸陵。',
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 195 },
         },
         {
           title: { zh: '峴山之讎', en: 'The Debt at Xian Mountain' },
@@ -484,8 +524,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       primary: {
         title: { zh: '西涼之主', en: 'Master of the West' },
         description: 'Hold Wuwei, Jincheng and Anding — make the Liang country answer to one man.',
-        descriptionZh: '據有武威、金城、安定 —— 讓涼州只認一個號令。',
-        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 196 },
+        /*
+         * 三城 → 兩城,期限 196 → 198。他開局只有武威一座、七千兵,府庫十二輪
+         * 見底五次 —— 六年之內連下金城與安定,對這樣的家底是空話(0/12)。
+         * 金城是韓遂的本據,也是他與韓遂結為異姓兄弟又相攻的那座城;先拿下它,
+         * 涼州才談得上「只認一個號令」。安定留在次要。
+         */
+        descriptionZh: '於198年前據有武威與金城 —— 金城是韓遂的本據,而涼州只能認一個號令。',
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng'], byYear: 198 },
       },
       secondary: [
         {
