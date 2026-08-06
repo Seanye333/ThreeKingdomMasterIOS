@@ -110,7 +110,28 @@ async function main() {
     if (ghosts.length) findings.push({ level: 'error', where: `provinces/${p.id}`, what: `${p.name.zh} 列了不存在的城:${ghosts.join(' ')}` });
   }
 
-  // ⑤ 劇本覆蓋度 —— 只報數,不判對錯(旗艦盤才需要滿格)
+  /*
+   * ⑤ openingRelations 的 a/b 必須是那張盤上真的有的勢力。
+   *
+   * 這一條是**踩到之後補的**:三國後期幾張盤沿用早期的勢力 id
+   * (cao / liu-bei / sun),而我照「魏蜀吳」的直覺寫成 wei/shu/wu。
+   * 落幕文本那一側有測試當場擋下(scenarioVerdicts.test.ts 的
+   * 「every force id is a real force on that board」),外交這一側**沒有** ——
+   * 關係表查不到勢力就是靜默不生效,盤上照樣兩兩中立,而我以為補好了。
+   */
+  for (const sc of SCENARIOS as Array<{ id: string; name: { zh: string }; forces: Array<{ id: string }>; openingRelations?: Array<{ a: string; b: string }> }>) {
+    if (!sc.openingRelations?.length) continue;
+    const ids = new Set(sc.forces.map((f) => f.id));
+    for (const r of sc.openingRelations) {
+      for (const side of [r.a, r.b]) {
+        if (!ids.has(side)) {
+          findings.push({ level: 'error', where: `scenario/${sc.id}`, what: `開局外交提到不存在的勢力 \`${side}\`(盤上是:${[...ids].join(', ')})—— 關係表查不到勢力會靜默不生效` });
+        }
+      }
+    }
+  }
+
+  // ⑥ 劇本覆蓋度 —— 只報數,不判對錯(旗艦盤才需要滿格)
   const { SCENARIO_VERDICTS } = await import(`${ROOT}src/game/data/scenarioVerdicts`);
   const covered = (SCENARIOS as Array<{ id: string; kind?: string; openingRelations?: unknown[] }>)
     .filter((s) => s.kind !== 'whatif');
