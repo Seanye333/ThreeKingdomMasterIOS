@@ -196,12 +196,29 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-190-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '獻帝奉迎', en: 'Shelter the Emperor' },
-        description: "Hold Luoyang and Xuchang by 197 AD.",
-        descriptionZh: "於197年前同時據有洛陽與許昌。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 197 },
+        title: { zh: '兗州之叛', en: 'The Mutiny at Yan' },
+        /*
+         * 原本是「於197年前同時據有洛陽與許昌」—— 體檢十二輪 0 中,而他終局
+         * 中位數只剩一座城。追下去,他不是被諸侯打垮的:六輪十四次失城裡
+         * 無主(民變)七次、黃天教四次、董卓只有三次,外圍的白馬與延津民忠
+         * 一路漂到二十以下,自己爛掉。
+         *
+         * 而這正是史實。194 年張邈、陳宮迎呂布入兗州,郡縣皆應,曹操只剩
+         * 鄄城、范、東阿三城 —— 他一生最險的一關不是官渡,是那一年。
+         * 所以主目標改成他真正做到的那件事:**守住核心**。取洛陽奉天子降為
+         * 次要 —— 那是 196 年的事,是熬過這一關之後的獎賞,不是入場券。
+         */
+        description: 'Still hold Xuchang and Chenliu in 196 — in 194 his own province turned on him and left him three cities.',
+        descriptionZh: '至196年仍據有許昌與陳留 —— 194年張邈陳宮迎呂布,兗州郡縣皆應,他只剩三座城。',
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'chenliu'], byYear: 196 },
       },
       secondary: [
+        {
+          title: { zh: '奉天子以令不臣', en: 'The Emperor at Xu' },
+          description: 'Take Luoyang while holding Xuchang — the court came out of the ruins in 196 and he moved it to Xu.',
+          descriptionZh: '據有許昌之餘並取洛陽 —— 196年天子出焦土,而他把朝廷遷到了許。',
+          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 199 },
+        },
         {
           title: { zh: '袁紹討伐', en: 'Defeat Yuan Shao' },
           description: 'Crush the Yuan Shao force.',

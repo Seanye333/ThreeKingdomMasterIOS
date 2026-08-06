@@ -382,16 +382,29 @@ const CITY_OWNERSHIP_190: Record<string, string | null> = {
 };
 
 const OFFICER_ASSIGNMENTS_190: Record<string, OfficerAssignment> = {
-  // Cao
+  /* 曹操 —— 九個人原本全擠在許昌,而他有五座城。照史實鋪開:夏侯惇領東郡
+     (白馬、延津一線)、曹仁曹洪守陳留起兵之地、于禁樂進在前線,荀彧郭嘉留幕府。
+
+     ⚠ 這條改動**不是**民忠的解藥,別誤記。追蹤是這樣走的:六輪十四次失城裡
+     無主(民變)七次、黃天教四次、董卓只有三次 —— 他不是被打垮的,是外圍
+     城池自己爛掉的(白馬民忠 79→50、延津 79→40,110 回合)。我當時以為是
+     「無人牧守」,把九將鋪開再量一次 —— **曲線一模一樣**(白馬仍在第 70 回合
+     跌到 23)。再往外量,才看見這是全盤的事:鄴 58→51、南皮 55→20、
+     彭城 64→27、襄陽 51→41,多數城都在 20–60 這一帶往下漂,而許昌與下邳
+     反而爬到 100。民忠低到 20 就民變,那是設計裡的機制,不是這一家的毛病。
+
+     而史實上曹操的後方**真的反了**:194 年張邈陳宮迎呂布,兗州郡縣皆應,
+     只剩鄄城、范、東阿三城。所以這件事不該被「修掉」,該被承認 ——
+     他的主目標因此改成「守住核心」而非「取洛陽」(見 objectives)。 */
   'cao-cao':     { forceId: 'cao',       cityId: 'xuchang' },
-  'xiahou-dun':  { forceId: 'cao',       cityId: 'xuchang' },
-  'xiahou-yuan': { forceId: 'cao',       cityId: 'xuchang' },
-  'cao-ren':     { forceId: 'cao',       cityId: 'xuchang' },
-  'cao-hong':    { forceId: 'cao',       cityId: 'xuchang' },
-  'yu-jin':      { forceId: 'cao',       cityId: 'xuchang' },
-  'le-jin':      { forceId: 'cao',       cityId: 'xuchang' },
   'xun-yu':      { forceId: 'cao',       cityId: 'xuchang' },
   'guo-jia':     { forceId: 'cao',       cityId: 'xuchang' },
+  'cao-ren':     { forceId: 'cao',       cityId: 'chenliu' },
+  'cao-hong':    { forceId: 'cao',       cityId: 'chenliu' },
+  'xiahou-dun':  { forceId: 'cao',       cityId: 'baima' },
+  'xiahou-yuan': { forceId: 'cao',       cityId: 'yanjin' },
+  'yu-jin':      { forceId: 'cao',       cityId: 'guandu' },
+  'le-jin':      { forceId: 'cao',       cityId: 'guandu' },
   // Gongsun (Liu Bei serves him in 190)
   'liu-bei':     { forceId: 'gongsun',   cityId: 'beiping' },
   'guan-yu':     { forceId: 'gongsun',   cityId: 'beiping' },
