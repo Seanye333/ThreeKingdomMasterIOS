@@ -416,9 +416,23 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       'Pressed by the coalition, Dong Zhuo torches the imperial capital and flees with the boy emperor to Chang\'an. Luoyang lies in ruins; loyalty collapses across the Central Plain.',
     descriptionZh: "迫於聯軍壓境,董卓焚毀帝都,挾少帝西遷長安。洛陽化為廢墟,中原民心崩潰。",
     effects: [
-      // ⚠ 原本寫的是 'city-luoyang' —— 盤上沒有這個 id(城 id 就叫 luoyang),
-      //   於是「焚洛陽」這條效果十年來一次也沒生效過。全庫僅此一處。
+      /*
+       * ⚠ 原本只有一條民忠 −40,而且城 id 寫成 'city-luoyang' —— 盤上沒有這個
+       *   id(城 id 就叫 luoyang),查不到城靜默跳過,這條效果從沒生效過。
+       *
+       * 補成一座真的被燒過的城。史書:「盡徙洛陽人數百萬口於長安,悉燒宮廟
+       * 官府居家,二百里內無復雞犬。」而盤面上原本焚完之後,洛陽的城防、
+       * 守軍、倉廩一分未動 —— 董卓照樣拿它當都城守到二百年後。
+       *
+       * 這一條同時解開兩個卡住的目標:孫堅的「攻取洛陽」與曹操的「據有洛陽
+       * 與許昌」在體檢裡都是 0/12,而洛陽是全盤最硬的一座城(董卓十七將、
+       * 十萬兵)。史實上他們面對的不是那座洛陽,是一片焦土 —— 孫堅入洛之日
+       * 「城中無雞犬,火猶未熄」。燒過之後城該是可取的,那才是這一節的意義。
+       */
       { kind: 'city-loyalty', cityId: 'luoyang', delta: -40 },
+      { kind: 'city-defense', cityId: 'luoyang', delta: -30 },
+      { kind: 'city-troops-multiplier', cityId: 'luoyang', multiplier: 0.45 },
+      { kind: 'city-food', cityId: 'luoyang', delta: -30000 },
       { kind: 'flag', key: 'luoyang-burned' },
     ],
   },

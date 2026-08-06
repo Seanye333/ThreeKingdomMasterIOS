@@ -323,11 +323,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 193 },
       },
       secondary: [
+        /*
+         * 原本這條是「同時據有洛陽與長沙」—— 與主目標同樣卡在洛陽,一條路
+         * 塞住就兩條都不通。換成他真正的下一步:191 年袁術遣堅征荊州擊劉表,
+         * 而襄陽正在他長沙以北。史書裡他就是死在這條路上的。
+         */
         {
-          title: { zh: '傳國之璽', en: 'The Seal of State' },
-          description: 'Hold Luoyang and Changsha together — the seal came out of a well in the ruins, and he carried it home.',
-          descriptionZh: '同時據有洛陽與長沙 —— 玉璽出於城南甄官井中,而他帶著它回了江南。',
-          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changsha'], byYear: 194 },
+          title: { zh: '征荊州', en: 'The Campaign into Jing' },
+          description: 'Take Xiangyang by 195 — Yuan Shu sent him against Liu Biao, and that road ended at Xian mountain.',
+          descriptionZh: '於195年前攻取襄陽 —— 袁術遣堅征荊州擊劉表,而這條路的盡頭是峴山。',
+          goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 195 },
         },
         {
           title: { zh: '峴山之讎', en: 'The Debt at Xian Mountain' },

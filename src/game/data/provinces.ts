@@ -12,7 +12,8 @@ export const PROVINCES: Province[] = [
     description: 'The capital province, holding Luoyang and Chang\'an. The seat of the Han Court.',
     descriptionZh: '京畿之州,轄洛陽、長安。漢室朝廷所在。',
     color: '#d4a84a',
-    cityIds: ['luoyang', 'changan', 'hulao', 'tongguan'],
+    // 郿(右扶風,董卓郿塢)與武關(弘農商縣,關中南門)自益州移回 —— 見益州條的說明。
+    cityIds: ['luoyang', 'changan', 'hulao', 'tongguan', 'mei', 'wuguan'],
   },
   {
     id: 'yu',
@@ -100,7 +101,17 @@ export const PROVINCES: Province[] = [
     description: 'The basin of Shu — fenced by mountains, the heart of Liu Bei\'s realm.',
     descriptionZh: '蜀地盆地——群山環抱,劉備霸業之心。',
     color: '#3a7d4a',
-    cityIds: ['chengdu', 'hanzhong', 'yongan', 'jiangzhou', 'baxi', 'yinping', 'xincheng', 'wudu', 'shangyong', 'yangping', 'mei', 'wuguan', 'nanzhong', 'jianning', 'yongchang', 'yunnan', 'yuexi'],
+    /*
+     * 郿與武關**不在益州**,已移入司隸(2026-08-05)。
+     *
+     * 郿縣屬右扶風,去長安三十里 —— 董卓築郿塢之處;武關在弘農郡商縣,
+     * 是關中通南陽的門戶。兩座都在關中,而它們被掛在益州底下,於是
+     * 「盡取益州」這條目標**必須從據有長安的那一家手裡打下兩座關中城**。
+     *
+     * 190 盤實測:劉焉終局十七城(全盤最大),而主目標 0/12 —— 差的正是
+     * 董卓手上的郿與武關。這條錯掛影響每一張有益州目標的盤,不只 190。
+     */
+    cityIds: ['chengdu', 'hanzhong', 'yongan', 'jiangzhou', 'baxi', 'yinping', 'xincheng', 'wudu', 'shangyong', 'yangping', 'nanzhong', 'jianning', 'yongchang', 'yunnan', 'yuexi'],
   },
   {
     id: 'jiao',
