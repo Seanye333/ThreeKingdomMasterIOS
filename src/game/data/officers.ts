@@ -85,7 +85,7 @@ const OFFICER_TEMPLATES: OfficerTemplate[] = [
   // Yuan Shao force
   { id: 'yuan-shao',   name: { en: 'Yuan Shao',   zh: '袁紹'   }, courtesyName: { en: 'Benchu',    zh: '本初' }, birthYear: 154, deathYear: 202, hometownCityId: 'runan', stats: { leadership: 80, war: 79,  intelligence: 75, politics: 71, charisma: 86 } },
   { id: 'yan-liang',   name: { en: 'Yan Liang',   zh: '顏良'   },                                                                                          birthYear: 165, deathYear: 200, hometownCityId: 'ye', stats: { leadership: 65, war: 95,  intelligence: 30, politics: 25, charisma: 60 } },
-  { id: 'wen-chou',    name: { en: 'Wen Chou',    zh: '文丑'   },                                                                                          birthYear: 165, deathYear: 200, hometownCityId: 'ye', stats: { leadership: 70, war: 94,  intelligence: 32, politics: 28, charisma: 55 } },
+  { id: 'wen-chou',    name: { en: 'Wen Chou',    zh: '文醜'   },                                                                                          birthYear: 165, deathYear: 200, hometownCityId: 'ye', stats: { leadership: 70, war: 94,  intelligence: 32, politics: 28, charisma: 55 } },
   { id: 'zhang-he',    name: { en: 'Zhang He',    zh: '張郃'   }, courtesyName: { en: 'Junyi',     zh: '儁乂' }, birthYear: 167, deathYear: 231, hometownCityId: 'ye', stats: { leadership: 88, war: 92,  intelligence: 80, politics: 65, charisma: 75 } },
   { id: 'tian-feng',   name: { en: 'Tian Feng',   zh: '田豐'   }, courtesyName: { en: 'Yuanhao',   zh: '元皓' }, birthYear: 152, deathYear: 200, hometownCityId: 'ye', stats: { leadership: 60, war: 30,  intelligence: 95, politics: 88, charisma: 75 } },
 
@@ -1448,7 +1448,7 @@ export const CANONICAL_ITEMS_PRIMARY: Record<string, string> = {
   'taishi-ci':        'shenzi-bingfa',      // 慎子兵法 — 太史慈所讀兵書
   'zhou-tai':         'zhouqiao-shuangdao', // 周泰雙刀
   'yan-liang':        'yanliang-dadao',     // 顏良大刀
-  'wen-chou':         'wenchou-tieqi-maoshe',// 文丑鐵騎矛槊
+  'wen-chou':         'wenchou-tieqi-maoshe',// 文醜鐵騎矛槊
   'ma-chao':          'machao-yinlong-qiang',// 馬超銀龍槍
   'ma-dai':           'majia-qiang',        // 馬家槍
   'du-yu':            'duyu-chunqiu',       // 春秋左氏經傳集解 — 杜預

@@ -15,7 +15,43 @@ import type { Force } from '../types';
  * already-assigned guard + per-scenario assignments resolve who actually gets
  * them, so the *later* owner (already hand-assigned) always wins.
  */
-export const RETINUE: Record<string, string[]> = {
+/**
+ * 一條從屬。字串 = 一開局就在;物件可加 `since` —— **那一年之後才算他的人**。
+ *
+ * 需要 `since` 是因為主公們的班底是**一個一個來的**:張遼 198 年下邳城破才歸曹操,
+ * 賈詡 199 年隨張繡來降,太史慈 199 年為孫策所擒而後降。沒有年份的話,
+ * 190 年的反董卓聯軍盤上曹操帳下就會冒出張遼 —— 那時他還在丁原、董卓那邊。
+ */
+export type RetinueEntry = string | { id: string; since: number };
+
+export const RETINUE: Record<string, RetinueEntry[]> = {
+  /*
+   * ── 三國主角三家 ────────────────────────────────────────────────
+   *
+   * 這三家原本**一條都沒有**,理由是「他們每張盤都手寫」。可是手寫的份量遠遠
+   * 不夠:200 年官渡盤上曹操九將、袁紹五將、孫策六將,而周瑜、張昭、太史慈、
+   * 荀攸、程昱、許褚、張遼、徐晃、賈詡、李典、沮授、審配、郭圖、逢紀、高覽、
+   * 袁譚袁尚袁熙、趙雲、孫乾、簡雍 —— 那個時代的整個幕府,全躺在 unsearched
+   * 的人才池裡。而次要諸侯(劉璋十二將、劉表七將)反而是滿的,因為他們有
+   * RETINUE。主角比配角還空,是這張表的覆蓋面問題,不是設計。
+   *
+   * 手寫指派永遠優先(fillRetinues 只填「無主且在池裡」的人),所以補這三家
+   * 不會覆蓋任何一張盤已經寫好的編制。
+   */
+  'cao-cao':    ['xiahou-dun', 'xiahou-yuan', 'cao-ren', 'cao-hong', 'le-jin', 'li-dian', 'cao-chun',
+                 { id: 'xun-yu', since: 191 }, { id: 'yu-jin', since: 192 }, { id: 'cheng-yu', since: 192 },
+                 { id: 'man-chong', since: 194 }, { id: 'guo-jia', since: 196 }, { id: 'xun-you', since: 196 },
+                 { id: 'xu-huang', since: 196 }, { id: 'liu-ye', since: 196 }, { id: 'xu-chu', since: 197 },
+                 { id: 'zhang-liao', since: 198 }, { id: 'jia-xu', since: 199 }],
+  'yuan-shao':  ['yan-liang', 'wen-chou', 'zhang-he', 'gao-lan', 'tian-feng', 'ju-shou', 'shen-pei',
+                 'guo-tu', 'feng-ji', 'yuan-tan', 'yuan-xi', 'yuan-shang'],
+  'sun-ce':     ['cheng-pu', 'huang-gai', 'han-dang', 'zhu-zhi', 'sun-quan',
+                 { id: 'zhou-yu', since: 195 }, { id: 'zhang-zhao', since: 195 }, { id: 'lu-fan', since: 195 },
+                 { id: 'jiang-qin', since: 195 }, { id: 'zhou-tai', since: 195 }, { id: 'chen-wu', since: 196 },
+                 { id: 'lu-meng', since: 198 }, { id: 'taishi-ci', since: 199 }],
+  'liu-bei':    ['guan-yu', 'zhang-fei', { id: 'jian-yong', since: 190 }, { id: 'sun-qian', since: 194 },
+                 { id: 'zhao-yun', since: 200 }],
+
   // ── Three Kingdoms secondary warlords ──────────────────────────────
   'liu-biao':   ['cai-mao', 'kuai-yue', 'kuai-liang', 'huang-zu', 'wen-pin', 'liu-qi', 'liu-cong'],
   'ma-teng':    ['ma-chao', 'ma-dai', 'pang-de', 'han-sui', 'ma-xiu', 'ma-tie'],
@@ -69,7 +105,10 @@ export function fillRetinues(officers: Officer[], forces: Force[], year: number)
   for (const force of forces) {
     const retinue = RETINUE[force.rulerOfficerId];
     if (!retinue) continue;
-    for (const oid of retinue) {
+    for (const entry of retinue) {
+      const oid = typeof entry === 'string' ? entry : entry.id;
+      // 「那一年之後才算他的人」—— 張遼 198 才歸曹操,在 190 盤上不該出現在他帳下。
+      if (typeof entry !== 'string' && year < entry.since) continue;
       if (assigned.has(oid)) continue;          // already serving a lord
       const o = byId.get(oid);
       if (!o || o.forceId || o.status === 'dead') continue;

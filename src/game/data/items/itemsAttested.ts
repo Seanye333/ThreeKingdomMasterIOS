@@ -344,7 +344,7 @@ export const ITEMSATTESTED: Item[] = [
     kind: 'weapon',
     originCityId: 'ye',
     description: "Wen Chou's snake-spear with iron ridge — set beside Yan Liang as the twin jewels of Yuan Shao's host. Cut down by Guan Yu at Yanjin.",
-    descriptionZh: "文丑鐵脊蛇矛。與顏良並為河北雙璧。延津之戰亦為關羽所斬。",
+    descriptionZh: "文醜鐵脊蛇矛。與顏良並為河北雙璧。延津之戰亦為關羽所斬。",
     effects: { war: 9 },
   },
   {

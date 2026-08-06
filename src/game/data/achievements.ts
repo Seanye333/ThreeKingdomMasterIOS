@@ -312,9 +312,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'ach-slay-wen-chou',
-    name: { en: 'Slew Wen Chou', zh: '誅文丑' },
+    name: { en: 'Slew Wen Chou', zh: '誅文醜' },
     description: 'Defeat Wen Chou.',
-    descriptionZh: "擊敗文丑。",
+    descriptionZh: "擊敗文醜。",
     tier: 'silver',
     trigger: { kind: 'defeat-officer', targetId: 'wen-chou' },
   },
