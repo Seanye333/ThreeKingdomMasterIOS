@@ -1790,6 +1790,19 @@ export const SCENARIO_220_DECLARATION: Scenario = {
     'Guan Yu fell, and Lu Meng captured the south for Sun Quan. The realm is split between three rivals.',
   descriptionZh: "公元220年春。曹操薨逝，其子曹丕將受漢獻帝禪讓，建立大魏。劉備據益州、漢中，然荊州已失——關羽兵敗身死，呂蒙白衣渡江盡取江南。天下遂成三足鼎立之勢。",
   startDate: { year: 220, season: 'spring' },
+  /*
+   * 開局外交 —— 曹丕受禪,孫權稱藩於魏 —— 三家之中,
+     蜀漢是唯一還打著漢旗的那一個,而它剛剛失去荊州與關羽。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: 45, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'sun', score: -70, status: 'neutral' },
+    { a: 'cao', b: 'shi-xie', score: 20, status: 'non-aggression' },
+    { a: 'sun', b: 'shi-xie', score: 35, status: 'non-aggression' },
+    { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
+    { a: 'liu-bei', b: 'nanman', score: -30, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_220),
   forces: FORCES_220,
   // Auto-compute dead officers by year — anything dying before 220 gets marked dead.
@@ -1980,6 +1993,21 @@ export const SCENARIO_215_HEFEI: Scenario = {
     'in the most legendary defensive stand of the era.',
   descriptionZh: "公元215年夏。劉備方取益州於劉璋之手，曹操親征漢中張魯。孫權趁勢起兵十萬攻打合肥——城中張遼僅率七千將士死守，遂演成本朝最為傳奇之守城血戰。",
   startDate: { year: 215, season: 'summer' },
+  /*
+   * 開局外交 —— 逍遙津:張遼以八百破十萬。而這一年孫劉以湘水為界,
+     分荊州三郡 —— 盟約還在,信任已經不在。曹操方取漢中。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'sun', score: -85, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 40, status: 'non-aggression' },
+    { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'zhang-lu', score: -85, status: 'neutral' },
+    { a: 'liu-bei', b: 'zhang-lu', score: -20, status: 'neutral' },
+    { a: 'cao', b: 'shi-xie', score: 15, status: 'non-aggression' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+    { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
+    { a: 'liu-bei', b: 'nanman', score: -25, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_215),
   forces: FORCES_215,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_215, [], 215),
@@ -2102,6 +2130,22 @@ export const SCENARIO_197_BOHAI: Scenario = {
     'The chessboard is set for the next decade.',
   descriptionZh: "公元197年春。曹操方迎漢獻帝駐蹕許昌，袁紹於河北擁兵倍於曹氏，虎視中原。呂布兵敗長安後據守下邳，孫策亦於江東崛起。天下棋局，已為此後十年之爭埋下伏線。",
   startDate: { year: 197, season: 'spring' },
+  /*
+   * 開局外交 —— 袁術僭號於壽春,天下共討之 —— 孫策絕之,呂布絕之,曹操征之。
+     而曹操與袁紹的盟約已裂而未破:官渡還有三年。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'yuan-shu', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'yuan-shao', score: 50, status: 'allied' },
+    { a: 'cao', b: 'lu-bu', score: -40, status: 'neutral' },
+    { a: 'sun', b: 'yuan-shu', score: -70, status: 'neutral' },
+    { a: 'yuan-shao', b: 'gongsun', score: -85, status: 'neutral' },
+    { a: 'lu-bu', b: 'yuan-shu', score: -30, status: 'neutral' },
+    { a: 'sun', b: 'liu-biao', score: -75, status: 'neutral' },
+    { a: 'cao', b: 'liu-biao', score: -20, status: 'neutral' },
+    { a: 'ma-teng', b: 'cao', score: 25, status: 'non-aggression' },
+    { a: 'liu-yan', b: 'liu-biao', score: 20, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_197),
   forces: FORCES_197,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_197, DEAD_BY_197, 197),
@@ -2209,6 +2253,18 @@ export const SCENARIO_219_HANZHONG: Scenario = {
     'But Sun Quan watches Jingzhou, and Lü Meng has a plan involving white robes.',
   descriptionZh: "公元219年秋。劉備於漢中大破曹操，自立為漢中王。關雲長兵發樊城，蜀漢國勢一時鼎盛。然孫權窺伺荊州，呂蒙密謀白衣渡江之計。",
   startDate: { year: 219, season: 'autumn' },
+  /*
+   * 開局外交 —— 水淹七軍,威震華夏 —— 而孫權已遣使求婚不成,
+     密與曹操通,呂蒙白衣渡江在即。盟約表面仍在,實則已翻。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'liu-bei', score: -90, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: 40, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'sun', score: -50, status: 'neutral' },
+    { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
+    { a: 'liu-bei', b: 'nanman', score: -25, status: 'neutral' },
+    { a: 'sun', b: 'nanman', score: 10, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_219),
   forces: FORCES_219,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_219, DEAD_BY_219, 219),
@@ -2306,6 +2362,18 @@ export const SCENARIO_222_YILING: Scenario = {
     'A burning camp 700 li long awaits.',
   descriptionZh: "公元222年夏。劉備為報雲長之仇，怒髮衝冠，率七十萬大軍東征伐吳。孫權拜陸遜為帥——此人名不見經傳，卻臨危受命。連營七百里，烈火焚天之劫即將降臨。",
   startDate: { year: 222, season: 'summer' },
+  /*
+   * 開局外交 —— 夷陵。陸遜火燒連營七百里,而後孫權叛魏 ——
+     這一年三家兩兩為敵,是鼎立之世唯一的一次。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'sun', score: -95, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -30, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
+    { a: 'liu-bei', b: 'nanman', score: -40, status: 'neutral' },
+    { a: 'sun', b: 'nanman', score: 15, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_222),
   forces: FORCES_222,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_222, DEAD_BY_222, 222),
@@ -2587,6 +2655,22 @@ export const SCENARIO_198_XIAPI: Scenario = {
     'Yangtze; Liu Biao guards Jing. Chen Gong and Gao Shun stand last beside the Flying General.',
   descriptionZh: "公元198年冬。曹操挾天子以令諸侯，會同劉備東征下邳，欲擒呂布。袁紹於鄴擁兵倍於曹氏，虎視中原；孫策席捲江東；劉表據荊州自守。陳宮、高順誓死隨飛將軍，困守孤城。此局宜長圍：決泗沂之水，或圍而不攻坐待糧盡 — 白門樓上，自有分曉。",
   startDate: { year: 198, season: 'winter' },
+  /*
+   * 開局外交 —— 決泗沂之水灌下邳,白門樓上一句「明公所患不過於布」。
+     而袁紹方困公孫瓚於易京,曹操與袁紹的裂痕已經藏不住。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'lubu', score: -95, status: 'neutral' },
+    { a: 'cao', b: 'yuan-shao', score: 40, status: 'non-aggression' },
+    { a: 'lubu', b: 'yuan-shu', score: 20, status: 'non-aggression' },
+    { a: 'cao', b: 'yuan-shu', score: -85, status: 'neutral' },
+    { a: 'sun', b: 'yuan-shu', score: -70, status: 'neutral' },
+    { a: 'yuan-shao', b: 'gongsun', score: -90, status: 'neutral' },
+    { a: 'sun', b: 'liu-biao', score: -75, status: 'neutral' },
+    { a: 'cao', b: 'liu-biao', score: -20, status: 'neutral' },
+    { a: 'ma-teng', b: 'cao', score: 25, status: 'non-aggression' },
+    { a: 'liu-zhang', b: 'liu-biao', score: 20, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_198),
   forces: FORCES_198,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_198, DEAD_BY_198, 198),
@@ -2788,6 +2872,21 @@ export const SCENARIO_207_THREE_VISITS: Scenario = {
     'Longzhong. Three times he will ride out to that thatched cottage. The age of the strategists begins.',
   descriptionZh: "公元207年春。曹操北征烏桓，白狼山一戰盡掃袁氏餘孽，河北遂定。劉備寄寓新野，仰仗劉表庇護，聞隆中有臥龍之名，三顧茅廬以求賢。軍師之世，自此而開。",
   startDate: { year: 207, season: 'spring' },
+  /*
+   * 開局外交 —— 北方已定,而南方三家各守其境。劉表與孫權有黃祖之讎,
+     張魯與劉璋有殺母之恨 —— 曹操此時尚未南下,天下最後一段安靜。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'sun', score: -40, status: 'neutral' },
+    { a: 'cao', b: 'liu-biao', score: -35, status: 'neutral' },
+    { a: 'sun', b: 'liu-biao', score: -80, status: 'neutral' },
+    { a: 'zhang-lu', b: 'liu-zhang', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'ma-teng', score: 40, status: 'non-aggression' },
+    { a: 'cao', b: 'gongsun-du', score: 25, status: 'non-aggression' },
+    { a: 'cao', b: 'shi-xie', score: 20, status: 'non-aggression' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+    { a: 'liu-biao', b: 'liu-zhang', score: 20, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_207),
   forces: FORCES_207,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_207, DEAD_BY_207, 207),
@@ -2993,6 +3092,23 @@ export const SCENARIO_211_WEINAN: Scenario = {
     'flower of his armies. Liu Bei consolidates Jingzhou; Liu Zhang ponders inviting him into Yi.',
   descriptionZh: "公元211年秋。馬騰為曹操所害，馬超舉哀興兵，會同韓遂及涼州十路諸侯，誓報父仇。曹操親率大軍西征潼關，許褚、曹仁皆隨。劉備據荊州，劉璋方議迎之入蜀。",
   startDate: { year: 211, season: 'autumn' },
+  /*
+   * 開局外交 —— 潼關之戰:馬超韓遂等關中十部連兵,而賈詡以離間破之 ——
+     那條盟約從一開始就是脆的。南方則是孫劉之盟正盛(借荊州),
+     而劉璋方請劉備入蜀。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'ma-chao', score: -95, status: 'neutral' },
+    { a: 'ma-chao', b: 'han-sui', score: 60, status: 'allied' },
+    { a: 'cao', b: 'han-sui', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 55, status: 'allied' },
+    { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
+    { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
+    { a: 'liu-bei', b: 'liu-zhang', score: 35, status: 'non-aggression' },
+    { a: 'cao', b: 'zhang-lu', score: -20, status: 'neutral' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_211),
   forces: FORCES_211,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_211, DEAD_BY_211, 211),
@@ -3189,6 +3305,17 @@ export const SCENARIO_228_JIETING: Scenario = {
     'Zhang He west and recalls Sima Yi. At Jieting, Ma Su will abandon the road for the heights.',
   descriptionZh: "公元228年春。諸葛亮上《出師表》，自漢中起兵北伐，揮師中原。南安、天水、安定三郡降蜀，魏廷震動。魏明帝曹叡命張郃西進，復召司馬懿出鎮。馬謖違亮節度，舍水上山——街亭之失，自此注定。",
   startDate: { year: 228, season: 'spring' },
+  /*
+   * 開局外交 —— 街亭。馬謖舍水上山,張郃絕其汲道 ——
+     蜀吳之盟已復(鄧芝使吳),而軻比能受亮之約擾魏北邊。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
+    { a: 'liu-bei', b: 'xianbei', score: 45, status: 'non-aggression' },
+    { a: 'cao', b: 'xianbei', score: -40, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_228),
   forces: FORCES_228,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_228, DEAD_BY_228, 228),
@@ -3381,6 +3508,15 @@ export const SCENARIO_263_SHU_FALL: Scenario = {
     'Wu under Sun Xiu watches from afar, knowing its own hour is near.',
   descriptionZh: "公元263年秋。司馬昭實為晉公，挾魏帝以伐蜀。鍾會率主力出斜谷直指漢中；鄧艾偷渡陰平小道；諸葛緒牽制姜維於沓中。成都之內，後主劉禪沉湎黃皓之言。吳主孫休隔江坐觀，深知唇亡齒寒之理。",
   startDate: { year: 263, season: 'autumn' },
+  /*
+   * 開局外交 —— 滅蜀之役:鍾會出斜谷,鄧艾出陰平 ——
+     蜀之亡,不亡於劍閣,亡於一條沒有人設防的小路。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'liu-bei', score: -95, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+    { a: 'cao', b: 'sun', score: -80, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_263),
   forces: FORCES_263,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_263, DEAD_BY_263, 263),
@@ -3527,6 +3663,24 @@ export const SCENARIO_189_EUNUCHS: Scenario = {
     'time Dong Zhuo\'s army reaches Luoyang, the boy emperor is in his grasp — and the Han is doomed.',
   descriptionZh: "公元189年秋。靈帝駕崩，大將軍何進攝政，與袁紹密謀召董卓進京誅除宦官。十常侍先發制人，於宮中斬何進首級。袁紹引兵入宮，盡誅宦黨。董卓抵洛陽，少帝已落其手——四百年漢室，自此名存實亡。",
   startDate: { year: 189, season: 'autumn' },
+  /*
+   * 開局外交 —— 190 年之前的那一夜:何進與十常侍已成死局,而外兵在路上。
+     袁紹勸進誅宦,曹操為典軍校尉在其幕;董卓奉召而來,名為助何進,
+     實則等禁中自亂。孫堅、劉表、劉焉遠在外州,與洛陽之爭無涉。
+   */
+  openingRelations: [
+    { a: 'han', b: 'eunuchs', score: -90, status: 'neutral' },
+    { a: 'han', b: 'yuan-shao', score: 75, status: 'allied' },
+    { a: 'han', b: 'cao', score: 50, status: 'non-aggression' },
+    { a: 'han', b: 'dong', score: 30, status: 'non-aggression' },
+    { a: 'eunuchs', b: 'yuan-shao', score: -85, status: 'neutral' },
+    { a: 'eunuchs', b: 'cao', score: -40, status: 'neutral' },
+    { a: 'dong', b: 'eunuchs', score: -20, status: 'neutral' },
+    { a: 'dong', b: 'yuan-shao', score: -30, status: 'neutral' },
+    { a: 'han', b: 'liu-biao', score: 25, status: 'non-aggression' },
+    { a: 'han', b: 'liu-yan', score: 20, status: 'non-aggression' },
+    { a: 'han', b: 'sun', score: 30, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_189),
   forces: FORCES_189,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_189, DEAD_BY_189, 189),
@@ -3725,6 +3879,25 @@ export const SCENARIO_194_XUZHOU: Scenario = {
     'Yuan Shu\'s cage at Shouchun, his father\'s sword unsheathed.',
   descriptionZh: "公元194年夏。曹操之父曹嵩為陶謙部將所殺，孟德舉哀興兵，血洗徐州，彭城屍積如山。其後方，呂布、陳宮乘虛襲取兗州。陶謙病篤，遣使北海請劉備來代守徐州。袁紹整合河北；孫策困於壽春袁術之側，懷父劍而未發。亂世群雄並起，徐州一州，幾為天下樞紐。",
   startDate: { year: 194, season: 'summer' },
+  /*
+   * 開局外交 —— 曹嵩死於徐州境內,操東征,所過多所殘戮 —— 這張盤的第一條線
+     就是那筆血債。而張邈陳宮迎呂布入兗州,操的後方同時反了。
+     孔融發兵救徐州,公孫瓚亦與陶謙相結。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'tao', score: -95, status: 'neutral' },
+    { a: 'cao', b: 'lubu', score: -90, status: 'neutral' },
+    { a: 'tao', b: 'kong-rong', score: 55, status: 'allied' },
+    { a: 'tao', b: 'gongsun', score: 40, status: 'non-aggression' },
+    { a: 'cao', b: 'yuan-shao', score: 60, status: 'allied' },
+    { a: 'yuan-shao', b: 'gongsun', score: -80, status: 'neutral' },
+    { a: 'yuan-shao', b: 'yuan-shu', score: -60, status: 'neutral' },
+    { a: 'yuan-shu', b: 'liu-biao', score: -65, status: 'neutral' },
+    { a: 'lubu', b: 'yuan-shu', score: 20, status: 'non-aggression' },
+    { a: 'cao', b: 'yuan-shu', score: -55, status: 'neutral' },
+    { a: 'liu-yan', b: 'liu-biao', score: 20, status: 'non-aggression' },
+    { a: 'ma-teng', b: 'cao', score: 10, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_194),
   forces: FORCES_194,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_194, DEAD_BY_194, 194),
@@ -3938,6 +4111,20 @@ export const SCENARIO_214_XICHUAN: Scenario = {
     'he believes, is overdue.',
   descriptionZh: "公元214年夏。劉備圍成都。龐統殞落雒城；孔明、翼德溯江而上，義釋嚴顏，已取江州。劉璋閉門以待，西川人心離散。北方曹操濡須相持纔退，遂謀漢中張魯。江東孫權虎視荊州——魯子敬之借，自言已逾期矣。",
   startDate: { year: 214, season: 'summer' },
+  /*
+   * 開局外交 —— 成都開城。劉璋曰:「父子在州二十餘年,無恩德以加百姓。」
+     而孫權聞備得益州,遣使求還荊州 —— 湘水之爭自此始。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'liu-zhang', score: -90, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 25, status: 'non-aggression' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
+    { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'zhang-lu', score: -30, status: 'neutral' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+    { a: 'cao', b: 'shi-xie', score: 15, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_214),
   forces: FORCES_214,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_214, DEAD_BY_214, 214),
@@ -4135,6 +4322,19 @@ export const SCENARIO_249_GAOPINGLING: Scenario = {
     'clan. From this day, the Cao emperor reigns but the Sima clan rules.',
   descriptionZh: "公元249年春。司馬仲達詐病兩年，大將軍曹爽驕橫日盛。是日曹爽奉幼帝曹芳謁高平陵，司馬懿病榻一躍而起，部勒禁軍，閉洛陽諸門，盡奪武庫。曹爽信郭太后詔書出降，旋與三族並誅於市。自此曹氏雖坐龍床，天下實歸司馬。",
   startDate: { year: 249, season: 'spring' },
+  /*
+   * 開局外交 —— 高平陵。司馬懿以太后詔閉城門,勒兵據武庫 ——
+     曹爽出屯許昌則猶可為,而他選擇了「不失作富家翁」。
+     魏之社稷,自此日移於司馬氏。
+   */
+  openingRelations: [
+    { a: 'sima', b: 'cao', score: -95, status: 'neutral' },
+    { a: 'sima', b: 'liu-bei', score: -80, status: 'neutral' },
+    { a: 'sima', b: 'sun', score: -75, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -60, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -55, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_249),
   forces: FORCES_249,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_249, DEAD_BY_249, 249),
@@ -4328,6 +4528,13 @@ export const SCENARIO_280_JIN_UNITE: Scenario = {
     'In four months, three centuries of division will end, and the realm be one.',
   descriptionZh: "公元280年春。晉武帝司馬炎下詔大舉伐吳，六路齊發。杜元凱由襄陽南下；王渾自橫江渡江；王濬樓船下益州，沿江而東，焚鐵索、燒鐵錐，浩浩無敵。建業之內，吳主孫晧猶歌舞為樂。不過四月，三百年分裂之局將終，天下歸於一統。",
   startDate: { year: 280, season: 'spring' },
+  /*
+   * 開局外交 —— 晉滅吳:王濬樓船下益州,金陵王氣黯然收 ——
+     千尋鐵鎖沉江底,一片降幡出石頭。
+   */
+  openingRelations: [
+    { a: 'sima', b: 'sun', score: -95, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_280),
   forces: FORCES_280,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_280, DEAD_BY_280, 280),
@@ -4541,6 +4748,24 @@ export const SCENARIO_192_WANGYUN: Scenario = {
     'Sun Jian lies just slain at Xiangyang. The hour of the Han is brief, and dark.',
   descriptionZh: "公元192年春。司徒王允布連環之計，以歌伎貂蟬周旋於董卓、呂布父子之間。是日呂布於未央宮提戟而上，斬虐主於閤下。然西涼之兵未散——李傕、郭汜糾合舊部，欲為太師復仇，將再焚長安。河北界橋公孫瓚大敗於袁紹；曹操新領兗州牧，收青州黃巾為己用；江東猛虎孫堅方殞於襄陽。漢家氣數，將盡於此年。",
   startDate: { year: 192, season: 'spring' },
+  /*
+   * 開局外交 —— 王允與呂布共誅董卓,而李傕郭汜用賈詡之謀反攻長安 ——
+     這張盤的中心是長安城裡那三家。關東那頭:袁紹與公孫瓚方戰於界橋,
+     袁氏兄弟已互相提防,曹操此時仍是袁紹的盟友。
+   */
+  openingRelations: [
+    { a: 'han', b: 'lubu', score: 80, status: 'allied' },
+    { a: 'han', b: 'lijue', score: -95, status: 'neutral' },
+    { a: 'lubu', b: 'lijue', score: -90, status: 'neutral' },
+    { a: 'yuan-shao', b: 'gongsun', score: -80, status: 'neutral' },
+    { a: 'yuan-shao', b: 'yuan-shu', score: -60, status: 'neutral' },
+    { a: 'cao', b: 'yuan-shao', score: 60, status: 'allied' },
+    { a: 'yuan-shu', b: 'liu-biao', score: -65, status: 'neutral' },
+    { a: 'cao', b: 'yuan-shu', score: -55, status: 'neutral' },
+    { a: 'tao-qian', b: 'cao', score: -15, status: 'neutral' },
+    { a: 'han', b: 'yuan-shao', score: 35, status: 'non-aggression' },
+    { a: 'liu-yan', b: 'liu-biao', score: 20, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_192),
   forces: FORCES_192,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_192, DEAD_BY_192, 192),
@@ -4792,6 +5017,22 @@ export const SCENARIO_204_YECHENG: Scenario = {
     "Jing province Liu Bei sleeps under Liu Biao's wing at Xinye, still without a strategist worthy of him.",
   descriptionZh: "公元204年夏。曹操決漳水以灌鄴城，袁氏故都垣牆既圮。袁本初崩於官渡之後二年，諸子譚、尚鬩牆於外，中軍合圍於內。曹丕將於焚宅中得甄氏而納之。江東孫權承兄業已四載；荊州劉備寄食劉景升之新野，臥龍未顯，求賢正切。此局命脈在糧道：色帶即補給，烏巢一炬可定北方。",
   startDate: { year: 204, season: 'summer' },
+  /*
+   * 開局外交 —— 袁氏兄弟相攻,而曹操坐收 —— 譚降而復叛,尚走中山。
+     郭嘉曰:「急之則相持,緩之而後爭心生。」
+   */
+  openingRelations: [
+    { a: 'cao', b: 'yuan-shang', score: -95, status: 'neutral' },
+    { a: 'yuan-shang', b: 'yuan-tan', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'yuan-tan', score: 45, status: 'non-aggression' },
+    { a: 'sun', b: 'liu-biao', score: -75, status: 'neutral' },
+    { a: 'cao', b: 'ma-teng', score: 35, status: 'non-aggression' },
+    { a: 'zhang-lu', b: 'liu-zhang', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -25, status: 'neutral' },
+    { a: 'cao', b: 'liu-biao', score: -30, status: 'neutral' },
+    { a: 'gongsun', b: 'cao', score: 20, status: 'non-aggression' },
+    { a: 'shi-xie', b: 'sun', score: 30, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_204),
   forces: FORCES_204,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_204, DEAD_BY_204, 204),
@@ -5030,6 +5271,20 @@ export const SCENARIO_213_FENGPO: Scenario = {
     'Gan Ning leads his hundred horsemen on a night raid that will be sung for centuries.',
   descriptionZh: "公元213年夏。劉備溯岷江入蜀，鳳雛龐統運籌帷幄。是日落鳳坡，伏兵齊發；張任之卒見的盧白馬，誤以為劉郎，亂箭如雨——士元殞落於斯。玄德傳檄荊州，召孔明、翼德、子龍引兵入川。江東濡須口風緊，曹孟德百萬南臨；甘興霸夜引百騎劫魏寨，名動千秋。",
   startDate: { year: 213, season: 'summer' },
+  /*
+   * 開局外交 —— 龐統死於落鳳坡,而劉備與劉璋已無迴旋 ——
+     引虎自衛者,虎入而主易。孫劉之盟因荊州而生隙。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'liu-zhang', score: -70, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 45, status: 'non-aggression' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
+    { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'zhang-lu', score: -25, status: 'neutral' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+    { a: 'cao', b: 'shi-xie', score: 15, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_213),
   forces: FORCES_213,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_213, DEAD_BY_213, 213),
@@ -5302,6 +5557,19 @@ export const SCENARIO_221_SHU_EMPEROR: Scenario = {
     'two subordinates who fled east with his head.',
   descriptionZh: "公元221年夏。曹丕受漢禪稱魏帝；劉備不甘北望，遂於武擔之南即皇帝位，國號漢，是為昭烈帝。普天之下，三帝並立——魏據北方，漢承蜀地，吳王孫權雖未稱尊而坐擁江東。昭烈帝大集舟師，欲為雲長復仇、復取荊州。然閬中急報至：張翼德為帳下范疆、張達所弒，提首東奔。國仇家恨，盡聚此年。",
   startDate: { year: 221, season: 'summer' },
+  /*
+   * 開局外交 —— 劉備稱帝於成都,而後東征 —— 趙雲諫曰「國賊是曹操,
+     非孫權也」,不從。孫權則遣使稱藩於魏,以避兩線。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'sun', score: -90, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: 40, status: 'non-aggression' },
+    { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'shi-xie', score: 20, status: 'non-aggression' },
+    { a: 'sun', b: 'shi-xie', score: 35, status: 'non-aggression' },
+    { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
+    { a: 'liu-bei', b: 'nanman', score: -35, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_221),
   forces: FORCES_221,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_221, DEAD_BY_221, 221),
@@ -5565,6 +5833,20 @@ export const SCENARIO_229_THREE_EMPERORS: Scenario = {
     'held against him last winter. Zhao Yun, last of the Five Tiger Generals, is dying at Hanzhong.',
   descriptionZh: "公元229年夏。孫權於武昌設壇祭天，正位稱帝，國號吳，遂遷都建業。漢家三系並立——魏據洛京，蜀漢守成都，吳臨大江。諸葛丞相三出祁山方歸，雖取武都、陰平二郡，然郝伯道死守陳倉，蜀軍不能進。漢中營中老將子龍臥病，五虎之餘暉將熄。",
   startDate: { year: 229, season: 'summer' },
+  /*
+   * 開局外交 —— 孫權稱帝於武昌,蜀遣陳震賀之,並約中分天下 ——
+     鼎立之名,至此才算三家俱備。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'sun', score: 75, status: 'allied' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -80, status: 'neutral' },
+    { a: 'liu-bei', b: 'xianbei', score: 45, status: 'non-aggression' },
+    { a: 'cao', b: 'xianbei', score: -40, status: 'neutral' },
+    { a: 'cao', b: 'gongsun', score: -20, status: 'neutral' },
+    { a: 'sun', b: 'gongsun', score: 35, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'nanman', score: 20, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_229),
   forces: FORCES_229,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_229, DEAD_BY_229, 229),
@@ -5788,6 +6070,15 @@ export const SCENARIO_252_DONGXING: Scenario = {
     'next northern probe, the war that will not end.',
   descriptionZh: "公元252年冬。江東吳大帝孫權崩，在位五十二年。幼帝孫亮即位，大將軍諸葛恪輔政。司馬仲達一年前已殂，其子司馬子元當權於洛京。是冬魏軍三路南下，欲攻新築之東興大堤。雪夜陣前，丁奉率短兵裸袒突陣，魏軍大潰於堤上冰河。西邊姜伯約整兵漢中，再謀北伐——干戈未息，三國猶在。",
   startDate: { year: 252, season: 'winter' },
+  /*
+   * 開局外交 —— 東興之戰:諸葛恪築堤遏巢湖,魏三道並進而大敗 ——
+     吳之最後一次大勝,而恪由是輕敵,明年新城之圍,喪師而歸。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+    { a: 'cao', b: 'sun', score: -90, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_252),
   forces: FORCES_252,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_252, DEAD_BY_252, 252),
@@ -6013,6 +6304,18 @@ export const SCENARIO_264_ZHONGHUI: Scenario = {
     "and Deng Ai will all lie dead. Wu under Sun Hao watches in dread.",
   descriptionZh: "公元264年春。蜀漢已亡——昨冬譙周勸降，後主出城受縛。鍾士季坐成都，握平蜀大軍；姜伯約佯降而懷異志，密勸鍾會稱益州王，曰：「事成則漢家可興」。鄧士載入綿竹之奇，繫於檻車。司馬子上於洛陽復遣衛伯玉提兵入蜀。是春兵變於成都，鍾、姜、鄧三人皆殞於亂軍。江東孫皓初即位，聞之大震。",
   startDate: { year: 264, season: 'spring' },
+  /*
+   * 開局外交 —— 鍾會之亂:會與姜維謀據蜀自王,而鄧艾已先下成都 ——
+     三人之間,誰也不信誰,而司馬昭在長安看著。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'zhonghui', score: -90, status: 'neutral' },
+    { a: 'zhonghui', b: 'dengai', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'dengai', score: 30, status: 'non-aggression' },
+    { a: 'cao', b: 'sun', score: -80, status: 'neutral' },
+    { a: 'zhonghui', b: 'sun', score: 20, status: 'non-aggression' },
+    { a: 'dengai', b: 'sun', score: -60, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_264),
   forces: FORCES_264,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_264, DEAD_BY_264, 264),
@@ -6243,6 +6546,13 @@ export const SCENARIO_265_JIN_FOUNDED: Scenario = {
     'keels of the great river-fleet at Yizhou. Fifteen years of waiting begin.',
   descriptionZh: "公元265年冬。司馬子上薨於秋；其子司馬炎承父志，是年十二月乙卯，逼魏元帝曹奐禪位，定國號曰晉，都洛陽。曹孟德所創之魏，立國四十五年而終。江左孫皓暴戾日甚，群臣震慄，言讖緯者眾。晉之南陲，羊叔子、杜元凱緩兵蓄銳，撫荊襄民心；王士治於益州造船伐木，密謀順流之師。十五年之等待，自此始。",
   startDate: { year: 265, season: 'winter' },
+  /*
+   * 開局外交 —— 司馬炎受禪,國號晉 —— 天下只剩兩家,
+     而其中一家已經沒有人相信它還能贏。
+   */
+  openingRelations: [
+    { a: 'sima', b: 'sun', score: -85, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_265),
   forces: FORCES_265,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_265, DEAD_BY_265, 265),
@@ -7339,6 +7649,15 @@ export const SCENARIO_241_SHAOPI: Scenario = {
     'Summer 241. Cao Rui is three years dead and the boy-emperor Cao Fang reigns under his regents, and the aged Sun Quan throws his last great war northward: Quan Cong drives on the Shaobei dykes of the Huai, Zhu Ran lays siege to Fan, and Zhuge Jin strikes at Zuzhong. The Wei line under Wang Ling and Sun Li holds the frontier — but this is the final roar of the founder of Wu, who will not march again.',
   descriptionZh: "赤烏四年夏。曹叡崩已三載，幼帝曹芳受制於輔政諸公；老邁的孫權發動其畢生最後一次大舉北伐——全琮進逼淮南芍陂，朱然圍樊城，諸葛瑾攻柤中。魏軍賴王凌、孫禮拒守而得全。然此乃吳之開國者最後的咆哮，自此他再未能親征。",
   startDate: { year: 241, season: 'summer' },
+  /*
+   * 開局外交 —— 芍陂之戰:全琮攻淮南,王淩拒之 —— 鼎立既定,
+     此後三十年的仗都是這個樣子:各出其境,而無人能過。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+    { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -80, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_234),
   forces: FORCES_POST_CAORUI,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_POST_CAORUI, [], 241),
@@ -7350,6 +7669,15 @@ export const SCENARIO_244_XINGSHI: Scenario = {
     'Spring 244. The regent Cao Shuang, hungry for the martial glory that would cement his grip on Wei, pours a hundred thousand men up the Luo Valley into Hanzhong. But Wang Ping holds the heights of Xingshi with a few thousand, Fei Yi races north from Chengdu, and the Wei host starves on the broken mountain roads. The retreat becomes a rout — and Cao Shuang\'s prestige never recovers, paving the road that ends at the Gaoping Tombs.',
   descriptionZh: "正始五年春。大將軍曹爽急於立武功以固其權柄，驅十萬之眾溯駱谷而入漢中。然鎮北大將軍王平以數千之卒拒守興勢之嶺，費禕自成都疾馳來援，魏軍困於崎嶇山道，糧盡而士卒死傷枕藉。其退也如潰——曹爽威望自此一蹶不振，通往高平陵之變的道路，由是而鋪。",
   startDate: { year: 244, season: 'spring' },
+  /*
+   * 開局外交 —— 興勢之戰:曹爽伐蜀,王平據興勢,費禕自成都赴之 ——
+     爽大敗而還,自此魏不復西向者二十年。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_234),
   forces: FORCES_POST_CAORUI,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_POST_CAORUI, [], 244),
@@ -7365,6 +7693,15 @@ export const SCENARIO_253_HEFEI: Scenario = {
     'Summer 253. Drunk on his victory at Dongxing the winter before, the Grand Tutor Zhuge Ke throws two hundred thousand men — the whole strength of Wu — against the little Wei fortress of Hefei New City. Zhang Te holds the walls against all odds; the summer brings plague; the besiegers die in their thousands of disease and Wei arrows. Zhuge Ke\'s army melts away and his prestige with it — and within months Sun Jun\'s assassins will cut him down at a palace banquet.',
   descriptionZh: "建興二年夏。前歲東興大捷之威猶在，太傅諸葛恪盡發吳國之眾二十萬，圍攻魏之合肥新城。守將張特力守孤城，魏援司馬孚、毌丘儉繼至；時值盛暑，疫癘大作，圍城之卒病死、中矢者以萬計。諸葛恪頓兵堅城而師徒喪敗，威望盡失——數月之後，孫峻之刃，便將於宮宴之上取其性命。",
   startDate: { year: 253, season: 'summer' },
+  /*
+   * 開局外交 —— 合肥新城:諸葛恪以二十萬眾圍之,張特詐降以緩其攻 ——
+     圍城數月,士卒疲病,恪愧憤而還,而後被誅。
+   */
+  openingRelations: [
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+    { a: 'cao', b: 'sun', score: -90, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_252),
   forces: FORCES_252,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_252, DEAD_BY_252, 253),
@@ -7388,6 +7725,13 @@ export const SCENARIO_272_XILING: Scenario = {
     'Autumn 272. Bu Chan, commander of Xiling, throws open the gorge that guards Wu\'s western door and surrenders it to Jin. Lu Kang — son of Lu Xun, and the last great general the dynasty will produce — rushes upriver and does the unthinkable: he walls in the traitor\'s fortress without storming it, smashes the three Jin relief columns of Yang Hu, Yang Zhao and Xu Yin one by one, then takes Xiling and puts the Bu clan to the sword. It is the final masterpiece of Wu\'s art of war, and it buys the doomed kingdom one last decade.',
   descriptionZh: "鳳凰元年秋。西陵督步闡盡獻扼守吳國西門之峽口，叛降於晉。鎮軍大將軍陸抗——陸遜之子、吳國所能孕育的最後一員名將——溯江疾進，行常人所不敢為：圍叛城而不急攻，先逐一擊破羊祜、楊肇、徐胤三路晉援，再下西陵，盡誅步氏。此乃吳國兵法之最後傑作，為這氣數將盡的王朝，再續十年之命。",
   startDate: { year: 272, season: 'autumn' },
+  /*
+   * 開局外交 —— 西陵之戰:步闡以城降晉,陸抗圍之而不救外圍 ——
+     羊祜、楊肇皆退。吳之最後一次大捷,抗死之後,再無此人。
+   */
+  openingRelations: [
+    { a: 'sima', b: 'sun', score: -90, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_272),
   forces: FORCES_265,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_272, DEAD_BY_265, 272),
@@ -7422,6 +7766,17 @@ export const SCENARIO_238_LIAODONG: Scenario = {
     'Spring 238. Far in the northeast, Gongsun Yuan — third of his line to rule Liaodong as a private kingdom — has thrown off Wei, taken the title King of Yan, and even courted Wu for an alliance. The Emperor Cao Rui sends his deadliest weapon: Sima Yi, with forty thousand, marches four thousand li to the walls of Xiangping. The autumn rains will flood the siege lines, the city will fall, and the house of Gongsun will be wiped from the earth.',
   descriptionZh: "景初二年春。極北之地，公孫淵——割據遼東、世代自立者三世——叛魏自王，僭號燕王，更遣使通吳以為奧援。魏帝曹叡乃遣其最鋒利之兵刃：司馬懿提四萬之眾，行四千里而臨襄平城下。秋雨將漲其圍塹，孤城終破，公孫一族，自此族滅於天壤之間。",
   startDate: { year: 238, season: 'spring' },
+  /*
+   * 開局外交 —— 司馬懿征遼東,四月而克襄平 —— 公孫淵先通吳而後斬其使,
+     兩面皆絕,遂無所歸。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'yan', score: -95, status: 'neutral' },
+    { a: 'yan', b: 'sun', score: -30, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_238),
   forces: FORCES_238,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_238, [], 238),
@@ -7455,6 +7810,17 @@ export const SCENARIO_255_HUAINAN2: Scenario = {
     'Spring 255. Sima Shi has deposed the emperor Cao Fang and rules Wei in all but name. In the Huai, the veteran Guanqiu Jian and the fierce Wen Qin raise the standard of revolt to avenge the insulted throne, forging the dowager\'s edict and marching on Xuchang. The half-blind Sima Shi, a tumour bursting behind his eye, rides out to meet them — and at Le\'jia, Wen Qin\'s teenage son Wen Yang charges the imperial camp again and again, alone, and very nearly ends the house of Sima then and there.',
   descriptionZh: "正元二年春。司馬師既廢曹芳，魏室名存而實亡。淮南之地，宿將毌丘儉與驍將文欽舉義旗以雪君辱，矯太后之詔，進兵許昌。目疾方劇、目瘤迸裂的司馬師強起親征——樂嘉之戰，文欽之子文鴦，年方十八，單騎數入魏營，往返衝突，幾乎當場傾覆司馬之基業。",
   startDate: { year: 255, season: 'spring' },
+  /*
+   * 開局外交 —— 淮南二叛:毌丘儉、文欽起兵於壽春,傳檄州郡 ——
+     所討者非魏,是司馬師。而吳遣兵應之,是為了淮南,不是為了曹魏。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'guanqiu', score: -95, status: 'neutral' },
+    { a: 'guanqiu', b: 'sun', score: 45, status: 'non-aggression' },
+    { a: 'cao', b: 'sun', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_255),
   forces: FORCES_255,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_255, DEAD_BY_252, 255),
@@ -7488,6 +7854,17 @@ export const SCENARIO_257_HUAINAN3: Scenario = {
     'Summer 257. The greatest and last of the three Huai revolts. Zhuge Dan — kinsman to Zhuge Liang and Zhuge Ke, and the last of the loyalist generals — seizes Shouchun, kills Sima Zhao\'s inspector, sends his own son hostage to Wu, and defies the regent who now openly reaches for the throne. Wu pours in relief under Wen Qin, Tang Zi and Quan Yi; Sima Zhao marches the boy-emperor and a quarter-million men east to ring the city in siege walls. Within those walls, the alliance of rebels and Wu will curdle into mutual slaughter before the year is out.',
   descriptionZh: "甘露二年夏。淮南三叛之最大者，亦其終局。諸葛誕——諸葛亮、諸葛恪之族親，忠魏諸將之碩果——據壽春，斬司馬昭之刺史，遣子質於吳，公然抗拒這位已露篡心的權臣。吳發大軍，以文欽、唐咨、全懌入援；司馬昭挾幼帝、提二十六萬之眾東出，築壘環城而圍之。然城中叛軍與吳援，未及歲終，便將在猜忌中自相屠戮。",
   startDate: { year: 257, season: 'summer' },
+  /*
+   * 開局外交 —— 淮南三叛:諸葛誕殺樂綝,據壽春,遣子為質於吳 ——
+     司馬昭挾天子與太后親征,二十六萬眾圍之。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'huainan', score: -95, status: 'neutral' },
+    { a: 'huainan', b: 'sun', score: 55, status: 'allied' },
+    { a: 'cao', b: 'sun', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_257),
   forces: FORCES_257,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_257, DEAD_BY_252, 257),
@@ -7524,6 +7901,21 @@ export const SCENARIO_199_YIJING: Scenario = {
     'Spring 199. Lü Bu lies strangled at the White Gate Tower and Xuzhou has passed to Cao Cao — but in the north, Yuan Shao turns to finish the last rival barring his path to the four provinces: Gongsun Zan, the White Horse General, sealed inside the iron towers of Yijing with a mountain of grain and ten years\' resolve. Yuan Shao\'s host rings the walls and tunnels beneath them. When the towers fall, Gongsun Zan will burn his own household and himself — and all the north will be Yuan Shao\'s, save one man at Xuchang.',
   descriptionZh: "建安四年春。呂布既縊死於白門樓，徐州歸於曹操——而河北之地，袁紹回師以了結其取四州路上最後之勁敵：白馬將軍公孫瓚，自閉於易京鐵壘，積穀如山、誓守十年。袁紹大軍環其城而穿地道以攻之。樓壘既破，公孫瓚將自焚妻孥而後自盡——河北自此盡歸袁紹，唯許昌一人尚為其敵。",
   startDate: { year: 199, season: 'spring' },
+  /*
+   * 開局外交 —— 易京樓下,袁紹穿地至樓基而火其柱 —— 河北之爭到此收束,
+     而曹袁已經正式反目:下一場在官渡。
+   */
+  openingRelations: [
+    { a: 'yuan-shao', b: 'gongsun', score: -95, status: 'neutral' },
+    { a: 'cao', b: 'yuan-shao', score: -55, status: 'neutral' },
+    { a: 'cao', b: 'yuan-shu', score: -85, status: 'neutral' },
+    { a: 'sun', b: 'yuan-shu', score: -60, status: 'neutral' },
+    { a: 'sun', b: 'liu-biao', score: -75, status: 'neutral' },
+    { a: 'cao', b: 'liu-biao', score: -25, status: 'neutral' },
+    { a: 'ma-teng', b: 'cao', score: 30, status: 'non-aggression' },
+    { a: 'liu-zhang', b: 'liu-biao', score: 20, status: 'non-aggression' },
+    { a: 'cao', b: 'sun', score: 25, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_199),
   forces: FORCES_199,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_199, DEAD_BY_198, 199),
@@ -7555,6 +7947,23 @@ export const SCENARIO_207_BAILANG: Scenario = {
     'Autumn 207. The brothers Yuan Shang and Yuan Xi, beaten out of Hebei, have fled to the Wuhuan chieftain Tadun on the steppe, and the northern frontier festers. Against every counsel, Cao Cao leaves his baggage and drives his army on a desperate forced march through three hundred li of waterless waste — guided by Tian Chou over the abandoned Lulong passes — to burst upon the Wuhuan host at White Wolf Mountain. Zhang Liao leads the charge that cuts down Tadun himself. With this stroke the last embers of the house of Yuan are stamped out and the north made whole.',
   descriptionZh: "建安十二年秋。袁尚、袁熙兄弟為河北所敗，亡奔塞外烏桓單于蹋頓，北疆遂成腹心之患。曹操不顧眾諫，棄輜重而驅軍疾行，穿三百里無水之荒，賴田疇引由廢棄之盧龍故道——驟臨白狼山，掩殺烏桓之眾。張遼率鋒陷陣，臨陣斬蹋頓於馬下。此一擊既出，袁氏最後之餘燼盡熄，北方自此混一。",
   startDate: { year: 207, season: 'autumn' },
+  /*
+   * 開局外交 —— 白狼山 —— 郭嘉勸操輕兵兼道出盧龍塞,張遼為先鋒。
+     烏桓蹋頓是袁氏姻黨,袁尚兄弟正奔他;公孫康在遼東觀望,
+     而後斬二袁之首以獻。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'wuhuan', score: -85, status: 'neutral' },
+    { a: 'wuhuan', b: 'gongsun-du', score: 20, status: 'non-aggression' },
+    { a: 'cao', b: 'gongsun-du', score: 15, status: 'non-aggression' },
+    { a: 'cao', b: 'sun', score: -40, status: 'neutral' },
+    { a: 'cao', b: 'liu-biao', score: -35, status: 'neutral' },
+    { a: 'sun', b: 'liu-biao', score: -80, status: 'neutral' },
+    { a: 'zhang-lu', b: 'liu-zhang', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'ma-teng', score: 40, status: 'non-aggression' },
+    { a: 'cao', b: 'shi-xie', score: 20, status: 'non-aggression' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_207_WUHUAN),
   forces: FORCES_207_WUHUAN,
   // The base 207 death-list buries Tadun and the Yuan brothers (they perish in
@@ -7745,6 +8154,19 @@ export const SCENARIO_218_DINGJUN: Scenario = {
     'Winter 218. Zhang Lu\'s theocracy has fallen and Hanzhong is Cao Cao\'s, held by the fierce Xiahou Yuan and Zhang He. Now Liu Bei, master of Yi province and pressed hard by his strategist Fa Zheng, hurls his army north against the Qinling passes for the prize that will make him a king. The campaign grinds for a year in the gorges — until, on the slopes of Mount Dingjun, the old tiger Huang Zhong charges downhill and takes Xiahou Yuan\'s head, and the gate to Hanzhong swings open.',
   descriptionZh: "建安二十三年冬。張魯之政教既亡，漢中歸於曹操，以驍將夏侯淵、張郃守之。今劉備既得益州，又為謀主法正所激，遂揮師北出，仰攻秦嶺諸隘，以爭此使他得王天下之地。是役於峽谷間鏖戰經年——直至定軍山之坡，老虎黃忠居高馳下，斬夏侯淵之首，漢中之門遂為之洞開。",
   startDate: { year: 218, season: 'winter' },
+  /*
+   * 開局外交 —— 定軍山,黃忠斬夏侯淵。漢中之爭是曹劉之間唯一一次
+     正面決戰,而孫權在東邊等著荊州的空隙。
+   */
+  openingRelations: [
+    { a: 'cao', b: 'liu-bei', score: -90, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 35, status: 'non-aggression' },
+    { a: 'cao', b: 'sun', score: -60, status: 'neutral' },
+    { a: 'cao', b: 'shi-xie', score: 15, status: 'non-aggression' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+    { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
+    { a: 'liu-bei', b: 'nanman', score: -25, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_218_DINGJUN),
   forces: FORCES_218_DINGJUN,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_218_DINGJUN, [], 218),
