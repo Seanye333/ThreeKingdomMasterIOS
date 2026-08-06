@@ -763,6 +763,20 @@ export const SCENARIO_200_GUANDU: Scenario = {
     'liu-zhang': { troops: 0.85, food: 1.20, gold: 1.05, defense: 14, loyalty: 6 },
     'ma-teng':   { troops: 1.15, food: 0.95, gold: 0.85, defense: -4, loyalty: 0 },
     wuhuan:      { troops: 1.20, food: 0.85, gold: 0.80, defense: -10, loyalty: -4 },
+  }, {
+    /*
+     * 官渡具名調硬 —— 姿態表達不了「這一座是**壘**,不是城」。
+     *
+     * 曹操連營數十里,起土山地道,壘而拒之;袁紹起樓、掘地,兩軍對挖了半年。
+     * 而盤上官渡的城防跟一般小城同級,實測五輪追蹤:延津、白馬、官渡在
+     * **第 1–11 回合**就被袁紹推平 —— 那是烏巢那把火(第 9–12 回合)還沒燒
+     * 起來的時候。防線先垮,奇襲就沒有意義了。
+     *
+     * 城防 55 → 92,兵 8,000 → 20,000:一座能撐到十月的壘。
+     * 白馬、延津刻意**不動** —— 史實上曹操斬顏良之後就放棄了白馬,徙其民而走,
+     * 那兩座本來就是要丟的。
+     */
+    guandu: { defense: 92, troops: 20_000, food: 90_000 },
   }),
   forces: FORCES_200,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_200, DEAD_BY_200),

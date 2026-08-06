@@ -567,9 +567,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 白馬這條線到 203 年(紹死之次年)。破其軍、滅其族降為次要 ——
          * 那是熬過這一關之後的十年,不是入場券。
          */
-        description: 'Still hold Xuchang, Guandu and Baima in 203 — Guandu was a battle about not falling back.',
-        descriptionZh: '至203年仍據許昌、官渡與白馬 —— 官渡打的是守:自八月至十月,以一敵十而不退者半年。',
-        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'guandu', 'baima'], byYear: 203 },
+        /*
+         * 城單原本含白馬 —— 而史實上曹操斬顏良之後就**放棄**了白馬,徙其民而走;
+         * 五輪追蹤裡它也確實在第 2–4 回合就丟了。守的是官渡那條線,不是黃河
+         * 北岸的哨所。改成許昌(根本)、陳留(起兵之地)、官渡(壘)。
+         */
+        description: 'Still hold Xuchang, Chenliu and Guandu in 203 — Guandu was a battle about not falling back.',
+        descriptionZh: '至203年仍據許昌、陳留與官渡 —— 官渡打的是守:自八月至十月,以一敵十而不退者半年。',
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'chenliu', 'guandu'], byYear: 203 },
       },
       secondary: [
         {
