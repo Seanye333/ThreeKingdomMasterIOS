@@ -5600,6 +5600,335 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: the King of Qin in his anger reduced the Lord of Wu\'an to the ranks and banished him to Yinmi, and when he had got as far as Duyou sent him a sword. First refusing a man\'s advice and then blaming him for not carrying out the opposite is an old complaint.',
     },
   },
+  /* ── 戰國七雄·逐鹿 ────────────────────────────────────────────── */
+  'scn-ws-seven': {
+    qin: {
+      defeat: {
+        titleZh: '爭於氣力',
+        titleEn: 'An Age That Contends by Strength',
+        textZh:
+          '韓非曰:「上古競於道德,'
+          + '中世逐於智謀,當今爭於氣力。」\n\n'
+          + '——七國並立,無一國可以不變法而存:'
+          + '魏有李悝,楚有吳起,'
+          + '韓有申不害,齊有鄒忌,'
+          + '趙有武靈王之胡服,燕有樂毅,'
+          + '而秦有商鞅。\n\n'
+          + '所異者:六國之法,行於一君之世;'
+          + '而秦之法,行於六君之世。\n\n'
+          + '孝公用鞅,惠王殺鞅而不廢其法;'
+          + '武王、昭王、孝文、莊襄,'
+          + '至於始皇,凡百三十年,國策一也。',
+        textEn:
+          'Han Fei wrote: "High antiquity competed in virtue, the middle age contended in cleverness, and the present age contends by strength."\n\n'
+          + 'Seven states stood together and not one of them could survive without reforming its laws: Wei had Li Kui, Chu had Wu Qi, Hann had Shen Buhai, Qi had Zou Ji, Zhao had King Wuling and his nomad dress, Yan had Yue Yi — and Qin had Shang Yang.\n\n'
+          + 'The difference: in the six states the reforms lasted one reign. In Qin they lasted six.\n\n'
+          + 'Duke Xiao employed Shang Yang; King Hui killed Shang Yang and kept his laws; and through Kings Wu, Zhao, Xiaowen and Zhuangxiang down to the First Emperor — a hundred and thirty years — the policy of the state was one policy.',
+      },
+      verdictZh:
+        '論曰:七雄之世,人才無定所,'
+        + '而**制度有定所** ——\n'
+        + '商鞅、張儀、范雎、呂不韋、李斯,'
+        + '無一秦人,而皆終於秦。\n'
+        + '六國非無變法,是**變而不能傳**:'
+        + '吳起死於楚悼王之喪,而楚法即廢;'
+        + '申不害死而韓不用術。\n'
+        + '**一世之強,人為之;數世之強,法為之**。',
+      verdictEn:
+        'The historian says: in the age of the seven powers talent had no fixed home and institutions did. Shang Yang, Zhang Yi, Fan Ju, Lü Buwei and Li Si were none of them men of Qin, and all of them ended in Qin. It was not that the six states did not reform — their reforms could not be handed on. Wu Qi was killed at King Dao of Chu\'s funeral and the laws of Chu lapsed with him; Shen Buhai died and Hann stopped using his methods. One generation of strength is made by men; several generations of it are made by institutions.',
+      verdictLostZh:
+        '論曰:蘇秦說六國,佩六國相印;'
+        + '張儀相秦,而以連橫解之。'
+        + '二人同出鬼谷,而所事不同 ——'
+        + '**戰國之士無國,惟有主** 。',
+      verdictLostEn:
+        "The historian says: Su Qin talked the six states into an alliance and wore the chancellor's seal of all six; Zhang Yi was chancellor of Qin and undid it with the horizontal league. The two came from the same teacher and served opposite sides. The wandering advisers of that age had no country, only an employer.",
+    },
+  },
+  /* ── 戰國·秦滅六國 ────────────────────────────────────────────── */
+  'scn-ws-qin-unify': {
+    qin: {
+      defeat: {
+        titleZh: '亡三十萬金',
+        titleEn: 'Three Hundred Thousand in Gold',
+        textZh:
+          '尉繚說秦王曰:「以秦之彊,諸侯譬如郡縣之君,'
+          + '臣但恐諸侯合從,翕而出不意 ——'
+          + '此乃智伯、夫差、湣王之所以亡也。\n'
+          + '願大王毋愛財物,賂其豪臣,以亂其謀,'
+          + '不過亡三十萬金,則諸侯可盡。」\n\n'
+          + '秦王從其計。\n\n'
+          + '——趙有李牧,秦不能過。'
+          + '乃多與趙王寵臣郭開金,為反間,'
+          + '言牧欲反。趙王使人代之,牧不受命,'
+          + '趙使人微捕得李牧,斬之。\n\n'
+          + '三月而邯鄲下。',
+        textEn:
+          'Wei Liao advised the King of Qin: "With Qin as strong as it is, the feudal lords are like the governors of your commanderies. My one fear is that they combine and come at you together unexpectedly — that is how Zhi Bo, Fuchai and King Min were destroyed.\n\n'
+          + 'I would have Your Majesty not begrudge money: bribe their powerful ministers and throw their plans into confusion. It will not cost more than three hundred thousand in gold, and the feudal lords can all be had."\n\n'
+          + 'The King adopted the plan.\n\n'
+          + 'Zhao had Li Mu and Qin could not get past him. So a great deal of gold went to Guo Kai, the favourite of the King of Zhao, to put it about that Li Mu meant to rebel. The King sent a man to replace him, Li Mu refused the order, and men were sent to arrest him quietly, and he was beheaded.\n\n'
+          + 'Handan fell three months later.',
+      },
+      verdictZh:
+        '論曰:秦之滅六國,兵不過六;'
+        + '而金遍於六國之朝 ——\n'
+        + '李牧斬於郭開,趙亡;'
+        + '齊王建不備不助,秦兵至而降;'
+        + '燕殺荊軻之後,獻太子丹之首而終不免。\n'
+        + '**破一國之城,以兵;破一國之朝,以金** ——'
+        + '三十萬金者,尉繚所計之最廉一戰。',
+      verdictEn:
+        'The historian says: Qin destroyed the six states with no more than six campaigns, and its gold was all over their courts. Li Mu was beheaded on Guo Kai\'s word and Zhao fell; King Jian of Qi neither armed nor helped anyone and surrendered when Qin arrived; Yan killed Jing Ke\'s patron and sent Prince Dan\'s head and was destroyed anyway. Cities are broken with soldiers and courts with money — three hundred thousand in gold was the cheapest campaign Wei Liao ever costed.',
+      verdictLostZh:
+        '論曰:王翦伐楚,請美田宅園池甚眾。'
+        + '或曰:「將軍之乞貸,亦已甚矣!」'
+        + '翦曰:「不然。夫秦王怚而不信人。'
+        + '今空秦國甲士而專委於我,'
+        + '我不多請田宅為子孫業以自堅,'
+        + '顧令秦王坐而疑我邪?」',
+        verdictLostEn:
+        'The historian says: setting out against Chu, Wang Jian asked for a great many fine fields, houses, gardens and ponds. Somebody said, "Surely the general is begging rather hard." And Jian said: "Not at all. The King of Qin is coarse-grained and does not trust people. He has now emptied Qin of soldiers and put them entirely in my hands. If I do not ask for a great deal of land and property as an estate for my descendants, to make myself solid, am I to have him sitting at home suspecting me?"',
+    },
+    qi: {
+      defeat: {
+        titleZh: '松柏之間',
+        titleEn: 'Among the Pines and Cypresses',
+        textZh:
+          '齊王建立四十餘年不受兵。'
+          + '君王后賢,事秦謹,與諸侯信 ——'
+          + '故齊亦東邊海上,秦日夜攻三晉、燕、楚,'
+          + '五國各自救於秦,以故王建立四十餘年不受兵。\n\n'
+          + '——五國既亡,秦兵卒入臨淄,民莫敢格者。\n\n'
+          + '王建遂降,遷之共,處松柏之間,餓而死。\n\n'
+          + '齊人怨王建不早與諸侯合從攻秦,'
+          + '聽奸臣賓客以亡其國,'
+          + '歌之曰:「松耶?柏耶?'
+          + '住建共者客耶?」',
+        textEn:
+          'King Jian of Qi reigned over forty years without being attacked. The Queen Dowager was able, served Qin scrupulously and kept faith with the other states — so Qi sat on the eastern sea while Qin worked day and night on the three Jin states, Yan and Chu, and each of the five looked to its own defence. That is how King Jian reigned forty years untouched.\n\n'
+          + 'And when the five were gone, Qin\'s troops walked into Linzi and nobody dared resist.\n\n'
+          + 'King Jian surrendered, was moved to Gong, put among the pines and cypresses, and starved to death.\n\n'
+          + 'The people of Qi resented his not having joined the others against Qin in good time, and his listening to treacherous ministers and hangers-on until the state was lost, and they made a song of it: "Was it the pines? Was it the cypresses? Or was it the guests who put Jian in Gong?"',
+      },
+      verdictZh:
+        '論曰:齊四十年不受兵,而其亡最速 ——'
+        + '**不受兵者,非無敵,是輪到得晚**。\n'
+        + '王建之過,不在降,在四十年之中'
+        + '未嘗一日以他國之亡為己事。\n'
+        + '故蘇洵論六國曰:'
+        + '「與嬴而不助五國也。五國既喪,齊亦不免矣。」',
+      verdictEn:
+        'The historian says: Qi went forty years without being attacked and fell fastest of all — not being attacked does not mean having no enemy; it means your turn is later. King Jian\'s fault was not the surrender but that in forty years he never once treated another state\'s destruction as his own business. As Su Xun said of the six states: "Qi sided with Qin and would not help the other five. Once the five were gone, Qi could not escape either."',
+      verdictLostZh:
+        '論曰:六國破滅,非兵不利,戰不善,弊在賂秦。'
+        + '賂秦而力虧,破滅之道也。'
+        + '——**以地事秦,猶抱薪救火,薪不盡,火不滅**。',
+      verdictLostEn:
+        'The historian says: the six states were destroyed not because their weapons were poor or their fighting bad, but by the bribing of Qin. Bribing Qin drained them, and that was the road to destruction. Serving Qin with territory is carrying firewood to put out a fire: while the wood lasts, the fire does not go out.',
+    },
+  },
+  /* ── 大澤鄉起義 ───────────────────────────────────────────────── */
+  'scn-ch-daze': {
+    zhangchu: {
+      defeat: {
+        titleZh: '王侯將相寧有種乎',
+        titleEn: 'Are Kings and Nobles Born to It?',
+        textZh:
+          '二世元年七月,發閭左適戍漁陽九百人,'
+          + '屯大澤鄉。會天大雨,道不通,'
+          + '度已失期 —— 失期,法皆斬。\n\n'
+          + '陳勝、吳廣乃謀曰:'
+          + '「今亡亦死,舉大計亦死;'
+          + '等死,死國可乎?」\n\n'
+          + '乃丹書帛曰「陳勝王」,置人所罾魚腹中。'
+          + '又間令吳廣之次所旁叢祠中,'
+          + '夜篝火,狐鳴呼曰:「大楚興,陳勝王!」\n\n'
+          + '召令徒屬曰:'
+          + '「公等遇雨,皆已失期,失期當斬。'
+          + '藉第令毋斬,而戍死者固十六七。\n'
+          + '且壯士不死即已,死即舉大名耳 ——'
+          + '**王侯將相寧有種乎!**」',
+        textEn:
+          'In the seventh month of the First Year of the Second Emperor, nine hundred men from the poor side of the villages were sent to garrison Yuyang and camped at Dazexiang. Heavy rain came, the roads were impassable, and they reckoned they were already late — and being late meant execution under the law.\n\n'
+          + 'So Chen Sheng and Wu Guang consulted: "We die if we run and we die if we attempt something great. Since we die either way, may we die for a country?"\n\n'
+          + 'They wrote "Chen Sheng shall be king" on silk in cinnabar and put it inside a fish somebody had netted. And Wu Guang was quietly sent to the shrine in the grove beside the camp to light a fire in a basket at night and call out in a fox\'s voice: "Great Chu shall rise! Chen Sheng shall be king!"\n\n'
+          + 'Then they called the conscripts together: "You have all been caught by the rain and are all late, and being late means beheading. And even suppose we are not beheaded — six or seven in ten of those sent to the frontier die there anyway.\n\n'
+          + 'A brave man either does not die, or dies making a great name. Are kings and nobles born to it?"',
+      },
+      verdictZh:
+        '論曰:陳涉之起,不以其眾,'
+        + '以其**說出了那一句話** ——\n'
+        + '自三代以來,受命之說在天;'
+        + '至大澤鄉,乃在人。\n'
+        + '故涉雖六月而亡,'
+        + '而秦亦以之亡;'
+        + '天下之豪傑,皆自此知**可以試**。\n'
+        + '太史公列之於世家,曰:'
+        + '「桀紂失其道而湯武作,'
+        + '周失其道而春秋作。'
+        + '陳涉雖已死,其所置遣侯王將相竟亡秦,'
+        + '由涉首事也。」',
+      verdictEn:
+        'The historian says: Chen She did not rise on numbers but on having said that sentence. Since the Three Dynasties the mandate had been a matter of Heaven; at Dazexiang it became a matter of men. So although he lasted six months and Qin outlasted him, Qin died of it too — every bold man in the empire learned from him that it could be attempted. The Grand Historian put him among the hereditary houses, and wrote: "Jie and Zhou lost the way and Tang and Wu arose; Zhou lost the way and the Spring and Autumn Annals were written. Chen She was dead, and the kings, nobles and commanders he had installed did in the end destroy Qin, because he had begun it."',
+      verdictLostZh:
+        '論曰:涉少時嘗與人傭耕,輟耕之壟上,'
+        + '悵恨久之,曰:「苟富貴,無相忘。」'
+        + '傭者笑而應曰:「若為傭耕,何富貴也?」'
+        + '涉太息曰:「嗟乎,燕雀安知鴻鵠之志哉!」\n\n'
+        + '——及為王,故人來,言其故情。'
+        + '或說陳王曰:「客愚無知,顓妄言,輕威。」'
+        + '陳王斬之。諸陳王故人皆自引去,'
+        + '由是無親陳王者。',
+      verdictLostEn:
+        'The historian says: as a young man Chen She was a hired ploughman, and one day he stopped at the field-edge and stood a long while bitter and dissatisfied, and said: "If any of us gets on in the world, let him not forget the rest." The others laughed: "You are a hired ploughman. What getting on?" And She sighed: "Ah — how should sparrows understand what the swan intends?"\n\n'
+          + 'And when he was king, an old acquaintance came and talked about the old days. Somebody said to him, "This guest is an ignorant man who talks nonsense and cheapens your authority," and the King had him beheaded. All his old acquaintances took themselves off, and after that nobody was close to him.',
+    },
+    qin: {
+      defeat: {
+        titleZh: '關東群盜',
+        titleEn: 'Bandits East of the Pass',
+        textZh:
+          '謁者使東方來,以反者聞二世。'
+          + '二世怒,下之吏。\n\n'
+          + '後使者至,上問之,'
+          + '對曰:「群盜,郡守尉方逐捕,今盡得,不足憂。」'
+          + '上悅。\n\n'
+          + '——叔孫通亦曰:'
+          + '「此特群盜鼠竊狗盜耳,何足置之齒牙間!'
+          + '郡守尉今捕論,何足憂?」\n\n'
+          + '二世喜,盡問諸生。'
+          + '諸生或言反,或言盜。'
+          + '於是二世令御史案諸生言反者下吏,非所宜言。'
+          + '——言盜者皆罷之,賜通帛二十匹,衣一襲,拜為博士。\n\n'
+          + '通已出宮,反舍,諸生曰:'
+          + '「先生何言之諛也?」'
+          + '通曰:「公不知也,我幾不脫於虎口!」'
+          + '乃亡去。',
+        textEn:
+          'An usher came back from the east and reported the rising to the Second Emperor. The Emperor was angry and handed him to the law officers.\n\n'
+          + 'The next messenger, when asked, said: "A gang of bandits. The commandery administrators and commandants are running them down and have taken the lot. Nothing to worry about." And the Emperor was pleased.\n\n'
+          + 'Shusun Tong said the same: "These are common thieves, rats and dogs. Why should they be worth a word between the teeth? The administrators and commandants are arresting and sentencing them now. Where is the worry?"\n\n'
+          + 'The Emperor was delighted and put the question to all the scholars. Some said rebellion and some said banditry. So he had the censors take down the names of those who had said rebellion and hand them to the law officers, for having said what should not be said — and dismissed those who had said banditry, and gave Shusun Tong twenty bolts of silk and a suit of clothes and made him an Academician.\n\n'
+          + 'Once out of the palace and back at his lodgings, the other scholars said, "How could you flatter him like that?" And Tong said: "You gentlemen do not understand. I very nearly did not get out of the tiger\'s mouth." And he fled.',
+      },
+      verdictZh:
+        '論曰:秦之亡,不亡於陳涉之九百人,'
+        + '亡於**朝廷不許人說「反」字**。\n'
+        + '言反者下吏,言盜者受賞;'
+        + '於是二世所聞,皆天下無事。\n'
+        + '**上不聞其實,則無論其兵幾何,皆不及用** ——'
+        + '章邯之師出時,關東已數十萬眾矣。',
+      verdictEn:
+        'The historian says: Qin was not destroyed by Chen She\'s nine hundred men but by a court where the word "rebellion" could not be spoken. Those who said rebellion went to the law officers and those who said banditry were rewarded — so everything that reached the Second Emperor was that all was quiet in the empire. When the throne does not hear the facts, it does not matter how many soldiers it has; they arrive too late. By the time Zhang Han\'s army marched, there were already hundreds of thousands under arms east of the pass.',
+      verdictLostZh:
+        '論曰:趙高指鹿為馬,問左右,'
+        + '左右或默,或言馬以阿順趙高,'
+        + '或言鹿者,高因陰中諸言鹿者以法。'
+        + '後群臣皆畏高。'
+        + '——**與其說是試探,不如說是點名**。',
+      verdictLostEn:
+        'The historian says: Zhao Gao presented a deer and called it a horse, and asked the court. Some said nothing; some said horse to go along with him; and those who said deer he afterwards destroyed quietly by process of law. After that the whole court was afraid of him. It was less a test than a roll-call.',
+    },
+  },
+  /* ── 鉅鹿之戰 ─────────────────────────────────────────────────── */
+  'scn-ch-julu': {
+    chu: {
+      defeat: {
+        titleZh: '破釜沉船',
+        titleEn: 'Sink the Boats, Break the Cauldrons',
+        textZh:
+          '宋義行至安陽,留四十六日不進。'
+          + '曰:「夫搏牛之蝱不可以破蟣蝨。'
+          + '今秦攻趙,戰勝則兵罷,我承其敝;'
+          + '不勝,則我引兵鼓行而西,必舉秦矣。」\n\n'
+          + '時天寒大雨,士卒凍飢。'
+          + '項羽曰:「今歲飢民貧,士卒食芋菽,軍無見糧,'
+          + '乃飲酒高會 —— 不引兵渡河因趙食,'
+          + '與趙并力攻秦,乃曰『承其敝』。'
+          + '夫以秦之彊,攻新造之趙,'
+          + '其勢必舉趙。趙舉而秦彊,何敝之承!」\n\n'
+          + '——晨朝上將軍宋義,即其帳中斬宋義頭。\n\n'
+          + '乃悉引兵渡河,皆沉船,破釜甑,燒廬舍,'
+          + '持三日糧,以示士卒必死,無一還心。',
+        textEn:
+          'Song Yi got as far as Anyang and stayed forty-six days without moving. He said: "The gadfly that bites an ox cannot kill a louse. Qin is attacking Zhao; if Qin wins, its army will be worn out and we take it at its worst; if Qin loses, we beat the drums and march west and Qin is ours."\n\n'
+          + 'It was cold and pouring with rain and the soldiers were freezing and hungry. Xiang Yu said: "It is a lean year and the people are poor; the men are eating taro and beans and there is no grain in the camp — and he is holding drinking parties. Instead of crossing the river to live off Zhao and joining Zhao to attack Qin, he talks about taking them at their worst. With Qin as strong as it is, attacking a newly re-founded Zhao, the outcome is certain: Zhao falls. And with Zhao fallen Qin is stronger than ever. What worst is there to take them at?"\n\n'
+          + 'At the morning report he cut off Song Yi\'s head in his own tent.\n\n'
+          + 'Then he took the whole army across the river and sank the boats, broke the cooking-pots and steamers, burned the huts, and carried three days\' rations — to show the men they were to die and that no one was going back.',
+      },
+      verdictZh:
+        '論曰:破釜沉船,非勇,是**算**:\n'
+        + '諸侯十餘壁莫敢縱兵,'
+        + '楚軍若有退路,則亦一壁而已。\n'
+        + '斷其退,則三日之糧即三日之期,'
+        + '期內不勝則死 ——'
+        + '於是無不一以當十。\n'
+        + '戰罷,項羽召見諸侯將,'
+        + '入轅門,無不膝行而前,莫敢仰視。\n'
+        + '**諸侯之服,不服於楚之強,服於楚之肯死**。',
+      verdictEn:
+        'The historian says: sinking the boats was not bravery but arithmetic. A dozen allied camps sat there and none dared loose their troops; had Chu kept a line of retreat it would have been another such camp. Cut the retreat and three days\' rations become a three-day deadline, and failing to win inside it means dying — and every man was worth ten. After the battle Xiang Yu summoned the allied commanders, and every one of them came through the camp gate on his knees and none dared look up. What they submitted to was not Chu\'s strength but Chu\'s willingness to die.',
+      verdictLostZh:
+        '論曰:章邯既降,項羽立之為雍王。'
+        + '而諸侯吏卒異時徭使屯戍過秦中,秦中吏卒遇之多無狀;'
+        + '及秦軍降諸侯,諸侯吏卒乘勝多奴虜使之,輕折辱秦吏卒。\n'
+        + '秦吏卒多竊言曰:「章將軍等詐吾屬降諸侯,'
+        + '今能入關破秦,大善;'
+        + '即不能,諸侯虜吾屬而東,秦必盡誅吾父母妻子。」\n\n'
+        + '——於是楚軍夜擊阬秦卒二十餘萬人新安城南。',
+      verdictLostEn:
+        'The historian says: Zhang Han surrendered and Xiang Yu made him King of Yong. But the allied soldiers had in earlier years been sent through Qin territory on corvée and garrison duty, and the Qin officers and men had treated them badly; and now that the Qin army had surrendered, the allied soldiers in their victory used them like slaves and abused them freely.\n\n'
+          + 'And the Qin soldiers said to one another quietly: "General Zhang and the rest tricked us into surrendering. If they can get through the pass and destroy Qin, well and good; if not, the allies will drag us east as prisoners and Qin will slaughter our parents, wives and children to the last."\n\n'
+          + 'So the Chu army attacked by night and buried two hundred thousand Qin soldiers south of the walls of Xin\'an.',
+    },
+    qin: {
+      defeat: {
+        titleZh: '章邯之降',
+        titleEn: 'Zhang Han Surrenders',
+        textZh:
+          '章邯以驪山刑徒破周文、殺陳勝、滅魏咎、斬項梁,'
+          + '所向皆克 —— 秦之最後一支軍。\n\n'
+          + '而鉅鹿既敗,邯使人見二世,'
+          + '趙高不見,有不信之心。\n\n'
+          + '邯恐,使長史欣請事。'
+          + '留司馬門三日,趙高不見。'
+          + '欣恐,亡去。高使人追之,不及。\n\n'
+          + '欣還報曰:「趙高用事於中,'
+          + '將軍有功亦誅,無功亦誅。」\n\n'
+          + '陳餘亦遺邯書曰:'
+          + '「白起、蒙恬,身死不見容於秦。'
+          + '今將軍為秦將三歲矣,所亡失以十萬數,'
+          + '而諸侯並起滋益多。\n'
+          + '……何不還兵與諸侯為從,南面稱孤?」\n\n'
+          + '邯遂降。',
+        textEn:
+          'Zhang Han had broken Zhou Wen with convict labourers from Mount Li, killed Chen Sheng, destroyed Wei Jiu and killed Xiang Liang — he won everywhere. He was the last army Qin had.\n\n'
+          + 'And after the defeat at Julu he sent a man to the Second Emperor, and Zhao Gao would not receive him, and was inclined not to believe him.\n\n'
+          + 'Alarmed, Han sent his chief clerk Sima Xin to make a report. Xin waited three days at the Major\'s Gate and Zhao Gao would not see him. Frightened, he ran; Gao sent men after him and they missed him.\n\n'
+          + 'Xin got back and reported: "Zhao Gao is running things at court. If the general has successes he will be executed, and if he has none he will be executed."\n\n'
+          + 'And Chen Yu wrote to Han: "Bai Qi and Meng Tian — Qin had no room for either of them and both died. You have been a general of Qin three years now; your losses run into hundreds of thousands and the risings multiply... Why not turn your army round, join the allies, face south and call yourself a prince?"\n\n'
+          + 'And Han surrendered.',
+      },
+      verdictZh:
+        '論曰:秦之亡,兵不先亡,將先亡 ——'
+        + '而將之亡,不由敵,由其朝。\n'
+        + '**「有功亦誅,無功亦誅」八字,'
+        + '足以解散任何一支軍隊**。\n'
+        + '章邯降而秦之關中無兵;'
+        + '關中無兵而子嬰係頸以組,白馬素車,'
+        + '奉天子璽符,降軹道旁 ——'
+        + '自始皇二十六年並天下,至此十五年。',
+      verdictEn:
+        'The historian says: Qin\'s armies did not go first; its commanders did — and not to the enemy but to its own court. "Successes and he is executed, no successes and he is executed" is enough by itself to dissolve any army in the world. Zhang Han surrendered and Guanzhong had no troops; and with no troops in Guanzhong, Ziying put a cord round his neck, came in a plain carriage with white horses, and handed over the imperial seals beside the Zhi road. Fifteen years after the First Emperor united the world.',
+      verdictLostZh:
+        '論曰:賈誼曰:「一夫作難而七廟隳,'
+        + '身死人手,為天下笑者,何也?'
+        + '——仁義不施,而攻守之勢異也。」',
+      verdictLostEn:
+        'The historian says: Jia Yi wrote: "One man raised a difficulty and the seven ancestral temples came down; the ruler died at another\'s hands and became the laughing-stock of the world. Why? Because humanity and right were not practised, and because the conditions of attack and of holding what you have are not the same."',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
