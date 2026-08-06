@@ -1316,7 +1316,7 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   /* ── 234 五丈原 ─────────────────────────────────────────────────
      三家,而題目只有一個:**一個人能不能替一個國家延命。** */
   'scn-234-wuzhang': {
-    shu: {
+    'liu-bei': {
       defeat: {
         titleZh: '悠悠蒼天,曷此其極',
         titleEn: 'O Vast Heaven, Where Is the End of It',
@@ -1346,7 +1346,7 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
       verdictLostEn:
         'The historian says: Shu did not fall at Wuzhang Plain. It fell thirty years later — and in those thirty years no one else ever made the house of Sima halt on the Wei again.',
     },
-    wei: {
+    cao: {
       defeat: {
         titleZh: '堅壁而已',
         titleEn: 'Hold the Walls. That Is All.',
@@ -1374,7 +1374,7 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
       verdictLostEn:
         'The historian says: a war of walls is won by endurance — and the first thing that has to be endured is not the enemy but the mockery.',
     },
-    wu: {
+    sun: {
       defeat: {
         titleZh: '合肥新城之下',
         titleEn: 'Under the New Walls at Hefei',
@@ -1405,7 +1405,7 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 231 鹵城之戰 ──────────────────────────────────────────── */
   'scn-231-lucheng': {
-    shu: {
+    'liu-bei': {
       defeat: {
         titleZh: '甲首三千',
         titleEn: 'Three Thousand Helmets',
@@ -1433,7 +1433,7 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
       verdictLostEn:
         'The historian says: three thousand helmets, and then the army went home. The histories record the victory; the realm remembered the retreat.',
     },
-    wei: {
+    cao: {
       defeat: {
         titleZh: '公畏蜀如虎',
         titleEn: 'Your Excellency Fears Shu Like a Tiger',
@@ -1459,7 +1459,7 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
       verdictLostEn:
         'The historian says: Zhang He\'s death cost Wei a great captain and taught the house of Sima something. For the hundred days on the Wei that came after, Sima Yi never once came out from behind his walls.',
     },
-    wu: {
+    sun: {
       defeat: {
         titleZh: '盟在西,而兵在東',
         titleEn: 'The Alliance Is West. The Army Is East.',

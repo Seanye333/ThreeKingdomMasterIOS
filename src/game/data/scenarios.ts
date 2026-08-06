@@ -1569,9 +1569,9 @@ export const SCENARIO_234_WUZHANG: Scenario = {
    * 於是「北伐」與「東征」在數字上只是兩場沒有立場的戰爭。
    */
   openingRelations: [
-    { a: 'shu', b: 'wu', score: 70, status: 'allied' },   // 鄧芝復通好,終蜀之世不絕
-    { a: 'wei', b: 'shu', score: -85, status: 'neutral' },
-    { a: 'wei', b: 'wu', score: -75, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },   // 鄧芝復通好,終蜀之世不絕
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
   ],
   cities: buildInitialCities(CITY_OWNERSHIP_234),
   forces: FORCES_234,
@@ -2409,11 +2409,11 @@ export const SCENARIO_225_SOUTHERN: Scenario = {
    * 這正是「南征」要先辦的事 —— 亮曰:「若留外人,則當留兵;兵留則無所食。」
    */
   openingRelations: [
-    { a: 'shu', b: 'wu', score: 65, status: 'allied' },
-    { a: 'wei', b: 'shu', score: -85, status: 'neutral' },
-    { a: 'wei', b: 'wu', score: -70, status: 'neutral' },
-    { a: 'shu', b: 'nanman', score: -75, status: 'neutral' },        // 雍闓叛,孟獲扇動諸夷
-    { a: 'wu', b: 'nanman', score: 30, status: 'non-aggression' },   // 闓附吳,權遙署永昌太守
+    { a: 'liu-bei', b: 'sun', score: 65, status: 'allied' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
+    { a: 'liu-bei', b: 'nanman', score: -75, status: 'neutral' },        // 雍闓叛,孟獲扇動諸夷
+    { a: 'sun', b: 'nanman', score: 30, status: 'non-aggression' },   // 闓附吳,權遙署永昌太守
   ],
   cities: buildInitialCities(CITY_OWNERSHIP_225),
   forces: FORCES_225,
@@ -7310,9 +7310,9 @@ export const SCENARIO_231_LUCHENG: Scenario = {
    * 於是「北伐」與「東征」在數字上只是兩場沒有立場的戰爭。
    */
   openingRelations: [
-    { a: 'shu', b: 'wu', score: 70, status: 'allied' },   // 鄧芝復通好,終蜀之世不絕
-    { a: 'wei', b: 'shu', score: -85, status: 'neutral' },
-    { a: 'wei', b: 'wu', score: -75, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },   // 鄧芝復通好,終蜀之世不絕
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
   ],
   cities: buildInitialCities(CITY_OWNERSHIP_234),
   forces: FORCES_234,
@@ -7591,11 +7591,11 @@ export const SCENARIO_228_SHITING: Scenario = {
    * 通使(諸葛亮遣使結之,使擾魏之北邊),與魏則時叛時附。
    */
   openingRelations: [
-    { a: 'shu', b: 'wu', score: 70, status: 'allied' },
-    { a: 'wei', b: 'shu', score: -85, status: 'neutral' },
-    { a: 'wei', b: 'wu', score: -75, status: 'neutral' },
-    { a: 'shu', b: 'xianbei', score: 45, status: 'non-aggression' },  // 亮遣使結軻比能
-    { a: 'wei', b: 'xianbei', score: -40, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
+    { a: 'liu-bei', b: 'xianbei', score: 45, status: 'non-aggression' },  // 亮遣使結軻比能
+    { a: 'cao', b: 'xianbei', score: -40, status: 'neutral' },
   ],
   cities: buildInitialCities(CITY_OWNERSHIP_228_SHITING),
   forces: FORCES_228,
