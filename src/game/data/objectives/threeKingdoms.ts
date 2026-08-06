@@ -294,11 +294,34 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-190-liubiao',
       forceId: 'liu-biao',
       primary: {
-        title: { zh: '單騎定荊州', en: 'One Rider, Nine Commanderies' },
-        description: 'Control Jing province by 199.',
-        descriptionZh: "於199年前盡有荊州 —— 單騎入宜城,竟成一方之主。",
-        goal: { kind: 'control-province', provinceId: 'jing', byYear: 199 },
+        title: { zh: '單騎入宜城', en: 'One Rider into Yicheng' },
+        /*
+         * 「於199年前盡有荊州」實測十二輪 0 中,而他終局只有四到五城 ——
+         * 荊州十六城裡孫堅佔三、袁術佔三、無主五座,要全取等於同時打贏兩家。
+         * 那是他 191 年孫堅死後才慢慢做到的事,不是開局兩年的事。
+         *
+         * 主目標改成他真正立身的那一步:誘殺宗賊帥五十五人而後領荊州 ——
+         * 守住襄陽(治所)、江陵(南郡)、江夏(黃祖)這三座。盡有荊州降為
+         * 次要,那才是「竟成一方之主」的完成式。
+         */
+        description: 'Still hold Xiangyang, Jiangling and Jiangxia in 196 — he rode into Yicheng alone and took a province by killing fifty-five men at one meeting.',
+        descriptionZh: '至196年仍據襄陽、江陵、江夏 —— 單馬入宜城,誘宗賊帥五十五人而斬之,遂領荊州。',
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 196 },
       },
+      secondary: [
+        {
+          title: { zh: '盡有荊州', en: 'All Nine Commanderies' },
+          description: 'Control Jing province by 199 — after Sun Jian died the south came in one commandery at a time.',
+          descriptionZh: '於199年前盡有荊州 —— 孫堅既死,江南諸郡乃次第歸附。',
+          goal: { kind: 'control-province', provinceId: 'jing', byYear: 199 },
+        },
+        {
+          title: { zh: '北拒袁術', en: 'Hold the North Gate' },
+          description: 'Take Xinye by 197 — Yuan Shu sat in Nanyang at his back, and that is the door.',
+          descriptionZh: '於197年前攻取新野 —— 袁術據南陽在其肘腋,而新野是那扇門。',
+          goal: { kind: 'hold-cities', cityIds: ['xinye'], byYear: 197 },
+        },
+      ],
     },
     {
       id: 'obj-190-liuyan',
@@ -309,6 +332,20 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         descriptionZh: "於200年前盡有益州 —— 閉關守險,坐待天下之變。",
         goal: { kind: 'control-province', provinceId: 'yi', byYear: 200 },
       },
+      secondary: [
+        {
+          title: { zh: '斷絕閣道', en: 'Cut the Plank Roads' },
+          description: 'Take Hanzhong by 194 — he sent Zhang Lu to hold it and cut the Xie valley road, and after that no envoy of the Han came through.',
+          descriptionZh: '於194年前攻取漢中 —— 使張魯據之而斷絕斜谷閣道,自此漢使不通。',
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 194 },
+        },
+        {
+          title: { zh: '南中之附', en: 'The South Bows' },
+          description: 'Take Nanzhong by 199 — the far south was never governed so much as accommodated.',
+          descriptionZh: '於199年前攻取南中 —— 南中之地,自來只可羈縻,不可郡縣。',
+          goal: { kind: 'hold-cities', cityIds: ['nanzhong'], byYear: 199 },
+        },
+      ],
     },
     {
       id: 'obj-190-tao',
@@ -319,6 +356,20 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         descriptionZh: "至197年仍保彭城、下邳 —— 亂世之中,無事便是大功。",
         goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 197 },
       },
+      secondary: [
+        {
+          title: { zh: '流民歸之', en: 'The Refugees Come' },
+          description: 'Hold all of Xu province by 197 — grain in the granaries drew the displaced from four directions.',
+          descriptionZh: '於197年前盡有徐州 —— 穀米豐贍,流民多歸之。',
+          goal: { kind: 'control-province', provinceId: 'xu', byYear: 197 },
+        },
+        {
+          title: { zh: '非劉備不能安此州', en: 'No One but Liu Bei' },
+          description: 'Have Liu Bei in your service by 195 — on his deathbed he gave the province to him.',
+          descriptionZh: '於195年前招得劉備入麾下 —— 臨終讓徐州曰:「非劉備不能安此州也。」',
+          goal: { kind: 'recruit-officer', officerId: 'liu-bei', byYear: 195 },
+        },
+      ],
     },
     /* 孫堅 —— 諸侯之中唯一真的打進洛陽的人。 */
     {
