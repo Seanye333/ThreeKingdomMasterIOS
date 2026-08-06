@@ -4741,6 +4741,283 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: in Emperor Ming\'s reign Wu and Shu could do Wei no harm; and in the year he died he entrusted his heir to Cao Shuang and Sima Yi. Forty years without a defeat abroad, undone by one deathbed arrangement.',
     },
   },
+  /* ── 戰國·魏文侯首霸 ──────────────────────────────────────────── */
+  'scn-ws-weiwen': {
+    wei: {
+      defeat: {
+        titleZh: '謗書一篋',
+        titleEn: 'A Basket of Denunciations',
+        textZh:
+          '文侯師卜子夏,友田子方,禮段干木 ——'
+          + '過其閭,未嘗不軾也。\n\n'
+          + '用李悝盡地力之教:「地方百里,'
+          + '提封九萬頃,除山澤邑居參分去一,'
+          + '為田六百萬畝,治田勤謹則畝益三升,'
+          + '不勤則損亦如之。」'
+          + '又作法經六篇,為後世律令之祖。\n\n'
+          + '西門豹治鄴,鑿十二渠,引河水灌民田。\n'
+          + '吳起守西河,秦兵不敢東向。\n'
+          + '樂羊伐中山,三年而拔之 ——\n\n'
+          + '羊反而語功,文侯示之兩篋:'
+          + '皆謗羊之書也。羊再拜曰:'
+          + '「此非臣之功,主君之力也。」',
+        textEn:
+          'Marquis Wen took Bu Zixia as his teacher, Tian Zifang as his friend, and treated Duan Ganmu with ceremony — he never passed his lane without bowing over the carriage rail.\n\n'
+          + 'He used Li Kui\'s programme for getting everything out of the soil: "In a hundred li square there are ninety thousand qing of registered land; take away a third for hills, marshes and dwellings and six million mu remain as fields. Farm them diligently and each mu yields three sheng more; farm them slackly and it loses as much." And Li Kui wrote the Canon of Laws in six sections, ancestor of every code since.\n\n'
+          + 'Ximen Bao governed Ye and cut twelve channels to bring river water onto the people\'s fields. Wu Qi held the western river and Qin dared not face east. Yue Yang attacked Zhongshan and took it in three years —\n\n'
+          + 'and came back to speak of his achievement, and the Marquis showed him two basketfuls: all of them denunciations of Yue Yang. Yang bowed twice and said: "This was not your servant\'s doing. It was my lord\'s strength."',
+      },
+      verdictZh:
+        '論曰:魏之先霸諸侯,不以其地,以其**能用人於未成之時** ——'
+        + '樂羊三年不下中山,而謗書滿篋;\n'
+        + '文侯不出一言,待其成而後示之。\n'
+        + '故戰國之初,吳起、李悝、西門豹、樂羊皆在魏;'
+        + '而其後商鞅、張儀、范雎、孫臏,'
+        + '亦皆出於魏而不用於魏 ——\n'
+        + '**一國之衰,常始於它不再是人才願意留下的地方**。',
+      verdictEn:
+        'The historian says: Wei led the feudal lords first not because of its land but because it could back a man before he had produced anything. Yue Yang spent three years failing to take Zhongshan and the denunciations filled two baskets; the Marquis said nothing at all, and waited until it was done before showing him. So at the opening of the Warring States, Wu Qi, Li Kui, Ximen Bao and Yue Yang were all in Wei — and afterwards Shang Yang, Zhang Yi, Fan Ju and Sun Bin all came out of Wei and were not employed by it. A state\'s decline usually begins when it stops being the place able men are willing to stay.',
+      verdictLostZh:
+        '論曰:文侯問群臣:「我何如主?」'
+        + '皆曰仁君。任座曰:「君得中山,不以封君之弟,'
+        + '而以封君之子,是以知君之非仁君也。」'
+        + '文侯怒,任座趨出。'
+        + '翟璜曰:「君仁君也。臣聞君明則臣直。'
+        + '向者任座之言直,是以知君之仁也。」'
+        + '文侯喜,使翟璜召任座而反之,親下堂迎之,以為上客。',
+      verdictLostEn:
+        'The historian says: Marquis Wen asked his court, "What kind of ruler am I?" and they all said a benevolent one. Ren Zuo said: "You took Zhongshan and enfeoffed your son with it rather than your younger brother. That is how I know you are not a benevolent ruler." The Marquis was angry and Ren Zuo hurried out. Then Zhai Huang said: "You are a benevolent ruler. I have heard that where the ruler is clear-sighted his ministers are blunt. Ren Zuo just spoke bluntly, and that is how I know." The Marquis was pleased, sent Zhai Huang to bring Ren Zuo back, went down from the hall to meet him himself, and made him an honoured guest.',
+    },
+  },
+  /* ── 戰國·商鞅變法 ────────────────────────────────────────────── */
+  'scn-ws-shangyang': {
+    qin: {
+      defeat: {
+        titleZh: '徙木立信',
+        titleEn: 'The Pole at the South Gate',
+        textZh:
+          '令既具,未布,恐民之不信,'
+          + '乃立三丈之木於國都市南門,'
+          + '募民有能徙置北門者予十金。\n'
+          + '民怪之,莫敢徙。復曰:'
+          + '「能徙者予五十金。」\n'
+          + '有一人徙之,輒予五十金,以明不欺。\n\n'
+          + '令行於民期年,秦民之國都言初令之不便者以千數。'
+          + '於是太子犯法。衛鞅曰:'
+          + '「法之不行,自上犯之。」\n'
+          + '將法太子。太子,君嗣也,不可施刑,'
+          + '刑其傅公子虔,黥其師公孫賈。\n\n'
+          + '明日,秦人皆趨令。行之十年,'
+          + '秦民大悅,道不拾遺,山無盜賊,'
+          + '家給人足,民勇於公戰,怯於私鬥。',
+        textEn:
+          'The new laws were drafted and not yet published, and fearing the people would not trust them, he set a pole thirty feet long at the south gate of the capital market and offered ten pieces of gold to anyone who would move it to the north gate. The people thought it odd and nobody dared. He said: "Fifty to whoever moves it." One man moved it and was given fifty on the spot, to show that they were not being cheated.\n\n'
+          + 'After the laws had run a year, the people who came to the capital to say the new laws were inconvenient numbered in the thousands. Then the heir apparent broke the law. Wei Yang said: "Laws fail because those above break them." He was going to have the heir punished — but the heir was the ruler\'s successor and could not be sentenced, so his guardian Prince Qian was punished instead and his tutor Gongsun Jia branded on the face.\n\n'
+          + 'The next day every man in Qin hurried to obey. After ten years the people of Qin were delighted with it: nothing dropped on the road was picked up, there were no bandits in the hills, every household had enough, and men were brave in the state\'s wars and timid in private quarrels.',
+      },
+      verdictZh:
+        '論曰:鞅之立法,先立**信**而後立法 ——'
+        + '五十金買一根木頭,買的是「說了算數」四字。\n'
+        + '然其信止於令,不及於人:\n'
+        + '初言令不便者,後言令便,鞅曰'
+        + '「此皆亂化之民也」,盡遷之於邊城 ——'
+        + '**連稱讚都不許改口**,\n'
+        + '故秦法可行百年而秦人不敢言。\n'
+        + '孝公卒,鞅車裂於彤,而秦人不憐。',
+      verdictEn:
+        'The historian says: Shang Yang established credit before he established law — fifty pieces of gold for one pole bought four words: he means what he says. But the credit stopped at the statute and never reached the people. Those who had said at first that the laws were inconvenient and later said they were convenient were told by Yang, "These are people who disturb the transformation," and were deported to the frontier towns. He would not even allow them to change their minds in his favour. So the laws of Qin ran for a century and the people of Qin did not dare speak. When Duke Xiao died Yang was torn apart by chariots at Tong, and the people of Qin did not pity him.',
+      verdictLostZh:
+        '論曰:趙良謂鞅曰:「君之出也,'
+        + '後車十數,從車載甲,多力而駢脅者為驂乘,'
+        + '持矛而操闟戟者旁車而趨。'
+        + '此一物不具,君固不出。'
+        + '書曰:『恃德者昌,恃力者亡。』'
+        + '君之危若朝露,尚將欲延年益壽乎?」\n'
+        + '——後五月而難作。',
+      verdictLostEn:
+        'The historian says: Zhao Liang said to Shang Yang: "When you go out, there are a dozen carriages behind you and armoured men in them, powerful men with barrel ribs at your side and men with spears and halberds running alongside. If one of these is missing you do not go out at all. The Documents say: he who relies on virtue flourishes, he who relies on force perishes. Your danger is like the morning dew — and you still hope for length of years?" Five months later the blow fell.',
+    },
+  },
+  /* ── 戰國·圍魏救趙 ────────────────────────────────────────────── */
+  'scn-ws-guiling': {
+    qi: {
+      defeat: {
+        titleZh: '批亢搗虛',
+        titleEn: 'Strike the Throat, Stab the Empty Place',
+        textZh:
+          '魏伐趙,趙急,請救於齊。'
+          + '齊威王欲將孫臏,臏辭謝曰:'
+          + '「刑餘之人不可。」於是乃以田忌為將,'
+          + '而孫子為師,居輜車中,坐為計謀。\n\n'
+          + '田忌欲引兵之趙,孫子曰:\n'
+          + '「夫解雜亂紛糾者不控捲,救鬥者不搏撠,'
+          + '批亢搗虛,形格勢禁,則自為解耳。\n'
+          + '今梁趙相攻,輕兵銳卒必竭於外,'
+          + '老弱罷於內。\n'
+          + '君不若引兵疾走大梁,據其街路,衝其方虛,'
+          + '彼必釋趙而自救。\n'
+          + '是我一舉解趙之圍而收獘於魏也。」\n\n'
+          + '田忌從之。魏果去邯鄲,與齊戰於桂陵,大破梁軍。',
+        textEn:
+          'Wei attacked Zhao; Zhao was hard pressed and asked Qi for help. King Wei of Qi wanted Sun Bin in command, and Bin declined: "A man who has been mutilated cannot." So Tian Ji was made general and Master Sun his strategist, riding in a covered cart and doing his planning sitting down.\n\n'
+          + 'Tian Ji wanted to march to Zhao, and Master Sun said: "To untangle a snarl you do not tug at it; to break up a fight you do not join in the grappling. Strike at the throat, stab at the empty place; make the shape of things forbid it, and it comes apart of itself.\n\n'
+          + 'Wei and Zhao are locked together now, so Wei\'s light troops and best men must be spent abroad and the old and weak worn out at home.\n\n'
+          + 'Better to march hard on Daliang, hold its streets, drive at what is empty — and they will let go of Zhao to save themselves.\n\n'
+          + 'At one stroke we lift the siege of Zhao and collect the profit of Wei\'s exhaustion."\n\n'
+          + 'Tian Ji did it. Wei did leave Handan, fought Qi at Guiling, and its army was broken.',
+      },
+      verdictZh:
+        '論曰:救趙而不至趙,'
+        + '此戰國兵法之一大轉關 ——\n'
+        + '**戰之所在,不必在所爭之地**。\n'
+        + '十二年後馬陵,臏減灶而誘龐涓,'
+        + '書於樹曰「龐涓死於此樹之下」,'
+        + '萬弩俱發 —— 用的仍是同一法:'
+        + '不與敵爭其所備,而使敵自來就我所設。',
+      verdictEn:
+        'The historian says: relieving Zhao without going to Zhao is one of the great turning points in the military thinking of the age — where a battle is fought need not be where the thing in dispute lies. Twelve years later at Maling, Sun Bin reduced his cooking-fires to draw Pang Juan on, wrote on a tree "Pang Juan dies beneath this tree", and ten thousand crossbows went off together. The same method: never contend with an enemy where he is ready, but make him come of his own accord to where you have laid it out.',
+      verdictLostZh:
+        '論曰:臏與涓俱學兵法。涓自以能不及臏,'
+        + '陰使召之,以法刑斷其兩足而黥之,欲隱勿見。'
+        + '——**害人以絕其名,而其名終以害己者顯**。',
+      verdictLostEn:
+        'The historian says: Sun Bin and Pang Juan studied the art of war together. Juan knew himself the lesser, sent for Bin in secret, had his feet cut off by process of law and his face branded, meaning to keep him out of sight for good. Injure a man to bury his name, and his name ends up made by what you did to you.',
+    },
+    wei: {
+      defeat: {
+        titleZh: '釋趙而自救',
+        titleEn: 'Let Go of Zhao and Save Yourself',
+        textZh:
+          '你圍邯鄲一年而拔之。\n'
+          + '——而大梁空。\n\n'
+          + '齊師直走大梁,據其街路,衝其方虛。'
+          + '龐涓去邯鄲,倍道兼行,與齊戰於桂陵,'
+          + '輕兵銳卒竭於外,老弱罷於內,遂大敗。\n\n'
+          + '十二年後,你伐韓,韓告急於齊。'
+          + '齊復以田忌將,直走大梁。'
+          + '涓聞之,去韓而歸。\n\n'
+          + '孫子曰:「彼三晉之兵素悍勇而輕齊,'
+          + '齊號為怯。善戰者因其勢而利導之。」\n'
+          + '——入魏地為十萬灶,明日為五萬灶,'
+          + '又明日為三萬灶。',
+        textEn:
+          'You invested Handan for a year and took it. And Daliang was empty.\n\n'
+          + 'The army of Qi marched straight on Daliang, held its streets and drove at what was empty. Pang Juan left Handan and came back by forced marches, fought Qi at Guiling with his light troops spent abroad and his old and weak worn out at home, and was thoroughly beaten.\n\n'
+          + 'Twelve years later you attacked Hann, and Hann appealed to Qi. Qi again put Tian Ji in command and again marched straight on Daliang. Juan heard of it and left Hann to come home.\n\n'
+          + 'And Master Sun said: "The troops of the three Jin states are famously fierce and hold Qi cheap; Qi has a name for cowardice. A good commander takes the shape of things as he finds it and steers it to advantage." Entering Wei territory they made a hundred thousand cooking-fires, the next day fifty thousand, the day after thirty thousand.',
+      },
+      verdictZh:
+        '論曰:魏承文侯、武侯之業,'
+        + '至惠王而地最廣、兵最強、都最富 ——'
+        + '而兩敗於齊,一失太子,一失龐涓,'
+        + '自是不復為霸。\n'
+        + '**其病在四戰而無定向**:'
+        + '西攻秦、北圍趙、南伐韓,'
+        + '所向皆勝而所守皆虛。\n'
+        + '惠王之問孟子曰「叟不遠千里而來,'
+        + '亦將有以利吾國乎」,已是敗國之君語。',
+      verdictEn:
+        'The historian says: Wei inherited the work of Marquises Wen and Wu, and under King Hui it had the widest lands, the strongest army and the richest capital in the world — and was beaten twice by Qi, losing an heir apparent in one and Pang Juan in the other, and was never a leading power again. Its disease was fighting on four fronts with no settled direction: west at Qin, north round Zhao, south at Hann, winning wherever it went and leaving empty whatever it held. When King Hui asked Mencius, "Venerable sir, you have not thought a thousand li too far to come — will you also have something to profit my state by?" he was already speaking as the ruler of a lost cause.',
+      verdictLostZh:
+        '論曰:馬陵之役,涓自知智窮兵敗,'
+        + '乃自剄,曰:「遂成豎子之名!」'
+        + '——臨死所恨者,非國之亡,是人之名。',
+      verdictLostEn:
+        'The historian says: at Maling, knowing his cleverness exhausted and his army broken, Pang Juan cut his own throat, saying: "So I have made that wretch\'s reputation for him." What he regretted at the end was not his state\'s ruin but another man\'s fame.',
+    },
+  },
+  /* ── 戰國·長平之戰 ────────────────────────────────────────────── */
+  'scn-ws-changping': {
+    zhao: {
+      defeat: {
+        titleZh: '膠柱鼓瑟',
+        titleEn: 'Playing a Zither with the Pegs Glued',
+        textZh:
+          '廉頗堅壁以待秦,秦數挑戰,趙兵不出。'
+          + '趙王數以為讓。\n\n'
+          + '而秦相應侯又使人行千金於趙為反間,曰:'
+          + '「秦之所惡,獨畏馬服子趙括將耳,'
+          + '廉頗易與,且降矣。」\n\n'
+          + '趙王遂以括代頗。'
+          + '藺相如曰:「王以名使括,'
+          + '若膠柱而鼓瑟耳。'
+          + '括徒能讀其父書傳,不知合變也。」\n\n'
+          + '括母上書曰:「始妾事其父,時為將,'
+          + '身所奉飯飲而進食者以十數,所友者以百數,'
+          + '大王及宗室所賞賜者盡以予軍吏士大夫。\n'
+          + '今括一旦為將,東向而朝,軍吏無敢仰視之者,'
+          + '王所賜金帛,歸藏於家,'
+          + '而日視便利田宅可買者買之。'
+          + '——父子異心,願王勿遣。」',
+        textEn:
+          'Lian Po held his walls and waited for Qin; Qin offered battle repeatedly and the Zhao troops would not come out. The King of Zhao reproached him for it more than once.\n\n'
+          + 'And the Marquis of Ying, chancellor of Qin, sent a thousand pieces of gold into Zhao to sow the story: "The only thing Qin dreads is Zhao Kuo, son of the Lord of Mafu, taking command. Lian Po is easy to handle and is about to surrender anyway."\n\n'
+          + 'So the King replaced Lian Po with Kuo. Lin Xiangru said: "Your Majesty is employing Kuo on the strength of a name. It is like gluing the pegs and then playing the zither. Kuo can recite his father\'s books; he does not know how to meet a change."\n\n'
+          + 'And Kuo\'s mother submitted a memorial: "When I first served his father and he was a general, the men he served food to with his own hands were counted in tens and his friends in hundreds; everything Your Majesty and the royal house gave him he passed on to his officers and gentlemen.\n\n'
+          + 'Kuo is a general one day and sits facing east receiving court, and not an officer dares look up at him; the gold and silk Your Majesty has given him he has stored at home, and he goes out daily to look at profitable fields and houses to buy. Father and son are not of one mind. I beg Your Majesty not to send him."',
+      },
+      verdictZh:
+        '論曰:長平之敗,不敗於括,敗於**易將** ——'
+        + '相如言之,括母言之,而趙王皆不聽:\n'
+        + '所以不聽者,只因頗守而括言戰。\n'
+        + '**國君之最難,在於忍受一個看起來不作為的將領**。\n'
+        + '秦以千金易一將,而趙以四十萬人償之。',
+      verdictEn:
+        'The historian says: Changping was not lost by Zhao Kuo but by the change of commanders. Lin Xiangru said so and Kuo\'s own mother said so, and the King listened to neither — for no other reason than that Lian Po held and Kuo talked about attacking. The hardest thing for a sovereign is to tolerate a commander who appears to be doing nothing. Qin bought a change of general for a thousand pieces of gold, and Zhao paid for it with four hundred thousand men.',
+      verdictLostZh:
+        '論曰:括母請曰:「即如有不稱,妾得無隨坐乎?」'
+        + '王許諾。及括軍敗,王以母先言,竟不誅也。\n'
+        + '——舉國之中,惟一人在事前把話說死。',
+      verdictLostEn:
+        'The historian says: Kuo\'s mother asked, "And if he proves unequal to it, may I be spared being punished with him?" The King agreed. When Kuo\'s army was destroyed the King remembered what she had said beforehand and did not execute her. In the whole kingdom, one person had put it on the record in advance.',
+    },
+    qin: {
+      defeat: {
+        titleZh: '挾詐而盡阬之',
+        titleEn: 'By a Trick, and Buried Them All',
+        textZh:
+          '趙括出銳卒自搏戰,秦軍射殺趙括。'
+          + '括軍敗,卒四十萬人降武安君。\n\n'
+          + '武安君計曰:「前秦已拔上黨,'
+          + '上黨民不樂為秦而歸趙。'
+          + '趙卒反覆,非盡殺之,恐為亂。」\n\n'
+          + '乃挾詐而盡阬殺之,遺其小者二百四十人歸趙。'
+          + '前後斬首虜四十五萬人。趙人大震。\n\n'
+          + '——其後武安君稱病,不肯將邯鄲之役。'
+          + '曰:「邯鄲實未易攻也。'
+          + '且諸侯救日至,彼諸侯怨秦之日久矣。」\n'
+          + '秦王賜之劍,自裁。\n'
+          + '起曰:「我固當死。長平之戰,'
+          + '趙卒降者數十萬人,我詐而盡阬之,是足以死。」',
+        textEn:
+          'Zhao Kuo took his best troops out to fight hand to hand and was shot dead by the Qin army. His army broke, and four hundred thousand men surrendered to the Lord of Wu\'an.\n\n'
+          + 'The Lord of Wu\'an reasoned: "Qin has already taken Shangdang, and the people of Shangdang would not be Qin\'s and went over to Zhao. The soldiers of Zhao change sides. Unless they are all killed there will be trouble."\n\n'
+          + 'So by a trick he buried the lot of them alive, sending two hundred and forty of the youngest home to Zhao. All told, four hundred and fifty thousand heads and prisoners. Zhao was shaken to its roots.\n\n'
+          + 'Afterwards the Lord of Wu\'an pleaded illness and would not take command at Handan. He said: "Handan is really not easy to attack. And relief from the other states arrives daily; they have resented Qin a long time." The King of Qin sent him a sword.\n\n'
+          + 'And Bai Qi said: "I do deserve to die. At Changping several hundred thousand men of Zhao surrendered, and I deceived them and buried them all. That is enough to die for."',
+      },
+      verdictZh:
+        '論曰:長平一役,秦以一戰而定天下之勢 ——'
+        + '自是六國無能野戰者。\n'
+        + '然阬降四十萬,其害在後:'
+        + '**降不可保,則往後無人肯降**;\n'
+        + '故邯鄲之圍,秦以三年不下,'
+        + '而諸侯之救日至。\n'
+        + '白起之死,秦王殺之,而其罪自認,'
+        + '亦可謂知其所以死者。',
+      verdictEn:
+        'The historian says: Changping settled the shape of the age in one battle — after it none of the six states could meet Qin in the field. And burying four hundred thousand who had surrendered did its damage later: if surrender does not keep you alive, nobody surrenders again. So the siege of Handan lasted three years without success while relief came in daily from the other states. The King of Qin killed Bai Qi, and Bai Qi named his own offence, which is at least knowing what one is dying of.',
+      verdictLostZh:
+        '論曰:秦之強,不獨在兵,在**能易將而不亂** ——'
+        + '陰使武安君代王齕,而令軍中'
+        + '「有敢泄武安君將者斬」。\n'
+        + '同一年,趙易將而亡四十萬,秦易將而勝;'
+        + '所異者,一在暗,一在明;'
+        + '一由己出,一由敵使。',
+      verdictLostEn:
+        'The historian says: Qin\'s strength was not only in its troops but in being able to change commanders without disorder — the Lord of Wu\'an was substituted for Wang He in secret, with an order through the camp that anyone who let out that he was in command would be beheaded. In the same year Zhao changed commanders and lost four hundred thousand men and Qin changed commanders and won. The difference: one was done in the dark and one in the open; one was its own decision and one was the enemy\'s.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
