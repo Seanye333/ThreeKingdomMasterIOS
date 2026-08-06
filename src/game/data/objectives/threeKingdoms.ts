@@ -556,11 +556,35 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-200-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '官渡之戰', en: 'Defeat Yuan Shao at Guandu' },
-        description: 'Eliminate the Yuan Shao force.',
-        descriptionZh: "消滅袁紹勢力。",
-        goal: { kind: 'defeat-force', forceId: 'yuan-shao', byYear: 207 },
+        title: { zh: '守官渡', en: 'Hold the Line at Guandu' },
+        /*
+         * 原本是「於207年前消滅袁紹勢力」—— 照史書沒錯(紹死於 202,二子走
+         * 烏丸,207 年白狼山盡滅),而體檢十二輪 0 中:曹操自己覆滅四次、
+         * 終局中位數一座城。連活著都成問題,遑論滅人。
+         *
+         * 官渡打的是什麼?是**守**。自八月至十月,以一敵十而不退者半年,
+         * 而後烏巢一夜。主目標因此改成他真正做到的那件事:守住許昌、官渡、
+         * 白馬這條線到 203 年(紹死之次年)。破其軍、滅其族降為次要 ——
+         * 那是熬過這一關之後的十年,不是入場券。
+         */
+        description: 'Still hold Xuchang, Guandu and Baima in 203 — Guandu was a battle about not falling back.',
+        descriptionZh: '至203年仍據許昌、官渡與白馬 —— 官渡打的是守:自八月至十月,以一敵十而不退者半年。',
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'guandu', 'baima'], byYear: 203 },
       },
+      secondary: [
+        {
+          title: { zh: '破紹之軍', en: 'Break the Host' },
+          description: 'Cut Yuan Shao to ten cities by 205 — Guandu, then Cangting, then Ye.',
+          descriptionZh: '於205年前使袁紹所據不過十城 —— 官渡、倉亭,而後鄴城。',
+          goal: { kind: 'break-force', forceId: 'yuan-shao', maxCities: 10, byYear: 205 },
+        },
+        {
+          title: { zh: '盡滅袁氏', en: 'End the House of Yuan' },
+          description: 'Destroy the Yuan Shao force by 207 — the brothers died at White Wolf Mountain.',
+          descriptionZh: '於207年前消滅袁紹勢力 —— 二子奔烏丸,盡於白狼山。',
+          goal: { kind: 'defeat-force', forceId: 'yuan-shao', byYear: 207 },
+        },
+      ],
     },
     {
       id: 'obj-200-yuan',
@@ -577,21 +601,27 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-200-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '襲許之機', en: 'The Opening at Xu' },
-        description: 'Take Xuchang while the north is locked at Guandu — the raid Sun Ce never lived to make.',
-        descriptionZh: '趁兩強相持於官渡、北方空虛之際攻取許昌 —— 孫策沒能活著發動的那一擊。',
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 205 },
+        title: { zh: '江東之固', en: 'Jiangdong Secured' },
+        /*
+         * 「趁兩強相持攻取許昌」實測十二輪 0 中 —— 那本來就是他**沒能發動**的
+         * 那一擊(未發而死於許貢門客之手)。主次對調:主目標是他真正做到的
+         * 那件事 —— 五年之間盡有江東六郡,守住建業、吳郡、會稽這三處根本;
+         * 襲許留作次要,那是「若他活著」的那條線。
+         */
+        description: 'Still hold Jianye, Wu and Kuaiji in 205 — five years to take the six commanderies, and they were his.',
+        descriptionZh: '至205年仍據建業、吳郡、會稽 —— 五年之間盡有江東六郡,這三處是根本。',
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'kuaiji'], byYear: 205 },
       },
       secondary: [
         {
-          title: { zh: '江東之固', en: 'Jiangdong Secured' },
-          description: 'Hold Jianye, Wu and Kuaiji — the base that must not be lost while you march north.',
-          descriptionZh: '守住建業、吳郡、會稽 —— 北上時不能丟的根本。',
-          goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'kuaiji'], byYear: 205 },
+          title: { zh: '襲許之機', en: 'The Opening at Xu' },
+          description: 'Take Xuchang by 205 — the blow Sun Ce did not live to strike.',
+          descriptionZh: '趁兩強相持於官渡、北方空虛之際攻取許昌 —— 孫策沒能活著發動的那一擊。',
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 205 },
         },
         {
           title: { zh: '不死於刺客', en: 'No Assassin' },
-          description: 'Still alive in 205 — he was killed at twenty-six by three retainers of Xu Gong.',
+          description: 'Survive to 205 — he was twenty-six when Xu Gong\'s retainers found him.',
           descriptionZh: '撐到205年 —— 史實上他二十六歲死於許貢門客之手。',
           goal: { kind: 'survive-until', year: 205 },
         },

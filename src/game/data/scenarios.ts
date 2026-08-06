@@ -714,7 +714,11 @@ export const SCENARIO_200_GUANDU: Scenario = {
     // ── 曹操沒在打的那幾家 ──
     { a: 'cao', b: 'sun', score: 40, status: 'non-aggression' },     // 表為討逆將軍,又結姻
     { a: 'cao', b: 'ma-teng', score: 45, status: 'non-aggression' }, // 鍾繇撫關中,騰遣子入侍
-    { a: 'cao', b: 'liu-biao', score: -25, status: 'neutral' },      // 通袁而不出兵
+    /* 通袁而**不出兵** —— 這一條先寫成 neutral(−25),而體檢裡劉表照樣年年
+       南來:曹操十二輪覆滅十次,失城的兇手劉表排第二。史書給的正是「不出兵」
+       三個字:紹遣人求助,表許之而不至,亦不佐操,欲保江漢間觀天下變。
+       所以是互不侵犯,不是敵國 —— 敵意留在分數上(15,同盟裡最低)。 */
+    { a: 'cao', b: 'liu-biao', score: 15, status: 'non-aggression' },
     { a: 'cao', b: 'liu-zhang', score: 15, status: 'non-aggression' },
     // ── 南方唯一真正的戰線 ──
     { a: 'sun', b: 'liu-biao', score: -70, status: 'neutral' },      // 父讎在黃祖
@@ -724,7 +728,32 @@ export const SCENARIO_200_GUANDU: Scenario = {
     { a: 'ma-teng', b: 'yuan-shao', score: -20, status: 'neutral' },
     { a: 'wuhuan', b: 'cao', score: -55, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_200),
+  /*
+   * 開局姿態 —— 這張盤的題目是「以少勝多」,而姿態要回答的是**憑什麼**。
+   *
+   * 憑的是屯田。196 年棗祗、韓浩建議屯田於許下,歲得穀百萬斛,郡國列置田官
+   * —— 而《魏書》記同一時期的對照組:「袁紹之在河北,軍人仰食桑椹;袁術在
+   * 江淮,取給蒲蠃。民人相食,州里蕭條。」曹操能在官渡撐半年,不是因為兵多,
+   * 是因為只有他有一套能把糧送到前線的制度。
+   *
+   * 體檢十二輪:曹操覆滅十次、終局零城零兵,而糧兵比從 5.3 一路漲到 41 ——
+   * 全軍的糧沒少,少的是**前線那幾座城**的糧(缺糧逃兵在城,不在勢力)。
+   * 糧給到 1.5、民忠 +8,是把屯田寫進數字;袁紹壓到 0.9,是把桑椹寫進數字。
+   *
+   * 其餘各家按史書:孫策江東初定而兵精(兵高、民忠低,士民新附);劉表
+   * 保境而富(糧金高、城防高);劉璋闇弱而地險(城防最高、兵最少);
+   * 馬騰關中十部(兵高、金糧薄);烏丸騎射(兵高、城防最低)。
+   */
+  cities: buildInitialCities(CITY_OWNERSHIP_200, {
+    cao:         { troops: 1.00, food: 1.50, gold: 1.15, defense: 6,  loyalty: 8 },
+    'yuan-shao': { troops: 1.05, food: 0.90, gold: 1.10, defense: 4,  loyalty: 2 },
+    sun:         { troops: 1.15, food: 1.05, gold: 1.05, defense: 0,  loyalty: -6 },
+    'liu-bei':   { troops: 0.95, food: 1.10, gold: 0.90, defense: 0,  loyalty: 10 },
+    'liu-biao':  { troops: 0.95, food: 1.25, gold: 1.20, defense: 10, loyalty: 10 },
+    'liu-zhang': { troops: 0.85, food: 1.20, gold: 1.05, defense: 14, loyalty: 6 },
+    'ma-teng':   { troops: 1.15, food: 0.95, gold: 0.85, defense: -4, loyalty: 0 },
+    wuhuan:      { troops: 1.20, food: 0.85, gold: 0.80, defense: -10, loyalty: -4 },
+  }),
   forces: FORCES_200,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_200, DEAD_BY_200),
 };
