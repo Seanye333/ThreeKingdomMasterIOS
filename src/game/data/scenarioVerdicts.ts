@@ -947,6 +947,372 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: distance lets a man survive; it does not let him grow great. Ten thousand li out, with no authority above him, what he actually stood on was one tribute memorial a year.',
     },
   },
+  /* ── 195 孫策定江東 ────────────────────────────────────────────
+     一城九千五百兵,對面是四家各守一郡的太守。這張盤的題目是
+     **一個沒有地盤的人怎麼在五年之內拿到一個國家** ——
+     而十三家的敗法,寫的是他們各自為什麼沒能做到同一件事。 */
+  'scn-195-jiangdong': {
+    sun: {
+      defeat: {
+        titleZh: '質玉璽,借兵千餘',
+        titleEn: 'A Seal in Pledge, a Thousand Men on Loan',
+        textZh:
+          '父死時你十七歲。扶柩還葬曲阿,居江都,而後以父之傳國璽質於袁術,'
+          + '得兵千餘、騎數十。渡江之日,眾已五六千。\n\n'
+          + '所至皆下:劉繇走豫章,嚴白虎奔餘杭,王朗浮海而遁,華歆葛巾迎於道左。'
+          + '軍令嚴整,不敢虜略,雞犬菜茹,一無所犯 —— 民乃大悅,'
+          + '競以牛酒詣軍。\n\n'
+          + '而那一千人是借的。借的東西要還,或者要用比它更大的東西換掉。'
+          + '你沒能活到換掉它的那一天。',
+        textEn:
+          "You were seventeen when your father died. You brought the coffin home to Qua, settled at Jiangdu, and then pledged your father's imperial seal to Yuan Shu for a thousand foot and a few dozen horse. By the day you crossed the river you had five or six thousand.\n\n"
+          + 'Everything fell: Liu Yao ran to Yuzhang, Yan Baihu bolted to Yuhang, Wang Lang put to sea, Hua Xin came out to the roadside in a plain kerchief. Your orders were strict and nothing was looted — not a chicken, not a vegetable plot — and the people were delighted and came to the camp with cattle and wine.\n\n'
+          + 'But the thousand men were borrowed. Borrowed things have to be given back, or replaced with something bigger. You did not live to the day of the replacement.',
+      },
+      verdictZh:
+        '論曰:策以孤身渡江,五年而有六郡 —— 天下之速,無過於此者。'
+        + '所恃者三:父之舊部、周瑜之交、及軍令之不犯民。'
+        + '然輕而無備,性不好眾,常單騎出獵 —— 二十六歲死於三客之手。'
+        + '創業之速與殞身之速,同出一源。',
+      verdictEn:
+        'The historian says: he crossed the river alone and held six commanderies in five years — nothing in the age moved faster. Three things carried him: his father\'s veterans, his friendship with Zhou Yu, and orders his soldiers did not dare break against civilians. But he went about lightly and without guard, disliked company, and rode out hunting alone — and died at twenty-six at the hands of three retainers. The speed with which he built and the speed with which he died came from the same thing.',
+      verdictLostZh:
+        '論曰:借兵者,其權在人。'
+        + '策之絕袁術,在術僭號之後 —— 若術不僭,則江東之主終為術之部將耳。',
+      verdictLostEn:
+        "The historian says: a man who borrows an army holds it at someone else's pleasure. Sun Ce broke with Yuan Shu only after Shu took the imperial title. Had Shu not overreached, the lord of the east would have finished his life as Shu's subordinate officer.",
+    },
+    'liu-yao': {
+      defeat: {
+        titleZh: '揚州刺史,而無揚州',
+        titleEn: 'Inspector of Yang, without Yang',
+        textZh:
+          '你是漢室宗親,朝廷所命的揚州刺史 —— 而袁術先據壽春,'
+          + '你連治所都進不去,渡江寄治曲阿。\n\n'
+          + '許劭勸你用太史慈,你曰:「我若用子義,許子將不當笑我邪?」'
+          + '乃使慈偵視輕重而已。而神亭一戰,慈與策獨鬥,'
+          + '策刺慈馬,攬得慈項上手戟,慈亦得策兜鍪 —— 那是你手上最好的一張牌,'
+          + '你只讓他去看了看。\n\n'
+          + '兵敗走豫章,病卒。年四十二。',
+        textEn:
+          'You were of the imperial house and the court\'s appointed Inspector of Yang — and Yuan Shu held Shouchun first, so you could not even enter your own seat, and crossed the river to govern from Qua.\n\n'
+          + 'Xu Shao urged you to use Taishi Ci. "If I employ Ziyi," you said, "won\'t Xu Zijiang laugh at me?" So you sent him only to scout and report. And at Shenting he fought Sun Ce hand to hand — Ce speared his horse and took the short halberd from his neck, and Ci got Ce\'s helmet. That was the best card in your hand, and you used it to look at things.\n\n'
+          + 'Beaten, you fled to Yuzhang and died of illness, aged forty-two.',
+      },
+      verdictZh:
+        '論曰:繇以名義臨揚州,而不能用一太史慈 —— 所畏者,士林之議耳。'
+        + '夫亂世用人,問其能不能,不問人笑不笑。'
+        + '一問之差,而江東易主。',
+      verdictEn:
+        "The historian says: he came to Yang province with the court's authority and could not bring himself to use one Taishi Ci — what he feared was what the literary set would say. In a broken age you ask whether a man can do the thing, not whether people will laugh. One wrong question, and the east changed hands.",
+      verdictLostZh:
+        '論曰:有名而無實者,亂世之至危。'
+        + '名足以招敵,而實不足以拒之。',
+      verdictLostEn:
+        'The historian says: to have the title and not the substance is the most dangerous position in a broken age. The title is enough to draw enemies and the substance is not enough to hold them off.',
+    },
+    'wang-lang': {
+      defeat: {
+        titleZh: '浮海而遁',
+        titleEn: 'Away by Sea',
+        textZh:
+          '你是會稽太守,而孫策已破劉繇。功曹虞翻勸你避之,你不聽 ——'
+          + '「吾為漢吏,宜保城邑。」乃出兵拒策於固陵。\n\n'
+          + '策數渡水戰,不能克。其叔孫靜曰:「王朗負阻城守,難可卒拔。'
+          + '查瀆南去此數十里,而道之要徑也,宜從彼據其內。」策從之,'
+          + '夜多然火以為疑兵,分軍夜投查瀆道 —— 襲高遷屯。朗大駭。\n\n'
+          + '兵敗浮海,至東冶,又追破之。乃詣策降。策以其儒雅,詰讓而不害。\n\n'
+          + '你守到了最後一刻,而後活了下來 —— 二十七年後,'
+          + '你是曹魏的司徒。',
+        textEn:
+          'You were Grand Administrator of Kuaiji, and Sun Ce had already broken Liu Yao. Your officer Yu Fan urged you to get out of the way, and you would not: "I am an officer of Han. I ought to hold my walls." So you took troops out and met him at Guling.\n\n'
+          + 'Ce crossed the water again and again and could not carry it. His uncle Sun Jing said: "Wang Lang has the ground and the walls; he will not fall quickly. Zhadu is a few dozen li south of here and it is the key road — go round and take him from inside." Ce agreed, lit many fires by night as a decoy, sent a column down the Zhadu road, and fell on the camp at Gaoqian. You were badly shaken.\n\n'
+          + 'Beaten, you put to sea, reached Dongye, and were run down again. So you went to Ce and surrendered. He rebuked you for your scholarship and let you live.\n\n'
+          + 'You held to the last hour, and then you survived it — and twenty-seven years later you were Excellency over the Masses of Wei.',
+      },
+      verdictZh:
+        '論曰:朗之拒策,非不知不敵也,以漢吏自任耳。'
+        + '及其敗,不死不隱,受詰而不辱,終為魏之三公 ——'
+        + '夫守節與惜身,世以為二事,而朗兼之。史家不能非之,亦不能全許。',
+      verdictEn:
+        'The historian says: he did not resist Sun Ce out of ignorance of the odds; he did it because he took the duties of a Han officer seriously. And when he lost he neither died nor went into hiding, took his dressing-down without disgrace, and ended as one of the Three Excellencies of Wei. Keeping faith and keeping one\'s skin are usually thought to be two different things. He managed both. A historian cannot condemn him for it and cannot entirely approve either.',
+      verdictLostZh:
+        '論曰:一郡之守,能拒策數月者,朗與嚴白虎耳。'
+        + '而白虎以寇亡,朗以儒全 —— 同敗而異終。',
+      verdictLostEn:
+        'The historian says: only two men held Sun Ce off for months on one commandery — Wang Lang and Yan Baihu. Baihu ended as a bandit and Lang ended as a scholar of state. The same defeat, two different endings.',
+    },
+    'hua-xin': {
+      defeat: {
+        titleZh: '葛巾迎於道左',
+        titleEn: 'A Plain Kerchief at the Roadside',
+        textZh:
+          '你是豫章太守。孫策略地至豫章,遣虞翻說你 ——'
+          + '翻曰:「討逆將軍智略超世,用兵如神。府君無用兵之才,'
+          + '不如避之。」\n\n'
+          + '你曰:「久在江表,常欲北歸;孫會稽來,吾便去也。」'
+          + '明日,葛巾迎策。策執其手,禮而用之。\n\n'
+          + '豫章之民不知有兵。而後你北歸,歷魏三公,議禮定制,終為太尉。'
+          + '史稱:「歆清純德素,誠一時之俊偉也。」\n\n'
+          + '一座城可以守到最後一個人,也可以完好地交出去。'
+          + '兩種都要有人做。',
+        textEn:
+          'You were Grand Administrator of Yuzhang. Sun Ce came into the commandery and sent Yu Fan to talk to you: "The General Who Punishes Rebels is a strategist beyond his age and uses troops like a spirit. Your Honour has no talent for war. Better to step aside."\n\n'
+          + '"I have been south of the river a long time," you said, "and have long wanted to go north. Since the Kuaiji gentleman is coming, I shall go." Next day you met him in a plain kerchief. He took your hand, treated you with ceremony, and used you.\n\n'
+          + 'Yuzhang never knew there had been an army. Later you went north, held three of the highest offices of Wei, settled its rites and institutions, and ended as Grand Commandant. The histories say: pure, plain and unornamented — one of the outstanding men of his time.\n\n'
+          + 'A city can be held to the last man. It can also be handed over intact. Both need someone to do them.',
+      },
+      verdictZh:
+        '論曰:歆之降,非怯也。度己之才不足以拒,而豫章之民無罪 ——'
+        + '故一日而全一郡。世或譏其易主,然魏之典章,歆與有力焉。'
+        + '夫守土者以死為節,治世者以成為功;所處不同,不可以一律繩之。',
+      verdictEn:
+        'The historian says: his surrender was not cowardice. He measured his own capacity, found it insufficient, and reflected that the people of Yuzhang had done nothing wrong — so a whole commandery came through in a day. Some sneer that he changed masters easily; yet the institutions of Wei owe a good deal to him. The man who holds ground makes death his standard; the man who governs makes results his. They stand in different places and cannot be measured with one rule.',
+      verdictLostZh:
+        '論曰:不戰而全一郡者,史書不記其功;而那一郡的人記得。',
+      verdictLostEn:
+        'The historian says: the histories keep no column for a commandery saved without a battle. The people of that commandery keep one.',
+    },
+    'yan-baihu': {
+      defeat: {
+        titleZh: '白虎群盜',
+        titleEn: 'The White Tiger and His Bandits',
+        textZh:
+          '你不是朝廷所命的太守,是吳郡的宗帥 —— 聚眾萬餘,'
+          + '據吳城,自號將軍。亂世之中,這也是一種立身之法。\n\n'
+          + '孫策至,先遣弟嚴輿請和。策與輿共坐飲宴,'
+          + '手戟擲之,輿應手而倒 —— 「吾聞其勇,故先試之。」\n\n'
+          + '眾遂大懼。策攻之,一戰而破,白虎奔餘杭,'
+          + '為許昭所庇。程普請討昭,策曰:「昭有義於舊君,'
+          + '有誠於故友,此天下之丈夫也。」乃止。\n\n'
+          + '你最後一次被史書提到,是在別人的義氣裡。',
+        textEn:
+          'You were no court-appointed administrator but a clan chief of Wu commandery — ten thousand men gathered, the city of Wu held, and the title of general taken for yourself. In a broken age that too is a way of standing up.\n\n'
+          + 'When Sun Ce came, you first sent your brother Yan Yu to sue for terms. Ce sat drinking with him, threw a hand-halberd, and Yu went down where he sat. "I had heard he was brave, so I tested him first."\n\n'
+          + 'Everyone was badly frightened after that. Ce attacked and broke you in a single battle; you fled to Yuhang and were sheltered by Xu Zhao. Cheng Pu asked to go after Zhao, and Ce said: "Zhao kept faith with his old lord and honour with an old friend. That is a man of the realm." And let it go.\n\n'
+          + 'The last time the histories mention you, it is inside somebody else\'s loyalty.',
+      },
+      verdictZh:
+        '論曰:白虎聚眾萬餘,而一戰即潰者,眾非其眾也。'
+        + '宗帥之兵,合於利而散於危 —— 其興也速,其亡也無聲。',
+      verdictEn:
+        'The historian says: he gathered ten thousand and broke in one battle, because they were never really his. A clan chief\'s men come together for advantage and scatter at danger. Such a force rises quickly and ends without a sound.',
+      verdictLostZh:
+        '論曰:亂世之中,自號將軍者眾,而能傳之子孫者寡。'
+        + '所異者一事:兵之來,為利乎,為義乎。',
+      verdictLostEn:
+        'The historian says: in a broken age many men call themselves general and few pass anything to their sons. One thing separates them: whether the soldiers came for gain or for a cause.',
+    },
+    'lu-bu': {
+      defeat: {
+        titleZh: '二城,而十一將',
+        titleEn: 'Two Cities and Eleven Captains',
+        textZh:
+          '兗州反了又平,你走徐州。劉備以小沛處之,而你襲下邳,'
+          + '反客為主 —— 這一年是你一生中兵最精、將最多、地最少的一年。\n\n'
+          + '陳宮、高順、張遼、臧霸皆在麾下,而所據者二城。'
+          + '轅門射戟,一箭解兩家之圍,天下稱其神 ——'
+          + '而那一箭之後,你仍然只有二城。\n\n'
+          + '「布,狼子野心,誠難久養。」說這句話的是陳宮,'
+          + '而他最後與你同死於白門樓。',
+        textEn:
+          'Yan province rose and was retaken, and you went to Xu. Liu Bei parked you at Xiaopei, and you took Xiapi behind his back — the guest becoming the host. This was the year of your life with the best troops, the most captains, and the least ground.\n\n'
+          + 'Chen Gong, Gao Shun, Zhang Liao, Zang Ba all under your banner — and two cities to your name. At the camp gate you shot the halberd and lifted a siege with one arrow, and the realm called it uncanny. After that arrow you still had two cities.\n\n'
+          + '"Bu has a wolf\'s heart; he is hard to keep long." The man who said that was Chen Gong, and he died beside you on the White Gate Tower.',
+      },
+      verdictZh:
+        '論曰:布有虓虎之勇,而無一定之謀 —— 反覆之間,所殺者皆其主。'
+        + '故將雖精,而人不附;地雖得,而不能守。'
+        + '陳登謂之「養虎當飽其肉,不飽則將噬人」,可謂知之。',
+      verdictEn:
+        'The historian says: he had a tiger\'s courage and no settled plan, and every man he killed had been his lord. So his captains were excellent and nobody trusted him; he took ground and could not hold it. Chen Deng said feeding a tiger means keeping it full, because a hungry one eats people. That was an accurate description.',
+      verdictLostZh:
+        '論曰:兵精將多而地狹者,必攻;攻而無信者,天下共棄之。',
+      verdictLostEn:
+        'The historian says: good troops, many captains, and no ground means you must attack. Attack without keeping faith, and the realm turns you out together.',
+    },
+    'yuan-shu': {
+      defeat: {
+        titleZh: '玉璽在手,而僭號在後',
+        titleEn: 'The Seal in Hand, the Title Two Years Off',
+        textZh:
+          '孫堅之子以父璽質於你,借兵千餘 —— 你以為換來一個部將,'
+          + '換來的是一個國家的開端。\n\n'
+          + '南陽戶口百萬,壽春之富甲於淮南。而你所想的只有一件事:'
+          + '「代漢者,當塗高也」—— 那句讖語裡的「塗」,你認定是「術」。\n\n'
+          + '兩年後你僭號於壽春,而後眾叛親離。'
+          + '孫策絕之,呂布絕之,曹操討之。',
+        textEn:
+          "Sun Jian's son pledged his father's seal to you for a thousand men. You thought you had acquired a subordinate officer. What you had acquired was the beginning of a state — someone else's.\n\n"
+          + 'Nanyang had a million households and Shouchun was the richest place in Huainan. And you thought about one thing only: the old prophecy that "he who replaces Han stands on the high road" — and you had decided the character for road meant you.\n\n'
+          + 'Two years later you took the title at Shouchun, and everyone left. Sun Ce broke with you. Lü Bu broke with you. Cao Cao came to punish you.',
+      },
+      verdictZh:
+        '論曰:術以四世三公之資,據淮南之富,而所恃者一句讖語。'
+        + '夫天命者,得之於人心,不得之於符讖。'
+        + '借兵與孫策,得璽而失一國 —— 二者皆以為己有,而皆非己有。',
+      verdictEn:
+        'The historian says: with four generations of Excellencies behind him and the wealth of Huainan under him, what he actually relied on was a piece of doggerel. The mandate is won from what people think of you, not from prophecy. He lent troops to Sun Ce and got a seal and lost a country: he thought both were his, and neither was.',
+      verdictLostZh:
+        '論曰:天下未一而先正大位者,自絕於天下。',
+      verdictLostEn:
+        'The historian says: to take the title while the realm is still divided is to cut yourself off from it.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '兗州未定,而天子在西',
+        titleEn: 'Yan Not Yet Settled, and the Emperor in the West',
+        textZh:
+          '呂布之亂方平,兗州郡縣殘破,士民饑饉 —— 而你正在想一件更遠的事:'
+          + '天子自長安東歸,道路艱阻,公卿相食。\n\n'
+          + '荀彧曰:「昔晉文公納周襄王而諸侯景從,漢高祖為義帝縞素而天下歸心。'
+          + '……誠因此時,奉主上以從民望,大順也。」\n\n'
+          + '明年,你迎天子都許。而此刻,你手上只有一個殘破的兗州,'
+          + '和一個還沒有人想到要去接的天子。',
+        textEn:
+          "Lü Bu's rising has just been put down; the commanderies of Yan are wrecked and the people are starving — and you are thinking about something further off: the Son of Heaven is coming east from Chang'an, the roads are impassable, and the ministers are eating each other.\n\n"
+          + 'Xun Yu says: "When Duke Wen of Jin took in King Xiang of Zhou, the lords followed him like a shadow; when the Exalted Founder put on white for Emperor Yi, the realm turned to him... To seize this moment and serve the sovereign in accordance with what the people hope for — that is the great compliance."\n\n'
+          + 'Next year you brought the emperor to Xu. Right now you hold one wrecked province, and an emperor nobody else has thought to collect.',
+      },
+      verdictZh:
+        '論曰:操之興,不在官渡,在建安元年之迎天子。'
+        + '夫奉天子以令不臣,名也;修耕植以畜軍資,實也。'
+        + '名實既具,而後可以言取天下 —— 195 年他兩樣都還沒有。',
+      verdictEn:
+        'The historian says: his rise did not begin at Guandu but in the first year of Jian\'an, when he collected the emperor. To serve the Son of Heaven and command the disobedient is the name of the thing; to farm and store military supplies is the substance. Only with both can a man talk about taking the realm. In 195 he had neither.',
+      verdictLostZh:
+        '論曰:兗州殘破而不能守者,以其未有屯田也。'
+        + '一歲之後,棗祗建議,而軍無饑年。',
+      verdictLostEn:
+        'The historian says: he could not hold a wrecked Yan because he had not yet begun the state farms. A year later Zao Zhi proposed them, and his army never had a hungry year again.',
+    },
+    'yuan-shao': {
+      defeat: {
+        titleZh: '河北四州,而不能決',
+        titleEn: 'Four Provinces, and No Decision',
+        textZh:
+          '冀州已得,青州已定,公孫瓚困於易京,幽并指日可下 ——'
+          + '天下之大,無人比你更近於一統。\n\n'
+          + '沮授勸你迎天子於長安:「宜迎大駕,安宮鄴都,挾天子而令諸侯,'
+          + '畜士馬以討不庭,誰能禦之?」而郭圖、淳于瓊曰:'
+          + '「漢室陵遲,為日久矣,今欲興之,不亦難乎?」\n\n'
+          + '你從了後者。次年,天子入許。',
+        textEn:
+          'Ji is taken, Qing is settled, Gongsun Zan is penned up at Yijing, and You and Bing are a short march away — no one in the realm stands closer to unifying it than you.\n\n'
+          + 'Ju Shou urges you to collect the emperor from Chang\'an: "Receive the imperial carriage, settle the palace at Ye, hold the Son of Heaven and command the lords, feed your horses and punish those who do not attend — who could stand against you?" And Guo Tu and Chunyu Qiong say: "The house of Han has been sinking for a long time. To try to raise it now is surely hard."\n\n'
+          + 'You listened to the second pair. The following year the emperor entered Xu.',
+      },
+      verdictZh:
+        '論曰:紹失天子,非不知其利,乃不欲其煩 ——'
+        + '迎之則事之,不迎則無所制。二者之間,他選了輕鬆的那一個。'
+        + '四年之後,曹操以天子之名征之,而紹為叛臣。',
+      verdictEn:
+        'The historian says: he let the emperor go not because he could not see the advantage but because he did not want the inconvenience — collect him and you must serve him; leave him and you have nothing to command with. Between the two he chose the easy one. Four years later Cao Cao marched on him in the emperor\'s name, and he was the rebel.',
+      verdictLostZh:
+        '論曰:河北之強,強於地;其亡,亡於一議之不決。',
+      verdictLostEn:
+        'The historian says: Hebei was strong in land and fell on one undecided debate.',
+    },
+    'liu-biao': {
+      defeat: {
+        titleZh: '江漢之間,十八年',
+        titleEn: 'Eighteen Years between the Han and the River',
+        textZh:
+          '你已經在襄陽七年。宗賊已平,江南已附,'
+          + '士人南奔者以萬計 —— 學官立而詩書行於荊楚。\n\n'
+          + '袁術在北,孫策在東,曹操在中原 —— 你與三者皆有隙,'
+          + '而三者皆未及顧你。這十八年是買來的:'
+          + '用不動兵買的。\n\n'
+          + '而買來的東西,價錢要到最後一天才知道。',
+        textEn:
+          'You have been at Xiangyang seven years. The clan bandits are put down, the south has come in, refugee gentry arrive by the ten thousand — schools founded, the classics taught through Jing and Chu.\n\n'
+          + 'Yuan Shu to the north, Sun Ce to the east, Cao Cao in the middle plain: you are on bad terms with all three and none of them has time for you yet. These eighteen years were bought — bought by not moving.\n\n'
+          + 'And you never learn the price of a thing bought that way until the last day.',
+      },
+      verdictZh:
+        '論曰:表之治荊州,可謂能矣;而所以終為人取者,'
+        + '以其治之之法,正是不能取人之法。'
+        + '守成之善者,亂世之至危 —— 因為別人不會停下來等你。',
+      verdictEn:
+        'The historian says: he governed Jing province ably, and it was taken from him in the end because the very method that governed it well was the method that could take nothing from anyone. Excellence at holding is the most dangerous thing to have in a broken age, because nobody else stops to wait for you.',
+      verdictLostZh:
+        '論曰:買來的太平,價在最後一天結。',
+      verdictLostEn:
+        'The historian says: peace bought that way is invoiced on the last day.',
+    },
+    'liu-yan': {
+      defeat: {
+        titleZh: '益州牧,子承其位',
+        titleEn: 'The Governorship, Passed to a Son',
+        textZh:
+          '棧道已斷,漢使已絕,乘輿車具千餘乘已造 ——'
+          + '而你在這一年病死,疽發背卒。\n\n'
+          + '州大吏趙韙等貪璋溫仁,共上璋為益州刺史。'
+          + '「溫仁」二字,是他們選他的理由,也是二十年後開城的理由。\n\n'
+          + '你留下的那個國,比你想的要好守 —— 也比你想的要容易送人。',
+        textEn:
+          'The plank roads are cut, the imperial envoys are gone, a thousand carriages of imperial pattern have been built — and this is the year you die of an abscess on the back.\n\n'
+          + 'The senior officers of the province, Zhao Wei and the rest, liked Zhang for being mild and kind, and jointly put him forward as Inspector of Yi. Mild and kind: their reason for choosing him, and twenty years later his reason for opening the gates.\n\n'
+          + 'The state you left was easier to hold than you thought. It was also easier to give away.',
+      },
+      verdictZh:
+        '論曰:焉創之以權術,璋守之以溫仁 —— 而益州卒歸於劉備。'
+        + '夫創業者不可以無術,守成者不可以無威;'
+        + '父有術而無仁,子有仁而無威,故二世而國移。',
+      verdictEn:
+        'The historian says: the father founded it by craft and the son kept it by mildness, and Yi province ended in Liu Bei\'s hands. A founder cannot do without craft and an heir cannot do without authority. The father had craft and no kindness; the son had kindness and no authority; so the state moved in two generations.',
+      verdictLostZh:
+        '論曰:選嗣以溫仁,是選一個不會殺人的人來守一塊人人想要的地。',
+      verdictLostEn:
+        'The historian says: to pick an heir for mildness is to pick a man who will not kill, to guard a country everyone wants.',
+    },
+    gongsun: {
+      defeat: {
+        titleZh: '界橋之後',
+        titleEn: 'After Jieqiao',
+        textZh:
+          '白馬義從已喪於麴義之弩下,而你仍在河北與袁紹相持。'
+          + '殺劉虞之後,幽州士民不附;部曲離散,謀臣稍遠。\n\n'
+          + '你開始築樓 —— 一層,兩層,十層。'
+          + '「兵法百樓不攻」,你這麼說的時候,身邊已經沒有幾個人在聽。',
+        textEn:
+          'The White Horse Volunteers are already gone under Ju Yi\'s crossbows, and you are still facing Yuan Shao across Hebei. Since you killed Liu Yu the people of You province have not warmed to you; your retainers drift away and your advisers keep their distance.\n\n'
+          + 'You start building towers — one storey, two, ten. "The art of war says a hundred towers cannot be stormed," you say, and by then there are not many people left listening.',
+      },
+      verdictZh:
+        '論曰:瓚殺劉虞而失幽州之心,自此雖有百樓,無與守者。'
+        + '夫邊將之勇,足以破胡,不足以服士 —— 服士者,義也。',
+      verdictEn:
+        'The historian says: killing Liu Yu cost him the goodwill of You province, and after that a hundred towers had nobody to hold them. A frontier general\'s courage can break the northern tribes and cannot win over the gentry. What wins them is a cause.',
+      verdictLostZh:
+        '論曰:恃險者終於險。',
+      verdictLostEn:
+        'The historian says: the man who trusts in works ends inside them.',
+    },
+    'ma-teng': {
+      defeat: {
+        titleZh: '涼州十部,各自為兵',
+        titleEn: 'Ten Companies, Ten Armies',
+        textZh:
+          '你與韓遂結為異姓兄弟,而後相攻;朝廷遣使和之,乃各罷兵。'
+          + '關中十部,誰也統不了誰。\n\n'
+          + '中原方亂,而你在西邊。天下之爭與你隔著一道潼關 ——'
+          + '進不去,也沒有人打得進來。',
+        textEn:
+          'You and Han Sui swore brotherhood and then fought each other, until the court sent an envoy to make you stop. Ten companies in Guanzhong, and not one of them able to command the rest.\n\n'
+          + 'The central plain is coming apart, and you are in the west. Between you and the contest stands the Tong pass — you cannot get through it, and nobody can get in.',
+      },
+      verdictZh:
+        '論曰:關中之地,可以自守,不可以爭天下 ——'
+        + '非其兵不強,是其人不一。十部各為其主,則十部皆為人用。',
+      verdictEn:
+        'The historian says: Guanzhong could keep itself and could not contest the realm — not because its soldiers were weak but because its men were not one. Ten companies each with its own master means ten companies for somebody else to use.',
+      verdictLostZh:
+        '論曰:兄弟而相攻者,朝廷和之;和之而不能一,則終為人所並。',
+      verdictLostEn:
+        'The historian says: sworn brothers who fight get reconciled by the court; reconciled but not united, they are absorbed in the end.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */

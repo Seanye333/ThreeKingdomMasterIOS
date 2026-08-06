@@ -7600,7 +7600,71 @@ export const SCENARIO_195_JIANGDONG: Scenario = {
     'Winter 195. With barely a thousand troops borrowed from Yuan Shu and his late father\'s hardened veterans, the twenty-year-old Sun Ce crosses the Great River to make his own destiny in the southeast. Arrayed against the Little Conqueror are the lords of the Wu country: Liu Yao, the court-appointed Inspector of Yang province, at Moling; the bandit-magnate Yan Baihu in Wu; Wang Lang, the scholar-governor of Kuaiji; and Hua Xin in Yuzhang. Within three years Sun Ce will break them all and lay the foundation of a kingdom — if the assassin\'s arrow does not find him first.',
   descriptionZh: "興平二年冬。孫策年方二十，僅以借自袁術之千餘兵卒、並其亡父之百戰舊部，渡大江而自立基業於東南。與這位小霸王為敵者，乃江東群雄：朝廷所命之揚州刺史劉繇，據秣陵曲阿；吳郡豪強「東冶之主」嚴白虎；會稽儒宗太守王朗；及豫章華歆。三年之內，孫策將盡破之，奠一國之基——倘若刺客之矢不先尋上他。",
   startDate: { year: 195, season: 'winter' },
-  cities: buildInitialCities(CITY_OWNERSHIP_195_JIANGDONG),
+  /*
+   * 開局外交 —— 十三家兩兩中立,而這張盤的每一條線都有出處。
+   *
+   * 孫策以玉璽質於袁術,借兵千餘、騎數十渡江 —— 名義上他還是袁術的部將,
+   * 所以給高分互不侵犯而非同盟(197 年術僭號,策乃絕之,那是兩年後的事)。
+   * 江東四家(劉繇、嚴白虎、王朗、華歆)是他要一個一個打過去的對象,
+   * 而他們彼此之間並無同盟 —— 各守一郡,這正是他能各個擊破的原因。
+   *
+   * 中原那一頭:曹操方逐呂布於兗州(194 年濮陽之戰,195 年布走徐州);
+   * 曹操與袁紹此時仍是盟友(至 199 年方反目);公孫瓚與袁紹自界橋以來連年
+   * 相攻;袁術與劉表爭南陽,與曹操爭豫州;劉繇本是漢揚州刺史,袁術所立的
+   * 是另一個 —— 兩家為正統相攻。
+   */
+  openingRelations: [
+    // ── 孫策渡江 ──
+    { a: 'sun', b: 'yuan-shu', score: 55, status: 'non-aggression' }, // 質玉璽,借兵千餘
+    { a: 'sun', b: 'liu-yao', score: -85, status: 'neutral' },
+    { a: 'sun', b: 'yan-baihu', score: -75, status: 'neutral' },
+    { a: 'sun', b: 'wang-lang', score: -70, status: 'neutral' },
+    { a: 'sun', b: 'hua-xin', score: -55, status: 'neutral' },
+    { a: 'sun', b: 'liu-biao', score: -80, status: 'neutral' },      // 父讎在黃祖
+    // 江東四家各守一郡而不相救 —— 這正是他能各個擊破的緣故
+    { a: 'liu-yao', b: 'wang-lang', score: 20, status: 'non-aggression' },
+    { a: 'liu-yao', b: 'yan-baihu', score: -20, status: 'neutral' },
+    { a: 'wang-lang', b: 'hua-xin', score: 30, status: 'non-aggression' },
+    { a: 'liu-yao', b: 'yuan-shu', score: -70, status: 'neutral' },  // 揚州刺史之爭
+    // ── 中原 ──
+    { a: 'cao', b: 'lu-bu', score: -90, status: 'neutral' },         // 濮陽之戰,方逐之
+    { a: 'cao', b: 'yuan-shao', score: 65, status: 'allied' },       // 至 199 年方反目
+    { a: 'cao', b: 'yuan-shu', score: -70, status: 'neutral' },
+    { a: 'yuan-shao', b: 'gongsun', score: -80, status: 'neutral' }, // 界橋以來連年相攻
+    { a: 'yuan-shao', b: 'yuan-shu', score: -60, status: 'neutral' }, // 兄弟鬩牆已成
+    { a: 'yuan-shu', b: 'liu-biao', score: -65, status: 'neutral' },  // 南陽之爭
+    { a: 'lu-bu', b: 'yuan-shu', score: 15, status: 'non-aggression' },
+    { a: 'cao', b: 'liu-biao', score: -20, status: 'neutral' },
+    { a: 'ma-teng', b: 'cao', score: 20, status: 'non-aggression' },
+    { a: 'liu-yan', b: 'liu-biao', score: 20, status: 'non-aggression' },
+  ],
+  /*
+   * 開局姿態 —— 孫策一城九千五百兵,而帳下十一將(周瑜、程普、黃蓋、韓當、
+   * 朱治、呂範……)。他的本錢從來不是兵,是**人**與**勢**:「策為人美姿顏,
+   * 好笑語,士民見者莫不盡心,樂為致死。」兵給到 1.25、民忠 +14,而金糧壓低
+   * —— 借來的兵,沒有府庫。
+   * 江東四家:守一郡而不能戰(城防略高、兵低、民忠平);華歆是名士,
+   * 兵最低而民忠最高(豫章之民安之)。呂布二城十一將,兵精而無根(民忠最低)。
+   */
+  cities: buildInitialCities(CITY_OWNERSHIP_195_JIANGDONG, {
+    /* 金 0.70 → 1.00、糧 0.85 → 1.00:第一版把「借來的兵沒有府庫」寫成了
+       金糧雙低,而體檢裡他一城九千五百兵、府庫十二輪見底四次 —— 沒錢就
+       募不了兵、打不了仗,主目標(200 年前取江東四郡)0/12。他缺的是**地**,
+       不是刻意要窮;窮寫在「一城」這件事本身,不必再在乘數上補一刀。 */
+    sun:         { troops: 1.25, food: 1.00, gold: 1.00, defense: -4, loyalty: 14 },
+    cao:         { troops: 1.05, food: 1.25, gold: 1.10, defense: 4,  loyalty: 8 },
+    'yuan-shao': { troops: 1.10, food: 1.00, gold: 1.15, defense: 4,  loyalty: 4 },
+    'yuan-shu':  { troops: 1.05, food: 1.15, gold: 1.25, defense: 0,  loyalty: -10 },
+    'lu-bu':     { troops: 1.30, food: 0.80, gold: 0.75, defense: -8, loyalty: -14 },
+    'liu-biao':  { troops: 0.95, food: 1.20, gold: 1.15, defense: 10, loyalty: 10 },
+    'liu-yan':   { troops: 0.85, food: 1.20, gold: 1.05, defense: 14, loyalty: 6 },
+    gongsun:     { troops: 1.15, food: 0.90, gold: 0.90, defense: -4, loyalty: -4 },
+    'ma-teng':   { troops: 1.15, food: 0.95, gold: 0.85, defense: -4, loyalty: 0 },
+    'liu-yao':   { troops: 0.90, food: 1.05, gold: 1.00, defense: 6,  loyalty: 4 },
+    'yan-baihu': { troops: 1.00, food: 0.90, gold: 0.85, defense: -6, loyalty: -8 },
+    'wang-lang': { troops: 0.80, food: 1.10, gold: 1.05, defense: 6,  loyalty: 10 },
+    'hua-xin':   { troops: 0.75, food: 1.15, gold: 1.10, defense: 4,  loyalty: 14 },
+  }),
   forces: FORCES_195_JIANGDONG,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_195_JIANGDONG, [], 195),
 };
