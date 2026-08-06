@@ -1313,6 +1313,175 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: sworn brothers who fight get reconciled by the court; reconciled but not united, they are absorbed in the end.',
     },
   },
+  /* ── 234 五丈原 ─────────────────────────────────────────────────
+     三家,而題目只有一個:**一個人能不能替一個國家延命。** */
+  'scn-234-wuzhang': {
+    shu: {
+      defeat: {
+        titleZh: '悠悠蒼天,曷此其極',
+        titleEn: 'O Vast Heaven, Where Is the End of It',
+        textZh:
+          '出斜谷,據武功五丈原,與司馬懿對於渭南。懿堅壁不出 ——'
+          + '亮遺懿巾幗婦人之服,懿怒,表請戰,而詔不許。\n\n'
+          + '相持百餘日。其年八月,亮疾病,卒於軍,時年五十四。'
+          + '及軍退,宣王案行其營壘處所,曰:「天下奇才也。」\n\n'
+          + '長史楊儀等整軍而出,百姓奔告宣王,宣王追焉。'
+          + '姜維令儀反旗鳴鼓,若將向宣王者 —— 宣王乃退,不敢逼。'
+          + '百姓為之諺曰:「死諸葛走生仲達。」',
+        textEn:
+          'Out through the Xie valley to Wuzhang Plain at Wugong, facing Sima Yi across the Wei. Yi kept his walls and would not come out — so Liang sent him a woman\'s headdress and gown. Yi was furious and memorialised for permission to fight, and the edict refused him.\n\n'
+          + 'They faced each other more than a hundred days. In the eighth month of that year Liang fell ill and died with the army, aged fifty-four. After the retreat, Sima Yi walked the lines of his camp and said: "A talent without equal in the realm."\n\n'
+          + 'Yang Yi brought the army out in order. The country people ran to tell Sima Yi, who pursued — and Jiang Wei had Yi reverse the banners and beat the drums as if turning to give battle. Sima Yi withdrew and would not press. The people made a saying of it: "A dead Zhuge routs a living Zhongda."',
+      },
+      verdictZh:
+        '論曰:亮之為治,開誠心,布公道;盡忠益時者雖讎必賞,'
+        + '犯法怠慢者雖親必罰 —— 邦域之內,咸畏而愛之。'
+        + '然連年動眾,未能成功,蓋應變將略,非其所長歟。'
+        + '以一州之力抗九州,而九州不敢西向者十二年:功不在克復,在**未亡**。',
+      verdictEn:
+        'The historian says: he governed with an open heart and even-handed justice — a man who served the state loyally was rewarded though he were an enemy, and a man who broke the law or shirked was punished though he were kin, so that within the realm all feared him and loved him. Yet he moved armies year after year without success; adapting on campaign was perhaps not his gift. With one province he held off nine, and for twelve years the nine did not dare come west. The achievement was not recovery. It was that Shu did not fall.',
+      verdictLostZh:
+        '論曰:蜀之亡,不亡於五丈原,亡於五丈原之後三十年 ——'
+        + '而那三十年裡,再沒有一個人能讓司馬氏在渭南停下來。',
+      verdictLostEn:
+        'The historian says: Shu did not fall at Wuzhang Plain. It fell thirty years later — and in those thirty years no one else ever made the house of Sima halt on the Wei again.',
+    },
+    wei: {
+      defeat: {
+        titleZh: '堅壁而已',
+        titleEn: 'Hold the Walls. That Is All.',
+        textZh:
+          '諸將請戰,懿曰:「亮若勇者,當出武功依山而東;若西上五丈原,'
+          + '則諸將無事矣。」亮果上原。\n\n'
+          + '巾幗至,諸將忿。懿表請戰,帝使辛毗持節為軍師以制之。'
+          + '姜維謂亮曰:「辛佐治仗節而至,賊不復出矣。」'
+          + '亮曰:「彼本無戰情,所以固請戰者,以示武於其眾耳。」\n\n'
+          + '將在軍,君命有所不受 —— 苟能制吾,豈千里而請戰邪?',
+        textEn:
+          'The generals asked to fight. "If Liang is bold he will come out at Wugong and go east along the hills," said Yi. "If he goes up onto Wuzhang Plain in the west, then you gentlemen have nothing to do." Liang went up onto the plain.\n\n'
+          + 'The woman\'s headdress arrived and the generals were furious. Yi memorialised for permission to fight, and the emperor sent Xin Pi with the staff of authority as army supervisor to restrain him. Jiang Wei said to Liang: "Xin Zuozhi has come with the staff; the enemy will not come out again." And Liang said: "He never meant to fight. He asked so insistently only to show his own men some spirit."\n\n'
+          + 'A general in the field need not take every order from his sovereign — if the sovereign could really control him, would he send a thousand li to ask permission to fight?',
+      },
+      verdictZh:
+        '論曰:懿之不戰,非怯也,算也。'
+        + '蜀道千里而運糧難,魏但堅壁,則亮自退 —— 以不動勝動,'
+        + '所費者一將之名,所全者一國之實。'
+        + '然天下由是知司馬氏之能,亦由是啟其心。',
+      verdictEn:
+        'The historian says: he refused battle not from fear but from arithmetic. A thousand li of Shu road makes supply hard; Wei had only to hold its walls and Liang would go home. He beat motion with stillness, spent one general\'s reputation and preserved a whole state. But from that the realm learned what the house of Sima could do — and the house of Sima learned it too.',
+      verdictLostZh:
+        '論曰:堅壁之計,勝在耐久;而耐久者,必先能耐謗。',
+      verdictLostEn:
+        'The historian says: a war of walls is won by endurance — and the first thing that has to be endured is not the enemy but the mockery.',
+    },
+    wu: {
+      defeat: {
+        titleZh: '合肥新城之下',
+        titleEn: 'Under the New Walls at Hefei',
+        textZh:
+          '亮出五丈原,約吳同舉。權自將十萬眾圍合肥新城,'
+          + '陸遜、諸葛瑾攻襄陽,孫韶、張承向廣陵淮陰 —— 三道俱進。\n\n'
+          + '而滿寵拔新城之守,權攻城不下;魏明帝親御龍舟東征,'
+          + '權聞之,乃退。\n\n'
+          + '兩國同舉而各自退兵。這件事此後又發生了幾次 ——'
+          + '同盟是真的,同時卻從來沒有真過。',
+        textEn:
+          'Liang came out onto Wuzhang Plain and asked Wu to move with him. Quan led a hundred thousand himself against the new walls at Hefei; Lu Xun and Zhuge Jin went at Xiangyang; Sun Shao and Zhang Cheng at Guangling and Huaiyin — three roads at once.\n\n'
+          + 'But Man Chong held the new city and Quan could not take it; and when Emperor Ming of Wei came east in person on the dragon boat, Quan heard of it and withdrew.\n\n'
+          + 'Two states moved together and each went home separately. It happened several more times after that. The alliance was real. Simultaneity never once was.',
+      },
+      verdictZh:
+        '論曰:吳蜀之盟,四十年不絕,而未嘗一次真正同時。'
+        + '蜀出祁山則吳攻合肥,吳攻合肥則蜀已退 —— 各為其國,'
+        + '故盟可久而功不成。夫同盟者,共敵而已;共敵不等於共命。',
+      verdictEn:
+        'The historian says: the alliance of Wu and Shu lasted forty years and never once actually coincided. Shu came out at Qishan and Wu attacked Hefei; Wu attacked Hefei and Shu had already gone home. Each acted for his own state, so the alliance lasted and achieved nothing. An alliance means a shared enemy. A shared enemy is not a shared fate.',
+      verdictLostZh:
+        '論曰:合肥城下,權四至而四返。'
+        + '非兵不多,是那座城從來不是他真正想要的東西。',
+      verdictLostEn:
+        'The historian says: Quan came to Hefei four times and went home four times. Not for want of troops — that city was never the thing he actually wanted.',
+    },
+  },
+  /* ── 231 鹵城之戰 ──────────────────────────────────────────── */
+  'scn-231-lucheng': {
+    shu: {
+      defeat: {
+        titleZh: '甲首三千',
+        titleEn: 'Three Thousand Helmets',
+        textZh:
+          '亮圍祁山,司馬懿救之。諸將咸請戰,懿不許,'
+          + '曰:「亮遠來,利在急戰。」而諸將數請,懿病之,'
+          + '賈栩、魏平言:「公畏蜀如虎,奈天下笑何!」\n\n'
+          + '懿不得已,乃使張郃攻南圍,自案中道向亮。'
+          + '亮使魏延、高翔、吳班逆戰,魏兵大敗 ——'
+          + '獲甲首三千級,玄鎧五千領,角弩三千一百張。\n\n'
+          + '而後李嚴假傳詔命,召亮還。糧不繼者,人也,非天也。',
+        textEn:
+          'Liang invested Qishan and Sima Yi came to relieve it. Every general asked to fight and Yi refused: "Liang has come a long way; a quick battle is what suits him." They asked again and again until it wore on him, and Jia Xu and Wei Ping said: "Your Excellency fears Shu like a tiger. What of the laughter of the realm?"\n\n'
+          + 'So he sent Zhang He against the southern lines and took the middle road himself against Liang. Liang sent Wei Yan, Gao Xiang and Wu Ban to meet him, and the Wei troops were badly beaten — three thousand helmets taken, five thousand suits of black mail, three thousand one hundred horn crossbows.\n\n'
+          + 'And then Li Yan forged an edict recalling him. What broke the supply line was a man, not the weather.',
+      },
+      verdictZh:
+        '論曰:鹵城之戰,蜀之全勝也;而勝而即退者,糧盡於後方之人手。'
+        + '李嚴以督運不繼,懼罪而矯詔 —— 一國之外患未除,而內間先發。'
+        + '故曰:兵之所以不能久者,常不在敵。',
+      verdictEn:
+        'The historian says: Lucheng was a complete Shu victory, and the victor went home because his supply had failed in the hands of his own people. Li Yan, having botched the transport and fearing punishment, forged an edict. The external danger was not yet dealt with and the internal one moved first. Hence: what usually stops an army from staying in the field is not the enemy.',
+      verdictLostZh:
+        '論曰:斬將三千而還師,史書記其勝,而天下記其退。',
+      verdictLostEn:
+        'The historian says: three thousand helmets, and then the army went home. The histories record the victory; the realm remembered the retreat.',
+    },
+    wei: {
+      defeat: {
+        titleZh: '公畏蜀如虎',
+        titleEn: 'Your Excellency Fears Shu Like a Tiger',
+        textZh:
+          '你知道不該打。蜀道千里,亮利在急戰,而你只要不動,'
+          + '他自然要退 —— 這是最省的一條路。\n\n'
+          + '而諸將日日請戰,言語漸不堪:「公畏蜀如虎,奈天下笑何!」'
+          + '你終於出兵,而張郃死於木門,魏兵大敗。\n\n'
+          + '那一戰輸掉的不是三千甲首,是「我可以不理會他們」這件事。',
+        textEn:
+          'You knew you should not fight. A thousand li of Shu road; a quick battle suits Liang; hold still and he must go home. That is the cheapest road there is.\n\n'
+          + 'And your generals asked day after day, and the words got worse: "Your Excellency fears Shu like a tiger. What of the laughter of the realm?" So in the end you went out — and Zhang He died at Mumen and the Wei army was broken.\n\n'
+          + 'What that battle cost was not three thousand helmets. It was the proposition that you could ignore them.',
+      },
+      verdictZh:
+        '論曰:懿之敗於鹵城,敗於眾議,不敗於亮。'
+        + '為將者,能拒敵而不能拒言,則其算終有一日為人所奪。',
+      verdictEn:
+        'The historian says: he was beaten at Lucheng by the opinion of his own officers, not by Liang. A commander who can hold off an enemy but cannot hold off talk will one day have his arithmetic taken out of his hands.',
+      verdictLostZh:
+        '論曰:張郃之死,魏失一名將,而司馬氏得一教訓:'
+        + '此後渭南百餘日,他再沒有出過壁壘。',
+      verdictLostEn:
+        'The historian says: Zhang He\'s death cost Wei a great captain and taught the house of Sima something. For the hundred days on the Wei that came after, Sima Yi never once came out from behind his walls.',
+    },
+    wu: {
+      defeat: {
+        titleZh: '盟在西,而兵在東',
+        titleEn: 'The Alliance Is West. The Army Is East.',
+        textZh:
+          '蜀出祁山,遣使告吳。你點頭 —— 而後看著淮南。\n\n'
+          + '四十年裡,你的兵一次也沒有向西走過。'
+          + '同盟寫在紙上,而地在江北。',
+        textEn:
+          'Shu came out at Qishan and sent word. You nodded — and then looked at Huainan.\n\n'
+          + 'In forty years your troops never once marched west. The alliance was on paper; the land was north of the river.',
+      },
+      verdictZh:
+        '論曰:吳之於蜀,盟而不同舉者,以其所欲者異也。'
+        + '蜀欲興漢,吳欲保江 —— 目標既異,則同盟止於不相攻而已。',
+      verdictEn:
+        'The historian says: Wu allied with Shu and never moved with it, because they wanted different things. Shu wanted to restore Han; Wu wanted to keep the river. With different aims, an alliance amounts to no more than not attacking each other.',
+      verdictLostZh:
+        '論曰:不相攻,已經是亂世裡很難得的一種關係了。',
+      verdictLostEn:
+        'The historian says: not attacking each other is, in a broken age, already a rare kind of relationship.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */

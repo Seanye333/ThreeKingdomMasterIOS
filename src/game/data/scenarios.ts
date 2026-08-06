@@ -1563,6 +1563,16 @@ export const SCENARIO_234_WUZHANG: Scenario = {
     'but Zhuge Liang seeks one last chance to restore the Han.',
   descriptionZh: "公元234年夏。諸葛亮第五次北伐，屯兵於五丈原，與司馬懿隔渭水對峙。曹叡於洛陽稱帝統魏，劉禪於成都繼漢，孫權於建業治吳。天下三分之勢已定，然諸葛丞相猶欲鞠躬盡瘁，以圖匡復漢室。",
   startDate: { year: 234, season: 'summer' },
+  /*
+   * 開局外交 —— 三國鼎立期的三角是固定的:蜀吳同盟(223 年鄧芝使吳,
+   * 復通好,終蜀之世不絕),而兩家皆與魏為敵。盤上原本三家兩兩中立,
+   * 於是「北伐」與「東征」在數字上只是兩場沒有立場的戰爭。
+   */
+  openingRelations: [
+    { a: 'shu', b: 'wu', score: 70, status: 'allied' },   // 鄧芝復通好,終蜀之世不絕
+    { a: 'wei', b: 'shu', score: -85, status: 'neutral' },
+    { a: 'wei', b: 'wu', score: -75, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_234),
   forces: FORCES_234,
   // Auto-compute dead officers by year (anyone whose deathYear < 234).
@@ -2393,6 +2403,18 @@ export const SCENARIO_225_SOUTHERN: Scenario = {
     'Seven captures of the tiger-king lie ahead.',
   descriptionZh: "公元225年春。先主既崩，南中孟獲糾合蠻夷舉旗作亂。諸葛亮親率大軍南征，誓以攻心為上，不以力屈。七擒孟獲之傳奇，自此展開。",
   startDate: { year: 225, season: 'spring' },
+  /*
+   * 開局外交 —— 蜀吳同盟已復(223 鄧芝使吳),而南中四郡反:
+   * 雍闓殺太守而附吳,孟獲為之扇動諸夷。所以南蠻與吳有舊而與蜀為敵,
+   * 這正是「南征」要先辦的事 —— 亮曰:「若留外人,則當留兵;兵留則無所食。」
+   */
+  openingRelations: [
+    { a: 'shu', b: 'wu', score: 65, status: 'allied' },
+    { a: 'wei', b: 'shu', score: -85, status: 'neutral' },
+    { a: 'wei', b: 'wu', score: -70, status: 'neutral' },
+    { a: 'shu', b: 'nanman', score: -75, status: 'neutral' },        // 雍闓叛,孟獲扇動諸夷
+    { a: 'wu', b: 'nanman', score: 30, status: 'non-aggression' },   // 闓附吳,權遙署永昌太守
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_225),
   forces: FORCES_225,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_225, DEAD_BY_225, 225),
@@ -7282,6 +7304,16 @@ export const SCENARIO_231_LUCHENG: Scenario = {
     'Spring 231. Zhuge Liang marches out of Hanzhong a fourth time, this season reaping the wheat of Shanggui under Sima Yi\'s nose and crushing the Wei vanguard at Lucheng. Cao Zhen lies dying, Sima Yi holds the line at last, and the veteran Zhang He still rides — though the road through Mumen Gorge awaits him. The Han revival presses against the passes once more.',
   descriptionZh: "太和五年春。諸葛亮第四次出漢中，本季於上邽司馬懿眼皮下搶割隴麥，又破魏軍前鋒於鹵城。曹真病篤，司馬懿終得拒守，老將張郃猶在馳驅——然木門道之伏，正待其行。漢室之興，再叩關隴。",
   startDate: { year: 231, season: 'spring' },
+  /*
+   * 開局外交 —— 三國鼎立期的三角是固定的:蜀吳同盟(223 年鄧芝使吳,
+   * 復通好,終蜀之世不絕),而兩家皆與魏為敵。盤上原本三家兩兩中立,
+   * 於是「北伐」與「東征」在數字上只是兩場沒有立場的戰爭。
+   */
+  openingRelations: [
+    { a: 'shu', b: 'wu', score: 70, status: 'allied' },   // 鄧芝復通好,終蜀之世不絕
+    { a: 'wei', b: 'shu', score: -85, status: 'neutral' },
+    { a: 'wei', b: 'wu', score: -75, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_234),
   forces: FORCES_234,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_234, [], 231),
@@ -7554,6 +7586,17 @@ export const SCENARIO_228_SHITING: Scenario = {
     'Summer 228. The same season Ma Su lost Jieting in the west, the war blazes in the east. Zhou Fang, governor of Poyang, shaves his own head to make his feigned surrender ring true, and lures the Wei general Cao Xiu with a hundred thousand men deep into Wu at Wan. There the Grand Commander Lu Xun lies waiting: at Shiting he springs three armies upon the trapped Cao Xiu and routs him utterly. The Wei general flees, his back broken with shame, and is dead within months — while Lu Xun stands unrivalled as the sword of Wu.',
   descriptionZh: "建興六年夏（魏太和二年）。正當馬謖失街亭於西陲之際，戰火亦熾於東。鄱陽太守周魴斷髮以堅其詐降，誘魏將曹休提十萬之眾深入吳境至皖。大都督陸遜伏候於此：石亭一役，縱三軍掩擊困頓之曹休，大破之。魏將狼狽而遁，憤恚成疾，數月而卒——陸遜遂為東吳之利劍，一時無兩。",
   startDate: { year: 228, season: 'summer' },
+  /*
+   * 開局外交 —— 蜀吳同盟(鄧芝復通好),兩家皆與魏為敵;而軻比能與蜀
+   * 通使(諸葛亮遣使結之,使擾魏之北邊),與魏則時叛時附。
+   */
+  openingRelations: [
+    { a: 'shu', b: 'wu', score: 70, status: 'allied' },
+    { a: 'wei', b: 'shu', score: -85, status: 'neutral' },
+    { a: 'wei', b: 'wu', score: -75, status: 'neutral' },
+    { a: 'shu', b: 'xianbei', score: 45, status: 'non-aggression' },  // 亮遣使結軻比能
+    { a: 'wei', b: 'xianbei', score: -40, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_228_SHITING),
   forces: FORCES_228,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_228_SHITING, DEAD_BY_228, 228),
