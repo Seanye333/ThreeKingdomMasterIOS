@@ -779,21 +779,63 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-208-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '南征江東', en: 'Conquer Jiangdong' },
-        description: "Take all of Sun Quan's cities before 215.",
-        descriptionZh: "於215年前盡取孫權所有城池。",
-        goal: { kind: 'defeat-force', forceId: 'sun', byYear: 215 },
+        title: { zh: '會獵於吳', en: 'A Hunt in Wu' },
+        /*
+         * 原本是「於215年前盡取孫權所有城池」。八十萬眾南下,滅一個孫權看似
+         * 理所當然 —— 而赤壁之後他終其一生沒能過江。那是他**沒做到**的事,
+         * 照這一批的判準該降為次要。
+         *
+         * 主目標換成他真正要拿的東西:江陵與江夏。前者是荊州的軍實所在
+         * (「晝夜兼行三百餘里」搶的就是它),後者是入江東的門。這兩座拿下了,
+         * 赤壁就贏了;拿不下,八十萬眾也只是燒在江上的船。
+         */
+        description: 'Hold Jiangling and Jiangxia by 212 — the arsenal, and the gate into the east.',
+        descriptionZh: '於212年前據有江陵與江夏 —— 一個是荊州的軍實所在,一個是入江東的門。',
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'jiangxia'], byYear: 212 },
       },
+      secondary: [
+        {
+          title: { zh: '南征江東', en: 'Conquer Jiangdong' },
+          description: "Destroy the Sun force by 215 — after Red Cliffs he never crossed the river again.",
+          descriptionZh: '於215年前消滅孫權勢力 —— 赤壁之後,他終其一生沒能過江。',
+          goal: { kind: 'defeat-force', forceId: 'sun', byYear: 215 },
+        },
+        {
+          title: { zh: '一鼓而下', en: 'Take It in One Blow' },
+          description: 'Break Liu Bei to a single city by 210 — at Changban he chased him three hundred li and still lost him.',
+          descriptionZh: '於210年前使劉備所據不過一城 —— 當陽長阪追了三百餘里,還是讓他跑了。',
+          goal: { kind: 'break-force', forceId: 'liu-bei', maxCities: 1, byYear: 210 },
+        },
+      ],
     },
     {
       id: 'obj-208-sun-liu',
       forceId: 'sun',
       primary: {
         title: { zh: '赤壁之戰', en: 'Win at Red Cliffs' },
-        description: 'Repel Cao Cao\'s force and survive 210 AD.',
-        descriptionZh: "擊退曹操大軍,堅守至210年。",
-        goal: { kind: 'survive-until', year: 210 },
+        /*
+         * 原本是 survive-until 210 —— 開局十四城十三萬兵,活到 210 年是白送。
+         * 改成他真正守住的那條線:建業(根本)、柴桑(周瑜屯兵、議降議戰之地)、
+         * 江夏(黃祖舊地,赤壁之後的門戶)。
+         */
+        description: 'Still hold Jianye, Chaisang and Jiangxia in 212 — the line the fire on the river bought.',
+        descriptionZh: '至212年仍據建業、柴桑與江夏 —— 那條江防,是江上那把火換來的。',
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'chaisang', 'jiangxia'], byYear: 212 },
       },
+      secondary: [
+        {
+          title: { zh: '竟長江所極', en: 'The River to Its End' },
+          description: 'Take Jiangling by 212 — Zhou Yu spent a year and an arrow in the ribs on it.',
+          descriptionZh: '於212年前攻取江陵 —— 周瑜圍了一年,肋上還中了一箭。',
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 212 },
+        },
+        {
+          title: { zh: '不降', en: 'No Surrender' },
+          description: 'Survive to 210 — the whole court told him to fold, and he cut the corner off the table.',
+          descriptionZh: '撐到210年 —— 群下皆勸降,而他拔刀斫案。',
+          goal: { kind: 'survive-until', year: 210 },
+        },
+      ],
     },
     {
       id: 'obj-208-liu',
@@ -804,6 +846,20 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         descriptionZh: "於220年前同時據有成都與漢中。",
         goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 220 },
       },
+      secondary: [
+        {
+          title: { zh: '借荊州', en: 'The Loan of Jing' },
+          description: 'Take Jiangling by 212 — Sun Quan lent it, and the loan was never repaid.',
+          descriptionZh: '於212年前攻取江陵 —— 孫權借的,而這筆帳一直沒還。',
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 212 },
+        },
+        {
+          title: { zh: '荊南四郡', en: 'The Four Southern Commanderies' },
+          description: 'Take Changsha, Lingling, Guiyang and Wuling by 211 — the ground he actually stood on after the fire.',
+          descriptionZh: '於211年前取長沙、零陵、桂陽、武陵 —— 火燒之後,他真正站住的是這四郡。',
+          goal: { kind: 'hold-cities', cityIds: ['changsha', 'lingling', 'guiyang', 'wuling'], byYear: 211 },
+        },
+      ],
     },
     /* 劉琮 — 十七歲,而勸降的人比他官大。所以主目標就是**不降**。 */
     {

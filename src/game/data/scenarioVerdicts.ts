@@ -707,6 +707,246 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: after White Wolf Mountain the Wuhuan of the three commanderies became the finest cavalry of Wei. Their numbers did not shrink and their name did not fall. What they lost was the answer to the question of whom they fought for.',
     },
   },
+  /* ── 208 赤壁之戰 ────────────────────────────────────────────────
+     這張盤的題目是**一場火之後,天下為什麼變成三塊**。
+     八家的敗法寫的都是那一年他們各自站在哪個位置上 —— 而位置決定了
+     他們此後二十年只能是什麼。 */
+  'scn-208-chibi': {
+    cao: {
+      defeat: {
+        titleZh: '孤燒船自退,橫使周瑜虛獲此名',
+        titleEn: 'I Burned the Ships Myself',
+        textZh:
+          '八十萬眾,舳艫千里,旌旗蔽空。橫槊賦詩於江上,曰:「月明星稀,烏鵲南飛。」'
+          + '而後有人說:此不祥之言也。\n\n'
+          + '大疫,吏士多死者,乃引軍還。後與孫權書曰:「赤壁之役,值有疾病,'
+          + '孤燒船自退,橫使周瑜虛獲此名。」\n\n'
+          + '這句話是真的,也是假的。真的是船確實是自己燒的;假的是 ——'
+          + '從那一年起,他再也沒有渡過長江。',
+        textEn:
+          'Eight hundred thousand men, prows and sterns for a thousand li, banners blotting out the sky. He wrote a poem on the river with his spear across his knees: "The moon is bright, the stars few; the crows fly south." Someone said afterwards that this was an unlucky line.\n\n'
+          + 'Then plague, and many of the officers and men died, and he led the army home. Later he wrote to Sun Quan: "At Red Cliffs there was sickness. I burned my own ships and withdrew, and let Zhou Yu take the credit for nothing."\n\n'
+          + 'The sentence is true and it is false. True, because he did burn the ships himself. False, because from that year on he never crossed the Yangtze again.',
+      },
+      verdictZh:
+        '論曰:操之取荊州,不血刃而得十萬之眾;及其敗於赤壁,亦不失一州之地。'
+        + '然天下三分之勢,自此而定 —— 兵未大損而勢已判者,'
+        + '以其所失者非兵,是**時**也。此後二十年,他每一次南下,對面都多了一個國家。',
+      verdictEn:
+        'The historian says: he took Jing province without a fight and a hundred thousand men with it; and when he lost at Red Cliffs he did not lose a single province. Yet the realm split in three from that night — the army was not much reduced, and the shape of the age was decided anyway. What he lost was not troops but the hour. For the next twenty years, every time he came south there was one more state on the other bank.',
+      verdictLostZh:
+        '論曰:江之為險,不在水,在人。'
+        + '北人不習水戰,而連鎖其舟以求安 —— 求安者,火之所待也。',
+      verdictLostEn:
+        'The historian says: the river is not a barrier because of the water but because of the men on it. Northerners cannot fight afloat, so he chained his hulls together for steadiness. Steadiness is exactly what a fire waits for.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '拔刀斫案',
+        titleEn: 'He Cut the Corner off the Table',
+        textZh:
+          '曹操書至:「今治水軍八十萬眾,方與將軍會獵於吳。」群下皆失色,'
+          + '議者咸曰宜迎之。獨魯肅不言,權起更衣,肅追於宇下 —— '
+          + '「眾人皆可降曹,唯將軍不可。」\n\n'
+          + '及周瑜自鄱陽還,曰:「操雖託名漢相,其實漢賊也。將軍以神武雄才,'
+          + '兼仗父兄之烈,割據江東,地方數千里,兵精足用,英雄樂業,尚當橫行天下 ——'
+          + '請得精兵三萬人,進住夏口,保為將軍破之。」\n\n'
+          + '權拔刀斫前奏案曰:「諸將吏敢復有言當迎操者,與此案同!」\n\n'
+          + '那一刀,是他二十七歲那年砍下去的。',
+        textEn:
+          'Cao Cao\'s letter arrives: "I have eight hundred thousand marines in training and propose to join Your Lordship for a hunt in Wu." The court goes pale; every voice says receive him. Only Lu Su says nothing — and when Quan rises to change his clothes, follows him under the eaves: "Any of us may surrender to Cao. Only Your Lordship may not."\n\n'
+          + 'Then Zhou Yu comes back from Poyang: "Cao borrows the name of Han\'s chancellor and is Han\'s traitor. Your Lordship has divine martial talent, the legacy of a father and a brother, a thousand miles of the east, good troops and men glad to serve — you should be ranging the realm. Give me thirty thousand picked men, let me hold Xiakou, and I will break him for you."\n\n'
+          + 'Quan drew his sword and cut the corner off the memorial table: "The next officer who says receive him goes the way of this table."\n\n'
+          + 'He was twenty-seven the year he made that cut.',
+      },
+      verdictZh:
+        '論曰:權之為人,屈身忍辱,任才尚計,有勾踐之奇 —— 而赤壁之決,'
+        + '獨在一刀。夫議者眾而決者一,國之存亡,常繫於**肯不肯獨斷**的那一刻。'
+        + '及其晚年,信讒賊,殺賢良,則又非復當日斫案之人矣。',
+      verdictEn:
+        'The historian says: he could bend, endure humiliation, use talent and prize calculation — there was something of King Goujian in him. And the decision at Red Cliffs came down to one sword-stroke. Many advise; one decides. A state usually lives or dies on whether its lord is willing to decide alone. In his last years he listened to slanderers and killed good men, and was no longer the man who cut that table.',
+      verdictLostZh:
+        '論曰:江東之守,守的不是江,是那一句「唯將軍不可降」。'
+        + '降則為列侯,守則為敵國 —— 而他選了後者,那一年他二十七歲。',
+      verdictLostEn:
+        'The historian says: what the east defended was not the river but one sentence — "Only Your Lordship may not surrender." Surrender and be made a marquis; hold and be an enemy state. He chose the second, at twenty-seven.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '當陽長阪,十餘萬眾',
+        titleEn: 'A Hundred Thousand on the Road at Changban',
+        textZh:
+          '琮降,備走。過襄陽,或勸攻琮而取荊州,備曰:「吾不忍也。」'
+          + '荊州士民多歸之,比到當陽,眾十餘萬,輜重數千兩,日行十餘里。\n\n'
+          + '或謂備曰:「宜速行保江陵,今雖擁大眾,被甲者少,若曹公兵至,何以拒之?」'
+          + '備曰:「夫濟大事必以人為本,今人歸吾,吾何忍棄去!」\n\n'
+          + '曹公以精騎五千急追之,一日一夜行三百餘里,及於當陽之長阪。'
+          + '備棄妻子,與諸葛亮、張飛、趙雲等數十騎走。\n\n'
+          + '那十餘萬人,一個也沒有跟上來。',
+        textEn:
+          'Cong surrenders; Bei runs. Passing Xiangyang someone urges him to attack Cong and take the province. "I could not bear to," he says. The people of Jing follow him in numbers; by Dangyang there are a hundred thousand and more, several thousand baggage carts, ten li a day.\n\n'
+          + 'Someone says: better to move fast and secure Jiangling. You have a great crowd but few of them are in armour. If Cao\'s troops come up, what will you hold them with? And he says: "To do any great thing you must have people as your foundation. These people have come to me. How can I bear to abandon them?"\n\n'
+          + 'Cao Cao takes five thousand picked horse, covers three hundred li in a day and a night, and catches him on the long slope at Dangyang. Bei abandons his wife and children and rides off with Zhuge Liang, Zhang Fei, Zhao Yun and a few dozen horsemen.\n\n'
+          + 'Not one of the hundred thousand caught up.',
+      },
+      verdictZh:
+        '論曰:當陽之敗,兵法之至拙也;而備所以終有天下之半者,亦在此一拙。'
+        + '夫十餘萬人日行十餘里,以待追騎,智者不為 —— 然自此之後,'
+        + '天下皆知劉備所以異於曹操者何在。所失者妻子,所得者人心。',
+      verdictEn:
+        'The historian says: as generalship, Changban was as clumsy as it gets — and half the realm eventually came to him because of that clumsiness. To move a hundred thousand at ten li a day while cavalry closes is what no clever man does. But from that day everyone in the realm knew exactly how Liu Bei differed from Cao Cao. He lost his wife and children. He gained the thing that decides who men follow.',
+      verdictLostZh:
+        '論曰:三城三萬,而能與二強共分天下者,恃者非地非兵,恃孫劉之盟耳。'
+        + '盟成則鼎立,盟解則無所歸 —— 此後二十年,他每一步都走在這條線上。',
+      verdictLostEn:
+        'The historian says: three cities and thirty thousand men, and he ended up dividing the realm with two great powers. What carried him was neither land nor troops but an alliance. With it, three kingdoms; without it, nowhere to stand. Every step of his next twenty years was walked along that line.',
+    },
+    'liu-biao': {
+      defeat: {
+        titleZh: '降書送出去時,一仗都沒打',
+        titleEn: 'The Letter Went Out Before a Single Battle',
+        textZh:
+          '表卒,琮嗣。曹公南征,琮舉州降,而不告備。備至宛乃聞之。\n\n'
+          + '荊州帶甲十餘萬,舟船數千,而未嘗一戰。蒯越、傅巽勸曰:'
+          + '「逆順有大體,強弱有定勢。以人臣而拒人主,逆也;以新造之楚而御中國,'
+          + '弱也;以劉備而敵曹公,不當也。三者皆短,欲以抗王師之鋒,必亡之道也。」\n\n'
+          + '琮曰:「善。」\n\n'
+          + '降之明年,曹公敗於赤壁。荊州十萬之眾,已在他人麾下,'
+          + '正在江上燒著。',
+        textEn:
+          'Biao dies; Cong succeeds. Cao Cao comes south and Cong surrenders the province entire, without telling Bei — who hears of it only at Wan.\n\n'
+          + 'Jing had a hundred thousand men under arms and thousands of hulls, and never fought once. Kuai Yue and Fu Xun advised him: "There is a great principle in rebellion and obedience, and a settled shape in strength and weakness. For a subject to resist his sovereign is rebellion; for a newly-made Chu to withstand the middle realm is weakness; for Liu Bei to be your match against Cao is not the case. Three counts against you, and you would meet the royal army with them. That is the road to certain ruin."\n\n'
+          + 'And Cong said: "Very good."\n\n'
+          + 'The year after the surrender, Cao lost at Red Cliffs. The hundred thousand men of Jing were already someone else\'s — and they were burning on the river.',
+      },
+      verdictZh:
+        '論曰:琮之降,非怯也,理也 —— 蒯越所陳三事,無一不確。'
+        + '然天下之事,有理而不可從者:荊州一降,而赤壁之火即為天下所共見。'
+        + '早一年降,則十萬之眾為人所用;遲一年降,則其主自為一國。'
+        + '成敗之際,不在理之明暗,在**時**之先後。',
+      verdictEn:
+        'The historian says: the surrender was not cowardice, it was reasoning — and every one of Kuai Yue\'s three points was correct. But there are matters in this world where the reasoning is sound and cannot be followed. Jing surrendered, and within the year the whole realm watched the fire on the river. Surrender a year early and your hundred thousand fight for someone else; hold a year longer and your house is a state. Between winning and losing, what counts is not the clarity of the argument but the order of events.',
+      verdictLostZh:
+        '論曰:父守之十八年,子棄之一日。'
+        + '所守者非城池,是那十萬人願不願意為你死 —— 而那是問不出來的,只能試。',
+      verdictLostEn:
+        'The historian says: the father held it eighteen years and the son gave it away in one. What he was holding was never the walls: it was whether a hundred thousand men would die for him. You cannot ask that question. You can only find out.',
+    },
+    'liu-zhang': {
+      defeat: {
+        titleZh: '天下有變,而益州不動',
+        titleEn: 'The Realm Moved. Yi Province Did Not.',
+        textZh:
+          '赤壁之火燒了三個月,消息傳到成都時,你正在議張魯。\n\n'
+          + '別駕張松使於曹公,曹公不禮之;還,勸你絕曹而結劉備。'
+          + '法正、孟達繼之。你以為得一外援,而外援看見的是一條路。\n\n'
+          + '「今州中諸將龐羲、李異等皆恃功驕豪,欲有外意,'
+          + '非得劉豫州,無以拒曹公也。」—— 說這話的人,'
+          + '三年之後在成都城外替劉備畫地圖。',
+        textEn:
+          'The fire on the river burned for three months. When word of it reached Chengdu you were in council about Zhang Lu.\n\n'
+          + 'Your aide Zhang Song went as envoy to Cao Cao, was treated with contempt, came home and urged you to break with Cao and take Liu Bei as a friend. Fa Zheng and Meng Da said the same. You thought you had acquired an ally. What the ally saw was a road.\n\n'
+          + '"The generals of this province — Pang Xi, Li Yi and the rest — presume on their services and grow arrogant, and have thoughts of turning outward. Without the Governor of Yu we cannot hold off Cao Cao." The man who said that was drawing maps for Liu Bei outside Chengdu three years later.',
+      },
+      verdictZh:
+        '論曰:璋之引劉備,以拒曹操也 —— 而曹操終不能入蜀,劉備反據其國。'
+        + '夫外援者,強於己則不可召。召之而勝,則其功不可賞;'
+        + '召之而敗,則其禍不可解。益州之亡,亡於一封請兵的信。',
+      verdictEn:
+        'The historian says: he brought Liu Bei in to keep Cao Cao out — and Cao never did get into Shu, while Liu Bei took the country. An ally stronger than yourself must not be summoned. If he wins for you, there is no reward large enough; if he loses, there is no escape from the consequences. Yi province fell to a letter asking for troops.',
+      verdictLostZh:
+        '論曰:蜀道之險,拒得住十萬之師,拒不住一個帶著地圖的自己人。',
+      verdictLostEn:
+        'The historian says: the roads into Shu can hold off a hundred thousand men. They cannot hold off one of your own people carrying a map.',
+    },
+    'zhang-lu': {
+      defeat: {
+        titleZh: '寶貨倉庫,國家之有',
+        titleEn: 'The Storehouses Belong to the State',
+        textZh:
+          '以鬼道教民,自號師君。其來學者,初皆名鬼卒;受本道已信,號祭酒。'
+          + '諸祭酒皆作義舍,置義米肉,行路者量腹取足。'
+          + '不置長吏,以祭酒為治 —— 民夷便樂之。雄據巴漢垂三十年。\n\n'
+          + '及曹公西征,左右欲盡燒寶貨倉庫,魯曰:'
+          + '「本欲歸命國家,而意未達;今之走,避銳鋒,非有惡意。'
+          + '寶貨倉庫,國家之有。」遂封藏而去。\n\n'
+          + '曹公入南鄭,見其封藏,甚嘉之 —— 拜鎮南將軍,封閬中侯,邑萬戶。',
+        textEn:
+          'He taught the people by the way of the spirits and called himself Lord Instructor. Those who came to learn were called ghost-soldiers at first; once they had taken the doctrine and believed, they were called libationers. Every libationer kept a charity house with rice and meat set out, and travellers took what they needed. There were no ordinary officials: the libationers governed, and Han and non-Han alike were happy with it. He held Ba and Han for nearly thirty years.\n\n'
+          + 'When Cao came west, his people wanted to burn the treasuries and granaries. "My intent was always to give myself to the state, and it has not been understood. I am withdrawing from the point of the spear, not out of ill will. The treasuries and granaries belong to the state." So he sealed them and left.\n\n'
+          + 'Cao entered Nanzheng, saw the seals, and was greatly pleased — General Who Guards the South, Marquis of Langzhong, ten thousand households.',
+      },
+      verdictZh:
+        '論曰:魯以道術治民三十年,不置長吏而巴漢安 —— 亂世之中,'
+        + '此亦一治法也。及其去,封藏而不焚,是知天下終有主。'
+        + '故曰:能守者未必能有,能有者未必能保;而知所歸者,身名俱全。',
+      verdictEn:
+        'The historian says: he governed by doctrine for thirty years, appointed no regular officials, and Ba and Han were quiet — in a broken age that is one way of governing. And when he left he sealed the storehouses instead of burning them, knowing the realm would have a master in the end. Hence: the man who can hold need not be the man who can own, and the man who owns need not be the man who keeps. But the man who knows where to give himself keeps both his life and his name.',
+      verdictLostZh:
+        '論曰:五斗米之教,能聚民而不能聚兵。'
+        + '義舍所養者行路之人,不是甲士。',
+      verdictLostEn:
+        'The historian says: the Way of Five Pecks of Rice could gather a people and not an army. What the charity houses fed were travellers, not armoured men.',
+    },
+    'ma-teng': {
+      defeat: {
+        titleZh: '衛尉之印,在許都',
+        titleEn: 'The Seal of the Guard Lies in Xu',
+        textZh:
+          '建安十三年,徵騰入朝為衛尉,子超領其部曲。\n\n'
+          + '這一年,曹操南下荊州;這一年,赤壁火起。而你在許都,'
+          + '穿著九卿的朝服,聽著南方傳來的消息。\n\n'
+          + '兩年後,超與韓遂反於關中。書至許都,而衛尉馬騰與其二子及宗族'
+          + '二百餘口,同日皆死。\n\n'
+          + '史書寫這件事只用了十一個字:「超之叛也,騰坐夷三族。」',
+        textEn:
+          'In the thirteenth year of Jian\'an he was summoned to court as Commandant of the Guards, and his son Chao took over his troops.\n\n'
+          + 'That was the year Cao Cao came south into Jing province. That was the year of the fire at Red Cliffs. And he was in Xu, wearing the court robes of one of the Nine Ministers, listening to news from the south.\n\n'
+          + 'Two years later Chao and Han Sui revolted in Guanzhong. The dispatch reached Xu, and Commandant Ma Teng, his two other sons and more than two hundred of his kin all died on the same day.\n\n'
+          + 'The histories give the whole thing eleven characters: "Chao rebelled; Teng was accordingly exterminated to three degrees."',
+      },
+      verdictZh:
+        '論曰:騰之入朝,身為質也;超之反,質乃死焉。'
+        + '夫以子代父領兵,而父入為卿 —— 兩全之計也,而兩全者往往兩失。'
+        + '關中十部,自此無首;涼州之騎,自此為魏之銳。',
+      verdictEn:
+        'The historian says: going to court made him a hostage, and his son\'s revolt killed the hostage. Leave the army to the son and take a minister\'s office yourself — a plan to have it both ways, and having it both ways usually means losing both. Guanzhong lost its head that day, and the horsemen of Liang became the edge of Wei.',
+      verdictLostZh:
+        '論曰:兵在子而身在朝,則命不在己。'
+        + '不在己者,雖九卿之貴,亦質而已矣。',
+      verdictLostEn:
+        'The historian says: when the army is with your son and your body is at court, your life is not in your own hands. And a life not in your own hands is a hostage\'s, whatever rank it wears.',
+    },
+    'shi-xie': {
+      defeat: {
+        titleZh: '交州四十年',
+        titleEn: 'Forty Years in Jiao',
+        textZh:
+          '燮體器寬厚,謙虛下士,中國士人往依避難者以百數。'
+          + '耽玩春秋,為之注解。兄弟並為列郡,雄長一州,偏在萬里,威尊無上。\n\n'
+          + '出入鳴鐘磬,備具威儀,笳簫鼓吹,車騎滿道,胡人夾轂焚燒香者常有數十。'
+          + '妻妾乘輜軿,子弟從兵騎 —— 當時貴重,震服百蠻,尉他不足踰也。\n\n'
+          + '而每歲遣使詣權,貢雜香細葛、明珠大貝、流離翡翠、玳瑁犀象之珍,'
+          + '無歲不至。四十年不見兵革 —— 在那個時代,這是一件更難的事。',
+        textEn:
+          'Xie was broad and generous in temper, modest to men of learning; scholars fleeing the middle realm came to him by the hundred. He was fond of the Spring and Autumn Annals and wrote a commentary on it. His brothers held the neighbouring commanderies, he was master of a whole province ten thousand li from anywhere, and his authority had nothing above it.\n\n'
+          + 'He went out to bells and chimes in full ceremony, with reed pipes and drums, the road packed with carriages and riders, and often dozens of foreigners burning incense alongside his wheels. His wives rode in curtained carts, his sons and juniors had mounted escorts — the grandest man of his day, and the hundred southern peoples were in awe of him.\n\n'
+          + 'And every year he sent envoys to Sun Quan with mixed incense and fine hemp, bright pearls and great shells, glass and kingfisher plumes, tortoiseshell, rhinoceros horn and ivory. Not one year was missed. Forty years without seeing war — in that age, the harder achievement.',
+      },
+      verdictZh:
+        '論曰:燮在交州四十餘年,中國喪亂而一州獨全,士人避難者百數 ——'
+        + '此非兵之功,是**歲貢不絕**之功也。'
+        + '知其力不足以爭,而以禮自存,故能保其民,亦能保其身。'
+        + '及其子徽不奉命,呂岱一至而族滅 —— 父之所以存者,子不知也。',
+      verdictEn:
+        'The historian says: he was in Jiao more than forty years; the middle realm tore itself apart and one province came through whole, with refugee scholars by the hundred. That was not the achievement of his soldiers but of tribute paid every single year without fail. Knowing his strength was not enough to contend, he kept himself by ceremony, and so kept his people and his own life. When his son Hui disobeyed, Lü Dai came once and the family was wiped out. What preserved the father, the son never understood.',
+      verdictLostZh:
+        '論曰:遠者可以自存,不可以自大。'
+        + '萬里之外,威尊無上,而所恃者不過一封歲貢的表。',
+      verdictLostEn:
+        'The historian says: distance lets a man survive; it does not let him grow great. Ten thousand li out, with no authority above him, what he actually stood on was one tribute memorial a year.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */

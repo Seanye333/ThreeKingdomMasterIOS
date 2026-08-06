@@ -654,6 +654,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     yearMax: 209,
     season: 'winter',
     requires: [
+      { kind: 'flag-set', key: 'east-wind-borrowed' },
       { kind: 'force-alive', forceId: 'force-cao-cao' },
       { kind: 'force-alive', forceId: 'force-sun-quan' },
       { kind: 'flag-unset', key: 'chibi-chain-started' }, // superseded by the §8.1 choice chain
@@ -1259,6 +1260,10 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     yearMax: 209,
     season: 'winter',
     requires: [
+      // 抉擇鏈(evt-chibi-1/2/3)跑起來的時候,這一套旁白版讓位 ——
+      // 與 evt-battle-of-red-cliffs 同一條規則,否則同一場赤壁會演兩套。
+      { kind: 'flag-unset', key: 'chibi-chain-started' },
+      { kind: 'flag-set', key: 'chain-ships-set' },
       { kind: 'officer-active', officerId: 'zhuge-liang' },
       { kind: 'officer-active', officerId: 'zhou-yu' },
     ],
@@ -2172,6 +2177,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     yearMax: 210,
     season: 'winter',
     requires: [
+      { kind: 'flag-set', key: 'three-kingdoms-formed' },
       { kind: 'officer-active', officerId: 'guan-yu' },
       { kind: 'officer-active', officerId: 'cao-cao' },
     ],
@@ -2259,7 +2265,11 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     yearMin: 208,
     yearMax: 209,
     season: 'winter',
-    requires: [{ kind: 'officer-active', officerId: 'zhuge-liang' }],
+    requires: [
+      // 抉擇鏈(evt-chibi-1/2/3)跑起來的時候,這一套旁白版讓位 ——
+      // 與 evt-battle-of-red-cliffs 同一條規則,否則同一場赤壁會演兩套。
+      { kind: 'flag-unset', key: 'chibi-chain-started' },
+      { kind: 'officer-active', officerId: 'zhuge-liang' }],
     description:
       'Pressed by Zhou Yu to forge a hundred thousand arrows in three days, Zhuge Liang sends twenty straw-bound boats into the Yangtze fog before dawn, beating drums. Cao Cao\'s archers loose blindly into the mist — and the boats return bristling with arrows beyond count.',
     descriptionZh: "周瑜限諸葛亮三日造箭十萬,亮以草船二十,趁大霧未明擂鼓佯攻。曹營弓弩齊發,亂射於霧中——草船兩面受箭,滿載而歸,得箭無數。",
@@ -2274,7 +2284,12 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     yearMin: 208,
     yearMax: 209,
     season: 'winter',
-    requires: [{ kind: 'officer-alive', officerId: 'pang-tong' }],
+    requires: [
+      // 抉擇鏈(evt-chibi-1/2/3)跑起來的時候,這一套旁白版讓位 ——
+      // 與 evt-battle-of-red-cliffs 同一條規則,否則同一場赤壁會演兩套。
+      { kind: 'flag-unset', key: 'chibi-chain-started' },
+      { kind: 'flag-set', key: 'huang-gai-ruse' },
+      { kind: 'officer-alive', officerId: 'pang-tong' }],
     description:
       'Crossing to Cao Cao\'s camp, the Fledgling Phoenix Pang Tong counsels the northern host — sick on the rolling river — to chain their ships deck to deck for stability. The fleet is bound fast into a single floating fortress, perfect tinder for the coming fire.',
     descriptionZh: "鳳雛龐統渡江入曹營,見北軍不慣水戰、暈眩嘔吐,獻連環之計:以鐵索連舟,首尾相接,如履平地。曹軍艨艟遂結為一體——正堪縱火之薪。",
@@ -2285,11 +2300,20 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   },
   {
     id: 'evt-huang-gai-ruse',
+    /* 赤壁這一鏈原本各節只鎖了「冬」而彼此無序,體檢十二輪演出來的順序是:
+       借東風@10 → 赤壁@10 → 華容道@12 → 連環計@13 → 草船借箭@13 → 苦肉計@16
+       —— 曹操先被燒、關羽先放人,而後周瑜才開始設計。用旗標串成演義的順序:
+       草船借箭 → 苦肉計 → 連環計 → 借東風 → 火燒赤壁 → 華容道。 */
     name: { en: 'Huang Gai\'s Sacrifice', zh: '苦肉計·黃蓋詐降' },
     yearMin: 208,
     yearMax: 209,
     season: 'winter',
-    requires: [{ kind: 'officer-active', officerId: 'huang-gai' }],
+    requires: [
+      // 抉擇鏈(evt-chibi-1/2/3)跑起來的時候,這一套旁白版讓位 ——
+      // 與 evt-battle-of-red-cliffs 同一條規則,否則同一場赤壁會演兩套。
+      { kind: 'flag-unset', key: 'chibi-chain-started' },
+      { kind: 'flag-set', key: 'arrows-borrowed' },
+      { kind: 'officer-active', officerId: 'huang-gai' }],
     description:
       'The old general Huang Gai takes fifty lashes before the army in a staged quarrel with Zhou Yu, then sends Cao Cao a secret offer of surrender. None suspect the bleeding veteran — whose fire-boats will soon lead the assault on the chained fleet. "One willing to suffer, one willing to be deceived."',
     descriptionZh: "老將黃蓋與周瑜當眾佯爭,甘受五十脊杖,血肉模糊,然後密遣闞澤獻詐降書於曹操。曹營無人疑此重傷老臣——其火船,不日即引燃連環艨艟。所謂「一個願打,一個願挨」。",

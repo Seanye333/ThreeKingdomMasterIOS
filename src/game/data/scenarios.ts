@@ -1368,6 +1368,40 @@ export const SCENARIO_208_CHIBI: Scenario = {
     'with Zhuge Liang. Sun Quan must decide: surrender, or join Liu Bei at the Red Cliffs.',
   descriptionZh: "公元208年秋。曹操盡掃北方群雄，率八十萬大軍南下。劉表病故，其子劉琮不戰而獻荊州。劉備偕諸葛亮敗走江夏。孫權面臨抉擇——降曹，或聯劉抗敵於赤壁。",
   startDate: { year: 208, season: 'autumn' },
+  /*
+   * 開局外交 —— 這張盤的題目就是一個聯盟能不能結成,而盤上原本**一條關係
+   * 都沒有**:孫權與劉備兩兩中立,曹操與所有人兩兩中立。魯肅渡江、孔明舌戰
+   * 群儒、周瑜請五萬兵 —— 那一整段戲講的事情,在數字上不存在。
+   *
+   * 208 年秋的實情:
+   *  - 曹操南下,與劉備已成死敵(當陽長阪追了三百餘里),與孫權尚未交兵而
+   *    書至江東曰「今治水軍八十萬眾,方與將軍會獵於吳」—— 那是最後通牒。
+   *  - 孫劉之盟**尚未結成**(魯肅方至,孔明未渡江),所以給互不侵犯而非同盟:
+   *    要結盟得自己去結,那才是這張盤的第一個決定。
+   *  - 劉琮已降(八月),盤上仍給他一家 —— 於是他與曹操是「已許而未交割」,
+   *    分數高而非同盟。
+   *  - 馬騰入朝為衛尉在 208,關中十部名義上奉曹;張魯與劉璋世讎(璋殺其母弟);
+   *    士燮遠在交州,奉貢於漢而實自守。
+   */
+  openingRelations: [
+    // ── 南下的那一路 ──
+    { a: 'cao', b: 'liu-bei', score: -95, status: 'neutral' },   // 當陽長阪,追三百餘里
+    { a: 'cao', b: 'sun', score: -60, status: 'neutral' },       // 會獵於吳 —— 書至而兵未交
+    { a: 'cao', b: 'liu-biao', score: 60, status: 'non-aggression' }, // 琮已遣使奉降
+    { a: 'cao', b: 'ma-teng', score: 40, status: 'non-aggression' },  // 騰入朝為衛尉
+    { a: 'cao', b: 'zhang-lu', score: 10, status: 'non-aggression' },
+    { a: 'cao', b: 'liu-zhang', score: 25, status: 'non-aggression' }, // 璋遣使致敬,操加振威將軍
+    { a: 'cao', b: 'shi-xie', score: 20, status: 'non-aggression' },
+    // ── 還沒結成的那個盟 ──
+    { a: 'sun', b: 'liu-bei', score: 35, status: 'non-aggression' },  // 魯肅方至,孔明未渡江
+    // ── 舊帳 ──
+    { a: 'sun', b: 'liu-biao', score: -70, status: 'neutral' },   // 黃祖之讎,三攻江夏
+    { a: 'liu-bei', b: 'liu-biao', score: 30, status: 'non-aggression' }, // 依表七年,而琮不告以降
+    { a: 'zhang-lu', b: 'liu-zhang', score: -80, status: 'neutral' },     // 璋殺魯母及弟
+    { a: 'ma-teng', b: 'zhang-lu', score: -10, status: 'neutral' },
+    { a: 'liu-zhang', b: 'shi-xie', score: 5, status: 'non-aggression' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },      // 燮遣使詣權,歲奉貢
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_208),
   forces: FORCES_208,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_208, DEAD_BY_208),
