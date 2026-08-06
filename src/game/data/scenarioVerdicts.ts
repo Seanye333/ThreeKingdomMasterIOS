@@ -2172,6 +2172,221 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: when Xiangping fell, seven thousand men were put in a pit. Liaodong was empty afterwards, and Goguryeo and the Xianbei moved into it. To destroy a state without keeping its people is to gain ground and lose a buffer.',
     },
   },
+  /* ── 220 三國鼎立 ─────────────────────────────────────────────── */
+  'scn-220-declaration': {
+    cao: {
+      defeat: {
+        titleZh: '受禪臺上',
+        titleEn: 'On the Altar of Abdication',
+        textZh:
+          '延康元年十月,漢帝告祠高廟,使張音奉璽綬詔冊,禪位於魏。'
+          + '築壇於繁陽,庚午,王升壇即阼,百官陪位。\n\n'
+          + '禮畢,顧謂群臣曰:「舜、禹之事,吾知之矣。」\n\n'
+          + '這句話是實話。而實話說出口的那一刻,'
+          + '四百年的漢就真的完了 —— 不是因為誰打贏了,'
+          + '是因為終於有人肯把它說破。',
+        textEn:
+          'In the tenth month of the first year of Yankang the Han emperor announced it at the high temple and sent Zhang Yin with the seals and the edict, abdicating in favour of Wei. An altar was raised at Fanyang, and on the gengwu day the king mounted it and took the throne with the officials ranged below.\n\n'
+          + 'When the ceremony was over he turned to his court and said: "Now I understand the business of Shun and Yu."\n\n'
+          + 'It was a true remark. And in the moment it was said aloud, four hundred years of Han were really over — not because anyone had won, but because somebody was finally willing to say it.',
+      },
+      verdictZh:
+        '論曰:魏之代漢,以禪為名。'
+        + '禪者,堯舜之事也;而堯舜之事,自魏而後,'
+        + '為權臣易代之通用文書 —— 晉受魏禪,宋受晉禪,'
+        + '齊梁陳隋皆用此禮。\n'
+        + '曹丕一句「舜禹之事,吾知之矣」,說破的不只是他自己。',
+      verdictEn:
+        'The historian says: Wei replaced Han under the name of abdication. Abdication was the business of Yao and Shun — and after Wei it became the standard paperwork by which a powerful minister changes a dynasty. Jin took Wei\'s abdication, Song took Jin\'s, and Qi, Liang, Chen and Sui all used the same rite. Cao Pi\'s one line about understanding the business of Shun and Yu gave away rather more than himself.',
+      verdictLostZh:
+        '論曰:受禪之易,正是其後三代亡國之易。'
+        + '既以此得之,則不能禁人之以此取之。',
+      verdictLostEn:
+        'The historian says: the ease of taking a throne by abdication was exactly the ease with which three later houses lost theirs. Having got it that way, you cannot forbid anyone else to take it that way.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '天下未有無君之國',
+        titleEn: 'No Realm Has Ever Been without a Sovereign',
+        textZh:
+          '漢帝見害之訊至成都 —— 訊是假的,而你不知道。\n\n'
+          + '群臣勸進,你怒曰:「孤何忍為此!」'
+          + '諸葛亮曰:「今曹氏篡漢,天下無主,大王劉氏苗族,'
+          + '紹世而起,今即帝位,乃其宜也。」\n\n'
+          + '而後你稱帝於成都,國號漢 ——'
+          + '所繼者非國,是那一個字。',
+        textEn:
+          'Word reached Chengdu that the Han emperor had been murdered. The report was false, and you did not know that.\n\n'
+          + 'The court urged you to take the throne and you were angry: "How could I bear to do such a thing?" And Zhuge Liang said: "The house of Cao has usurped Han and the realm has no sovereign. Your Highness is of the seed of Liu, rising to continue the line. To take the imperial position now is entirely fitting."\n\n'
+          + 'So you took the throne at Chengdu, and called the state Han — what you were continuing was not a country. It was one character.',
+      },
+      verdictZh:
+        '論曰:先主之稱帝,以繼漢為名 —— 而所繼者,一州之地耳。'
+        + '然名之為用大矣:蜀之君臣以此自任,四十年間,'
+        + '雖弱而不肯降,雖敗而不肯改號。'
+        + '國小而志不小者,恃此一字。',
+      verdictEn:
+        'The historian says: the First Lord took the throne in the name of continuing Han — and what he continued amounted to one province. But a name can do a great deal of work: the lord and officers of Shu took it as their charge, and for forty years, weak as they were, they would not surrender, and beaten as they were, they would not change the name of the state. A small country with large ambitions was standing on that one character.',
+      verdictLostZh:
+        '論曰:漢帝實未死,而蜀已為之發喪 ——'
+        + '正統之爭,有時不必等真相。',
+      verdictLostEn:
+        'The historian says: the Han emperor was not in fact dead, and Shu had already held his funeral. A contest over legitimacy does not always wait for the facts.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '稱藩',
+        titleEn: 'Vassal',
+        textZh:
+          '曹丕受禪,你遣使奉章,並送于禁等還 ——'
+          + '丕遣邢貞拜你為吳王,加九錫。\n\n'
+          + '群臣以為宜稱上將軍九州伯,不當受魏封。'
+          + '你曰:「九州伯,於古未聞也。昔沛公亦受項羽拜為漢王,'
+          + '蓋時宜耳,復何損邪?」\n\n'
+          + '受封之後八年,你自己稱帝。'
+          + '那八年裡,魏以為你是臣,而蜀以為你是敵。',
+        textEn:
+          'When Cao Pi took the abdication you sent a memorial of submission and returned Yu Jin and the others — and Pi sent Xing Zhen to invest you as King of Wu with the nine bestowals.\n\n'
+          + 'Your court thought you should style yourself Supreme General and Count of the Nine Provinces and not accept Wei\'s patent. And you said: "Count of the Nine Provinces was never heard of in antiquity. The Duke of Pei once accepted the title King of Han from Xiang Yu; it suited the moment. Where is the harm?"\n\n'
+          + 'Eight years after accepting it you declared yourself emperor. During those eight years Wei took you for a subject and Shu took you for an enemy.',
+      },
+      verdictZh:
+        '論曰:權之稱藩,權宜也;而權宜之久,亦成一種身分。'
+        + '八年之間,北面事魏而東拒蜀 —— 所省者兩線之兵,'
+        + '所費者一國之名。及其自立,天下已不甚驚。',
+      verdictEn:
+        'The historian says: his submission was expedience, and expedience kept up long enough becomes a status of its own. For eight years he faced north as a subject and held off Shu in the east, saving himself a two-front war at the cost of his state\'s standing. When he did crown himself, nobody in the realm was very surprised.',
+      verdictLostZh:
+        '論曰:三家之中,吳最後稱帝,而最先受人之封 ——'
+        + '知所先後,亦一國之術。',
+      verdictLostEn:
+        'The historian says: of the three, Wu was the last to claim the throne and the first to accept someone else\'s patent. Knowing which comes first is also a way of running a state.',
+    },
+  },
+  /* ── 265 司馬炎篡魏 ───────────────────────────────────────────── */
+  'scn-265-jin-founded': {
+    sima: {
+      defeat: {
+        titleZh: '司馬昭之心',
+        titleEn: 'What Sima Zhao Was After',
+        textZh:
+          '高貴鄉公曰:「司馬昭之心,路人所知也。'
+          + '吾不能坐受廢辱,今日當與卿等自出討之。」\n\n'
+          + '乃拔劍升輦,率殿中宿衛蒼頭官僮鼓譟而出。'
+          + '賈充呼成濟曰:「畜養汝等,正為今日!」'
+          + '濟即前刺帝,刃出於背。\n\n'
+          + '五年之後,炎受禪。而弒君那一筆,'
+          + '史書寫在那一家的頭上,寫了三百年。',
+        textEn:
+          'The Duke of Gaogui said: "What Sima Zhao is after, every man in the street knows. I will not sit and be deposed and disgraced. Today I shall go out against him with you."\n\n'
+          + 'And he drew his sword, mounted his carriage, and went out at the head of the palace guards, the grooms and the household boys, shouting. Jia Chong called to Cheng Ji: "You have been kept and fed for exactly this day!" And Ji went forward and ran the emperor through, the blade coming out at his back.\n\n'
+          + 'Five years later Yan took the abdication. And the killing of a sovereign was written against that family in the histories for three hundred years.',
+      },
+      verdictZh:
+        '論曰:晉之代魏,與魏之代漢,禮同而事異 ——'
+        + '魏之受禪,漢帝尚存;晉之受禪,魏帝已弒其一。'
+        + '故晉雖有天下,而不能以名義服人;'
+        + '八王之亂,永嘉之禍,其原不在惠帝,在甘露五年那一輛車。',
+      verdictEn:
+        'The historian says: Jin replaced Wei by the same rite Wei used on Han, and it was not the same thing. When Wei took the abdication, the Han emperor was alive. When Jin took it, one Wei emperor had already been murdered. So Jin held the realm and could never make its claim stick; the war of the eight princes and the Yongjia catastrophe did not begin with Emperor Hui — they began with a carriage in the fifth year of Ganlu.',
+      verdictLostZh:
+        '論曰:得國不正者,常以嚴法自防;'
+        + '而防其外者,終不能防其內。',
+      verdictLostEn:
+        'The historian says: a house that takes a state by dubious means usually protects itself with severe laws — and guarding the outside never guards the inside.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '西陵猶在',
+        titleEn: 'Xiling Still Holds',
+        textZh:
+          '魏亡,晉立。而吳仍在江南 ——'
+          + '陸抗在西陵,丁奉在江北,長江仍是長江。\n\n'
+          + '孫皓卻在建業鑿人之眼,剝人之面。\n\n'
+          + '十五年,不算長。',
+        textEn:
+          'Wei ended and Jin began, and Wu was still there south of the river — Lu Kang at Xiling, Ding Feng north of the water, and the Yangtze still the Yangtze.\n\n'
+          + 'And Sun Hao was in Jianye gouging out eyes and flaying faces.\n\n'
+          + 'Fifteen years is not long.',
+      },
+      verdictZh:
+        '論曰:吳之能久,以江;其終亡,以人。'
+        + '江者,守之具也;人者,守江者也。'
+        + '具在而人不在,則江與平地同。',
+      verdictEn:
+        'The historian says: Wu lasted because of the river and ended because of its people. The river is the instrument of defence; people are what defends with it. Keep the instrument and lose the people, and the river is level ground.',
+      verdictLostZh:
+        '論曰:晉之立,吳臣或請乘其新造而伐之 ——'
+        + '皓不能用,而以為天命在己。十五年後,天命在王濬的樓船上。',
+      verdictLostEn:
+        'The historian says: when Jin was founded some of Wu\'s officers asked to strike while it was new. Hao would not, and took it that the mandate was his. Fifteen years later the mandate was aboard Wang Jun\'s tower-ships.',
+    },
+  },
+  /* ── 272 西陵之戰 ─────────────────────────────────────────────── */
+  'scn-272-xiling': {
+    sun: {
+      defeat: {
+        titleZh: '陸抗圍步闡,而不救外圍',
+        titleEn: 'Lu Kang Ringed Bu Chan and Ignored the Relief',
+        textZh:
+          '步闡據西陵以降晉。抗至,令諸軍築嚴圍,自赤谿至故市,'
+          + '內以圍闡,外以禦寇 —— 晝夜催切,如敵已至。\n\n'
+          + '諸將咸諫:「今宜及三軍之銳,亟攻闡,比晉救至,'
+          + '闡必可拔。何事於圍,而以弊士民之力乎?」\n\n'
+          + '抗曰:「此城處勢既固,糧穀又足,且所繕修備禦之具,'
+          + '皆抗所宿規。今反攻之,不可猝拔。'
+          + '及晉救船至,而吾無以禦之,此乃表裡受難也。」\n\n'
+          + '及羊祜等至,果不能克。闡遂敗,夷三族。',
+        textEn:
+          'Bu Chan held Xiling and went over to Jin. Kang came up and had a heavy line dug from Chixi to Gushi — inward to invest Chan, outward to hold off relief — driving the work day and night as though the enemy were already in sight.\n\n'
+          + 'His generals all objected: "We should use the edge our men have now and storm Chan at once. He can certainly be taken before the Jin relief arrives. Why build lines and wear out the strength of soldiers and civilians?"\n\n'
+          + 'And Kang said: "That city sits on strong ground and has grain enough, and every one of its defence works was laid out by me. Turn and storm it and it will not fall quickly. And when the Jin relief boats arrive I shall have nothing to hold them with, and we shall be in trouble from both directions at once."\n\n'
+          + 'Yang Hu and the rest came, and could do nothing. Chan fell, and three degrees of his family with him.',
+      },
+      verdictZh:
+        '論曰:抗之守西陵,先為不可勝而後求勝 ——'
+        + '諸將欲速,而抗知其城之堅者,以其備皆己所規也。'
+        + '知己知彼,常人以為兩事;抗之知彼,正是知己。',
+      verdictEn:
+        'The historian says: at Xiling he made himself unbeatable first and looked for the victory afterwards. His officers wanted speed; he knew how strong the place was because he had designed its works himself. Knowing yourself and knowing the enemy are usually treated as two things. In his case, knowing the enemy was knowing himself.',
+      verdictLostZh:
+        '論曰:抗卒之後,吳無守江之人。'
+        + '羊祜與抗對境,而祜曰:「抗存,吳未可圖也。」'
+        + '——一人之存亡,而一國之期在焉。',
+      verdictLostEn:
+        'The historian says: after Kang died Wu had no one to hold the river. Yang Hu faced him across the border and said: "While Kang lives, Wu cannot be planned against." One man\'s life, and a state\'s remaining time inside it.',
+    },
+    sima: {
+      defeat: {
+        titleZh: '羊祜與陸抗',
+        titleEn: 'Yang Hu and Lu Kang',
+        textZh:
+          '祜與抗對境,使命交通。抗遺祜酒,祜飲之不疑;'
+          + '抗有疾,祜饋之藥,抗服之不疑 ——'
+          + '人以為譏,抗曰:「羊祜豈鴆人者!」\n\n'
+          + '西陵一敗,祜坐貶。而後八年,他上表請伐吳,'
+          + '曰:「吳平則胡自定,但當速濟大功耳。」\n\n'
+          + '表上而不用。祜卒,舉杜預自代 ——'
+          + '五年之後,王濬的船下建業。',
+        textEn:
+          'Hu and Kang faced each other across the frontier and their envoys came and went. Kang sent Hu wine and Hu drank it without hesitation; Kang was ill and Hu sent him medicine and he took it without hesitation — and when people made insinuations Kang said: "Is Yang Hu a man who poisons people?"\n\n'
+          + 'After the defeat at Xiling, Hu was demoted. Eight years later he memorialised for an invasion of Wu: "Settle Wu and the northern tribes settle themselves. The only thing is to get the great work done quickly."\n\n'
+          + 'The memorial was submitted and not acted on. Hu died, recommending Du Yu to take his place — and five years after that, Wang Jun\'s ships came down to Jianye.',
+      },
+      verdictZh:
+        '論曰:祜之於抗,敵國也,而以信相與 ——'
+        + '此非婦人之仁,是伐國之遠謀:'
+        + '使吳人知晉之可信,則他日之降者不疑。'
+        + '故曰:滅國者,不始於兵。',
+      verdictEn:
+        'The historian says: Hu and Kang were officers of enemy states and dealt with each other in good faith. That was not softness but long-range strategy for taking a country: let the men of Wu learn that Jin can be trusted, and those who come over later will not hesitate. Hence: the destruction of a state does not begin with soldiers.',
+      verdictLostZh:
+        '論曰:祜請伐吳而朝議不許,及其卒,而後用其言 ——'
+        + '天下之事,常成於言者已歿之後。',
+      verdictLostEn:
+        'The historian says: Hu asked to invade and the court refused; after he died they did what he had said. Things in this world are commonly accomplished after the man who proposed them is dead.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
