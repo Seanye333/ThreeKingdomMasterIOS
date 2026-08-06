@@ -1927,6 +1927,251 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: the offer to cede the south was empty words, and Quan took it — not because he could not see it was empty, but because he wanted that land anyway.',
     },
   },
+  /* ── 225 南征之役 ─────────────────────────────────────────────── */
+  'scn-225-southern': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '攻心為上',
+        titleEn: 'Attack the Heart',
+        textZh:
+          '南中四郡皆反。亮曰:「若留外人,則當留兵;兵留則無所食,'
+          + '一不易也。加夷新傷破,父兄死喪,留外人而無兵者,'
+          + '必成禍患,二不易也。……三不易也。」\n\n'
+          + '馬謖送之數十里,曰:「夫用兵之道,攻心為上,攻城為下;'
+          + '心戰為上,兵戰為下。願公服其心而已。」\n\n'
+          + '七縱七擒,獲曰:「公,天威也,南人不復反矣。」'
+          + '遂至滇池。即其渠率而用之,不留兵,不運糧。',
+        textEn:
+          'All four commanderies of the south rose. Liang said: "If I leave outsiders in charge I must leave troops; leave troops and there is nothing to feed them — that is the first difficulty. The tribes have just been beaten and have fathers and brothers dead; leave outsiders without troops and it becomes a calamity — that is the second... and there is a third."\n\n'
+          + 'Ma Su saw him off for dozens of li: "In the use of troops, attacking the heart is highest and attacking walls lowest; a war of minds is highest and a war of arms lowest. I hope Your Excellency will simply win their hearts."\n\n'
+          + 'Seven times released and seven times taken, Huo said: "Your Excellency, this is Heaven\'s authority. The southern people will not rebel again." So he went on to Lake Dian, appointed their own chieftains to govern them, left no garrison and shipped no grain.',
+      },
+      verdictZh:
+        '論曰:南征之功,不在克敵,在**不留兵**。'
+        + '留兵則糧不繼,不留兵則其心自服 —— 亮之所以能北伐者,'
+        + '正以南中無後顧之憂。故曰:攻心者,省兵之術也。',
+      verdictEn:
+        'The historian says: the achievement of the southern campaign was not beating anyone but leaving no garrison. Garrison it and the supply fails; leave it ungarrisoned and the place settles itself. Liang could go north afterwards precisely because the south needed no watching. Winning hearts is, among other things, an economy of troops.',
+      verdictLostZh:
+        '論曰:南中之亂,起於雍闓之附吳而終於孟獲之心服 ——'
+        + '一叛一服之間,所爭者不是兵力,是有沒有人肯替你說話。',
+      verdictLostEn:
+        "The historian says: the southern rising began with Yong Kai going over to Wu and ended with Meng Huo's heart. Between a revolt and a submission, what is at stake is not troop strength but whether anyone will speak for you.",
+    },
+    nanman: {
+      defeat: {
+        titleZh: '七擒七縱',
+        titleEn: 'Seven Times Taken',
+        textZh:
+          '你被擒了七次。第一次你說地勢不熟,第二次你說手下無能,'
+          + '第三次你說是弟弟壞事 —— 每一次他都放你回去。\n\n'
+          + '第七次,你不說了。',
+        textEn:
+          'You were taken seven times. The first time you said you did not know the ground; the second, that your officers were useless; the third, that your brother had spoiled it. Every time he let you go.\n\n'
+          + 'The seventh time, you stopped talking.',
+      },
+      verdictZh:
+        '論曰:蠻夷之叛服,常在一人之心。'
+        + '獲之七擒而服,非力屈也,是無話可說 ——'
+        + '而無話可說,正是心服之始。',
+      verdictEn:
+        'The historian says: whether a border people rises or submits usually turns on one man. Huo submitted after seven captures not because his strength was gone but because he had run out of things to say — and having nothing left to say is where genuine submission begins.',
+      verdictLostZh:
+        '論曰:南中不置官,不留兵,而終蜀之世不復大反 ——'
+        + '此非蠻夷之易服,是治之者知其所欲。',
+      verdictLostEn:
+        'The historian says: no officials were installed in the south and no troops left, and there was no great rising again for the rest of Shu\'s existence. That is not because border peoples are easily pacified. It is because the man who settled it understood what they wanted.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '坐視其南',
+        titleEn: 'Watching the South',
+        textZh:
+          '蜀方南征,國中空虛 —— 而魏之群臣議伐蜀,'
+          + '曹丕方三路伐吳,不暇及也。\n\n'
+          + '一年之後,亮還成都,治戎講武;又三年,出祁山。',
+        textEn:
+          'Shu was campaigning in the south and the country behind was empty — and while the Wei court debated an invasion, Cao Pi had three armies committed against Wu and no attention to spare.\n\n'
+          + 'A year later Liang was back in Chengdu drilling troops. Three years after that, he came out at Qishan.',
+      },
+      verdictZh:
+        '論曰:敵之虛,不在其境之空,在我之能不能及。'
+        + '魏之伐吳三路皆無功,而蜀之南中一舉而定 ——'
+        + '同一年,兩國各用其兵,而所得相去如此。',
+      verdictEn:
+        "The historian says: an enemy's weakness is not a matter of his country being empty but of whether you can reach it. Wei's three columns against Wu achieved nothing that year while Shu settled the whole south in one campaign. The same year, two states spent their armies, and this was the difference in what they bought.",
+      verdictLostZh:
+        '論曰:三路伐吳而無功者,以其分也。分兵者,示強而實弱。',
+      verdictLostEn:
+        'The historian says: three columns against Wu achieved nothing because they were three. Dividing an army displays strength and produces weakness.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '遙署永昌太守',
+        titleEn: 'A Governor Appointed from a Thousand Li Away',
+        textZh:
+          '雍闓殺太守而附吳,你遙署他為永昌太守 ——'
+          + '一紙任命,不費一兵,而蜀之後方亂了三年。\n\n'
+          + '而後諸葛亮南征,四郡皆平。你的那位太守,'
+          + '死在自己人手裡。',
+        textEn:
+          'Yong Kai killed the administrator and came over to you, and you appointed him Grand Administrator of Yongchang from a thousand li away — one sheet of paper, not one soldier, and the rear of Shu was in disorder for three years.\n\n'
+          + 'Then Zhuge Liang went south and all four commanderies were settled. Your administrator was killed by his own people.',
+      },
+      verdictZh:
+        '論曰:遙制之術,費省而效速 —— 然所立者,'
+        + '非其力所能保。故雍闓死而吳不能救,'
+        + '南中之地,終為蜀有。',
+      verdictEn:
+        'The historian says: governing at a distance by appointment is cheap and quick — and what you set up that way you cannot protect. So Yong Kai died and Wu could not save him, and the south ended in Shu\'s hands.',
+      verdictLostZh:
+        '論曰:以一紙亂人之後方,善謀也;而謀止於此,則亦止於一紙。',
+      verdictLostEn:
+        "The historian says: to disorder an enemy's rear with a single document is good scheming. Scheming that stops there also stops at a single document.",
+    },
+  },
+  /* ── 228 街亭之戰 ─────────────────────────────────────────────── */
+  'scn-228-jieting': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '舍水上山',
+        titleEn: 'Off the Water, onto the Hill',
+        textZh:
+          '亮出祁山,南安、天水、安定三郡叛魏應亮,關中響震。\n\n'
+          + '而亮違眾拔謖,統大眾在前。謖舍水上山,舉措煩擾,'
+          + '王平連規諫謖,謖不能用 —— 張郃絕其汲道,擊,大破之。\n\n'
+          + '亮拔西縣千餘家還漢中,戮謖以謝眾。'
+          + '上疏曰:「臣以弱才,叨竊非據……請自貶三等,以督厥咎。」',
+        textEn:
+          'Liang came out at Qishan and three commanderies — Nan\'an, Tianshui and Anding — went over from Wei to him, and Guanzhong shook.\n\n'
+          + 'And Liang, against everyone\'s advice, promoted Ma Su to command the van. Su left the water and went up the hill, and his dispositions were fussy and confused; Wang Ping remonstrated again and again and Su would not use it — and Zhang He cut him off from the water, attacked, and broke him utterly.\n\n'
+          + 'Liang took a thousand households from Xi county back to Hanzhong and executed Su to answer for it, and memorialised: "With feeble talent I have usurped a place not mine... I ask to be demoted three ranks, to bear the blame."',
+      },
+      verdictZh:
+        '論曰:街亭之敗,敗於用人。先主臨終謂亮曰:'
+        + '「馬謖言過其實,不可大用,君其察之!」而亮違眾用之。\n'
+        + '及敗,戮謖而自貶三等 —— 知過而肯自罰者,古今為將者少。'
+        + '然一戰之失,三郡復入於魏,關中之震,自此不復有。',
+      verdictEn:
+        'The historian says: Jieting was lost in the choosing of a man. On his deathbed the First Lord told Liang: "Ma Su\'s words outrun his substance; he cannot be given great responsibility. Watch him." And Liang, against everyone, used him. When it failed he executed Su and demoted himself three ranks — few commanders in any age both see their error and punish themselves for it. But one lost battle put three commanderies back into Wei, and Guanzhong never shook again.',
+      verdictLostZh:
+        '論曰:出師之初,三郡響應;一敗之後,終亮之世,'
+        + '再無一郡叛魏而應蜀。人心之向背,常決於第一仗。',
+      verdictLostEn:
+        'The historian says: at the outset three commanderies came over. After the one defeat, not a single commandery ever went over to Shu again in Liang\'s lifetime. Which way people lean is usually settled by the first battle.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '張郃絕其汲道',
+        titleEn: 'Zhang He Cut Them Off from the Water',
+        textZh:
+          '三郡叛,朝野恐懼。帝曰:「亮阻山為固,今者自來,'
+          + '既亮貪三郡,知進而不知退,今因此時,破亮必也。」'
+          + '乃遣張郃西拒之。\n\n'
+          + '郃至街亭,見謖依阻南山,不下據城 ——'
+          + '絕其汲道,擊,大破之。三郡復平。',
+        textEn:
+          'Three commanderies revolted and the court took fright. The emperor said: "Liang had mountains to make himself safe in, and now he has come out of his own accord. Since he covets three commanderies and knows how to advance but not how to withdraw, this is the moment: he will certainly be broken." And sent Zhang He west.\n\n'
+          + 'He reached Jieting, saw Su had gone up the southern hill instead of holding the town below — cut him off from the water, attacked, and broke him. The three commanderies were quiet again.',
+      },
+      verdictZh:
+        '論曰:魏之勝街亭,勝在一將之目力。'
+        + '郃見謖舍水上山,不待命而絕其汲道 ——'
+        + '兵之勝負,有時只在看見對方站錯了地方的那一眼。',
+      verdictEn:
+        "The historian says: Wei won at Jieting on one general's eye. He saw that Su had left the water for the hill, cut the water without waiting for orders, and that was the battle. Sometimes the whole thing is the moment when someone notices the other man is standing in the wrong place.",
+      verdictLostZh:
+        '論曰:郃自街亭之後,為蜀所深憚;而三年之後,'
+        + '死於木門之弩下 —— 司馬懿使之追,郃曰不可,而不得已。',
+      verdictLostEn:
+        'The historian says: after Jieting, Shu was thoroughly wary of Zhang He. Three years later he died under the crossbows at Mumen — Sima Yi ordered the pursuit, He said it should not be made, and made it anyway.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '石亭在後',
+        titleEn: 'Shiting Comes Later',
+        textZh:
+          '蜀出祁山而敗於街亭 —— 而這一年秋天,'
+          + '周魴詐降誘曹休,陸遜大破之於石亭。\n\n'
+          + '同一年,兩國各出其兵,一敗一勝 ——'
+          + '而勝的那一家,也沒有再往前一步。',
+        textEn:
+          'Shu came out at Qishan and lost at Jieting — and that autumn Zhou Fang faked a defection to draw in Cao Xiu, and Lu Xun broke him at Shiting.\n\n'
+          + 'The same year, two states sent out their armies, one lost and one won — and the one that won did not take a step further either.',
+      },
+      verdictZh:
+        '論曰:蜀敗於西而吳勝於東,同在一年 ——'
+        + '而魏之疆域,終歲未減一縣。'
+        + '兩國各勝其勝,各敗其敗,而不能合為一事:此三分之所以久也。',
+      verdictEn:
+        "The historian says: Shu lost in the west and Wu won in the east in the same year — and Wei's borders were not a single county smaller at the end of it. Each state had its own victory and its own defeat and could not make them into one thing. That is why the three-way split lasted.",
+      verdictLostZh:
+        '論曰:同盟而不能同時者,其盟止於使敵不能專力於一方 ——'
+        + '而三分之世,這已經足夠了。',
+      verdictLostEn:
+        'The historian says: an alliance that cannot act simultaneously amounts to keeping the enemy from concentrating on one side. In an age of three powers, that turned out to be enough.',
+    },
+  },
+  /* ── 238 遼東·襄平之戰 ────────────────────────────────────────── */
+  'scn-238-liaodong': {
+    yan: {
+      defeat: {
+        titleZh: '燕王之號,兩年而已',
+        titleEn: 'King of Yan, for Two Years',
+        textZh:
+          '你先遣使南通孫權,權遣使拜你為燕王 —— 而你斬其使,'
+          + '送首於魏。魏拜你為大司馬、樂浪公。\n\n'
+          + '兩面皆賣,兩面皆不信。而後你自立為燕王,置百官。\n\n'
+          + '司馬懿至,四月而克襄平。城破之日,'
+          + '男子年十五已上七千餘人皆殺之,以為京觀。',
+        textEn:
+          'First you sent envoys south to Sun Quan, and Quan sent envoys to make you King of Yan — and you beheaded them and sent the heads to Wei. Wei made you Grand Marshal and Duke of Lelang.\n\n'
+          + 'You sold both sides and neither believed you afterwards. Then you declared yourself King of Yan and appointed a full set of officials.\n\n'
+          + 'Sima Yi came, and Xiangping fell in four months. On the day the walls went, more than seven thousand males aged fifteen and up were killed and piled into a victory mound.',
+      },
+      verdictZh:
+        '論曰:淵之亡,亡於兩賣。'
+        + '通吳以抗魏,可也;既通而斬其使,則吳不復救;'
+        + '受魏之封而後自王,則魏不復容。\n'
+        + '夫小國之存,恃一大國之庇;兩庇之而兩失之,'
+        + '則四十年之基,四月而盡。',
+      verdictEn:
+        'The historian says: Yuan fell by selling both sides. To approach Wu against Wei was reasonable; to approach them and then behead their envoys meant Wu would never come to his aid. To accept a title from Wei and then crown himself meant Wei would never tolerate him. A small state survives under the shelter of a large one. He tried for two shelters and lost both, and forty years of foundation went in four months.',
+      verdictLostZh:
+        '論曰:公孫氏據遼東三世五十年,而亡於一人之反覆。'
+        + '守遠地者,信為第一事 —— 遠則兵不能及,唯信可以及。',
+      verdictLostEn:
+        'The historian says: the Gongsun held Liaodong for three generations and fifty years, and it ended in one man\'s double-dealing. For a state far from anywhere, credibility is the first requirement — armies cannot reach that far; only a reputation can.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '四月而克',
+        titleEn: 'Four Months',
+        textZh:
+          '帝問懿:「往還幾日?」對曰:「往百日,攻百日,還百日,'
+          + '以六十日為休息,一年足矣。」\n\n'
+          + '會霖雨三十餘日,遼水暴漲,運船自遼口徑至城下。'
+          + '諸將欲移營,懿斬令曰:「敢有言徙者斬。」\n\n'
+          + '雨霽,乃合圍,起土山地道,晝夜攻之 —— 城破。',
+        textEn:
+          'The emperor asked Yi how long the round trip would take. "A hundred days out, a hundred days to take it, a hundred days back, and sixty to rest. A year is enough."\n\n'
+          + 'Then it rained for thirty days and more, the Liao rose, and the supply boats came up from the estuary right to the walls. His generals wanted to move camp, and he had the order posted: any man who mentions moving is executed.\n\n'
+          + 'When the rain cleared he closed the ring, raised earthworks and drove tunnels, and attacked day and night. The walls came down.',
+      },
+      verdictZh:
+        '論曰:懿之料敵,先計日而後行 —— 一年之期,'
+        + '果如其言。而霖雨三十日,諸將皆欲徙,獨懿不動:'
+        + '所恃者非天時,是**已經算過的那個數**。',
+      verdictEn:
+        'The historian says: he counted the days before he moved, and the year came out as he had said. And when it rained for thirty days and every general wanted to shift camp, he alone did not move — what he was standing on was not the weather but a number he had already worked out.',
+      verdictLostZh:
+        '論曰:襄平既破,坑其男子七千餘人 —— 遼東自此虛,'
+        + '而高句麗、鮮卑遂入其地。滅一國而不能有其民,'
+        + '所得者土,所失者藩。',
+      verdictLostEn:
+        'The historian says: when Xiangping fell, seven thousand men were put in a pit. Liaodong was empty afterwards, and Goguryeo and the Xianbei moved into it. To destroy a state without keeping its people is to gain ground and lose a buffer.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
