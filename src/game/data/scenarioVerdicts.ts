@@ -6637,6 +6637,379 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: after Dou Jiande\'s death his old commander Liu Heita rose again and recovered all his territory within six months. Taking ground is easy; dealing with the loyalty a dead man leaves behind is not. It took Tang three years to settle Hebei.',
     },
   },
+  /* ── 隋唐·淺水原之戰 ──────────────────────────────────────────── */
+  'scn-st-qianshui': {
+    tang: {
+      defeat: {
+        titleZh: '慎勿應也',
+        titleEn: 'On No Account Engage',
+        textZh:
+          '薛舉入寇涇州,世民為西討元帥。'
+          + '會世民疾篤,委軍於劉文靜、殷開山,誡之曰:\n'
+          + '「薛舉懸軍深入,食少兵疲,'
+          + '若來挑戰,慎勿應也。'
+          + '俟吾疾愈,為君等破之。」\n\n'
+          + '——文靜等恃眾不設備。'
+          + '舉兵掩其後,唐軍大敗,士卒死者十五六。\n\n'
+          + '其後薛舉卒,仁杲立。'
+          + '世民復至,堅壁不出者六十餘日。'
+          + '仁杲糧盡,其將帥相繼來降。\n\n'
+          + '乃遣梁實營於淺水原以誘之。'
+          + '宗羅睺攻之甚急,數日不下 ——'
+          + '世民度賊已疲,曰:「可以戰矣。」',
+        textEn:
+          'Xue Ju invaded Jingzhou and Li Shimin was appointed commander of the western expedition. Shimin fell seriously ill and handed the army to Liu Wenjing and Yin Kaishan, warning them: "Xue Ju has brought an army far from home with little food and tired troops. If he offers battle, on no account engage. Wait until I am well and I will break him for you."\n\n'
+          + 'Wenjing and the others trusted in their numbers and took no precautions. Xue Ju came round behind them, the Tang army was broken, and five or six men in ten were killed.\n\n'
+          + 'Afterwards Xue Ju died and Xue Rengao succeeded him. Shimin came back and held his works for over sixty days without coming out. Rengao\'s food ran out and his commanders came over one after another.\n\n'
+          + 'Then Liang Shi was sent to make camp on the Qianshui plain as a lure. Zong Luohou attacked it hard and could not carry it in several days — and Shimin, judging that the enemy was worn out, said: "Now we can fight."',
+      },
+      verdictZh:
+        '論曰:同一片淺水原,一敗一勝,'
+        + '所別者不在兵,在**誰肯等**。\n'
+        + '前役,主帥病而諸將恃眾;'
+        + '後役,主帥堅壁六十日而後一日決之。\n'
+        + '故諸將問:「一戰而勝,遂棄步兵,直趨城下,'
+        + '何以知其必克?」\n'
+        + '世民曰:「羅睺所部皆隴外之人,將驍卒悍,'
+        + '吾特出其不意而破之,斬獲不多。'
+        + '若復緩之,則皆入城,仁杲撫而用之,未易克也。'
+        + '……此決成敗之機,不可失也。」\n'
+        + '——**能等者,亦必能不等**。',
+      verdictEn:
+        'The historian says: the same Qianshui plain, one defeat and one victory, and the difference was not in the troops but in who was willing to wait. In the first action the commander was ill and his generals trusted their numbers; in the second the commander held his works sixty days and then settled it in one. So his officers asked: "You won the battle and then left your infantry and rode straight for the walls. How did you know it would fall?" And Shimin said: "Zong Luohou\'s men are all from beyond Long, hard commanders and hard soldiers, and I broke them by surprise without killing many of them. Give them time and they all get inside the city, and Rengao reassures them and uses them again, and it is no longer easy... That was the hinge of the whole thing and could not be let slip." A man who can wait must also be able not to wait.',
+      verdictLostZh:
+        '論曰:高墌之敗,世民不誅劉文靜、殷開山?'
+        + '——除名而已,後皆復用。\n'
+        + '**敗軍之責,分在授命者與受命者;'
+        + '而授命者病,則責不可盡以與人**。',
+      verdictLostEn:
+        'The historian says: after Gaozhi, did Shimin execute Liu Wenjing and Yin Kaishan? They were struck off the register and afterwards employed again. Responsibility for a lost battle is divided between the man who gave the order and the men who took it; and where the man who gave it was ill in bed, it cannot all be handed to somebody else.',
+    },
+    xiqin: {
+      defeat: {
+        titleZh: '懸軍深入',
+        titleEn: 'An Army Far From Home',
+        textZh:
+          '舉,金城人,家貲鉅萬,'
+          + '驍武絕倫,好結納邊豪。\n'
+          + '起兵旬月而有隴西之地,'
+          + '眾至十三萬,'
+          + '謂其群下曰:「古天子有降者乎?」\n\n'
+          + '——高墌一勝,唐軍死者十五六。\n'
+          + '諸將請乘勝取長安,而舉卒。\n\n'
+          + '仁杲立,性酷忍,'
+          + '每破敵,必生刳而支解之。'
+          + '眾雖畏而不附。\n\n'
+          + '及世民堅壁六十日,'
+          + '仁杲糧盡,其將梁胡郎、'
+          + '牟君才、渾幹等相繼降 ——'
+          + '——一國之亡,先亡於降者相屬。',
+        textEn:
+          'Xue Ju was a man of Jincheng with a great fortune, of unmatched martial vigour, and fond of cultivating the frontier magnates. Within a month of rising he held the Longxi region with a hundred and thirty thousand men, and asked his followers: "Have there ever been Sons of Heaven who surrendered?"\n\n'
+          + 'One victory at Gaozhi, and five or six Tang soldiers in ten were dead. His generals asked leave to follow it up and take Chang\'an — and he died.\n\n'
+          + 'Rengao succeeded him, a cruel man who had every enemy he took cut open alive and dismembered. His men feared him and were not attached to him.\n\n'
+          + 'And when Shimin held his works sixty days and Rengao\'s food ran out, his commanders Liang Hulang, Mou Juncai and Hun Gan came over one after another. A state falls first by having deserters in a steady stream.',
+      },
+      verdictZh:
+        '論曰:薛氏父子,一以驍武得隴,'
+        + '一以酷忍失之 ——\n'
+        + '**得眾以勝,而保眾以恩**;'
+        + '生刳支解者,勝時無人敢言,'
+        + '而糧盡之日,無一人肯守。\n'
+        + '故淺水原之再役,世民所待者,'
+        + '不是仁杲之糧盡,是**仁杲之人心先盡**。',
+      verdictEn:
+        'The historian says: the father took Longxi by martial vigour and the son lost it by cruelty. Men are gathered by victories and kept by generosity. While he was winning, nobody dared mention the men cut open alive; on the day the food ran out, not one of them would hold a wall. What Shimin was waiting for in the second Qianshui campaign was not Rengao\'s grain running out but his people running out first.',
+      verdictLostZh:
+        '論曰:仁杲既降,世民得其精兵,'
+        + '悉配麾下,與之遊獵無所間,'
+        + '眾皆感悅,願效死力。'
+        + '——**降卒之用,在敢與之同行**。',
+      verdictLostEn:
+        'The historian says: when Rengao surrendered, Shimin took his best troops, distributed them all through his own command, and went hunting with them without keeping any distance, and they were moved and glad and willing to die for him. The use of surrendered troops lies in daring to ride alongside them.',
+    },
+  },
+  /* ── 隋唐·柏壁之戰 ────────────────────────────────────────────── */
+  'scn-st-bobi': {
+    tang: {
+      defeat: {
+        titleZh: '閉營養銳',
+        titleEn: 'Shut the Camp and Keep the Edge',
+        textZh:
+          '劉武周引突厥之眾南侵,'
+          + '宋金剛陷太原、晉州,河東盡沒。\n'
+          + '高祖手敕曰:「賊勢如此,難與爭鋒,'
+          + '宜棄大河以東,謹守關西而已。」\n\n'
+          + '世民上表曰:「太原,王業所基,'
+          + '國之根本;河東殷實,京邑所資。'
+          + '若舉而棄之,臣竊憤恨。'
+          + '願假精兵三萬,必能平殄武周,克復汾晉。」\n\n'
+          + '至柏壁,堅壁不戰者五月餘。'
+          + '曰:「金剛懸軍千里,深入吾地,'
+          + '精兵猛將,咸聚於是。'
+          + '武周據太原,倚金剛為捍蔽。'
+          + '金剛軍無蓄積,以虜掠為資,'
+          + '意在速戰。'
+          + '我閉營養銳以挫其鋒,'
+          + '分兵汾、隰,衝其心腹 ——'
+          + '彼糧盡計窮,自當遁走。」',
+        textEn:
+          'Liu Wuzhou came south with Turkish troops and Song Jingang took Taiyuan and Jinzhou, and all of Hedong was lost. The Emperor wrote in his own hand: "With the enemy in this strength we cannot contend with them. We should give up everything east of the great river and hold the west of the pass carefully, and no more."\n\n'
+          + 'Shimin memorialised: "Taiyuan is where the imperial enterprise was founded and is the root of the state; Hedong is rich and supplies the capital. To abandon them at a stroke — I resent the thought. Give me thirty thousand picked men and I will certainly destroy Wuzhou and recover Fen and Jin."\n\n'
+          + 'At Baibi he held his works for over five months without fighting, saying: "Jingang has brought an army a thousand li and come deep into our country, and his best troops and hardest commanders are all here with him. Wuzhou sits at Taiyuan and uses Jingang as his shield. Jingang\'s army has no stores and lives by plunder, so his interest is a quick decision. I shall shut the camp and keep our edge to blunt his, and detach troops to Fen and Xi to drive at his vitals — and when his grain and his devices are gone he will run of his own accord."',
+      },
+      verdictZh:
+        '論曰:柏壁五月不戰,而一戰追奔二百里 ——'
+        + '**守與追,是同一個判斷的兩端**:'
+        + '守者,待其糧盡;追者,防其復振。\n'
+        + '故金剛北走,世民一日一夜行二百餘里,'
+        + '戰數十合;至雀鼠谷,一日八戰皆捷;'
+        + '軍中乏食,不食二日,不解甲三日。\n'
+        + '劉弘基執轡諫曰:「宜按兵以須。」'
+        + '世民曰:「功難成而易敗,機難得而易失。'
+        + '……吾竭力克之,'
+        + '若更淹留,使其計立備成,不可復攻矣。」',
+      verdictEn:
+        'The historian says: five months at Baibi without a battle, and then one battle and a two-hundred-li pursuit — holding and pursuing are two ends of a single judgement: you hold to let his grain run out and you pursue to stop him getting on his feet again. So when Jingang went north, Shimin covered over two hundred li in a day and a night and fought dozens of actions; at the Queshu valley he fought eight times in one day and won all eight; the army had no food, and he did not eat for two days or take his armour off for three. Liu Hongji took his bridle and urged him to halt and wait. And Shimin said: "Success is hard to make and easy to lose, and an opportunity is hard to get and easy to let slip... I am spending everything I have to beat him. Delay any longer and his plans are laid and his preparations made, and he cannot be attacked at all."',
+      verdictLostZh:
+        '論曰:尋相、尉遲敬德以介休、永安降。'
+        + '世民得敬德,大悅,'
+        + '使將其眾八千,與諸營相參。'
+        + '屈突通以為慮,驟以為言,'
+        + '世民曰:「寡人所見,異於卿等。」\n'
+        + '——後單雄信刺世民於榆窠,'
+        + '敬德躍馬大呼,橫刺之,墜於地。',
+      verdictLostEn:
+        'The historian says: Xun Xiang and Yuchi Jingde surrendered Jiexiu and Yong\'an. Shimin was delighted to have Jingde, left him in command of his eight thousand and mixed them in among the other camps. Qutu Tong thought it dangerous and said so repeatedly, and Shimin said: "What I see in this differs from what you gentlemen see." Later, when Shan Xiongxin came at Shimin with a lance at Yuke, Jingde spurred up shouting, took him in the flank and knocked him to the ground.',
+    },
+    dingyang: {
+      defeat: {
+        titleZh: '以虜掠為資',
+        titleEn: 'Living on What They Took',
+        textZh:
+          '武周引突厥為援,南下如破竹:'
+          + '并州總管齊王元吉棄城夜遁,'
+          + '太原陷。裴寂敗於介休。'
+          + '晉、澮、絳、呂,望風而下。\n\n'
+          + '——而軍無蓄積,以虜掠為資。\n\n'
+          + '柏壁相持五月,'
+          + '汾、隰之兵斷其糧道,'
+          + '金剛糧盡北走。\n\n'
+          + '雀鼠谷八戰皆北。'
+          + '金剛奔突厥,為突厥所殺;'
+          + '武周亦奔突厥,謀歸馬邑,事洩,見殺。',
+        textEn:
+          'Liu Wuzhou brought in the Turks as backing and came south through everything: the Prince of Qi, Yuanji, abandoned Bingzhou and slipped away at night, and Taiyuan fell. Pei Ji was beaten at Jiexiu. Jin, Kuai, Jiang and Lü came over at the rumour of his approach.\n\n'
+          + 'And his army had no stores and lived on what it took.\n\n'
+          + 'Five months facing each other at Baibi, with the troops from Fen and Xi cutting his supply road, and Jingang\'s grain ran out and he went north.\n\n'
+          + 'Eight actions in the Queshu valley and he lost all eight. Jingang fled to the Turks and the Turks killed him; Wuzhou fled to the Turks too, planned to slip back to Mayi, was found out and killed.',
+      },
+      verdictZh:
+        '論曰:武周之速,天下罕見;'
+        + '而其亡也,亦不過五月。\n'
+        + '**以掠為資者,其軍之壽命等於其所過之地** ——'
+        + '不能停,一停即餒;'
+        + '而世民之策,正是**逼他停下來**。\n'
+        + '故柏壁之勝,不在陣,在算糧。',
+      verdictEn:
+        'The historian says: Liu Wuzhou moved as fast as anyone in the empire, and five months finished him. An army that lives on what it takes has a lifespan equal to the country it passes through: it cannot stop, and stopping means starving — and Shimin\'s whole plan was to make it stop. Baibi was not won by a deployment. It was won by counting grain.',
+      verdictLostZh:
+        '論曰:引突厥為援者,武周、梁師都、劉黑闥皆然。'
+        + '——**借兵於外者,勝則分其地,'
+        + '敗則寄其命;而其命,不在自己手上**。',
+      verdictLostEn:
+        'The historian says: Liu Wuzhou, Liang Shidu and Liu Heita all brought the Turks in as backing. Whoever borrows an army abroad shares out his land if he wins and lodges his life with them if he loses — and his life is then not in his own hands.',
+    },
+  },
+  /* ── 隋唐·虎牢之戰 ────────────────────────────────────────────── */
+  'scn-st-hulao': {
+    tang: {
+      defeat: {
+        titleZh: '扼其咽喉',
+        titleEn: 'A Hand on the Throat',
+        textZh:
+          '世民圍王世充於洛陽,'
+          + '而竇建德將十餘萬眾來援。\n\n'
+          + '諸將皆以為腹背受敵,宜退保新安。\n'
+          + '郭孝恪、薛收曰:'
+          + '「世充保據東都,府庫充實,'
+          + '所將之兵,皆江淮精銳,'
+          + '即日之慮,在於乏食,'
+          + '是以為我所持,求戰不得,'
+          + '欲走無路。\n'
+          + '建德新破海公,將驕卒惰。'
+          + '吾據武牢,扼其咽喉。'
+          + '彼若冒險爭鋒,破之必矣。'
+          + '如其不戰,旬月之間,世充自潰。」\n\n'
+          + '——世民以三千五百騎據虎牢,'
+          + '而留兵圍洛陽如故。',
+        textEn:
+          'Shimin had Wang Shichong shut up in Luoyang when Dou Jiande came to the relief with over a hundred thousand men.\n\n'
+          + 'His officers all thought they were caught front and rear and should fall back on Xin\'an. Guo Xiaoke and Xue Shou said: "Shichong holds the eastern capital with full storehouses and troops who are the best of the Jiang and Huai region; his immediate worry is food, which is why we can hold him, so that he cannot get a battle and has nowhere to run.\n\n'
+          + 'Jiande has just beaten the Duke of Hai and his commanders are conceited and his men slack. Hold Hulao and we have a hand on his throat. If he takes the risk and comes on, he will certainly be broken. And if he will not fight, within a month Shichong collapses of himself."\n\n'
+          + 'So Shimin took three thousand five hundred horse to Hulao and left the siege of Luoyang exactly as it was.',
+      },
+      verdictZh:
+        '論曰:一戰而擒兩主,古今所罕 ——'
+        + '而其所以能者,在**不肯撤圍**。\n'
+        + '撤圍則世充復振,而建德無戰之必要;'
+        + '不撤圍,則建德不得不戰,'
+        + '而戰於虎牢者,是三千五百騎所選之地。\n'
+        + '**兩面受敵之時,常有一面是自己造出來的;'
+        + '既造之,則勿棄之**。',
+      verdictEn:
+        'The historian says: to take two sovereigns in one battle is nearly unheard of, and what made it possible was refusing to lift the siege. Lift it and Wang Shichong is on his feet again and Dou Jiande need not fight at all; keep it, and Jiande has to fight — and the place he has to fight is the ground three thousand five hundred horsemen have chosen. When you are caught between two enemies, one of those fronts is often one you made yourself; having made it, do not throw it away.',
+      verdictLostZh:
+        '論曰:建德陣自辰至午,士卒饑倦,'
+        + '皆坐列,又爭飲水,稍稍引退。'
+        + '世民曰:「可擊矣!」\n'
+        + '——**大軍之破綻,常不在陣形,在他們什麼時候吃飯**。',
+      verdictLostEn:
+        'The historian says: Dou Jiande stood in line of battle from dawn to midday, and his men grew hungry and tired and sat down in their ranks and scrambled for water and began drifting backwards. And Shimin said: "Now we can strike." The flaw in a great army is usually not its formation but when it last ate.',
+    },
+    zheng: {
+      defeat: {
+        titleZh: '洛陽',
+        titleEn: 'Luoyang',
+        textZh:
+          '你據東都,府庫充實,'
+          + '所將之兵皆江淮精銳。\n\n'
+          + '——而唐軍圍之,不攻。\n\n'
+          + '城中乏食,絹一匹直粟三升,'
+          + '布一匹直鹽一升,'
+          + '積屍滿於坑塹。\n'
+          + '民初有三萬家,'
+          + '至城破,不足三千家。\n\n'
+          + '及建德就擒,世民以其俘示城下。'
+          + '世充懼,乃出降。\n\n'
+          + '——所恃之外援,'
+          + '至此成了勸降的憑證。',
+        textEn:
+          'You held the eastern capital with full storehouses and troops who were the best of the Jiang and Huai region.\n\n'
+          + 'And the Tang army invested it and did not assault it.\n\n'
+          + 'Food ran short inside. A bolt of silk fetched three pints of grain and a bolt of cloth a pint of salt, and the corpses filled the ditches. There had been thirty thousand households at the start; when the city fell there were under three thousand.\n\n'
+          + 'And when Dou Jiande was taken, Shimin had the prisoners paraded below the walls. Shichong was frightened, and came out and surrendered.\n\n'
+          + 'The outside relief he had counted on ended as the exhibit that talked him into surrendering.',
+      },
+      verdictZh:
+        '論曰:世充之守洛陽,可謂堅矣;'
+        + '而其國之亡,不在城破,在**援至而敗**。\n'
+        + '守而待援者,一援不至猶可再守;'
+        + '援至而覆,則城中之心一日盡。\n'
+        + '故唐軍不攻而示俘 ——'
+        + '**攻城之最後一擊,常不是器械**。',
+      verdictEn:
+        'The historian says: Wang Shichong\'s defence of Luoyang was stubborn enough, and his state fell not when the walls were breached but when the relief arrived and was destroyed. A garrison waiting for relief can wait again if it does not come; when it comes and is annihilated, the will inside goes in a day. Which is why the Tang army did not assault and paraded prisoners instead. The last blow in a siege is usually not delivered by an engine.',
+      verdictLostZh:
+        '論曰:世充降,世民數之曰:'
+        + '「汝常以我為童子,今日相見,何如?」'
+        + '世充但頓首謝罪。'
+        + '——**倨傲之語,常於降時被人一句記起**。',
+      verdictLostEn:
+        'The historian says: when Shichong surrendered, Shimin taxed him with it: "You always called me a boy. And how do you find me today?" Shichong only knocked his head on the ground and begged pardon. Words spoken loftily are usually remembered back at a man in one sentence on the day he surrenders.',
+    },
+  },
+  /* ── 安史之亂 ─────────────────────────────────────────────────── */
+  'scn-st-anshi': {
+    tang: {
+      defeat: {
+        titleZh: '漁陽鼙鼓',
+        titleEn: 'The War Drums at Yuyang',
+        textZh:
+          '天寶十四載十一月,'
+          + '祿山發所部兵及同羅、奚、契丹、室韋'
+          + '凡十五萬眾,反於范陽。\n\n'
+          + '海內久承平,百姓累世不識兵革,'
+          + '猝聞范陽兵起,遠近震駭。'
+          + '河北皆祿山統內,所過州縣,望風瓦解 ——'
+          + '或開門出迎,或棄城竄匿,或為所擒戮,無敢拒之者。\n\n'
+          + '哥舒翰守潼關,固請持重:\n'
+          + '「祿山久習用兵,今始為逆,'
+          + '豈肯無備?是必羸師以誘我。'
+          + '若往,正入其計中。\n'
+          + '且賊遠來,利在速戰;'
+          + '王師堅守,利在持重。'
+          + '……不如按兵以待之。」\n\n'
+          + '——楊國忠迫之。翰撫膺慟哭,引兵出關。\n'
+          + '靈寶之敗,二十萬眾,存者八千。',
+        textEn:
+          'In the eleventh month of the fourteenth year of Tianbao, An Lushan brought out his own troops and the Tongluo, Xi, Khitan and Shiwei, a hundred and fifty thousand in all, and revolted at Fanyang.\n\n'
+          + 'The empire had been at peace so long that the people had not seen war for generations, and the sudden news from Fanyang shook everyone near and far. All Hebei was under An Lushan\'s command, and the prefectures and counties he passed came apart at the sight of him — opening their gates to meet him, or abandoning their walls and hiding, or being taken and killed. Nobody dared stand against him.\n\n'
+          + 'Geshu Han held Tong pass and pressed hard for caution: "An Lushan has been a soldier a long time; having just now turned rebel, is he likely to be unprepared? He is certainly showing us a weak force to draw us out, and going out means walking into it. Besides, the rebels have come far and their interest is a quick decision, while the imperial army holds a fortified line and its interest is patience... Better to keep the troops in hand and wait."\n\n'
+          + 'And Yang Guozhong forced him out. Han beat his breast and wept, and led the army through the pass. At Lingbao, of two hundred thousand men eight thousand were left.',
+      },
+      verdictZh:
+        '論曰:潼關之失,不失於賊,失於**朝廷不能忍** ——\n'
+        + '守關者主守,而促戰者在千里之外;\n'
+        + '促之者非不知兵,是恐翰之擁兵自重。\n'
+        + '**猜疑一起,則正確的軍略反成了罪證**。\n'
+        + '關破而幸蜀,馬嵬之變,'
+        + '國忠死於亂兵,貴妃縊於佛堂 ——'
+        + '迫翰出關者,亦不能自免。\n'
+        + '自是唐有天下百五十年,'
+        + '而藩鎮之根,種於此。',
+      verdictEn:
+        'The historian says: Tong pass was not lost to the rebels but to a court that could not be patient. The man holding the pass wanted to hold it, and the men pressing for battle were a thousand li away — and they pressed not out of ignorance of war but out of fear that Geshu Han with an army would grow too powerful. Once suspicion is in, the correct strategy becomes the evidence against you. The pass fell, the court fled to Shu, and at Mawei, Yang Guozhong was killed by the mutinous troops and the Imperial Consort strangled in the shrine — the man who forced Geshu Han out of the pass did not escape either. Tang held the empire another hundred and fifty years, and the roots of the warlord provinces were planted here.',
+      verdictLostZh:
+        '論曰:張巡守睢陽,'
+        + '外無蚍蜉蟻子之援,'
+        + '而江淮由是保全。\n'
+        + '城陷,尹子奇問曰:'
+        + '「聞君每戰眥裂,嚼齒皆碎,何也?」'
+        + '巡曰:「吾欲氣吞逆賊,但力不能耳。」'
+        + '子奇以刀抉其口視之,'
+        + '所存之齒,不過三數。',
+      verdictLostEn:
+        'The historian says: Zhang Xun held Suiyang without so much as an ant\'s worth of relief, and the Jiang and Huai country was saved by it. When the city fell, Yin Ziqi asked him: "They say that in every action your eyes split at the corners and your teeth are ground to pieces. Why is that?" And Xun said: "I want to swallow the traitors whole, and my strength is not equal to it." Ziqi prised his mouth open with a blade to look, and there were three or four teeth left.',
+    },
+    yan: {
+      defeat: {
+        titleZh: '范陽',
+        titleEn: 'Fanyang',
+        textZh:
+          '祿山兼統平盧、范陽、河東三鎮,'
+          + '擁兵二十萬,'
+          + '而朝廷方以為忠。\n\n'
+          + '——十五萬眾南下,'
+          + '三十四日而下洛陽,'
+          + '六月而入長安。\n\n'
+          + '然入長安之後,'
+          + '祿山目盲,居深宮,'
+          + '諸將希得見。\n'
+          + '嚴莊、李豬兒與慶緒謀,'
+          + '夜刺之於帳中。\n\n'
+          + '——慶緒為史思明所殺,'
+          + '思明為其子朝義所殺,'
+          + '朝義自縊於林中。\n\n'
+          + '八年之亂,四主相殺,無一善終。',
+        textEn:
+          'An Lushan held the three commands of Pinglu, Fanyang and Hedong together, with two hundred thousand troops — and the court still thought him loyal.\n\n'
+          + 'A hundred and fifty thousand came south, Luoyang fell in thirty-four days, and Chang\'an in six months.\n\n'
+          + 'And once in Chang\'an, An Lushan went blind, kept to the inner palace, and his commanders rarely saw him. Yan Zhuang and Li Zhu\'er plotted with his son Qingxu and stabbed him in his tent at night.\n\n'
+          + 'Qingxu was killed by Shi Siming, Siming was killed by his son Chaoyi, and Chaoyi hanged himself in a wood.\n\n'
+          + 'Eight years of rebellion, four rulers killing one another, and not one of them died well.',
+      },
+      verdictZh:
+        '論曰:祿山之強,強於**一人領三鎮**;'
+        + '而其亂之速,亦由於此 ——\n'
+        + '節度使本為邊防而設,'
+        + '兼統則為一國;\n'
+        + '故亂之根不在祿山,在**制度容許有這樣一個人**。\n'
+        + '亂雖平,而河北三鎮終唐之世不奉朝命:'
+        + '**平叛所用之法,是把叛者封為節度使** ——'
+        + '於是一亂之後,置了三個可以再亂的位子。',
+      verdictEn:
+        'The historian says: An Lushan was strong because one man held three military commands, and the rebellion came as fast as it did for the same reason. Military governorships were created for frontier defence; held together they amount to a state. So the root of it was not An Lushan but a system that permitted such a man to exist. The rebellion was put down, and the three Hebei commands never took an order from the court again for the rest of the dynasty — because the method used to end it was to make the rebels military governors. One rebellion over, and three posts created from which it could be done again.',
+      verdictLostZh:
+        '論曰:杜甫至德二載在長安,作《春望》:'
+        + '「國破山河在,城春草木深。'
+        + '感時花濺淚,恨別鳥驚心。'
+        + '烽火連三月,家書抵萬金。」\n'
+        + '——**史載其亡幾城,詩載其亡何物**。',
+      verdictLostEn:
+        'The historian says: Du Fu, in Chang\'an in the second year of Zhide, wrote Spring View: "The state is broken; its hills and rivers remain. Spring in the city, and the grass and trees grow deep. Moved by the times, the flowers scatter tears; hating the parting, the birds startle the heart. Beacon fires three months on end; a letter from home is worth ten thousand in gold." The histories record how many cities were lost. The poems record what was lost.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
