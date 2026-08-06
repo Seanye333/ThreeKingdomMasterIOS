@@ -2828,6 +2828,198 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: the loan of Jing province never had a due date, and the man asking for it back never expected to get it. He asked in order to have a justification.',
     },
   },
+  /* ── 189 十常侍之亂 ───────────────────────────────────────────── */
+  'scn-189-eunuchs': {
+    han: {
+      defeat: {
+        titleZh: '召外兵',
+        titleEn: 'Send for the Border Armies',
+        textZh:
+          '太后不聽誅宦,袁紹勸進曰:「可多召四方猛將及諸豪傑,'
+          + '使並引兵向京城,以脅太后。」\n\n'
+          + '陳琳諫曰:「今將軍總皇威,握兵要,龍驤虎步,高下在心 ——'
+          + '此猶鼓洪爐燎毛髮耳。夫違經合道,天人所順;'
+          + '而反委釋利器,更徵外助。大兵聚會,強者為雄,'
+          + '所謂倒持干戈,授人以柄,功必不成,只為亂階。」\n\n'
+          + '進不聽。曹操聞而笑曰:「宦官之官,古今宜有,'
+          + '但世主不當假之權寵,使至於此。既治其罪,當誅元惡,'
+          + '一獄吏足矣,何至紛紛召外兵乎!欲盡誅之,事必宣露,吾見其敗也。」\n\n'
+          + '八月,進入省,宦官伏兵斬之於嘉德殿前。',
+        textEn:
+          'The Dowager would not have the eunuchs killed, so Yuan Shao urged: "Summon a number of the fierce generals of the four quarters and the local strongmen, and have them all march on the capital to put pressure on the Dowager."\n\n'
+          + 'Chen Lin remonstrated: "Your Excellency holds the imperial authority and the keys of the army; you stride like a dragon and a tiger, and high and low are at your discretion. This is like working a great furnace to singe a hair. To go outside the rules and stay within the Way is what Heaven and men approve — and instead you would put down the sharp instrument in your hand and send for outside help. When great armies gather, the strongest becomes the master. This is called reversing your grip on the spear and handing someone else the shaft. It cannot succeed and it will only make a stair for disorder."\n\n'
+          + 'He was not heeded. Cao Cao heard and laughed: "Eunuch offices are proper enough in any age. The trouble is that sovereigns should not lend them power and favour until it comes to this. Since their crimes are to be punished, execute the ringleaders — one gaoler is enough. Why all this summoning of border armies? If he means to kill them all, word will get out, and I can see how it ends."\n\n'
+          + 'In the eighth month He Jin went into the palace, and the eunuchs\' hidden men cut him down before the Jiade hall.',
+      },
+      verdictZh:
+        '論曰:進之死,死於召外兵之前 —— 召兵之議一出,'
+        + '而禁中已無可保之理。陳琳、曹操皆言之,而進不聽者,'
+        + '以其所畏在太后,不在董卓。\n'
+        + '夫倒持干戈者,不知授柄之人為誰 —— 而那個人已經在路上了。',
+      verdictEn:
+        'The historian says: He Jin died before the border armies were ever summoned — from the moment the proposal was made, the inner palace could not be kept. Chen Lin said so and Cao Cao said so, and he did not listen because what he feared was the Dowager, not Dong Zhuo. A man who reverses his grip on a spear does not know who will take the shaft — and that man was already on the road.',
+      verdictLostZh:
+        '論曰:一獄吏足矣 —— 而所以不能用一獄吏者,'
+        + '以其兄妹之間,已非君臣。',
+      verdictLostEn:
+        'The historian says: one gaoler would have been enough. The reason one gaoler could not be used was that between a brother and a sister there is no relation of sovereign and subject.',
+    },
+    eunuchs: {
+      defeat: {
+        titleZh: '張常侍是我父',
+        titleEn: '"Chang Rang Is My Father"',
+        textZh:
+          '靈帝嘗曰:「張常侍是我父,趙常侍是我母。」'
+          + '你們十二人共守禁中三十年,靠的是宮牆、詔書,和皇帝的耳朵。\n\n'
+          + '而那位皇帝死了。何進在門外,袁紹在門外。\n\n'
+          + '你們殺了何進 —— 而後袁紹勒兵斬趙忠,'
+          + '捕諸宦者,無少長皆殺之,凡二千餘人,'
+          + '或有無鬚而誤死者。\n\n'
+          + '張讓等劫少帝走小平津,追急,讓等投河而死。',
+        textEn:
+          'Emperor Ling used to say: "Chang Rang is my father and Zhao Zhong is my mother." Twelve of you held the inner palace for thirty years on three things — walls, edicts, and the emperor\'s ear.\n\n'
+          + 'And that emperor died. He Jin was outside. Yuan Shao was outside.\n\n'
+          + 'You killed He Jin — and then Yuan Shao brought troops in, cut down Zhao Zhong, and had every eunuch taken and killed regardless of age, more than two thousand of them; some men without beards died by mistake.\n\n'
+          + 'Zhang Rang and the rest carried the young emperor off to Xiaopingjin, and when the pursuit closed they went into the river.',
+      },
+      verdictZh:
+        '論曰:宦者之禍,起於人主之私 —— 「張常侍是我父」一語,'
+        + '非讓等所能自致,乃靈帝授之也。\n'
+        + '及其誅也,無少長皆殺,二千餘人,而漢之禁中遂空。'
+        + '宦官既盡,而董卓入洛 —— 去一患而致一亡。',
+      verdictEn:
+        'The historian says: the eunuch calamity began in a sovereign\'s private affections — "Chang Rang is my father" was not something Zhang Rang could have arranged for himself; Emperor Ling gave it to him. And when the reckoning came, every one of them died regardless of age, more than two thousand, and the inner palace of Han was empty. The eunuchs were finished, and Dong Zhuo entered Luoyang. One nuisance removed and a dynasty ended.',
+      verdictLostZh:
+        '論曰:守禁中三十年而不出一步者,一旦出宮門,即無所依。'
+        + '權之所在,亦其所囚。',
+      verdictLostEn:
+        'The historian says: men who held the inner palace for thirty years without once stepping outside it had nothing to stand on the moment they went out the gate. Where their power was, they were also imprisoned.',
+    },
+    dong: {
+      defeat: {
+        titleZh: '奉召而來',
+        titleEn: 'Summoned',
+        textZh:
+          '你在河東,而洛陽的詔書到了 —— 召你將兵入京,以脅太后。\n\n'
+          + '你上書曰:「臣輒鳴鐘鼓如洛陽,請收讓等,以清姦穢。」'
+          + '而後緩行,觀變。\n\n'
+          + '及至,何進已死,宦官已誅,少帝在北邙山下 ——'
+          + '你迎之而還。從此洛陽的兵是你的,天子也是你的。\n\n'
+          + '你什麼都沒做。你只是來得剛剛好。',
+        textEn:
+          'You were in Hedong when the edict came from Luoyang, summoning you to bring troops to the capital and put pressure on the Dowager.\n\n'
+          + 'You memorialised: "Your servant will beat drums and bells all the way to Luoyang and ask for Zhang Rang and the rest to be arrested and the filth cleaned out." And then marched slowly, watching.\n\n'
+          + 'By the time you arrived He Jin was dead, the eunuchs were dead, and the young emperor was under the Beimang hills. You collected him and came back. From that day the troops in Luoyang were yours and so was the Son of Heaven.\n\n'
+          + 'You had done nothing at all. You had merely arrived at exactly the right time.',
+      },
+      verdictZh:
+        '論曰:卓之得洛陽,非戰也,是**時**也 ——'
+        + '進召之而進死,宦誅之而宦盡,'
+        + '及卓至,城中無主而兵在其手。\n'
+        + '故曰:授人以柄者,不必授於強者;授於**恰好在場**的那一個。',
+      verdictEn:
+        'The historian says: Dong Zhuo did not take Luoyang by fighting; he took it by timing. He Jin summoned him and then died; the eunuchs were destroyed and then gone; and when Zhuo arrived the city had no master and the troops were in his hands. Hence: the man you hand the shaft to need not be the strongest. It is whoever happens to be standing there.',
+      verdictLostZh:
+        '論曰:緩行者,非怯也,待其自亂也。'
+        + '待之而後入,故一入而無所爭。',
+      verdictLostEn:
+        'The historian says: he marched slowly not out of timidity but to let the thing come apart by itself. He waited and then went in, and having waited, there was nothing left to fight over.',
+    },
+  },
+  /* ── 194 徐州牧 ───────────────────────────────────────────────── */
+  'scn-194-xuzhou': {
+    cao: {
+      defeat: {
+        titleZh: '兗州反,而徐州未下',
+        titleEn: 'Yan Revolted before Xu Fell',
+        textZh:
+          '再征徐州,所過殘戮,雞犬亦盡,泗水為之不流。\n\n'
+          + '而張邈與陳宮叛迎呂布 —— 郡縣皆應,'
+          + '唯鄄城、范、東阿三城為荀彧、程昱所全。\n\n'
+          + '你回師,與布相持於濮陽百餘日。蝗蟲起,百姓大餓,'
+          + '布眾亦餓,各引去。\n\n'
+          + '袁紹使人說你連和,欲使你舉家往鄴。'
+          + '你方畏懼,欲許之 —— 程昱曰:'
+          + '「意者將軍殆臨事而懼,不然何慮之不深也!'
+          + '夫袁紹據燕、趙之地,有并天下之心,而智不能濟也。'
+          + '將軍自度能為之下乎?」',
+        textEn:
+          'The second campaign into Xu: slaughter everywhere it passed, not a chicken or a dog left, the Si river dammed with the dead.\n\n'
+          + 'And then Zhang Miao and Chen Gong revolted and brought in Lü Bu — every commandery and county went over, and only Juancheng, Fan and Dong\'e were kept, by Xun Yu and Cheng Yu.\n\n'
+          + 'You turned back and stood facing Bu at Puyang for a hundred days and more. Then locusts came and the people starved, and Bu\'s men starved too, and both sides drew off.\n\n'
+          + 'Yuan Shao sent to propose an alliance and suggested you move your family to Ye. You were frightened enough to consider it — and Cheng Yu said: "I take it Your Excellency has been frightened by events; otherwise how could you think so shallowly? Yuan Shao holds the country of Yan and Zhao and has designs on the whole realm, and his judgement is not equal to it. Do you reckon you could be his subordinate?"',
+      },
+      verdictZh:
+        '論曰:操之興,不在兗州之得,在兗州既失而復得。'
+        + '一州皆反而三城不動 —— 荀彧、程昱之力也。\n'
+        + '故曰:創業者不患無地,患無死守之人。'
+        + '而屠徐州之事,史官不為之諱:'
+        + '其後徐州之人,終操之世不肯附。',
+      verdictEn:
+        "The historian says: Cao's rise was not in taking Yan province but in losing it and getting it back. The whole province turned and three towns did not — the work of Xun Yu and Cheng Yu. A founder's problem is not a shortage of ground but a shortage of men who will hold it to the death. As for the massacre in Xu, the historians do not gloss it over: the people of Xu would not come over to him for the rest of his life.",
+      verdictLostZh:
+        '論曰:報父之讎而屠一州之民 —— 讎報矣,而州不可有。'
+        + '兵之所忌,莫大於使人無降之路。',
+      verdictLostEn:
+        'The historian says: he avenged his father by massacring a province. The vengeance was taken and the province could never be held. Nothing in war is more foolish than leaving people no road on which to surrender.',
+    },
+    tao: {
+      defeat: {
+        titleZh: '非劉備不能安此州',
+        titleEn: 'No One but Liu Bei',
+        textZh:
+          '曹嵩過境,你遣都尉張闓將騎二百護送 ——'
+          + '而闓於泰山華、費間殺之,取財物而走。\n\n'
+          + '你不能自明,亦不能拒操。退保郯城,'
+          + '而徐州之民為之受屠。\n\n'
+          + '臨終,謂別駕麋竺曰:「非劉備不能安此州也。」',
+        textEn:
+          'Cao Song crossed your territory and you sent the commandant Zhang Kai with two hundred horse to escort him — and Kai killed him between Hua and Fei in Taishan, took his goods, and rode off.\n\n'
+          + 'You could neither clear yourself nor hold Cao off. You fell back on Tan, and the people of Xu were butchered on your account.\n\n'
+          + 'At the end you said to your aide Mi Zhu: "No one but Liu Bei can settle this province."',
+      },
+      verdictZh:
+        '論曰:謙之禍,起於一都尉之貪。'
+        + '夫遣人護送者,所託非人,則禍不可解 ——'
+        + '而亂世之中,遣誰去,常是主者一念之間的事。',
+      verdictEn:
+        'The historian says: Tao Qian\'s ruin began with one commandant\'s greed. When you send an escort and pick the wrong man, the consequence cannot be argued away — and in a broken age, whom you send is usually a matter of one passing thought.',
+      verdictLostZh:
+        '論曰:讓徐州於備,而不讓於子 —— 亂世之中,'
+        + '此為知子,亦為知州。',
+      verdictLostEn:
+        'The historian says: he left the province to Liu Bei and not to his sons. In such an age that was knowing his sons, and also knowing his province.',
+    },
+    lubu: {
+      defeat: {
+        titleZh: '兗州一時皆應',
+        titleEn: 'All Yan Came Over at Once',
+        textZh:
+          '陳宮說張邈曰:「今雄傑並起,天下分崩,'
+          + '君以千里之眾,當四戰之地,撫劍顧眄,亦足以為人豪,'
+          + '而反受制於人,不以鄙乎!今州軍東征,其處空虛,'
+          + '呂布壯士,善戰無前,若權迎之,共牧兖州,'
+          + '觀天下形勢,俟時事之變通,此亦縱橫之一時也。」\n\n'
+          + '邈從之。布至,郡縣皆應 ——\n\n'
+          + '而百餘日之後,蝗起,人相食,布眾亦餓,'
+          + '你不得不走。你這一生所有的城,都是這樣來的,也是這樣走的。',
+        textEn:
+          'Chen Gong said to Zhang Miao: "Strong men are rising everywhere and the realm is coming apart. You have a thousand li of people and hold ground fought over on four sides; you could put your hand on your sword, look about you, and be one of the great men of the age — and instead you take orders from someone else. Is that not shabby? The provincial army has gone east and the place is empty. Lü Bu is a fighter, unbeatable in the field. Take him in on your own terms, hold Yan province jointly, watch how the realm shapes, and wait for events. This too is a moment for the arts of alliance."\n\n'
+          + 'Miao agreed. Bu arrived, and every commandery and county came over —\n\n'
+          + 'and a hundred days later the locusts came, people ate each other, his own men starved, and he had to go. Every city he ever held came to him that way, and left him that way.',
+      },
+      verdictZh:
+        '論曰:布之得兗州,以其虛;其失兗州,以其無食。'
+        + '善戰無前而不能理民 —— 故所至皆下,而所下皆不能久。',
+      verdictEn:
+        'The historian says: he got Yan province because it was empty and lost it because there was nothing to eat. Unbeatable in the field and unable to administer a population — so everything fell to him and nothing he took stayed taken.',
+      verdictLostZh:
+        '論曰:陳宮之謀,可謂善矣;而所託者布 ——'
+        + '謀之善否,終繫於用之者。',
+      verdictLostEn:
+        "The historian says: Chen Gong's plan was a good one, and the man he entrusted it to was Lü Bu. Whether a plan is good in the end depends on who carries it out.",
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
