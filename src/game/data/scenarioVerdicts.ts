@@ -2654,6 +2654,180 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: Cao did not take Liu Ye\'s advice, and Ye never made anything of it afterwards. The hard part of being a strategist is not producing the plan. It is having it refused and not resenting it.',
     },
   },
+  /* ── 211 渭南之戰 ─────────────────────────────────────────────── */
+  'scn-211-weinan': {
+    cao: {
+      defeat: {
+        titleZh: '離之而已',
+        titleEn: 'Just Separate Them',
+        textZh:
+          '關中諸將十部,眾十萬,而操曰:「關中長遠,若賊各依險阻,'
+          + '征之,不一二年不可定也。今皆來集,其眾雖多,莫相歸服,'
+          + '軍無適主,一舉可滅,為功差易,吾是以喜。」\n\n'
+          + '及與韓遂交馬語移時,不及軍事,但說京都舊故 ——'
+          + '超等問遂:「公何言?」遂曰:「無所言也。」超等疑之。\n\n'
+          + '他日,操又與遂書,多所點竄,如遂改定者 ——'
+          + '超等愈疑遂。遂大戰,遂等大敗。',
+        textEn:
+          'Ten companies in Guanzhong, a hundred thousand men, and Cao said: "Guanzhong is far off. If the rebels each held their own defiles it would take a year or two to settle. Now they have all gathered in one place — many as they are, none of them defers to another and the army has no proper master. It can be destroyed at a stroke, and rather easily. That is why I am pleased."\n\n'
+          + 'And when he met Han Sui, they rode knee to knee talking a long while, nothing about the campaign, only old acquaintances in the capital. Chao and the others asked Sui what he had said. "Nothing at all." And they began to wonder.\n\n'
+          + 'Later Cao wrote to Sui and made many corrections in the letter, as if Sui had altered it. Chao and the rest wondered a great deal more. Then Cao gave battle, and they were badly beaten.',
+      },
+      verdictZh:
+        '論曰:潼關之勝,不在渭水之陣,在**十部無適主**五字。'
+        + '兵多而無統者,不必以兵破之;示之以疑可也。'
+        + '故曰:合眾者難,離眾者易 —— 而離之之術,常止於一封改過的信。',
+      verdictEn:
+        'The historian says: Tongguan was not won on the Wei river but in the phrase "the army has no proper master." A large force with no unified command need not be broken by force; it is enough to give it something to doubt. Gathering men is hard and separating them is easy — and the technique of separating them often amounts to one letter with corrections in it.',
+      verdictLostZh:
+        '論曰:超等十部,合則十萬,分則各數千。'
+        + '而其合也,以利;其分也,亦以利。',
+      verdictLostEn:
+        'The historian says: the ten companies together were a hundred thousand and separately a few thousand each. They came together for advantage and they came apart for advantage.',
+    },
+    'ma-chao': {
+      defeat: {
+        titleZh: '若使早用李堪之計',
+        titleEn: 'If Only We Had Taken Li Kan\'s Advice',
+        textZh:
+          '超等屯渭南,遣信求割河以西請和,操不許。'
+          + '九月,進軍渡渭。超等數挑戰,又不許;'
+          + '固請割地,求送任子,操用賈詡計,偽許之。\n\n'
+          + '而後一戰而破。超走涼州,遂走金城。\n\n'
+          + '其後操曰:「賊守潼關,若吾入河東,賊必引守諸津,'
+          + '則西河未可渡。吾故盛兵向潼關,賊悉眾南守,西河之備虛,'
+          + '故二將得擅取西河。」',
+        textEn:
+          'Chao and the rest camped south of the Wei and sent to ask for peace, offering to cede the land west of the river; Cao refused. In the ninth month he moved and crossed the Wei. Chao offered battle repeatedly and was refused; when he pressed hard to cede territory and send hostages, Cao took Jia Xu\'s advice and pretended to agree.\n\n'
+          + 'Then one battle broke them. Chao ran for Liang province and Sui for Jincheng.\n\n'
+          + 'Afterwards Cao said: "The rebels held Tongguan. Had I gone into Hedong they would have drawn back to hold the fords and the west river could not have been crossed. So I made a great show at Tongguan, they all went south to hold it, the west river was left empty, and my two generals had it for the taking."',
+      },
+      verdictZh:
+        '論曰:超之勇,冠於一時;而所將者非其兵,所盟者非其黨。'
+        + '十部各為其主,故操一離而潰。\n'
+        + '其後超奔漢中,再奔劉備,終為蜀之五虎 ——'
+        + '而涼州之地,自此不復有主。',
+      verdictEn:
+        'The historian says: Ma Chao\'s courage had no equal in his day, and the troops he led were not his and the allies he had sworn with were not his party. Ten companies each with its own master, so one act of separation scattered them. Afterwards he fled to Hanzhong, then to Liu Bei, and ended as one of Shu\'s Five Tigers — and Liang province never had a master again.',
+      verdictLostZh:
+        '論曰:求割地、求送任子者,已示其怯;'
+        + '示怯而後戰,未有能勝者。',
+      verdictLostEn:
+        'The historian says: to offer territory and to offer hostages is to show that you are afraid. Nobody who shows fear first and fights afterwards wins.',
+    },
+    'han-sui': {
+      defeat: {
+        titleZh: '公何言?無所言也',
+        titleEn: '"What Did He Say?" "Nothing at All."',
+        textZh:
+          '你與曹操之父同歲孝廉,又與操同時,'
+          + '故交馬語移時,所說者京都舊故,拊手歡笑。\n\n'
+          + '而後超問你說了什麼。你說沒說什麼 ——'
+          + '這是實話,而實話在那個時候是最壞的答案。\n\n'
+          + '你在關中三十年,與馬騰結為異姓兄弟,又相攻,又和解。'
+          + '而最後拆散你們的,是一場沒有內容的談話。',
+        textEn:
+          'You and Cao Cao\'s father had been recommended in the same year, and you and Cao had served at the same time — so you rode knee to knee a long while talking about old acquaintances in the capital, clapping your hands and laughing.\n\n'
+          + 'Then Chao asked you what had been said. You said nothing had been. It was true, and the truth was the worst possible answer at that moment.\n\n'
+          + 'Thirty years in Guanzhong; sworn brother to Ma Teng, then at war with him, then reconciled. And what finally separated you was a conversation with no content in it.',
+      },
+      verdictZh:
+        '論曰:操之離間,不用一言之偽,'
+        + '而用**一場無事之談** —— 無事者,最難自明。'
+        + '遂之見疑,非其罪也;而疑之既生,雖無罪亦無以自解。',
+      verdictEn:
+        'The historian says: Cao\'s wedge was not a lie but a conversation about nothing — and nothing is the hardest thing to prove. Han Sui was suspected without having done anything, and once suspicion exists, innocence has no way to argue itself.',
+      verdictLostZh:
+        '論曰:三十年之盟,壞於一日之語;'
+        + '而語之所以能壞之者,以其盟本無所繫。',
+      verdictLostEn:
+        'The historian says: thirty years of alliance undone by one day\'s conversation — and the conversation could undo it because the alliance had never been fastened to anything.',
+    },
+  },
+  /* ── 213 落鳳坡 ───────────────────────────────────────────────── */
+  'scn-213-fengpo': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '進退狼跋',
+        titleEn: 'Caught between Advancing and Retreating',
+        textZh:
+          '龐統曰:「今陰選精兵,晝夜兼道,徑襲成都,此上計也。'
+          + '楊懷、高沛,璋之名將,今宜稱有急還救荊州,'
+          + '併使裝束,外作歸形;此二子既服將軍英名,'
+          + '又喜將軍之去,必乘輕騎來見,將軍因此執之,'
+          + '進取其兵,乃向成都,此中計也。'
+          + '退還白帝,連引荊州,徐還圖之,此下計也。'
+          + '若沉吟不去,將致大困,不可久矣。」\n\n'
+          + '先主然其中計。而後統率眾攻雒縣,'
+          + '為流矢所中,卒 —— 年三十六。',
+        textEn:
+          'Pang Tong said: "Pick good troops quietly, march day and night, go straight for Chengdu — that is the best plan. Yang Huai and Gao Pei are Zhang\'s best generals; announce that there is an emergency and you are going back to Jing, have the baggage packed and make a show of leaving. Those two admire your name and will be glad you are going, and will certainly come with a light escort to see you off; seize them then, take their troops, and go for Chengdu — that is the middle plan. Fall back on Baidi, link up with Jing, and come back to it slowly — that is the lowest. And if you sit and brood and do not go, you will be in serious difficulty and it will not last long."\n\n'
+          + 'The First Lord took the middle plan. Then Tong led an assault on Luo county, was hit by a stray arrow, and died at thirty-six.',
+      },
+      verdictZh:
+        '論曰:三計之中,先主取其中 —— 非不知上計之速,'
+        + '以其名不正也。故寧遲一年而後取之。\n'
+        + '龐統死於流矢,而蜀之取益州,自此以兵而非以謀。'
+        + '一人之死,而一國之得失皆改其形。',
+      verdictEn:
+        'The historian says: of three plans the First Lord took the middle one — not because he could not see that the first was faster, but because it could not be justified. Better a year slower and defensible. Pang Tong died of a stray arrow, and from then on Shu took Yi province by force rather than by scheme. One man\'s death, and the whole shape of a country\'s gain changed with it.',
+      verdictLostZh:
+        '論曰:客而取主者,必先有辭。'
+        + '無辭而取之,雖得其地,不得其人。',
+      verdictLostEn:
+        'The historian says: a guest who intends to displace his host needs a justification first. Take it without one and you may have the ground; you will not have the people.',
+    },
+    'liu-zhang': {
+      defeat: {
+        titleZh: '斬楊懷、高沛',
+        titleEn: 'Yang Huai and Gao Pei',
+        textZh:
+          '楊懷、高沛守白水關,數諫你遣備還荊州。\n\n'
+          + '而備稱有急欲還,二人輕騎來見 —— 備斬之,'
+          + '併其兵,徑向成都。\n\n'
+          + '你最忠的兩個將,死於一場送行。',
+        textEn:
+          'Yang Huai and Gao Pei held Baishui pass and repeatedly urged you to send Bei back to Jing province.\n\n'
+          + 'And Bei announced an emergency and a departure, and the two came with a light escort to see him off — and he killed them, took their troops, and went straight for Chengdu.\n\n'
+          + 'Your two most loyal generals died at a farewell.',
+      },
+      verdictZh:
+        '論曰:懷、沛數諫而璋不聽,及其死,璋乃驚 ——'
+        + '夫諫者,主之藩籬也;藩籬既去,而後知風之寒。',
+      verdictEn:
+        'The historian says: Huai and Pei warned him repeatedly and he did not listen, and when they were dead he was shocked. Men who warn you are a hedge around a ruler. Only when the hedge is gone does he notice how cold the wind is.',
+      verdictLostZh:
+        '論曰:引之者璋,斬其將者備 —— 而璋猶以為可與言和。',
+      verdictLostEn:
+        'The historian says: Zhang brought him in, and he killed Zhang\'s generals — and Zhang still thought terms could be discussed.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '備入蜀,而荊州空',
+        titleEn: 'Bei Went into Shu, and Jing Was Empty',
+        textZh:
+          '劉備入蜀,留關羽守荊州。'
+          + '你遣使求還三郡,羽不與 ——\n\n'
+          + '而蜀之主力在西,荊州之守,只有一個人。\n\n'
+          + '呂蒙在你身邊,已經在算了。',
+        textEn:
+          'Liu Bei went into Shu and left Guan Yu holding Jing province. You sent to ask for the three commanderies back and Yu would not give them —\n\n'
+          + 'and the main strength of Shu was in the west, and one man was holding Jing.\n\n'
+          + 'Lü Meng was at your elbow, already doing the arithmetic.',
+      },
+      verdictZh:
+        '論曰:備之西入,吳之機也。'
+        + '夫同盟而一方遠征,則其後必虛;虛而不取,他人取之。'
+        + '故權之圖荊州,不始於呂蒙,始於備入蜀之日。',
+      verdictEn:
+        'The historian says: Bei going west was Wu\'s opening. When one ally goes off on a long campaign his rear is bound to be thin, and a thin rear that you do not take, somebody else does. Quan\'s designs on Jing did not begin with Lü Meng. They began the day Bei went into Shu.',
+      verdictLostZh:
+        '論曰:借荊州者,本無還期;'
+        + '而求還者,亦本不指望其還 —— 求之,所以立辭耳。',
+      verdictLostEn:
+        'The historian says: the loan of Jing province never had a due date, and the man asking for it back never expected to get it. He asked in order to have a justification.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
