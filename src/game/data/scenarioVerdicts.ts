@@ -6300,6 +6300,343 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: about to be boiled, Li Yiji said: "A man engaged in great affairs does not fuss over details, and great virtue does not stand on ceremony. I am not going to change my story for you." And they boiled him. When Han had settled the empire, his younger brother Li Shang was made a marquis, and the founding emperor never thought of Li Yiji without sighing.',
     },
   },
+  /* ── 楚漢爭霸 ─────────────────────────────────────────────────── */
+  'scn-ch-chuhan': {
+    han: {
+      defeat: {
+        titleZh: '養虎自遺患',
+        titleEn: 'Rearing a Tiger to Bite You',
+        textZh:
+          '項王與漢約,中分天下,'
+          + '割鴻溝以西者為漢,鴻溝而東者為楚。'
+          + '——項王已約,乃引兵解而東歸。\n\n'
+          + '漢欲西歸,張良、陳平說曰:'
+          + '「漢有天下太半,而諸侯皆附之。'
+          + '楚兵罷食盡,此天亡楚之時也。'
+          + '不如因其機而遂取之。'
+          + '今釋弗擊,此所謂『養虎自遺患』也。」\n\n'
+          + '漢王聽之。\n\n'
+          + '——五年,追項王至固陵,'
+          + '而信、越期不至,漢敗。\n'
+          + '張良曰:「君王能與共分天下,今可立致也。」'
+          + '乃使使者告韓信、彭越:'
+          + '「並力擊楚。楚破,自陳以東傅海與齊王,'
+          + '睢陽以北至穀城與彭相國。」'
+          + '——使者至,皆報「請今進兵」。',
+        textEn:
+          'The King of Chu made a treaty with Han halving the empire: west of the Hong Canal to Han and east of it to Chu — and having made it, he raised the siege and went home east.\n\n'
+          + 'Han meant to go west, and Zhang Liang and Chen Ping said: "Han holds more than half the empire and the other lords are all attached to it. The Chu troops are worn out and their food is gone; this is the moment Heaven means Chu to be destroyed. Take the opportunity and finish it. To let it go now is what is called rearing a tiger to bite you."\n\n'
+          + 'The King of Han took the advice.\n\n'
+          + 'In the fifth year he pursued the King of Chu to Guling, and Han Xin and Peng Yue did not come at the appointed time, and Han was beaten.\n\n'
+          + 'Zhang Liang said: "If Your Majesty will divide the empire with them, they can be brought here at once." So envoys went to Han Xin and Peng Yue: "Join in attacking Chu. When Chu is broken, everything from Chen east to the sea goes to the King of Qi, and everything north of Suiyang to Gucheng to Chancellor Peng."\n\n'
+          + 'The envoys arrived, and both replied: "We ask leave to advance immediately."',
+      },
+      verdictZh:
+        '論曰:高祖之取天下,'
+        + '不在其能戰,在**其能分** ——\n'
+        + '固陵之敗,不敗於楚,敗於信、越不至;'
+        + '而其至也,不以詔,以地。\n'
+        + '故置酒洛南宮,自論曰:'
+        + '「夫運籌策帷帳之中,決勝於千里之外,吾不如子房;'
+        + '鎮國家,撫百姓,給餽饟,不絕糧道,吾不如蕭何;'
+        + '連百萬之軍,戰必勝,攻必取,吾不如韓信。'
+        + '此三者,皆人傑也,吾能用之,此吾所以取天下也。'
+        + '項羽有一范增而不能用,此其所以為我擒也。」',
+      verdictEn:
+        'The historian says: the founding emperor won the empire not by being able to fight but by being able to share it out. The defeat at Guling was not inflicted by Chu; it happened because Han Xin and Peng Yue did not come — and what brought them was not an edict but land. So at the banquet in the southern palace at Luoyang he took his own measure: "In planning inside the tent and deciding a victory a thousand li away, I am not the equal of Zifang. In holding the state together, comforting the people, keeping the supplies coming and the grain road open, I am not the equal of Xiao He. In leading a million men, winning every battle and taking every objective, I am not the equal of Han Xin. These three are the outstanding men of the age, and I could use them, and that is how I took the empire. Xiang Yu had one Fan Zeng and could not use him, and that is why I have him."',
+      verdictLostZh:
+        '論曰:項王為高俎,置太公其上,'
+        + '告漢王曰:「今不急下,吾烹太公。」\n'
+        + '漢王曰:「吾與項羽俱北面受命懷王,'
+        + '曰『約為兄弟』,吾翁即若翁。'
+        + '必欲烹而翁,則幸分我一桮羹。」\n\n'
+        + '項王欲挑戰決雌雄,漢王笑謝曰:'
+        + '「吾寧鬥智,不能鬥力。」',
+      verdictLostEn:
+        'The historian says: the King of Chu set up a high table with the King of Han\'s father on it, and called across: "Surrender at once or I boil your father." And the King of Han said: "You and I both faced north and took our orders from King Huai, and we agreed to be as brothers. My father is your father. If you insist on boiling your own father, be so good as to send me a cup of the soup."\n\n'
+          + 'The King of Chu then challenged him to single combat to settle it, and the King of Han laughed and declined: "I would rather contend in wits. I cannot contend in strength."',
+    },
+    chu: {
+      defeat: {
+        titleZh: '鴻溝',
+        titleEn: 'The Hong Canal',
+        textZh:
+          '是時項王兵罷食絕,'
+          + '而漢兵盛食多,楚兵疲。\n\n'
+          + '乃與漢約,中分天下,'
+          + '割鴻溝以西者為漢,鴻溝而東者為楚。'
+          + '歸漢王父母妻子,軍皆呼萬歲。\n\n'
+          + '項王已約,乃引兵解而東歸。\n\n'
+          + '——而漢兵不歸。\n\n'
+          + '五年,漢王追項王至陽夏南,止軍,'
+          + '與淮陰侯韓信、建成侯彭越期會而擊楚軍。\n\n'
+          + '——垓下。',
+        textEn:
+          'By then the King of Chu\'s troops were worn out and his food gone, while the Han armies were strong and well supplied.\n\n'
+          + 'So he made the treaty with Han halving the empire, west of the Hong Canal to Han and east of it to Chu, and returned the King of Han\'s parents, wife and children; and the whole army shouted for joy.\n\n'
+          + 'Having made the treaty, he raised the siege and went home east.\n\n'
+          + 'And the Han army did not go home.\n\n'
+          + 'In the fifth year the King of Han pursued him to south of Yangxia, halted, and made an appointment with the Marquis of Huaiyin, Han Xin, and the Marquis of Jiancheng, Peng Yue, to strike Chu together.\n\n'
+          + 'Gaixia.',
+      },
+      verdictZh:
+        '論曰:鴻溝之約,楚信而漢背 ——'
+        + '而後世責漢者少,責楚者多。\n'
+        + '**其故在:項王之約,不是為了天下,是為了太公歸與士卒之呼萬歲**;'
+        + '所欲既在息兵,則約成之日,已無再戰之志。\n'
+        + '故不必待漢之背約,'
+        + '楚之敗,在「軍皆呼萬歲」的那一刻已定。',
+      verdictEn:
+        'The historian says: at the Hong Canal, Chu kept faith and Han broke it — and posterity has blamed Chu more than Han. The reason is that Xiang Yu made the treaty not for the empire but to get the hostages back and hear his army cheer. Since what he wanted was to stop fighting, on the day the treaty was signed he had no fight left in him. So it did not need Han\'s treachery: Chu was beaten at the moment the whole army shouted for joy.',
+      verdictLostZh:
+        '論曰:漢王欲西歸,張良、陳平止之,'
+        + '曰「養虎自遺患」;'
+        + '而項王引兵東歸,無一人止之。\n'
+        + '**范增死後,楚無諫者**。',
+      verdictLostEn:
+        'The historian says: the King of Han meant to go home west and Zhang Liang and Chen Ping stopped him with a line about rearing a tiger; the King of Chu marched home east and nobody stopped him. After Fan Zeng died, there was nobody in Chu who argued.',
+    },
+  },
+  /* ── 楚漢·垓下之戰 ────────────────────────────────────────────── */
+  'scn-ch-gaixia': {
+    chu: {
+      defeat: {
+        titleZh: '虞兮虞兮奈若何',
+        titleEn: 'Yu, Yu, What Is to Become of You',
+        textZh:
+          '項王軍壁垓下,兵少食盡,漢軍及諸侯兵圍之數重。\n\n'
+          + '夜聞漢軍四面皆楚歌,項王乃大驚曰:'
+          + '「漢皆已得楚乎?是何楚人之多也!」\n\n'
+          + '項王則夜起,飲帳中。'
+          + '有美人名虞,常幸從;'
+          + '駿馬名騅,常騎之。\n\n'
+          + '於是項王乃悲歌忼慨,自為詩曰:\n'
+          + '「力拔山兮氣蓋世,'
+          + '時不利兮騅不逝。'
+          + '騅不逝兮可柰何,'
+          + '虞兮虞兮柰若何!」\n\n'
+          + '歌數闋,美人和之。'
+          + '項王泣數行下,左右皆泣,莫能仰視。',
+        textEn:
+          'The King of Chu was walled up at Gaixia with few men and no food, and the armies of Han and the other lords had him surrounded several deep.\n\n'
+          + 'In the night he heard the songs of Chu coming from every side of the Han lines, and started up in dismay: "Has Han taken all of Chu already? How can there be so many men of Chu over there?"\n\n'
+          + 'He rose in the night and drank in his tent. There was a lady named Yu who was always with him, and a fine horse named Zhui that he always rode.\n\n'
+          + 'And he sang, bitterly and grandly, a poem of his own:\n\n'
+          + '"Strength to uproot mountains, a spirit over the age —\n'
+          + 'and the time is against me, and Zhui will not go on.\n'
+          + 'Zhui will not go on, and what is to be done?\n'
+          + 'Yu, Yu, what is to become of you?"\n\n'
+          + 'He sang it several times over and the lady sang it with him. Tears ran down his face, and everyone about him wept, and none of them could look up.',
+      },
+      verdictZh:
+        '論曰:項王至東城,乃有二十八騎。'
+        + '自度不得脫,謂其騎曰:'
+        + '「吾起兵至今八歲矣,身七十餘戰,'
+        + '所當者破,所擊者服,未嘗敗北,遂霸有天下。'
+        + '然今卒困於此,此天之亡我,非戰之罪也。'
+        + '今日固決死,願為諸君快戰,'
+        + '必三勝之……令諸君知天亡我,非戰之罪也。」\n\n'
+        + '——太史公曰:「自矜功伐,奮其私智而不師古……'
+        + '身死東城,尚不覺寤而不自責,過矣。'
+        + '乃引『天亡我,非用兵之罪也』,豈不謬哉!」',
+      verdictEn:
+        'The historian says: by Dongcheng he had twenty-eight horsemen left. Reckoning he could not get out, he said to them: "It is eight years since I raised troops. I have fought over seventy engagements; whatever stood against me was broken and whatever I struck submitted, and I was never once beaten, and so I held the empire as hegemon. And here I am, finished — Heaven is destroying me; it is no fault of my soldiering. Today I shall certainly die, and I should like to fight one good fight for you gentlemen and win three times over... so that you may know that it is Heaven destroying me and no fault of my soldiering."\n\n'
+          + 'And the Grand Historian wrote: "Vain of his own conquests, pushing his private cleverness and refusing to learn from antiquity... he died at Dongcheng and still had not understood and would not blame himself. That was his error. And to fall back on \'Heaven is destroying me; it is no fault of my soldiering\' — is that not absurd?"',
+      verdictLostZh:
+        '論曰:於是項王乃欲東渡烏江。'
+        + '烏江亭長檥船待,曰:'
+        + '「江東雖小,地方千里,眾數十萬人,亦足王也。'
+        + '願大王急渡。今獨臣有船,漢軍至,無以渡。」\n\n'
+        + '項王笑曰:'
+        + '「天之亡我,我何渡為!'
+        + '且籍與江東子弟八千人渡江而西,今無一人還,'
+        + '縱江東父兄憐而王我,我何面目見之?'
+        + '縱彼不言,籍獨不愧於心乎?」\n\n'
+        + '乃以馬賜亭長。'
+        + '顧見漢騎司馬呂馬童,曰:'
+        + '「吾聞漢購我頭千金,邑萬戶,吾為若德。」'
+        + '乃自刎而死。',
+      verdictLostEn:
+        'The historian says: he thought then of crossing the Wu river east. The village head at the Wu crossing had a boat waiting and said: "The east of the river is small, but it is a thousand li across with several hundred thousand people, and it is enough to be king of. I beg Your Majesty to cross quickly. Mine is the only boat here; when the Han army comes there will be no way over."\n\n'
+          + 'And the King of Chu laughed: "Heaven is destroying me. What should I cross for? Besides, I crossed west with eight thousand sons of the east and not one of them is going back. Even if their fathers and brothers pitied me and made me king, how could I face them? Even if they said nothing, would I not be ashamed in my own heart?"\n\n'
+          + 'He gave the man his horse. Then, seeing Lü Matong of the Han cavalry among the pursuers, he said: "I hear Han has put a thousand in gold and a fief of ten thousand households on my head. Let me do you a good turn." And he cut his own throat.',
+    },
+    han: {
+      defeat: {
+        titleZh: '四面楚歌',
+        titleEn: 'Songs of Chu on Every Side',
+        textZh:
+          '淮陰侯將三十萬自當之,'
+          + '孔將軍居左,費將軍居右,'
+          + '皇帝在後,絳侯、柴將軍在皇帝後。\n\n'
+          + '項羽之卒可十萬。'
+          + '淮陰先合,不利,卻。'
+          + '孔將軍、費將軍縱,楚兵不利,'
+          + '淮陰侯復乘之,大敗垓下。\n\n'
+          + '——夜,令降卒四面歌楚歌。\n\n'
+          + '此戰之勝,不在陣,'
+          + '在**楚人已多在漢營之中**。',
+        textEn:
+          'The Marquis of Huaiyin took three hundred thousand into the centre, General Kong on the left and General Fei on the right, the Emperor behind, and the Marquis of Jiang and General Chai behind him.\n\n'
+          + 'Xiang Yu had perhaps a hundred thousand. Huaiyin engaged first, had the worse of it and fell back. Kong and Fei came in from the flanks and Chu had the worse of it, and Huaiyin came on again, and Chu was broken at Gaixia.\n\n'
+          + 'And that night the surrendered troops were set to sing the songs of Chu on every side.\n\n'
+          + 'The battle was not won by the deployment. It was won by how many men of Chu were already in the Han camp.',
+      },
+      verdictZh:
+        '論曰:四面楚歌之所以能行,'
+        + '正因**漢軍中楚人已眾** ——'
+        + '此非一夜之計,是五年招降納叛之積。\n'
+        + '故聞歌而驚者,項王也;'
+        + '而唱歌者,昔日之楚卒也。\n'
+        + '**戰爭之終局,常不是誰殺得多,'
+        + '是誰那邊的人變多了**。',
+      verdictEn:
+        'The historian says: the songs of Chu worked because there were by then so many men of Chu in the Han army — not a night\'s stratagem but five years of accepting deserters and surrenders. The man startled by the singing was Xiang Yu; the men singing had been soldiers of Chu. Wars usually end not with a count of who killed more but with a count of whose side has been growing.',
+      verdictLostZh:
+        '論曰:魯最後下。漢乃引項王頭示魯,魯父兄乃降。'
+        + '始楚懷王初封項籍為魯公,及其死,魯最後下,'
+        + '故以魯公禮葬項王穀城。'
+        + '漢王為發哀,泣之而去。'
+        + '——**諸項氏枝屬,漢王皆不誅**。',
+      verdictLostEn:
+        'The historian says: Lu was the last place to submit. Han had Xiang Yu\'s head shown to Lu, and then its elders surrendered. Because King Huai of Chu had originally enfeoffed Xiang Ji as Duke of Lu, and because Lu held out longest, he was buried at Gucheng with the rites of a Duke of Lu. The King of Han went into mourning for him, wept, and went away. And none of the Xiang clan were put to death.',
+    },
+  },
+  /* ── 隋末群雄逐鹿 ─────────────────────────────────────────────── */
+  'scn-st-suiend': {
+    tang: {
+      defeat: {
+        titleZh: '先入關中者王',
+        titleEn: 'Whoever Enters Guanzhong First',
+        textZh:
+          '隋失其鹿,天下共逐之。\n\n'
+          + '李密雄視河洛,擁瓦崗之眾三十萬,'
+          + '而與王世充相持於洛口 ——'
+          + '天下之兵,盡繫於一倉。\n\n'
+          + '李淵起於晉陽,'
+          + '——不爭洛陽,不爭倉粟。'
+          + '西入河東,渡龍門,下永豐倉,'
+          + '十一月而克長安。\n\n'
+          + '立代王侑為帝,約法十二條,'
+          + '悉除隋苛禁。\n\n'
+          + '密與世充相攻二年,'
+          + '而關中已定。',
+        textEn:
+          'Sui lost its deer, and the whole empire ran after it.\n\n'
+          + 'Li Mi dominated the Luo valley with three hundred thousand of the Wagang men, and was locked with Wang Shichong at the mouth of the Luo — every army in the empire tied to one granary.\n\n'
+          + 'Li Yuan rose at Jinyang — and did not contend for Luoyang and did not contend for the grain. He went west into Hedong, crossed at Longmen, took the Yongfeng granary, and in the eleventh month held Chang\'an.\n\n'
+          + 'He set up the Prince of Dai as emperor, made a covenant of twelve articles, and swept away the harsh prohibitions of Sui.\n\n'
+          + 'Li Mi and Wang Shichong fought each other for two years, and by then Guanzhong was settled.',
+      },
+      verdictZh:
+        '論曰:隋末之群雄,'
+        + '兵最眾者李密,地最要者王世充,'
+        + '而得天下者李淵 ——\n'
+        + '**其別在:一爭倉,一爭城,一爭地** 。\n'
+        + '洛口倉可以聚三十萬人,而不能養一國;'
+        + '長安背關中,右隴蜀,'
+        + '此高祖入關之故智,唐人再用之。\n'
+        + '故曰:創業之難,不在能戰,在**知道該去哪裡**。',
+      verdictEn:
+        'The historian says: at the end of Sui the largest army was Li Mi\'s, the most important position was Wang Shichong\'s, and the man who got the empire was Li Yuan. The difference: one contended for a granary, one for a city, and one for a region. The Luokou granary could gather three hundred thousand men and could not feed a state; Chang\'an has Guanzhong at its back and Longyou and Shu on its right — the old calculation that took the founder of Han through the pass, used a second time. Which is to say that the hard part of founding a dynasty is not being able to fight. It is knowing where to go.',
+      verdictLostZh:
+        '論曰:淵之起也,劉文靜為之謀,'
+        + '而首事者裴寂以晉陽宮人侍淵,'
+        + '使不得不反。\n'
+        + '——**大事之發端,常不甚體面**;'
+        + '而史家錄之不諱,亦唐人之自信。',
+      verdictLostEn:
+        'The historian says: Liu Wenjing planned the rising, and Pei Ji set it going by putting the Jinyang palace women in Li Yuan\'s bed so that he had no choice but to revolt. The beginnings of great enterprises are often not very decorous — and that the Tang historians recorded it without covering it up is a kind of confidence in itself.',
+    },
+    wagang: {
+      defeat: {
+        titleZh: '罄南山之竹',
+        titleEn: 'All the Bamboo of the Southern Hills',
+        textZh:
+          '密移檄郡縣,數煬帝十罪,曰:\n'
+          + '「罄南山之竹,書罪無窮;'
+          + '決東海之波,流惡難盡。」\n\n'
+          + '破洛口倉,開倉恣民所取,'
+          + '老弱襁負,道路不絕,'
+          + '眾至數十萬。\n\n'
+          + '——而糧不可久:'
+          + '倉粟散而民歸,倉粟盡而民去。\n\n'
+          + '密與世充決戰於邙山,敗。'
+          + '降唐,復叛,死於熊耳山。\n\n'
+          + '魏徵嘗上書密,陳十策,不用。'
+          + '——後徵事唐,為太宗諫議大夫。',
+        textEn:
+          'Li Mi sent a manifesto round the commanderies listing ten crimes of Emperor Yang, and it said: "Use up all the bamboo of the southern hills, and his crimes would not be written out; let out all the water of the eastern sea, and the evil would not be washed away."\n\n'
+          + 'He took the Luokou granary and threw it open for the people to take what they liked, and the old and the weak came with children on their backs in an unbroken line along the roads, and his following grew to hundreds of thousands.\n\n'
+          + 'And grain does not last. While the granary was being given away the people came; when it was empty they went.\n\n'
+          + 'Li Mi fought Wang Shichong to a decision at Mount Mang and lost. He surrendered to Tang, revolted again, and died in the Xiong\'er hills.\n\n'
+          + 'Wei Zheng had once submitted ten proposals to him and they were not used. Wei Zheng afterwards served Tang, as Grand Counsellor to Emperor Taizong.',
+      },
+      verdictZh:
+        '論曰:密之得眾,以開倉;而其失眾,亦以開倉 ——\n'
+        + '**以粟聚人者,粟盡而人散;'
+        + '以地聚人者,地在則人在**。\n'
+        + '故李淵取關中而置根本,'
+        + '密擁三十萬而無一州為家。\n'
+        + '及邙山一敗,遂無所歸。\n'
+        + '——魏徵之十策不用於瓦崗,而用於貞觀;'
+        + '天下之才,終歸於能容之者。',
+      verdictEn:
+        'The historian says: Li Mi gathered his following by opening a granary and lost it the same way. Gather men with grain and they scatter when the grain is gone; gather them with territory and they stay while the territory does. So Li Yuan took Guanzhong and had a base, and Li Mi had three hundred thousand men and not one province to call home. After Mount Mang there was nowhere to go. Wei Zheng\'s ten proposals were not used at Wagang and were used in the Zhenguan reign; ability ends up wherever there is room for it.',
+      verdictLostZh:
+        '論曰:密殺翟讓而奪其眾,'
+        + '自是將帥人人自疑。'
+        + '——**取眾易,取眾之信難;'
+        + '而殺其舊主者,終不能得其信**。',
+      verdictLostEn:
+        'The historian says: Li Mi killed Zhai Rang and took over his following, and from then on every commander under him was uneasy. Taking over men is easy and taking over their trust is not; and a man who has killed their old master never quite gets it.',
+    },
+    xia: {
+      defeat: {
+        titleZh: '重然諾',
+        titleEn: 'A Man Who Kept His Word',
+        textZh:
+          '建德,貝州漳南人,'
+          + '少尚氣俠,重然諾。\n\n'
+          + '同縣人有喪親者,家貧無以葬,'
+          + '時建德方耕於田,聞而歎息,'
+          + '遽輟耕牛以與之,由是鄉黨敬異之。\n\n'
+          + '既為夏王,'
+          + '得隋黃門侍郎裴矩等,'
+          + '每有攻戰所得資財,'
+          + '悉以分將士,身無所取。'
+          + '又不啖肉,常食唯有蔬菜脫粟之飯,'
+          + '妻曹氏不衣紈綺,'
+          + '所使婢妾才十數人。\n\n'
+          + '——山東豪傑,多歸之。',
+        textEn:
+          'Dou Jiande was a man of Zhangnan in Beizhou, given in his youth to a chivalrous temper and to keeping his word.\n\n'
+          + 'A man of the same county lost a parent and was too poor to pay for the funeral; Jiande, ploughing at the time, heard of it, sighed, and unyoked his ox on the spot and gave it to him. From then on the district thought him remarkable.\n\n'
+          + 'As King of Xia he took Pei Ju, the Sui Vice-Director of the Chancellery, and others into his service, and whatever was captured in his campaigns he divided among his officers and men and kept nothing. He ate no meat; his meals were vegetables and unpolished grain; his wife of the Cao family wore no fine silk, and had perhaps a dozen maids.\n\n'
+          + 'And the strong men of Shandong came over to him in numbers.',
+      },
+      verdictZh:
+        '論曰:建德之德,近古之王者;'
+        + '而其敗於虎牢,一日而國亡。\n'
+        + '**德足以聚人,而不足以代兵法** ——'
+        + '凌敬勸其渡河攻懷,則鄭圍自解,不用;'
+        + '列陣自辰至午,士卒饑倦爭飲,'
+        + '而唐騎三千五百自谷而出。\n'
+        + '既擒,太宗問:「我自伐王世充,'
+        + '關汝何事,越境而來?」'
+        + '建德曰:「今不自來,恐煩遠取。」'
+        + '——至死不失其氣。',
+      verdictEn:
+        'The historian says: Dou Jiande\'s virtue was nearly that of the kings of antiquity, and he lost at Hulao and his state was gone in a day. Virtue is enough to gather men and is not a substitute for the art of war. Ling Jing urged him to cross the river and attack Huai, which would have lifted the siege of Zheng of itself, and he did not do it; he stood in line of battle from dawn to midday until his men were hungry, tired and scrambling for water, and three thousand five hundred Tang horse came out of the valley. Taken prisoner, he was asked by Taizong: "I came to punish Wang Shichong. What business was it of yours, to cross your border and come here?" And Jiande said: "If I had not come myself, I was afraid of putting you to the trouble of fetching me." He did not lose his spirit even at the end.',
+      verdictLostZh:
+        '論曰:建德既死,其故將劉黑闥復起,'
+        + '半歲盡復故地。'
+        + '——**得地易,得人心之遺留難**;'
+        + '唐之定河北,前後三年。',
+      verdictLostEn:
+        'The historian says: after Dou Jiande\'s death his old commander Liu Heita rose again and recovered all his territory within six months. Taking ground is easy; dealing with the loyalty a dead man leaves behind is not. It took Tang three years to settle Hebei.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
