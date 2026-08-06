@@ -5018,6 +5018,309 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: Qin\'s strength was not only in its troops but in being able to change commanders without disorder — the Lord of Wu\'an was substituted for Wang He in secret, with an order through the camp that anyone who let out that he was in command would be beheaded. In the same year Zhao changed commanders and lost four hundred thousand men and Qin changed commanders and won. The difference: one was done in the dark and one in the open; one was its own decision and one was the enemy\'s.',
     },
   },
+  /* ── 戰國·五國攻秦 ────────────────────────────────────────────── */
+  'scn-ws-hangu': {
+    qin: {
+      defeat: {
+        titleZh: '天下之士合從',
+        titleEn: 'The Vertical Alliance',
+        textZh:
+          '蘇秦說六國從親:'
+          + '「秦以牛田之水通糧,蠶食諸侯,'
+          + '六國從親以擯秦,'
+          + '秦兵必不敢出於函谷關以害山東矣。」\n\n'
+          + '於是六國從合而並力焉。'
+          + '蘇秦為從約長,並相六國,'
+          + '——秦兵不敢闚函谷關十五年。\n\n'
+          + '然從者,以利合;'
+          + '利盡則散。\n'
+          + '張儀既相秦,乃以連橫破之:'
+          + '「夫從人飾辯虛辭,高主之節,'
+          + '言其利不言其害,卒有秦禍,無及為己。」',
+        textEn:
+          'Su Qin argued the six states into a vertical alliance: "Qin brings up its grain by water on ox-farmed land and eats the feudal states like silkworms. Let the six join north and south to fence Qin off, and Qin will never dare bring troops out of the Hangu pass to harm the lands east of the mountains."\n\n'
+          + 'So the six combined and joined their strength. Su Qin was made head of the covenant and chancellor of all six at once — and for fifteen years Qin\'s troops did not so much as look at the Hangu pass.\n\n'
+          + 'But an alliance made out of interest scatters when the interest is gone. Once Zhang Yi was chancellor of Qin he broke it with the horizontal alliance: "These vertical men dress up their arguments with empty phrases and flatter a ruler\'s dignity, speaking of the advantages and never of the harm. When the calamity from Qin finally arrives it is too late to do anything about it."',
+      },
+      verdictZh:
+        '論曰:六國之地五倍於秦,兵十倍於秦,'
+        + '而卒為秦所並 ——\n'
+        + '非不能合,是**合而不能久**:'
+        + '五國攻秦至函谷而還,一勝即散;'
+        + '一國割地求和,則餘者亦爭割。\n'
+        + '**從者,眾人共擔一事;'
+        + '橫者,一人各許一利** ——'
+        + '故從難而橫易。',
+      verdictEn:
+        'The historian says: the six states had five times Qin\'s land and ten times its soldiers, and Qin swallowed them. Not that they could not combine — they could not stay combined. Five of them attacked as far as the Hangu pass and went home; one victory and they scattered; one state ceded territory for peace and the rest raced to cede theirs. A vertical alliance asks many men to carry one thing; the horizontal offers each man his own advantage. Which is why the first is hard and the second easy.',
+      verdictLostZh:
+        '論曰:蘇秦既約六國,乃投從約書於秦。'
+        + '秦人不出關者十五年 ——'
+        + '**十五年之後,函谷關依舊在,而六國之約已無人記得**。',
+      verdictLostEn:
+        'The historian says: with the six states bound, Su Qin sent a copy of the covenant into Qin, and Qin did not come out of the pass for fifteen years. Fifteen years later the pass was still there and nobody remembered the covenant.',
+    },
+    qi: {
+      defeat: {
+        titleZh: '入函谷關',
+        titleEn: 'Into the Hangu Pass',
+        textZh:
+          '孟嘗君相齊,率齊、韓、魏之師攻秦,'
+          + '至函谷關 —— **入之**。'
+          + '秦割河東三城以和。\n\n'
+          + '此戰國二百年中,山東之師唯一次入關者。\n\n'
+          + '而孟嘗君之在秦也,昭王囚之欲殺。'
+          + '客有能為狗盜者,入秦宮藏中,取狐白裘以獻幸姬,'
+          + '姬為言得出。\n'
+          + '夜半至函谷關,關法雞鳴而出客。'
+          + '客有能為雞鳴者,一鳴而群雞盡鳴,遂發傳出。\n\n'
+          + '——出如脫兔,入如平地;'
+          + '而其後齊亦亡於五國之兵。',
+        textEn:
+          'As chancellor of Qi, the Lord of Mengchang led the armies of Qi, Hann and Wei against Qin as far as the Hangu pass — and through it. Qin ceded three cities east of the river for peace.\n\n'
+          + 'In two hundred years of the Warring States, that was the one time the armies of the east got inside the pass.\n\n'
+          + 'And when the Lord of Mengchang had been in Qin, King Zhao imprisoned him and meant to kill him. One of his retainers could steal like a dog, and got into the Qin treasury and took the white fox robe to present to the favourite concubine, and she spoke for him and he was let out.\n\n'
+          + 'He reached the pass at midnight, and by the regulation travellers were let out at cockcrow. One of his retainers could crow like a cock; he crowed once, every cock in the place answered, and the pass was opened and the warrant issued.\n\n'
+          + 'Out like a bolting hare, and in as if the pass were level ground. And in the end Qi too fell to the armies of five states.',
+      },
+      verdictZh:
+        '論曰:齊之強,嘗與秦並稱東西帝;'
+        + '而其亡也,先失於**自為帝**,'
+        + '再失於**獨吞宋**。\n'
+        + '五國攻秦,齊為之長;五國伐齊,齊無一援。\n'
+        + '**同一群人,可以跟你一起打人,也可以一起打你** ——'
+        + '所別者,只在誰看起來最像下一個秦。',
+      verdictEn:
+        'The historian says: Qi was once strong enough to be called Emperor of the East alongside Qin as Emperor of the West. It lost itself first by taking that title and then by swallowing Song alone. When five states attacked Qin, Qi led them; when five states attacked Qi, not one came to help. The same set of people who will help you beat somebody will help beat you; the only question is who currently looks most like the next Qin.',
+      verdictLostZh:
+        '論曰:孟嘗君之出關,恃雞鳴狗盜;'
+        + '而王安石譏之曰:「擅齊之強,'
+        + '得一士焉,宜可以南面而制秦,'
+        + '尚何取雞鳴狗盜之力哉?」',
+      verdictLostEn:
+        'The historian says: the Lord of Mengchang got out of the pass on a cock-crower and a dog-thief; and Wang Anshi\'s judgement on him was: "With the strength of Qi behind him, one real gentleman would have let him face south and dictate to Qin. What did he want with cock-crowers and dog-thieves?"',
+    },
+  },
+  /* ── 戰國·伊闕之戰 ────────────────────────────────────────────── */
+  'scn-ws-yique': {
+    qin: {
+      defeat: {
+        titleZh: '二軍不同',
+        titleEn: 'Two Armies, Not One',
+        textZh:
+          '韓魏合兵二十四萬,拒秦於伊闕。\n\n'
+          + '白起察之:「韓孤顧魏,不欲先用其眾;'
+          + '魏恃韓之銳,欲推以為鋒。'
+          + '二軍不同心,故可破也。」\n\n'
+          + '乃設疑兵以當韓陣,'
+          + '而潛以精銳出魏軍之後,擊之。\n\n'
+          + '魏軍既敗,韓軍自潰。'
+          + '斬首二十四萬,虜其將公孫喜,拔五城。\n\n'
+          + '——起由是為國尉,遷大良造。',
+        textEn:
+          'Hann and Wei put two hundred and forty thousand men together and stood against Qin at Yique.\n\n'
+          + 'Bai Qi looked at it and said: "Hann is alone and keeps glancing at Wei, and does not want to spend its own men first. Wei is relying on Hann\'s picked troops and wants to push them out in front. The two armies are not of one mind, so they can be broken."\n\n'
+          + 'So he set up a demonstration force facing the Hann line and took his best troops round in secret behind the Wei army and struck.\n\n'
+          + 'With Wei broken, Hann fell apart of itself. Two hundred and forty thousand heads, their commander Gongsun Xi taken, five cities carried.\n\n'
+          + 'And on the strength of it Bai Qi was made State Commandant and then Grand Steward of the Left.',
+      },
+      verdictZh:
+        '論曰:起之破韓魏,不在其兵利,'
+        + '在其**先讀懂了對面兩家的心事** ——\n'
+        + '「韓孤顧魏,魏恃韓銳」八字,'
+        + '是戰前偵察所不能得,'
+        + '而必自兩國之處境推之。\n'
+        + '**凡合兵者,必有一家想少出力**;'
+        + '知其為誰,則陣未接而勝負分。',
+      verdictEn:
+        'The historian says: Bai Qi broke Hann and Wei not with better weapons but by reading what was in the minds of the two armies facing him. "Hann is alone and glancing at Wei; Wei is relying on Hann\'s picked troops" is not something scouting produces; it has to be deduced from the two states\' positions. Wherever armies are combined, one of them is hoping to spend less — know which, and the thing is decided before contact.',
+      verdictLostZh:
+        '論曰:秦之用起,起於伊闕,終於長平,'
+        + '三十七年,未嘗一敗。'
+        + '而其死也,以不肯將必敗之師。'
+        + '——**善戰者知所不戰,而人主不許其不戰**。',
+      verdictLostEn:
+        'The historian says: Qin used Bai Qi from Yique to Changping, thirty-seven years without a defeat. And he died for refusing to command an army he knew would lose. A good commander knows what not to fight; a sovereign will not grant him the refusal.',
+    },
+    wei: {
+      defeat: {
+        titleZh: '推韓為鋒',
+        titleEn: 'Push Hann Out in Front',
+        textZh:
+          '韓魏之兵二十四萬,倍於秦。\n\n'
+          + '而你恃韓之銳,欲推以為鋒;'
+          + '韓亦顧你,不欲先用其眾。\n'
+          + '——兩軍相望,各待對方先動。\n\n'
+          + '白起以疑兵當韓,以精銳出你之後。\n\n'
+          + '公孫喜被虜。五城入秦。\n'
+          + '自是韓魏不能復當秦於崤函之間,'
+          + '而秦之東出,自伊闕始無阻。',
+        textEn:
+          'Hann and Wei had two hundred and forty thousand men, twice what Qin had.\n\n'
+          + 'And you were relying on Hann\'s picked troops and wanted to push them out in front; and Hann was watching you and did not want to spend its own men first. Two armies facing one another, each waiting for the other to move.\n\n'
+          + 'Bai Qi held Hann with a demonstration and took his best men round behind you.\n\n'
+          + 'Gongsun Xi was captured. Five cities went to Qin. After that Hann and Wei could no longer hold Qin between Xiao and Hangu, and from Yique onwards Qin\'s road east was open.',
+      },
+      verdictZh:
+        '論曰:韓魏本三晉之親,而至此各存其力 ——'
+        + '**合兵而各存其力,則不如不合**:'
+        + '二十四萬同死於一日,'
+        + '正因為誰都不肯先死。\n'
+        + '此後六國之伐秦,皆蹈此轍;'
+        + '秦之所以能以一敵六,'
+        + '不在其眾,在六者之各為己。',
+      verdictEn:
+        'The historian says: Hann and Wei were kin, both heirs of Jin, and here each was conserving its own strength. Armies combined with each side conserving itself would do better not to combine at all: two hundred and forty thousand died in one day precisely because nobody would die first. Every later coalition against Qin ran into the same rut. Qin held off six states not because of its numbers but because each of the six was in it for itself.',
+      verdictLostZh:
+        '論曰:魏自伊闕之後,'
+        + '割河東四百里、河內、南陽,以至於安釐王之世,'
+        + '所存者大梁一隅。'
+        + '——**割地事秦,猶抱薪救火,薪不盡,火不滅**。',
+      verdictLostEn:
+        'The historian says: after Yique, Wei ceded four hundred li east of the river, then Henei, then Nanyang, until by King Anxi\'s time all it had left was the corner around Daliang. Ceding land to serve Qin is carrying firewood to put out a fire: while the wood lasts, the fire does not go out.',
+    },
+  },
+  /* ── 戰國·鄢郢之戰 ────────────────────────────────────────────── */
+  'scn-ws-yanying': {
+    chu: {
+      defeat: {
+        titleZh: '水灌鄢城',
+        titleEn: 'The River Let Into Yan',
+        textZh:
+          '白起攻楚,拔鄢、鄧五城。\n\n'
+          + '鄢城堅,不可急拔。'
+          + '起乃於城西百里,壅夷水為渠以灌鄢城。'
+          + '水潰城東北角,城中人隨水流,'
+          + '死於城東者數十萬,城東皆臭 ——'
+          + '故名其陂曰臭池。\n\n'
+          + '明年,拔郢,燒夷陵,東至竟陵。'
+          + '楚王亡走,遷都於陳。\n\n'
+          + '屈原懷石,自沉汨羅。\n\n'
+          + '起由是封武安君。',
+        textEn:
+          'Bai Qi attacked Chu and took Yan, Deng and five other cities.\n\n'
+          + 'Yan was strong and could not be rushed. So a hundred li west of it he dammed the Yi river into a channel and let it into the city. The water broke the northeast corner and the people inside went out with it; several hundred thousand died east of the walls and the whole area stank — the pool there was called the Stinking Pool from then on.\n\n'
+          + 'The next year he took Ying, burnt the royal tombs at Yiling, and pushed east as far as Jingling. The King of Chu fled and moved the capital to Chen.\n\n'
+          + 'Qu Yuan put a stone in his robe and drowned himself in the Miluo.\n\n'
+          + "And Bai Qi was made Lord of Wu'an for it.",
+      },
+      verdictZh:
+        '論曰:楚地方五千里,帶甲百萬,'
+        + '而失郢都於一水之下 ——\n'
+        + '**大國之亡,不在其小,在其散**:\n'
+        + '懷王入秦而不返,'
+        + '屈原放於江南,'
+        + '而群臣爭以割地事秦為和。\n'
+        + '故荀子曰:'
+        + '「楚人鮫革犀兕以為甲,鞈如金石;'
+        + '宛鉅鐵釶,慘如蜂蠆;'
+        + '輕利僄遫,卒如飄風 ——'
+        + '然而兵殆於垂沙,唐蔑死,'
+        + '是無他故焉,不卹其下也。」',
+      verdictEn:
+        'The historian says: Chu was five thousand li across with a million men under arms, and lost its capital to a river. A great state is not destroyed by being small but by being scattered: King Huai went into Qin and did not come back, Qu Yuan was banished south of the river, and the court competed to make peace by ceding land. As Xunzi said: "The men of Chu make armour of shark hide and rhinoceros, hard as metal and stone; their steel from Wan is cruel as a wasp\'s sting; they are light and quick and fall like a whirlwind — and their army came to grief at Chuisha and Tang Mie died, and there was no other reason for it than that they did not care for the men below them."',
+      verdictLostZh:
+        '論曰:屈原既放,漁父曰:'
+        + '「聖人不凝滯於物,而能與世推移。」'
+        + '原曰:「安能以身之察察,受物之汶汶者乎!」'
+        + '——**一國之亡,先亡其不肯同流者**。',
+      verdictLostEn:
+        'The historian says: when Qu Yuan had been banished, the fisherman said to him: "The sage is not held fast by things and can shift with the age." And Qu Yuan said: "How can a man who has kept himself clean take on the filth of things?" What a state loses first are the people who will not go along with it.',
+    },
+    qin: {
+      defeat: {
+        titleZh: '拔郢燒夷陵',
+        titleEn: 'Ying Taken, Yiling Burnt',
+        textZh:
+          '起將數萬之師以與楚戰,'
+          + '一戰而舉鄢郢,再戰而燒夷陵,'
+          + '三戰而辱王之先人。\n\n'
+          + '楚人震恐,東徙而不敢西向。\n\n'
+          + '——秦置南郡於此,'
+          + '自是江漢之粟入於關中,'
+          + '而秦之國力始能兼支東西兩線。\n\n'
+          + '其後司馬錯自隴西出蜀,'
+          + '兩川之粟又入 ——'
+          + '秦之能久戰,始於此二役。',
+        textEn:
+          'Bai Qi took some tens of thousands against Chu: one battle carried Yan and Ying, a second burnt Yiling, a third dishonoured the graves of the King\'s ancestors.\n\n'
+          + 'The people of Chu were terrified, moved east, and did not dare face west again.\n\n'
+          + 'Qin set up Nan commandery there, and from then on the grain of the Jiang and the Han came into Guanzhong, and Qin\'s resources could carry two fronts at once.\n\n'
+          + 'Later Sima Cuo went out through Longxi into Shu, and the grain of the two river plains came in as well. Qin\'s capacity for long wars began with those two campaigns.',
+      },
+      verdictZh:
+        '論曰:秦之並天下,人多稱其兵;'
+        + '而其實勝於**糧** ——\n'
+        + '取蜀而得成都之粟,取郢而得江漢之粟,'
+        + '關中、巴蜀、南郡三地相接,'
+        + '故能歲歲興師而國不匱。\n'
+        + '**六國之敗,常敗於一戰;'
+        + '秦之勝,勝於能連年**。',
+      verdictEn:
+        'The historian says: people credit Qin\'s conquest of the world to its soldiers; it was really won on grain. Taking Shu got it the harvests of Chengdu, taking Ying got it the harvests of the Jiang and the Han, and with Guanzhong, Ba-Shu and Nan commandery joined up it could put armies into the field year after year without running short. The six states were usually undone by a single battle; Qin won by being able to go on for years.',
+      verdictLostZh:
+        '論曰:白起言於秦王:'
+        + '「是時楚王恃其國大,不卹其政,'
+        + '而群臣相妒以功,諂諛用事,'
+        + '良臣斥疏,百姓心離,城池不修 ——'
+        + '故起所以得引兵深入,'
+        + '多倍城邑,發梁焚舟以專民,'
+        + '掠於郊野以足軍食。」',
+      verdictLostEn:
+        'The historian says: Bai Qi told the King of Qin: "At that time the King of Chu trusted in the size of his state and neglected its government; his ministers were jealous of one another\'s achievements and flatterers ran things; good ministers were pushed aside, the people\'s hearts had gone, and the walls and moats were unrepaired. That is why I was able to take an army deep in, leave walled towns behind me, break the bridges and burn the boats to fix my men\'s minds, and forage the countryside to feed them."',
+    },
+  },
+  /* ── 戰國·閼與之戰 ────────────────────────────────────────────── */
+  'scn-ws-yuyu': {
+    zhao: {
+      defeat: {
+        titleZh: '兩鼠鬥於穴中',
+        titleEn: 'Two Rats Fighting in a Hole',
+        textZh:
+          '秦伐韓,軍於閼與。'
+          + '王召廉頗問:「可救不?」對曰:'
+          + '「道遠險狹,難救。」'
+          + '樂乘亦如之。\n\n'
+          + '召趙奢問,奢曰:'
+          + '「其道遠險狹,譬之猶兩鼠鬥於穴中,'
+          + '將勇者勝。」\n\n'
+          + '王乃令奢將。去邯鄲三十里而止,'
+          + '令軍中曰:「有以軍事諫者死。」'
+          + '留二十八日不行,復益增壘。\n\n'
+          + '秦間來入,奢善食而遣之。'
+          + '間以報秦將,秦將大喜曰:'
+          + '「夫去國三十里而軍不行,乃增壘,'
+          + '閼與非趙地也。」\n\n'
+          + '——奢既已遣秦間,卷甲而趨之,'
+          + '二日一夜至。',
+        textEn:
+          'Qin attacked Hann and camped at Yuyu. The King summoned Lian Po: "Can it be relieved?" — "The road is long, dangerous and narrow. Hard to relieve." Yue Cheng said the same.\n\n'
+          + 'He summoned Zhao She, who said: "The road is long, dangerous and narrow. It is like two rats fighting in a hole: the braver commander wins."\n\n'
+          + 'So the King gave She the command. He halted thirty li out of Handan and gave the order: "Anyone who advises me on military matters dies." He stayed twenty-eight days without moving and went on building his earthworks higher.\n\n'
+          + 'A Qin spy came in and She fed him well and let him go. The spy reported, and the Qin commander was delighted: "Thirty li from his own capital and not moving, building earthworks — Yuyu is not Zhao\'s territory."\n\n'
+          + 'And having let the spy go, She rolled up his armour and went for them, and arrived in two days and one night.',
+      },
+      verdictZh:
+        '論曰:奢之勝,在**先教敵人替他做判斷** ——'
+        + '築壘二十八日,不是備戰,是給間諜看的一份戰報。\n'
+        + '至則許歷請諫,曰:'
+        + '「先據北山上者勝,後至者敗。」'
+        + '奢從之 —— 前令諫者死,而至此納諫,\n'
+        + '**令之嚴以誤敵,令之弛以用人**,二者不相妨。\n'
+        + '秦自商鞅以來,野戰之敗,以此為首。',
+      verdictEn:
+        'The historian says: Zhao She won by getting the enemy to draw his conclusion for him — twenty-eight days of earthworks was not preparation, it was a report written for a spy to read. On arrival Xu Li asked leave to advise: "Whoever holds the north hill first wins; whoever gets there second loses." She took the advice — having earlier made advising a capital offence. Strictness of orders to mislead an enemy and slackness of orders to use a man do not get in each other\'s way. It was the first serious defeat Qin had suffered in the field since Shang Yang.',
+      verdictLostZh:
+        '論曰:奢受賜為馬服君。'
+        + '而其子括,即長平之將。'
+        + '奢嘗與括言兵事,不能難,然不謂善。'
+        + '母問其故,奢曰:'
+        + '「兵,死地也,而括易言之。'
+        + '使趙不將括即已,若必將之,破趙軍者必括也。」',
+      verdictLostEn:
+        'The historian says: Zhao She was rewarded with the title Lord of Mafu. His son was Zhao Kuo, the commander at Changping. She used to discuss war with Kuo and could not get the better of him in argument, and never said he was any good. His wife asked why, and She said: "War is where men die, and Kuo talks about it lightly. If Zhao does not make him a general, well and good; if it must, the man who destroys the armies of Zhao will be Kuo."',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
