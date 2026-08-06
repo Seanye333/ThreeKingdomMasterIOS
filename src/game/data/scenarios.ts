@@ -8405,6 +8405,33 @@ export const SCENARIO_WS_SEVEN: Scenario = {
     'A parallel age of iron and intrigue. The house of Zhou is a shadow, and seven kingdoms contend for all under heaven: Qin rising in the west behind Shang Yang\'s laws and Bai Qi\'s spear; Zhao with its hu-fu cavalry and the generals Lian Po and Li Mu; wealthy Qi at Linzi with its Jixia academy; the vast southern Chu; Yan of the cold north and its avenger Yue Yi; Wei that was first to power and squandered it; and Han, smith of the realm\'s finest iron. The persuaders Su Qin and Zhang Yi wander between the courts, selling alliance and betrayal. Whoever masters the others will forge the first empire under heaven.',
   descriptionZh: "鐵與謀的並世之局。周室如影，七雄爭天下：秦據西陲，恃商鞅之法、白起之矛而崛起；趙有胡服騎射、廉頗李牧之師；臨淄之齊富甲東方，稷下學宮冠絕諸侯；南方之楚廣袤無垠；北地之燕與其復仇者樂毅；魏為最先稱霸而又自棄之者；韓鑄天下之利兵。蘇秦張儀縱橫於列國之間，售合縱連橫、賣背盟負約。能制群雄者，將鑄天下第一帝國。",
   startDate: { year: 178, season: 'spring' },
+  /*
+   * 開局外交 —— 七雄之世的底色:合縱連橫未起,而人人自危 ——
+     互不侵犯而互不信任,誰先強起來,其餘六家就先看誰。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_SEVEN),
   forces: FORCES_WS_SEVEN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_SEVEN),
@@ -8435,6 +8462,33 @@ export const SCENARIO_WS_CHANGPING: Scenario = {
     'The great bloodletting. Qin has seized the Shangdang plateau and Bai Qi\'s army stands upon it; across the line the aged Lian Po digs in behind deep walls and will not be drawn, trading ground for time. In Handan the impatient King Xiaocheng listens to slander and to Zhao Kuo — son of Zhao She, who has read every book of war and fought no battle. Replace Lian Po and march out, and Bai Qi waits to encircle four hundred thousand men and bury them in the earth. The other five kingdoms watch, and do not move.',
   descriptionZh: "長平之殤。秦已取上黨高地，白起之軍臨之；隔陣相望，老將廉頗深溝高壘、堅守不出，以地易時。邯鄲城中，性急的孝成王聽信讒言，又信趙奢之子趙括——此人讀盡兵書而未嘗一戰。若以括代頗、出壘決戰，白起正待圍而坑之，四十萬眾將埋骨於此。其餘五國，作壁上觀，按兵不動。",
   startDate: { year: 178, season: 'autumn' },
+  /*
+   * 開局外交 —— 長平之戰:趙括代廉頗,而白起坑降卒四十萬 ——
+     此後山東六國,無一能獨當秦者。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'zhao', score: -95, status: 'neutral' },
+    { a: 'zhao', b: 'han', score: 35, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: -70, status: 'neutral' },
+    { a: 'zhao', b: 'wei', score: 25, status: 'non-aggression' },
+    { a: 'zhao', b: 'chu', score: 25, status: 'non-aggression' },
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_CHANGPING),
   forces: FORCES_WS_CHANGPING,
   officers: buildWarringStatesOfficers(ASSIGN_WS_CHANGPING),
@@ -8474,6 +8528,33 @@ export const SCENARIO_WS_YUEYI: Scenario = {
     'The avenger has come. King Zhao of Yan, who raised a golden terrace to gather the talent of the realm, has unleashed Yue Yi at the head of a five-kingdom host; in half a year they have taken seventy cities of Qi and burned Linzi to the ground. The mighty east is reduced to two towns — Ju, where King Xiang hides, and Jimo, where Tian Dan readies a thousand oxen with blades lashed to their horns and fire to their tails. Whoever holds this last line decides whether Qi dies, or rises from the ash to reclaim it all.',
   descriptionZh: "復仇者已至。燕昭王築黃金台以攬天下之士，遂遣樂毅統五國之師伐齊；半歲之間，下齊七十餘城，焚臨淄為墟。煌煌東方之強齊，僅餘二城——莒，齊襄王潛匿之地；即墨，田單束千牛、縛刃於角、繫火於尾以待。守得此最後一線者，將決齊之亡，抑或自灰燼中復起而盡復其地。",
   startDate: { year: 178, season: 'summer' },
+  /*
+   * 開局外交 —— 樂毅伐齊:燕秦趙魏韓五國之師,半年下齊七十餘城 ——
+     唯莒與即墨不下。
+   */
+  openingRelations: [
+    { a: 'yan', b: 'qi', score: -95, status: 'neutral' },
+    { a: 'yan', b: 'qin', score: 45, status: 'allied' },
+    { a: 'yan', b: 'zhao', score: 50, status: 'allied' },
+    { a: 'yan', b: 'wei', score: 45, status: 'allied' },
+    { a: 'yan', b: 'han', score: 45, status: 'allied' },
+    { a: 'qin', b: 'qi', score: -70, status: 'neutral' },
+    { a: 'zhao', b: 'qi', score: -70, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_YUEYI),
   forces: FORCES_WS_YUEYI,
   officers: buildWarringStatesOfficers(ASSIGN_WS_YUEYI),
@@ -8516,6 +8597,33 @@ export const SCENARIO_WS_GUILING: Scenario = {
     'Wei stands at its zenith under King Hui, first hegemon of the age. Pang Juan has stormed the Zhao capital of Handan and the house of Zhao reels back to Jinyang. But Zhao\'s cry for help has reached Linzi, and in the war-chariot of Qi sits Pang Juan\'s old schoolmate — Sun Bin, crippled and disgraced by him years ago, now waiting with a cold patience. Strike not at the relieving army but at undefended Daliang, and the Wei host must race home into the ambush. The road runs to Guiling, and one day to Maling, where Pang Juan will read his own name carved on a tree by torchlight.',
   descriptionZh: "魏當極盛，惠王為一世之雄。龐涓既拔趙都邯鄲，趙氏退保晉陽。然趙之求救已達臨淄——齊之戎車上，正坐著龐涓的同窗：孫臏，昔年為其所刖、所辱，今以冷酷之耐心待之。不擊救兵而擊空虛之大梁，魏師必回師自投伏中。其路通桂陵，他日通馬陵——龐涓將於火光下，讀到刻於樹上的自己之名。",
   startDate: { year: 178, season: 'spring' },
+  /*
+   * 開局外交 —— 圍魏救趙:魏伐趙而齊救之,孫臏引兵疾走大梁 ——
+     「批亢搗虛,形格勢禁,則自為解耳。」
+   */
+  openingRelations: [
+    { a: 'wei', b: 'zhao', score: -85, status: 'neutral' },
+    { a: 'qi', b: 'zhao', score: 55, status: 'allied' },
+    { a: 'qi', b: 'wei', score: -80, status: 'neutral' },
+    { a: 'qin', b: 'wei', score: -55, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_GUILING),
   forces: FORCES_WS_GUILING,
   officers: buildWarringStatesOfficers(ASSIGN_WS_GUILING),
@@ -8552,6 +8660,33 @@ export const SCENARIO_WS_HANDAN: Scenario = {
     'The year after Changping, where four hundred thousand of Zhao were buried, Qin comes for the kill: its army grinds down from Shangdang to ring the Zhao capital of Handan. Within, Lord Pingyuan strips his household to man the walls and sends his desperate plea across the realm. The answer is the vertical alliance made flesh — Lord Xinling of Wei murders the general Jin Bi with Zhu Hai\'s forty-pound hammer to seize his army by a stolen tally, and Lord Chunshen marches the men of Chu north. If the three armies hold, Qin\'s tide breaks on Handan\'s walls; if not, the first empire comes a generation early.',
   descriptionZh: "長平坑趙四十萬之次年，秦來取命：其軍自上黨碾壓而下，環圍趙都邯鄲。城中，平原君散盡家財以守，遣使泣血求援於天下。而回應者，乃合縱之化身——魏公子信陵君以朱亥四十斤鐵椎擊殺晉鄙，竊符奪其軍；楚春申君亦提江東之眾北上。三軍若能拒守，秦之大潮將碎於邯鄲城下；若其不能，天下第一帝國，將早一世而至。",
   startDate: { year: 178, season: 'winter' },
+  /*
+   * 開局外交 —— 邯鄲之戰:信陵君竊符救趙,春申君以楚兵至 ——
+     秦圍邯鄲三年而解,是六國最後一次真正的合力。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'zhao', score: -95, status: 'neutral' },
+    { a: 'zhao', b: 'wei', score: 60, status: 'allied' },
+    { a: 'zhao', b: 'chu', score: 55, status: 'allied' },
+    { a: 'qin', b: 'wei', score: -70, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: -65, status: 'neutral' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_HANDAN),
   forces: FORCES_WS_HANDAN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_HANDAN),
@@ -8594,6 +8729,33 @@ export const SCENARIO_WS_QIN_UNIFY: Scenario = {
     'The endgame. Ying Zheng, King of Qin, sits behind the laws of Shang Yang and the cabinet of Li Si and Wei Liao, and his generals — old Wang Jian, his son Wang Ben, the bold Li Xin, Meng Tian of the frontier — are loosed to swallow all under heaven one kingdom at a time. The six hold only their hearts now: Zhao behind Li Mu, the last great shield of the north; Chu behind Xiang Yan; and in Yan, Crown Prince Dan whispers with Jing Ke over a map of Dukang with a poisoned dagger rolled inside. Within a decade the realm is one, or the dagger finds the king first.',
   descriptionZh: "終局。秦王嬴政恃商鞅之法、李斯尉繚之謀，縱其諸將——老將王翦、其子王賁、驍勇李信、戍邊蒙恬——以逐一吞滅天下。六國今所守者，唯其腹心：趙有李牧，北方最後之盾；楚有項燕；而燕之太子丹，正與荊軻密語於督亢之圖前，圖窮而匕首藏焉。十年之內，天下歸一——或匕首先尋上秦王。",
   startDate: { year: 178, season: 'autumn' },
+  /*
+   * 開局外交 —— 秦滅六國:十年之內,韓趙魏楚燕齊次第而亡 ——
+     而六國之亡,先亡於不能相救。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'han', score: -90, status: 'neutral' },
+    { a: 'qin', b: 'zhao', score: -90, status: 'neutral' },
+    { a: 'qin', b: 'wei', score: -90, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: -90, status: 'neutral' },
+    { a: 'qin', b: 'yan', score: -90, status: 'neutral' },
+    { a: 'qin', b: 'qi', score: -60, status: 'neutral' },
+    { a: 'zhao', b: 'yan', score: -40, status: 'neutral' },
+    { a: 'qi', b: 'chu', score: 10, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_QIN_UNIFY),
   forces: FORCES_WS_QIN_UNIFY,
   officers: buildWarringStatesOfficers(ASSIGN_WS_QIN_UNIFY, ['warring-states', 'qin']),
@@ -8629,6 +8791,33 @@ export const SCENARIO_WS_SHANGYANG: Scenario = {
     'The west, before it was a wolf. Qin is a backward marcher state, mocked at the conferences of the central plain, holding only the Guanzhong basin — Ba-Shu is still its own kingdoms, the Long corridor and the Hexi lands beyond Qin\'s reach, while in the east Wei stands first among the powers. Duke Xiao, burning to lift his house, gives the Wey exile Shang Yang an absolutely free hand: to abolish the old aristocracy of blood, reward only farming and war, and forge from cold law the most terrible military machine the age will know. The reforms will cost Shang Yang his life and remake the world.',
   descriptionZh: "西陲未為狼時。秦乃僻處邊鄙之國，為中原會盟所輕，僅守關中盆地——巴蜀尚為其國，隴右、河西之地皆非秦有，而東方魏為諸侯之首。孝公切於振作其室，授衛人商鞅以全權：廢世卿世祿之舊貴，獎耕戰，以冷酷之法，鑄就此世所未見之可怖戰爭機器。此變法將以商鞅之命為代價，而重塑天下。",
   startDate: { year: 178, season: 'spring' },
+  /*
+   * 開局外交 —— 商鞅變法:秦欲東出而魏據河西 ——
+     此後二十年,秦魏之爭只有一個題目,就是那一片河西之地。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'wei', score: -85, status: 'neutral' },
+    { a: 'wei', b: 'zhao', score: 20, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 25, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: -40, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_SHANGYANG),
   forces: FORCES_WS_SHANGYANG,
   officers: buildWarringStatesOfficers(ASSIGN_WS_SHANGYANG),
@@ -8665,6 +8854,33 @@ export const SCENARIO_WS_YANYING: Scenario = {
     'The God of War turns south. Bai Qi drives into Chu, dams a river to drown the city of Yan with hundreds of thousands within, and storms Ying, the ancient capital, putting the royal tombs to the torch. The court of King Qingxiang flees east in ruin to Shouchun and will never reclaim the Jianghan heartland it loses here; the poet-minister Qu Yuan, watching his world end, fills his robes with stones and walks into the Miluo. Vast Chu, the largest realm under heaven, is broken in a single campaign — and Qin\'s shadow lengthens over all the south.',
   descriptionZh: "戰神南向。白起深入楚境，壅水以灌鄢城，溺數十萬於其中，又拔故都郢，焚其先王之陵。頃襄王之朝廷崩潰東奔壽春，自此永失江漢腹心；三閭大夫屈原，目睹其世之傾覆，懷石自沉於汨羅。煌煌大楚，天下之最廣者，一役而折——秦之陰影，自此長籠南天。",
   startDate: { year: 178, season: 'summer' },
+  /*
+   * 開局外交 —— 鄢郢之戰:白起引夷水灌鄢,而後拔郢,燒夷陵 ——
+     楚自此東徙於陳,雖存而非復大國。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'chu', score: -90, status: 'neutral' },
+    { a: 'chu', b: 'qi', score: 25, status: 'non-aggression' },
+    { a: 'qin', b: 'zhao', score: -40, status: 'neutral' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_YANYING),
   forces: FORCES_WS_YANYING,
   officers: buildWarringStatesOfficers(ASSIGN_WS_YANYING),
@@ -8689,6 +8905,33 @@ export const SCENARIO_WS_HANGU: Scenario = {
     'The vertical alliance made manifest. Su Qin, a starving scholar who once could not borrow a coin from his own family, has talked his way into the chancellorships of all six kingdoms at once and wears their six seals on one sash, binding them north-to-south against the wolf of the west. Now the armies of the alliance roll toward the great gate of Hangu, the only road into Guanzhong. But inside, Su Qin\'s fellow-student Zhang Yi sells Qin the counter — the horizontal: buy off one ally, frighten another, and the great coalition rots from within before it can force the pass.',
   descriptionZh: "合縱之成形。蘇秦，昔日向親族借錢而不得的窮士，竟一舌而並佩六國相印於一身，合天下南北之眾以抗西方之狼。今合縱之師滾滾西向函谷大關——入關中之唯一通道。然關內，蘇秦之同門張儀，正為秦售其反制之策連橫：賂一國、懼一國，使這龐大的聯盟未及叩關，先自內潰。",
   startDate: { year: 178, season: 'autumn' },
+  /*
+   * 開局外交 —— 五國攻秦:公孫衍倡合縱,楚齊趙魏韓並兵臨函谷 ——
+     而縱者,各懷其私,故五國之師終於自罷。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'chu', score: -75, status: 'neutral' },
+    { a: 'qin', b: 'qi', score: -70, status: 'neutral' },
+    { a: 'qin', b: 'zhao', score: -75, status: 'neutral' },
+    { a: 'qin', b: 'wei', score: -80, status: 'neutral' },
+    { a: 'qin', b: 'han', score: -80, status: 'neutral' },
+    { a: 'chu', b: 'qi', score: 40, status: 'allied' },
+    { a: 'zhao', b: 'wei', score: 40, status: 'allied' },
+    { a: 'wei', b: 'han', score: 45, status: 'allied' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_SEVEN),
   forces: FORCES_WS_SEVEN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_HANGU),
@@ -8717,6 +8960,33 @@ export const SCENARIO_WS_YIQUE: Scenario = {
     'The God of War\'s first masterpiece. Han and Wei, the two heirs of Jin, throw a joint army across the Yi River gorges to bar Qin\'s road east — but their commanders distrust each other and neither will lead. Bai Qi, reading the seam between them, feints at one and falls upon the other, then wheels and destroys the first: two hundred and forty thousand heads taken in a day. The gate to the central plain stands open, Yiyang and the Zhou heartland are in Qin\'s hand, and a young general has announced his name to history.',
   descriptionZh: "戰神之初篇傑作。韓魏二晉之裔，合師於伊水之闕以拒秦東出——然二帥相疑，莫肯先進。白起察其罅隙，佯攻其一而襲其一，復回師滅其先者：一日之間，斬首二十四萬。中原之門洞開，宜陽與周室腹地入於秦手，而一位年輕的將軍，自此向歷史報出了自己的名姓。",
   startDate: { year: 178, season: 'spring' },
+  /*
+   * 開局外交 —— 伊闕之戰:白起破韓魏聯軍二十四萬 ——
+     自此韓魏折,而秦之東門開矣。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'han', score: -90, status: 'neutral' },
+    { a: 'qin', b: 'wei', score: -85, status: 'neutral' },
+    { a: 'han', b: 'wei', score: 55, status: 'allied' },
+    { a: 'qin', b: 'zhao', score: -30, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_YIQUE),
   forces: FORCES_WS_SEVEN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_YIQUE),
@@ -8747,6 +9017,33 @@ export const SCENARIO_WS_YUYU: Scenario = {
     'Before Changping, before the burying, there was a day when Zhao could still beat Qin in open field. The Qin army has driven deep into the Shangdang hills and seized Yuyu, and the council at Handan calls the road too far and too narrow to save it. Only Zhao She says otherwise: "On a road this cramped, two rats fighting in a hole — the braver wins." He marches in secret, feigns timidity to lull the enemy, then covers fifty li in a day and a night, seizes the heights, and shatters the Qin host. For this King Huiwen makes him Lord Mafu — while his son Zhao Kuo, who reads every book of war, watches and learns all the wrong lessons.',
   descriptionZh: "在長平之前，在坑殺之前，曾有一日趙尚能於野戰勝秦。秦軍已深入上黨山中，取閼與；邯鄲之廷皆言道遠險狹、不可救。獨趙奢曰：『其道甚狹，譬兩鼠鬥於穴中，將勇者勝。』乃潛師急進，先示怯以驕敵，後一日一夜行五十里，據北山而大破秦軍。惠文王為此封其馬服君——而其子趙括，讀盡兵書，旁觀此役，所學盡是錯處。",
   startDate: { year: 178, season: 'autumn' },
+  /*
+   * 開局外交 —— 閼與之戰:趙奢曰「其道遠險狹,譬之猶兩鼠鬥於穴中,
+     將勇者勝」—— 秦人不意趙師至此。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'zhao', score: -90, status: 'neutral' },
+    { a: 'qin', b: 'han', score: -60, status: 'neutral' },
+    { a: 'zhao', b: 'han', score: 40, status: 'non-aggression' },
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_YUYU),
   forces: FORCES_WS_YUYU,
   officers: buildWarringStatesOfficers(ASSIGN_WS_YUYU),
@@ -8789,6 +9086,33 @@ export const SCENARIO_WS_TIANDAN: Scenario = {
     'The ash stirs. King Hui, new on the throne of Yan, mistrusts the brilliant Yue Yi who has all but ended Qi, and recalls him — replacing the conqueror with the lesser Qi Jie before the last two towns of the east. In Jimo, Tian Dan has been waiting for exactly this. He has spread the rumor that drove Yue Yi out; he feigns surrender to make the Yan army careless; and now he lashes blades to the horns of a thousand oxen and fire to their tails, and waits for the night to drive them into the Yan camp. From two cities, in a single season, Qi will reclaim seventy.',
   descriptionZh: "灰燼復動。燕新君惠王，疑那幾乎滅齊的天才樂毅，召之還——以庸劣的騎劫代此征服者於齊最後之二城前。即墨城中，田單正等的便是此刻。他已縱反間以去樂毅；他詐降以驕燕師；今束刃於千牛之角、繫火於其尾，只待夜色，驅之衝燕營。自二城之地，一季之間，齊將盡復七十城。",
   startDate: { year: 178, season: 'winter' },
+  /*
+   * 開局外交 —— 田單復國:火牛陣夜出即墨,燕師大潰 ——
+     七十餘城,一夕而復。
+   */
+  openingRelations: [
+    { a: 'qi', b: 'yan', score: -95, status: 'neutral' },
+    { a: 'qi', b: 'zhao', score: 20, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: -30, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_TIANDAN),
   forces: FORCES_WS_TIANDAN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_TIANDAN),
@@ -8834,6 +9158,33 @@ export const SCENARIO_WS_WEIWEN: Scenario = {
     'The dawn of the warring age. The house of Jin has been carved in three, and of the three heirs Wei rises first and fastest. Marquis Wen, the model lord of the era, gathers a court no rival can match: Li Kui writes the first code of Legalist reform and "wrings the earth dry" to fill the granaries; Wu Qi forges the armoured foot-soldiers of Wei who do not lose; Ximen Bao tames the Zhang River and breaks the witch-cult of Ye; Yue Yang marches out and swallows the kingdom of Zhongshan. For one generation Wei is the first power under heaven, and a still-feudal Qin cowers behind the passes — before Wei\'s heirs throw the whole inheritance away.',
   descriptionZh: "大爭之世的黎明。晉室既三分，三晉之中魏興最先、最速。文侯，一世之賢君，聚天下無雙之朝：李悝著法家變法之首典，盡地力之教以實倉廩；吳起鑄魏之重甲武卒，戰而不敗；西門豹治漳水、破鄴之巫風；樂羊出師，吞中山之國。魏為天下首強者，凡一世，而尚行封建之秦瑟縮於關隘之後——直至文侯之子孫，將此基業盡棄。",
   startDate: { year: 178, season: 'spring' },
+  /*
+   * 開局外交 —— 魏文侯用李悝、吳起,三晉之盟猶在 ——
+     魏趙韓同出於晉,故相親;而秦弱於河西,魏之西鄙也。
+   */
+  openingRelations: [
+    { a: 'wei', b: 'zhao', score: 60, status: 'allied' },
+    { a: 'wei', b: 'han', score: 60, status: 'allied' },
+    { a: 'zhao', b: 'han', score: 45, status: 'non-aggression' },
+    { a: 'qin', b: 'wei', score: -70, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qi', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_WEIWEN),
   forces: FORCES_WS_WEIWEN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_WEIWEN),
@@ -8862,6 +9213,33 @@ export const SCENARIO_WS_QIMIN: Scenario = {
     'Qi at the noon of its power, and its pride. King Min has swallowed the rich state of Song, humbled Chu and battered Qin, and now takes the title Di — Emperor of the East — to stand level with Qin\'s Emperor of the West. Linzi is the wealthiest city under heaven and its Jixia academy the brightest gathering of minds in the age. But at his court sits the persuader Su Qin, secretly an agent of Yan, forever urging him into one more war to bleed Qi white; and beyond the horizon five kingdoms are quietly agreeing that the East has grown too proud to be borne. This is the high noon before the avalanche of Yue Yi.',
   descriptionZh: "齊之日中，與其驕。湣王既吞富宋，辱楚摧秦，遂取帝號，稱東帝，以與秦之西帝並立。臨淄為天下最富之城，稷下學宮為當世最盛之士林。然其朝中坐著說客蘇秦，實為燕之間者，日誘之於再一場兵戈以疲齊；而天際之外，五國正悄然議定：東方已驕橫得不可復容。此乃樂毅之雪崩前，最盛的正午。",
   startDate: { year: 178, season: 'summer' },
+  /*
+   * 開局外交 —— 齊湣王稱東帝,秦昭王稱西帝 —— 而蘇代說湣王去帝號,
+     天下遂共惡秦。齊之盛極,亦其禍始。
+   */
+  openingRelations: [
+    { a: 'qi', b: 'qin', score: -50, status: 'neutral' },
+    { a: 'qi', b: 'yan', score: -40, status: 'neutral' },
+    { a: 'qi', b: 'chu', score: -45, status: 'neutral' },
+    { a: 'qi', b: 'wei', score: -45, status: 'neutral' },
+    { a: 'qi', b: 'zhao', score: -40, status: 'neutral' },
+    { a: 'qi', b: 'han', score: -40, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'qin', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'yan', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'chu', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'zhao', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
+    { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
+    { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_WS_QIMIN),
   forces: FORCES_WS_QIMIN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_QIMIN),
@@ -8968,6 +9346,21 @@ export const SCENARIO_CH_CHUHAN: Scenario = {
     'The empire of Qin is ash, and Xiang Yu — Hegemon-King of Western Chu, the strongest man of the age — has carved all under heaven into eighteen fiefs to suit himself. He has banished his rival Liu Bang to the dead end of Hanzhong behind the Three Qin, the surrendered Qin generals set to wall him in. But Liu Bang has the three greatest talents of the era — Han Xin to command, Zhang Liang to plan, Xiao He to supply — and means to burn his retreat-galleries as a lie, march out of the west, and contend for it all. Qi already rebels in the east, the restored kingdoms eye each other, and Fan Zeng warns a Hegemon who will not listen. The four years that decide a dynasty begin now.',
   descriptionZh: "秦之帝國已成灰燼，而項羽——西楚霸王、當世第一之人——已按己意裂天下為十八國。他將勁敵劉邦逐於漢中之絕地，以三秦降將圍堵之。然劉邦握有當世三傑——韓信將兵、張良運籌、蕭何足食——意欲明燒棧道以為餌，暗度而出，爭奪天下。齊已叛於東，諸復國者彼此相窺，而范增之諫，霸王不聽。決定一代王朝的四年，自此刻始。",
   startDate: { year: 178, season: 'spring' },
+  /*
+   * 開局外交 —— 楚漢爭霸:鴻門之後,漢王之國於巴蜀,
+     而三秦扼其出路 —— 天下之爭,自此二人而已。
+   */
+  openingRelations: [
+    { a: 'chu', b: 'han', score: -90, status: 'neutral' },
+    { a: 'han', b: 'yong', score: -85, status: 'neutral' },
+    { a: 'chu', b: 'yong', score: 45, status: 'allied' },
+    { a: 'chu', b: 'qi', score: -60, status: 'neutral' },
+    { a: 'chu', b: 'zhao', score: -30, status: 'neutral' },
+    { a: 'chu', b: 'wei', score: 20, status: 'non-aggression' },
+    { a: 'chu', b: 'jiujiang', score: 55, status: 'allied' },
+    { a: 'han', b: 'qi', score: 25, status: 'non-aggression' },
+    { a: 'han', b: 'zhao', score: 10, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_CHUHAN),
   forces: FORCES_CHUHAN,
   officers: buildWarringStatesOfficers(ASSIGN_CHUHAN, ['chu-han', 'qin']),
@@ -8992,6 +9385,21 @@ export const SCENARIO_CH_SANQIN: Scenario = {
     'The feint that won an empire. Marching into Hanzhong, Liu Bang burned the plank-roads behind him to convince Xiang Yu he would never come out — and now his new marshal Han Xin turns the ashes into a ruse. He sends men to make a show of "repairing" the galleries while the army slips through the back road of Chencang, bursting into Guanzhong to fall on Zhang Han\'s Three Qin before they can react. Take the Wei river basin, and the King of Han has at last a base from which to contend for all under heaven.',
   descriptionZh: "贏得天下的疑兵。劉邦入漢中時，燒絕棧道於身後，使項羽信其永不復出——今其新拜大將韓信，化此灰燼為詭計。遣人佯作『修復』棧道，而大軍暗出陳倉故道，驟入關中，趁三秦章邯未及反應而擊之。得渭水盆地，漢王便終有爭天下之基。",
   startDate: { year: 178, season: 'autumn' },
+  /*
+   * 開局外交 —— 還定三秦:明修棧道,暗度陳倉 ——
+     韓信之計,一月而定關中。
+   */
+  openingRelations: [
+    { a: 'han', b: 'yong', score: -95, status: 'neutral' },
+    { a: 'chu', b: 'han', score: -85, status: 'neutral' },
+    { a: 'chu', b: 'yong', score: 40, status: 'allied' },
+    { a: 'chu', b: 'qi', score: -60, status: 'neutral' },
+    { a: 'chu', b: 'jiujiang', score: 55, status: 'allied' },
+    { a: 'chu', b: 'wei', score: 20, status: 'non-aggression' },
+    { a: 'han', b: 'wei', score: 25, status: 'non-aggression' },
+    { a: 'han', b: 'zhao', score: 10, status: 'non-aggression' },
+    { a: 'chu', b: 'zhao', score: -25, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_CH_SANQIN),
   forces: FORCES_CHUHAN,
   officers: buildWarringStatesOfficers(ASSIGN_CH_SANQIN, ['chu-han', 'qin']),
@@ -9020,6 +9428,20 @@ export const SCENARIO_CH_PENGCHENG: Scenario = {
     'The high tide of folly. While Xiang Yu is away in the north crushing Qi\'s revolt, Liu Bang gathers a grand coalition of five kingdoms — five hundred and sixty thousand men — and walks into Pengcheng, the Hegemon\'s own capital, to feast in his halls. Then Xiang Yu turns. Leaving the siege of Qi, he takes thirty thousand cavalry, rides through the night, and falls on the drunken coalition at dawn; by dusk the Si and Sui rivers run choked with Han dead and Liu Bang flees for his life. It is the most crushing defeat of his career — and he will still, somehow, win the war.',
   descriptionZh: "得意之巔，亦愚妄之巔。當項羽北上平齊之叛，劉邦糾合五國之眾——五十六萬——徑入彭城，霸王之都，宴於其殿。然後項羽回師。棄平齊之圍，提三萬精騎，連夜奔襲，黎明掩殺沉醉之聯軍；至暮，泗水睢水為漢屍所塞，劉邦亡命而逃。此其生涯最慘之敗——而他終將，竟然，贏得此戰爭。",
   startDate: { year: 178, season: 'summer' },
+  /*
+   * 開局外交 —— 彭城之戰:漢王將五諸侯兵五十六萬入彭城,
+     而項羽以三萬騎晨擊之,漢卒十餘萬人皆入睢水,水為之不流。
+   */
+  openingRelations: [
+    { a: 'chu', b: 'han', score: -95, status: 'neutral' },
+    { a: 'han', b: 'wei', score: 55, status: 'allied' },
+    { a: 'han', b: 'zhao', score: 40, status: 'allied' },
+    { a: 'han', b: 'yong', score: -40, status: 'neutral' },
+    { a: 'chu', b: 'qi', score: -65, status: 'neutral' },
+    { a: 'chu', b: 'jiujiang', score: 50, status: 'allied' },
+    { a: 'chu', b: 'zhao', score: -30, status: 'neutral' },
+    { a: 'chu', b: 'wei', score: -40, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_CH_PENGCHENG),
   forces: FORCES_CHUHAN,
   officers: buildWarringStatesOfficers(ASSIGN_CH_PENGCHENG, ['chu-han', 'qin']),
@@ -9064,6 +9486,13 @@ export const SCENARIO_CH_GAIXIA: Scenario = {
     'Four sides of Chu songs. The four years are almost run. Han Xin has conquered the whole north and east for Han — Wei, Zhao, Qi all fallen — and Peng Yue has bled Chu\'s supply lines white; now the Hegemon, his army starving, is ringed at Gaixia by a host many times his size. In the night the Han camps raise the songs of Chu on every side, and Xiang Yu, believing his homeland wholly lost, rises to drink and sing his last with Lady Yu: the strength to uproot mountains, and an age that would not go his way. From a hundred thousand he will cut his way to twenty-eight riders at the Wu River — and there, refusing the ferry home, make his end.',
   descriptionZh: "四面楚歌。四年之期將盡。韓信已為漢盡取北方與東土——魏、趙、齊皆下——彭越又斷楚糧道殆盡；今霸王之軍饑餒，為數倍於己之眾圍於垓下。是夜，漢營四面皆起楚歌，項羽以為江東盡失，乃起飲，與虞姬作其最後之歌：力拔山兮氣蓋世，時不利兮騅不逝。自十萬之眾，他將殺至烏江僅餘二十八騎——而於彼處，辭舟不渡，了此一生。",
   startDate: { year: 178, season: 'winter' },
+  /*
+   * 開局外交 —— 垓下:四面楚歌,力拔山兮氣蓋世 ——
+     而虞兮虞兮奈若何。
+   */
+  openingRelations: [
+    { a: 'chu', b: 'han', score: -100, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_CH_GAIXIA),
   forces: FORCES_CH_GAIXIA,
   officers: buildWarringStatesOfficers(ASSIGN_CH_GAIXIA, ['chu-han', 'qin']),
@@ -9094,6 +9523,19 @@ export const SCENARIO_CH_JINGXING: Scenario = {
     'Han Xin\'s impossible victory. Sent north with a few tens of thousands of raw troops to open a second front, he has already swallowed Wei; now he faces Chen Yu\'s two hundred thousand at the mouth of the Jingxing pass. He does the thing every manual forbids — drawing up his men with a river at their backs and no line of retreat — so that, with nowhere to run, they fight like cornered demons; meanwhile two thousand light horse slip round and tear the Zhao banners from their emptied camp. Chen Yu, who scorned Li Zuoche\'s plea to simply hold the pass, dies in the rout. "Throw them onto dead ground, and they live."',
   descriptionZh: "韓信不可能之勝。受命北出，將數萬新卒以開第二戰場，他已並魏；今於井陘口面對陳餘二十萬之眾。他行兵家所禁——背水列陣、無退路可走——使士卒無所逃而人人死戰；同時遣輕騎二千繞出，拔趙幟於空壁。陳餘輕李左車守關之策，死於亂軍。「陷之死地而後生。」",
   startDate: { year: 178, season: 'autumn' },
+  /*
+   * 開局外交 —— 井陘之戰:背水一陣,置之死地而後生 ——
+     而趙有廣武君之策而不用。
+   */
+  openingRelations: [
+    { a: 'han', b: 'zhao', score: -90, status: 'neutral' },
+    { a: 'chu', b: 'han', score: -90, status: 'neutral' },
+    { a: 'chu', b: 'zhao', score: 40, status: 'allied' },
+    { a: 'chu', b: 'qi', score: -55, status: 'neutral' },
+    { a: 'chu', b: 'jiujiang', score: 45, status: 'allied' },
+    { a: 'han', b: 'yong', score: -30, status: 'neutral' },
+    { a: 'chu', b: 'yong', score: 30, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_CH_JINGXING),
   forces: FORCES_CH_JINGXING,
   officers: buildWarringStatesOfficers(ASSIGN_CH_JINGXING, ['chu-han', 'qin']),
@@ -9170,6 +9612,20 @@ export const SCENARIO_CH_JULU: Scenario = {
     'Break the cauldrons, sink the boats. The Qin empire\'s last great armies have the rebellion by the throat: Wang Li\'s Great Wall corps rings the King of Zhao inside Julu while Zhang Han\'s host guards the supply road, and Zhang Er within the walls screams for a rescue no one dares give — Chen Yu sits outside with his whole army and will not move. Then Xiang Yu murders the dithering Song Yi, seizes command, crosses the river, and orders every cauldron smashed and every boat sunk: three days\' rations and no way back, win or die. In nine furious charges he annihilates the Qin host before a dozen frozen lords too afraid to leave their walls — and walks out, at twenty-six, the master of them all.',
   descriptionZh: "破釜沉舟。秦帝國最後之大軍扼住了起義之咽喉：王離之長城軍圍趙王於鉅鹿，章邯之眾守其甬道糧路，城中張耳呼救而無人敢應——陳餘擁兵於外，按兵不動。於是項羽斬猶豫之宋義，奪其軍，渡河，下令盡破釜甑、盡沉舟船：持三日糧、無還之路，非勝即死。九戰之間，他於十餘壁上諸侯目瞪口呆之注視下，殲秦軍主力——而後步出轅門，年方二十六，諸侯膝行，莫敢仰視。",
   startDate: { year: 178, season: 'winter' },
+  /*
+   * 開局外交 —— 鉅鹿之戰:項羽破釜沉舟,九戰九捷 ——
+     諸侯將入轅門,無不膝行而前,莫敢仰視。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'chu', score: -95, status: 'neutral' },
+    { a: 'qin', b: 'zhao', score: -95, status: 'neutral' },
+    { a: 'qin', b: 'qi', score: -80, status: 'neutral' },
+    { a: 'qin', b: 'wei', score: -85, status: 'neutral' },
+    { a: 'chu', b: 'zhao', score: 60, status: 'allied' },
+    { a: 'chu', b: 'wei', score: 45, status: 'allied' },
+    { a: 'chu', b: 'qi', score: 30, status: 'non-aggression' },
+    { a: 'zhao', b: 'wei', score: 35, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_CH_JULU),
   forces: FORCES_CH_JULU,
   officers: buildWarringStatesOfficers(ASSIGN_CH_JULU, ['chu-han', 'qin']),
@@ -9227,6 +9683,18 @@ export const SCENARIO_CH_DAZE: Scenario = {
     'Where there is no seed of kings. In the seventh month of rain, nine hundred conscripts bound for the northern garrisons are halted by floods at Dazexiang — and Qin law says a man late to his post dies. So Chen Sheng and Wu Guang reason it out: death for desertion, death for revolt, the same death — better to die for a kingdom. They kill the escort officers, raise the cry "Are kings and nobles born to their blood?", and the first fire of rebellion against Qin catches and roars across the realm. Within weeks the old six kingdoms stir — Xiang Liang in the south, the Tian clan in Qi — while the empire of the First Emperor, still vast and terrible under the fool Er Shi and the eunuch Zhao Gao, gathers its armies to stamp out the spark.',
   descriptionZh: "王侯將相，寧有種乎。七月霖雨，九百戍卒赴漁陽，為大水阻於大澤鄉——而秦法，失期當斬。陳勝吳廣乃謀：亡亦死，舉大計亦死，等死，死國可乎？遂殺尉，舉「王侯將相寧有種乎」之號，反秦之第一把火，燃而怒捲天下。旬月之間，六國舊地皆動——項梁起於江東，田氏王於齊——而始皇之帝國，在愚主二世與閹宦趙高之下，雖暴虐猶廣且強，正集其兵以撲滅此星火。",
   startDate: { year: 178, season: 'summer' },
+  /*
+   * 開局外交 —— 大澤鄉:「王侯將相寧有種乎」—— 陳勝吳廣舉大澤,
+     而六國之後並起。
+   */
+  openingRelations: [
+    { a: 'qin', b: 'zhangchu', score: -95, status: 'neutral' },
+    { a: 'qin', b: 'chu', score: -85, status: 'neutral' },
+    { a: 'qin', b: 'qi', score: -80, status: 'neutral' },
+    { a: 'zhangchu', b: 'chu', score: 40, status: 'non-aggression' },
+    { a: 'zhangchu', b: 'qi', score: 35, status: 'non-aggression' },
+    { a: 'chu', b: 'qi', score: 30, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_CH_DAZE),
   forces: FORCES_CH_DAZE,
   officers: buildWarringStatesOfficers(ASSIGN_CH_DAZE, ['chu-han', 'qin']),
@@ -9276,6 +9744,15 @@ export const SCENARIO_CH_WEISHUI: Scenario = {
     'The water-trick that ended a kingdom. Han Xin, having swept Wei, Dai, Zhao and Yan into Liu Bang\'s hand, turns on Qi — and storms Linzi in a rush before the persuader Li Yiji\'s peace can take hold. Xiang Yu, alarmed at last, sends his finest general Long Ju with two hundred thousand to save it. Long Ju scorns his enemy and will not wait. So in the night Han Xin dams the Wei river upstream with ten thousand sandbags, lures Long Ju half across the dry bed, then breaks the dam — and the flood takes half the Chu host as it struggles in the water. Long Ju dies on the far bank, Qi falls, and the balance of the whole war tips toward Han.',
   descriptionZh: "水淹一國之計。韓信既掃魏、代、趙、燕入於劉邦之手，遂轉兵向齊——趁說客酈食其之和未定，急襲破臨淄。項羽至此始驚，遣其第一名將龍且，提二十萬以救之。龍且輕敵，不肯持重。韓信乃夜以萬囊壅濰水上流，誘龍且半渡涸床，決囊放水——洪流挾去半數楚師於水中掙紮之際。龍且死於彼岸，齊遂平，而舉世戰局之勢，自此傾於漢矣。",
   startDate: { year: 178, season: 'autumn' },
+  /*
+   * 開局外交 —— 濰水之戰:韓信囊沙壅水,半渡而擊 ——
+     龍且死,而齊地盡入於漢。
+   */
+  openingRelations: [
+    { a: 'chu', b: 'han', score: -95, status: 'neutral' },
+    { a: 'chu', b: 'qi', score: 45, status: 'allied' },
+    { a: 'han', b: 'qi', score: -80, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_CH_WEISHUI),
   forces: FORCES_CH_WEISHUI,
   officers: buildWarringStatesOfficers(ASSIGN_CH_WEISHUI, ['chu-han', 'qin']),
@@ -9359,6 +9836,24 @@ export const SCENARIO_ST_SUIEND: Scenario = {
     'The Sui have burned themselves out. Emperor Yang lies dead at Jiangdu, the canal-digging and the Korean wars have broken the realm, and rebellion blazes from every province. In the heartland Li Mi\'s Wagang army is the mightiest force in the land, gorged on the granaries of Luokou; Wang Shichong holds Luoyang with a puppet Sui prince, Dou Jiande the Hebei plain, Xue Ju the Long passes, Liu Wuzhou the north under Turkic patronage, Du Fuwei the Huai. And in Guanzhong, the Duke of Tang Li Yuan and his second son — a youth of nineteen named Li Shimin who has not yet shown the world what he is — hold Chang\'an. The greatest captains of the age are scattered among the rebels: Qin Qiong and Cheng Yaojin under Li Mi, Yuchi Gong under Liu Wuzhou. Whoever gathers them gathers the empire.',
   descriptionZh: "隋室已自焚殆盡。煬帝橫死江都，鑿河與征遼之役耗盡天下，叛火燃於每一州郡。中原之地，李密之瓦崗軍為當世最強，飽掠洛口之倉；王世充挾隋室幼主據洛陽，竇建德有河北之野，薛舉扼隴關，劉武周恃突厥而王於北，杜伏威據淮。而於關中，唐國公李淵與其次子——年方十九、尚未向世人顯露其為何物的李世民——已據長安。當世名將散於群雄之間：秦瓊、程咬金在李密麾下，尉遲恭在劉武周帳中。能聚之者，即聚天下。",
   startDate: { year: 178, season: 'spring' },
+  /*
+   * 開局外交 —— 隋末群雄:煬帝崩於江都,而天下十八路反王並起 ——
+     瓦崗最盛,而李密不能成;唐起於太原,而後一一收之。
+   */
+  openingRelations: [
+    { a: 'tang', b: 'wagang', score: -50, status: 'neutral' },
+    { a: 'tang', b: 'zheng', score: -60, status: 'neutral' },
+    { a: 'tang', b: 'xia', score: -55, status: 'neutral' },
+    { a: 'tang', b: 'xiqin', score: -80, status: 'neutral' },
+    { a: 'tang', b: 'dingyang', score: -75, status: 'neutral' },
+    { a: 'tang', b: 'wu', score: -20, status: 'neutral' },
+    { a: 'wagang', b: 'zheng', score: -85, status: 'neutral' },
+    { a: 'zheng', b: 'xia', score: 20, status: 'non-aggression' },
+    { a: 'wagang', b: 'xia', score: -25, status: 'neutral' },
+    { a: 'dingyang', b: 'xiqin', score: 15, status: 'non-aggression' },
+    { a: 'wu', b: 'zheng', score: -25, status: 'neutral' },
+    { a: 'wu', b: 'xia', score: -20, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_ST_SUIEND),
   forces: FORCES_ST_SUIEND,
   officers: buildWarringStatesOfficers(ASSIGN_ST_SUIEND, ['sui', 'tang']),
@@ -9384,6 +9879,20 @@ export const SCENARIO_ST_QIANSHUI: Scenario = {
     'The young commander\'s first great campaign — and his first lesson in defeat. Xue Ju\'s Western Qin cavalry, the finest horse in the realm, drives east out of the Long passes straight for Chang\'an. Li Shimin\'s plan is to wait behind walls until their supply fails; but while he lies ill in camp, his deputies are goaded into the open at Qianshuiyuan and shattered. He will have to come a second time — and the second time, run Xue Rengao\'s army to exhaustion and take it whole, the first of the rivals he will swallow on his road to the throne.',
   descriptionZh: "少年統帥之初戰——亦其敗績之初課。薛舉西秦之騎，天下之精，東出隴關，直趨長安。李世民之策，乃堅壁以待其糧盡；然當其臥病軍中，部將為敵所激，出戰於淺水原而大敗。他將再來——第二次，他將拖垮薛仁杲之軍而全取之，此乃其登基之路上所吞群雄之第一個。",
   startDate: { year: 178, season: 'summer' },
+  /*
+   * 開局外交 —— 淺水原:秦王世民初戰失利,而後堅壁六十餘日 ——
+     待其糧盡,一戰而滅薛仁杲。
+   */
+  openingRelations: [
+    { a: 'tang', b: 'xiqin', score: -95, status: 'neutral' },
+    { a: 'tang', b: 'dingyang', score: -60, status: 'neutral' },
+    { a: 'tang', b: 'zheng', score: -45, status: 'neutral' },
+    { a: 'tang', b: 'xia', score: -40, status: 'neutral' },
+    { a: 'tang', b: 'wagang', score: -30, status: 'neutral' },
+    { a: 'tang', b: 'wu', score: -15, status: 'neutral' },
+    { a: 'wagang', b: 'zheng', score: -85, status: 'neutral' },
+    { a: 'zheng', b: 'xia', score: 20, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_ST_QIANSHUI),
   forces: FORCES_ST_SUIEND,
   officers: buildWarringStatesOfficers(ASSIGN_ST_QIANSHUI, ['sui', 'tang']),
@@ -9411,6 +9920,20 @@ export const SCENARIO_ST_BOBI: Scenario = {
     'Liu Wuzhou, backed by the Turks and led by the fierce Song Jingang, has stormed down out of Mayi and taken Taiyuan — the very cradle of the Tang rising — and the court cries to abandon all the land east of the passes. Li Shimin refuses. He digs in at Bobi through the winter, refusing battle, letting the enemy\'s supply rot; then, when they break and run, he pursues two days and a night without rest and destroys them at Que\'shu Valley. And out of the wreck of the beaten army comes the greatest prize of the war: the unstoppable Yuchi Gong, who kneels to Tang.',
   descriptionZh: "劉武周恃突厥，以驍將宋金剛為鋒，自馬邑南下，拔太原——唐興之搖籃——朝廷皆議棄關以東之地。李世民不可。乃深壁柏壁，經冬不戰，坐視敵糧自潰；及其敗走，晝夜兼程追之二日一夜，殲之於雀鼠谷。而自敗軍之中，得此役最大之獲：萬人不當的尉遲恭，跪降於唐。",
   startDate: { year: 178, season: 'winter' },
+  /*
+   * 開局外交 —— 柏壁之戰:劉武周據太原,唐之根本幾失 ——
+     世民堅壁不出,而後追宋金剛一日八戰。
+   */
+  openingRelations: [
+    { a: 'tang', b: 'dingyang', score: -95, status: 'neutral' },
+    { a: 'tang', b: 'zheng', score: -55, status: 'neutral' },
+    { a: 'tang', b: 'xia', score: -50, status: 'neutral' },
+    { a: 'tang', b: 'xiqin', score: -40, status: 'neutral' },
+    { a: 'tang', b: 'wagang', score: -25, status: 'neutral' },
+    { a: 'tang', b: 'wu', score: -15, status: 'neutral' },
+    { a: 'wagang', b: 'zheng', score: -80, status: 'neutral' },
+    { a: 'zheng', b: 'xia', score: 25, status: 'non-aggression' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_ST_BOBI),
   forces: FORCES_ST_SUIEND,
   officers: buildWarringStatesOfficers(ASSIGN_ST_BOBI, ['sui', 'tang']),
@@ -9457,6 +9980,15 @@ export const SCENARIO_ST_HULAO: Scenario = {
     'One battle, two kings. Li Shimin has run the table — Xue Ju\'s Qin, Liu Wuzhou\'s north and Li Mi\'s Wagang all broken, their captains (Qin Qiong, Cheng Yaojin, Yuchi Gong) now riding under Tang banners. He has Wang Shichong\'s Zheng penned starving inside Luoyang. Then Dou Jiande marches his whole Hebei host — a hundred thousand — to save his rival, knowing that if Luoyang falls he is next. Li Shimin does the audacious thing: he leaves a screen to hold the siege and races a small picked force to seize the Hulao pass, the one gate Dou Jiande must force. Hold the pass and shatter the relief, and the two greatest rivals of the age fall on a single day.',
   descriptionZh: "一戰擒兩王。李世民已席捲群雄——薛舉之秦、劉武周之北、李密之瓦崗皆破，其將(秦瓊、程咬金、尉遲恭)今皆隸唐旗之下。他已將王世充之鄭困於洛陽，城中食盡。於是竇建德盡發河北之眾——十萬——以救其敵，蓋知洛陽若破，己為下一個。李世民乃行險著：留偏師續圍，自將精銳疾趨虎牢，扼竇建德必爭之關。守關而破援，則當世兩大勁敵，一日俱擒。",
   startDate: { year: 178, season: 'spring' },
+  /*
+   * 開局外交 —— 虎牢之戰:一戰而擒兩王 —— 世民圍王世充於洛陽,
+     竇建德以十萬眾來救,而唐軍三千五百人守虎牢。
+   */
+  openingRelations: [
+    { a: 'tang', b: 'zheng', score: -95, status: 'neutral' },
+    { a: 'tang', b: 'xia', score: -90, status: 'neutral' },
+    { a: 'zheng', b: 'xia', score: 65, status: 'allied' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_ST_HULAO),
   forces: FORCES_ST_HULAO,
   officers: buildWarringStatesOfficers(ASSIGN_ST_HULAO, ['sui', 'tang']),
@@ -9501,6 +10033,12 @@ export const SCENARIO_ST_ANSHI: Scenario = {
     'The mountains break. For forty years Emperor Xuanzong has reigned over the most brilliant court the world had ever seen — then drowsed into the arms of Yang Guifei while real power slid to the frontier. Now An Lushan, the vast general who commands three border armies, raises a hundred and fifty thousand at Fanyang and marches south crying treason against the chief minister. The unblooded heartland folds: Luoyang falls, then the Tong pass, then Chang\'an itself, as Xuanzong flees toward Shu and his own guards strangle Yang Guifei at Mawei. But in Hebei the commanderies of Yan Zhenqing rise behind the rebels; in the passes Guo Ziyi and Li Guangbi gather the Shuofang veterans; and at Suiyang one man named Zhang Xun prepares to hold the door to the south with his life. The eight years that end the golden age begin.',
   descriptionZh: "山河崩裂。玄宗御宇四十年，開元天寶之盛曠古未有——而後醉臥於楊貴妃之懷，實權旁落於邊鎮。今安祿山，統三鎮之胡將，擁兵十五萬起於范陽，以討權相為名，長驅南下。承平已久的中原望風而潰：洛陽陷，潼關破，長安亦失，玄宗西奔入蜀，禁軍縊殺楊貴妃於馬嵬。然河北顏真卿之諸郡並起於賊後，關塞間郭子儀、李光弼聚朔方之勁卒，睢陽城中一人名張巡者，將以性命守住通往江南之門。終結盛世的八年，自此而始。",
   startDate: { year: 178, season: 'winter' },
+  /*
+   * 開局外交 —— 安史之亂:漁陽鼙鼓動地來,驚破霓裳羽衣曲。
+   */
+  openingRelations: [
+    { a: 'tang', b: 'yan', score: -95, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_ST_ANSHI),
   forces: FORCES_ST_ANSHI,
   officers: buildWarringStatesOfficers(ASSIGN_ST_ANSHI, ['tang']),
