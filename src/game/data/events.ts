@@ -163,6 +163,28 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'The Granaries at Wuchao', zh: '許攸夜獻烏巢' },
     yearMin: 200,
     yearMax: 203,
+    /*
+     * 十月。**這一節原本在第 1 回合就演完了** —— 決定官渡勝負的那把火,燒在
+     * 白馬斬顏良(第 11 回合)之前、兩軍相持(第 3 回合)之前。體檢十二輪
+     * 都是這個順序。
+     *
+     * 許攸是相持到糧將盡的時候才夜奔而來的,那是這場仗打了半年之後的事,
+     * 不是開場第一句。
+     *
+     * ⚠ 鎖「秋」沒有用 —— **這張盤的開局就是 200 年秋**,於是秋鎖在第 1 回合
+     * 就成立,十輪實測仍然全部落在第 1–2 回合。鎖冬才真的把它推到相持之後
+     * (十月,正是史書給的月份)。**季節鎖要對照劇本的開局季節看**,
+     * 這是 184、190 兩張春天開局的盤上不會遇到的坑。
+     */
+    season: 'winter',
+    /*
+     * ⚠ 一度在這裡加了 `flag-set: baima-yanliang`(讓烏巢排在白馬之後)——
+     * 十輪實測**整條鏈 0/10**。原因是白馬那一節要 `guan-yu-with-cao`,
+     * 而官渡盤上關羽在劉備麾下(史實上他 200 年正月下邳城破才降曹),
+     * 那個旗標在這張盤根本設不起來 —— 開關取不到,底下全靜默。
+     * 這與 190 盤上「討董鎖春導致整條鏈不演」是同一個教訓:
+     * **順序交給季節,不要交給一個可能永遠設不上的旗標。**
+     */
     requires: [
       { kind: 'officer-alive', officerId: 'cao-cao' },
       { kind: 'officer-alive', officerId: 'yuan-shao' },
@@ -517,8 +539,21 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     id: 'evt-battle-of-guandu',
     name: { en: 'The Battle of Guandu', zh: '官渡之戰' },
     yearMin: 200,
-    yearMax: 201,
+    yearMax: 202,
+    /*
+     * 這一節**是烏巢那把火的結果,不是它的前提**。原本無條件、無季節,體檢
+     * 十二輪都在第 3 回合觸發 —— 於是袁紹的兵在他還沒渡河之前就先折了四成,
+     * 而許攸要到第 1 回合就已經夜奔過了(那條也沒鎖)。
+     *
+     * 現在要 `wuchao-burned`:選了「親率輕騎夜襲烏巢」才有這一場大潰。
+     * 選「疑有詐,按兵不動」的話,這一節不演 —— 相持下去,而糧盡的是自己。
+     * 那正是史書給的那個岔路口,也是這張盤唯一一個真正決定勝負的選擇。
+     *
+     * 排在烏巢的下一季(春):火在十月,而袁紹渡河北走、倉亭再敗是次年的事。
+     */
+    season: 'spring',
     requires: [
+      { kind: 'flag-set', key: 'wuchao-burned' },
       { kind: 'force-alive', forceId: 'force-cao-cao' },
       { kind: 'force-alive', forceId: 'force-yuan-shao' },
     ],
@@ -1127,6 +1162,17 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     name: { en: 'Yan Liang Falls at White Horse', zh: '白馬斬顏良' },
     yearMin: 200,
     yearMax: 201,
+    /*
+     * 官渡這一鏈原本一節都沒鎖季節,體檢十二輪跑出來的順序是:
+     * **烏巢第 1 回合、官渡之戰第 3、白馬斬顏良第 11** —— 決定勝負的那把火
+     * 燒在開戰之前,而斬顏良發生在戰役結束之後。史實的順序是
+     * 白馬(二月)→ 延津 → 官渡相持(八月至十月)→ 烏巢(十月)→ 大潰。
+     *
+     * 這一節是開頭,鎖春;下游用旗標串起來。
+     * (同名的第二條 evt-baima-yan-liang 已刪 —— 兩條同一個場面,名字一字不差,
+     *  而互斥條件各查各的旗標,誰先誰後全看列表順序。)
+     */
+    season: 'spring',
     requires: [
       { kind: 'flag-set', key: 'guan-yu-with-cao' },
       { kind: 'officer-active', officerId: 'guan-yu' },
@@ -1141,6 +1187,9 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'officer-status', officerId: 'wen-chou', status: 'dead' },
       { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 5 },
       { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 2 },
+      // 併掉的那條設的是 yan-liang-slain,一併設上,免得舊存檔/成就讀不到。
+      { kind: 'flag', key: 'baima-yanliang' },
+      { kind: 'flag', key: 'yan-liang-slain' },
       { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shao', delta: -2 },
       { kind: 'flag', key: 'baima-yanliang' },
     ],
@@ -2158,28 +2207,6 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     effects: [
       { kind: 'officer-loyalty', officerId: 'sun-jian', delta: 10 },
       { kind: 'flag', key: 'imperial-seal-found' },
-    ],
-  },
-  {
-    id: 'evt-baima-yan-liang',
-    name: { en: 'Slaying Yan Liang at Baima', zh: '白馬斬顏良' },
-    yearMin: 200,
-    yearMax: 200,
-    /* 與 evt-baima-yanliang 同一個場面。那一版要求 `guan-yu-with-cao`(關羽
-       在曹營才有這一刀),這一版是給沒走過降漢不降曹那條線的盤用的簡述版
-       —— 所以必須互斥,否則同一局會斬兩次顏良。 */
-    requires: [
-      { kind: 'flag-unset', key: 'baima-yanliang' },
-      { kind: 'officer-active', officerId: 'guan-yu' },
-      { kind: 'officer-alive', officerId: 'yan-liang' },
-    ],
-    description:
-      'At the siege of Baima, Guan Yu charges alone into Yuan Shao\'s host, cuts down the famed general Yan Liang amid ten thousand troops, and rides back with his head — repaying Cao Cao\'s hospitality before departing.',
-    descriptionZh: "白馬之圍,關羽單騎衝入袁紹萬軍之中,於亂軍斬名將顏良,提其首級而還——以報曹操款待之恩,然後掛印封金而去。",
-    effects: [
-      { kind: 'officer-status', officerId: 'yan-liang', status: 'dead' },
-      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 5 },
-      { kind: 'flag', key: 'yan-liang-slain' },
     ],
   },
   {
