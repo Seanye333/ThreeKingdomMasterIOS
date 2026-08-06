@@ -550,7 +550,11 @@ export const SCENARIO_190_ANTI_DONG_ZHUO: Scenario = {
     gongsun:     { troops: 1.15, food: 0.90, gold: 0.95, defense: -4, loyalty: -4 },
     tao:         { troops: 0.85, food: 1.40, gold: 1.20, defense: 4,  loyalty: 8 },
     'kong-rong': { troops: 0.75, food: 1.15, gold: 1.20, defense: 2,  loyalty: 14 },
-    'ma-teng':   { troops: 1.25, food: 1.20, gold: 1.20, defense: -6, loyalty: 0 },
+    /* 兵 1.25 → 1.10、糧 1.20 → 1.40:上一版之後他仍是十二輪斷糧六次、
+       府庫見底四次的一家 —— 兵給得比糧多,而他長到三城時兩萬五千兵,
+       涼州那點糧養不動。涼州騎士仍精(兵種與士氣不在這五個旋鈕裡),
+       但一支永遠在餓的軍隊不是設定,是難受。 */
+    'ma-teng':   { troops: 1.10, food: 1.40, gold: 1.25, defense: -6, loyalty: 0 },
   }),
   forces: FORCES_190,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_190),
