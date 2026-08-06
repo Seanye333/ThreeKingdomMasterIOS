@@ -3718,6 +3718,320 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: the great victory at Dongxing and the disaster at New Hefei were one year apart. Wu killed Zhuge Ke and exterminated his kin to the third degree; then Sun Jun and Sun Chen held the court in turn, and what they killed were the imperial clansmen and senior ministers. After that there was nobody left in the southeast to use.',
     },
   },
+  /* ── 255 淮南二叛 ─────────────────────────────────────────────── */
+  'scn-255-huainan2': {
+    cao: {
+      defeat: {
+        titleZh: '目瘤突出',
+        titleEn: 'The Eye Burst',
+        textZh:
+          '師新割目瘤,創甚。或曰:「可遣太尉往。」'
+          + '傅嘏、王肅、鍾會皆勸師自行:'
+          + '「若他人往,事有不捷,則天下事去矣。」\n\n'
+          + '師蹶然而起曰:「我請輿疾而東。」\n\n'
+          + '鍾會之策:「淮南將士家皆在北,'
+          + '眾心沮散,降者相屬。'
+          + '宜深溝高壘以待之,不與之戰。」\n\n'
+          + '果如所料。而文欽子鴦,年十八,'
+          + '夜襲師營,大呼:「司馬師何在!」'
+          + '師驚,目瘤突出,痛甚,'
+          + '恐眾之駭,齧被而忍之,被為之破裂。',
+        textEn:
+          'Sima Shi had just had a tumour cut from his eye and the wound was bad. Someone suggested sending the Grand Commandant instead; Fu Gu, Wang Su and Zhong Hui all urged him to go himself: "If another man goes and it does not come off, the realm is lost."\n\n'
+          + 'Shi got up abruptly: "Then carry me east on my sickbed."\n\n'
+          + 'Zhong Hui\'s plan was this: "The families of the Huainan officers and men are all in the north. Their hearts will fail and they will come over one after another. We should dig deep and build high and wait, and not give them a battle."\n\n'
+          + 'And so it went. Then Wen Qin\'s son Yang, eighteen years old, raided Shi\'s camp at night shouting, "Where is Sima Shi?" Shi started up; the tumour burst from its socket and the pain was terrible. Fearing the effect on his men, he bit down on the bedding and endured it, and the bedding tore.',
+      },
+      verdictZh:
+        '論曰:淮南之兵,一敗於家在北。'
+        + '**深溝高壘,不與之戰** —— 鍾會此策,'
+        + '不攻其軍,攻其軍中之家書。\n'
+        + '而師以疾東征,勝而卒於許昌,年四十八。'
+        + '天下之權遂歸昭 ——'
+        + '一齧之被,實裂魏祚。',
+      verdictEn:
+        'The historian says: the Huainan troops were beaten by the fact that their families were in the north. Dig deep, build high, refuse battle — Zhong Hui\'s plan attacked not their army but the letters from home inside it. And Shi went east on a sickbed, won, and died at Xuchang aged forty-eight. Power passed to Zhao. That torn bedding tore the fortune of Wei with it.',
+      verdictLostZh:
+        '論曰:文鴦單騎陷陣,追騎數百不敢逼 ——'
+        + '二十六年後,鴦為諸葛誕所殺之父復仇不得,'
+        + '終夷三族於晉。**勇者不保其身,常坐所事非人**。',
+      verdictLostEn:
+        'The historian says: Wen Yang charged the line alone and several hundred pursuers dared not close with him. Twenty-six years later he was exterminated to the third degree under Jin. A brave man rarely keeps his life, usually because of whom he served.',
+    },
+    guanqiu: {
+      defeat: {
+        titleZh: '移檄郡國',
+        titleEn: 'The Circular to the Commanderies',
+        textZh:
+          '儉與欽矯太后詔,起兵壽春,'
+          + '移檄郡國,數司馬師之罪十一條 ——'
+          + '所言皆實,而應者無一郡。\n\n'
+          + '將士家皆在北,眾心沮散,'
+          + '降者相屬,惟淮南新附農民為之用。\n\n'
+          + '儉走,匿水草中,為安風津都尉部民張屬所射殺。'
+          + '屬以功封侯。\n\n'
+          + '——舉義者死於漁人之手。',
+        textEn:
+          'Jian and Wen Qin forged an edict from the Empress Dowager, raised troops at Shouchun and sent a circular round the commanderies setting out eleven charges against Sima Shi. Every charge was true and not one commandery answered.\n\n'
+          + 'The families of their officers and men were all in the north; their hearts failed and they went over in a steady stream, and only the newly settled farmers of Huainan stayed with them.\n\n'
+          + 'Jian fled and hid in the reeds by the water, and a militiaman named Zhang Shu of the Anfeng ford garrison shot him. Shu was ennobled for it.\n\n'
+          + 'The man who rose for the right cause died at the hands of a fisherman.',
+      },
+      verdictZh:
+        '論曰:儉之檄,字字皆實;而兵者不以理直勝。\n'
+        + '**舉大事者先問其眾之家在何處** ——'
+        + '淮南之卒,身在南而心在北,'
+        + '此非忠於司馬,是質於司馬。\n'
+        + '王淩、儉、誕三叛,前後十年,'
+        + '所敗者同一因;而司馬氏所恃者,亦不過此一著。',
+      verdictEn:
+        'The historian says: every word of Guanqiu Jian\'s circular was true, and wars are not won by being in the right. Whoever raises a great enterprise should first ask where his men\'s families live. The soldiers of Huainan stood in the south with their hearts in the north — not loyalty to the Simas but hostages held by them. The three Huainan revolts spanned ten years and all failed for the same reason, and that one device was the whole of the Sima family\'s security.',
+      verdictLostZh:
+        '論曰:儉嘗與夏侯玄、李豐善,豐既誅,玄夷,'
+        + '而儉不自安 —— 三叛之起,皆起於「見前者之死」。'
+        + '殺一人以立威,而後不得不殺其友;此其所以無窮。',
+      verdictLostEn:
+        'The historian says: Guanqiu Jian had been close to Xiahou Xuan and Li Feng, and when Feng was executed and Xuan\'s family destroyed he no longer felt safe. All three revolts began with watching what happened to the last man. Kill one to make an example and you must then kill his friends; that is why it never ends.',
+    },
+  },
+  /* ── 257 淮南三叛 ─────────────────────────────────────────────── */
+  'scn-257-huainan3': {
+    cao: {
+      defeat: {
+        titleZh: '長圍',
+        titleEn: 'The Long Wall',
+        textZh:
+          '昭督二十六萬眾臨淮,'
+          + '築長圍以困壽春,不攻。\n\n'
+          + '或言「宜急攻之」,昭曰:'
+          + '「城固而眾多,攻之必傷;'
+          + '若吳兵至,表裡受敵,危道也。'
+          + '今三叛相聚於孤城之中,天其或者將使同就戮乎!'
+          + '吾當以全策縻之。」\n\n'
+          + '既而城中食盡,全懌等數萬人出降。'
+          + '誕與文欽爭議,遂殺欽。欽子鴦、虎踰城降 ——'
+          + '昭赦之,使繞城而呼:'
+          + '「文欽之子猶不見殺,其餘何懼!」\n\n'
+          + '城中皆喜,又日益飢困。遂陷。',
+        textEn:
+          'Sima Zhao brought two hundred and sixty thousand down to the Huai, walled Shouchun in with a long circumvallation, and did not attack.\n\n'
+          + 'When some urged an assault he said: "The walls are strong and the garrison large; storming it will cost us. And if the Wu troops arrive we shall be taken front and rear — that is a dangerous road. All three rebellions have now gathered in one isolated city. Perhaps Heaven means them to be executed together. I shall tie them up with a whole strategy."\n\n'
+          + 'In time the food ran out and Quan Yi and tens of thousands came out and surrendered. Zhuge Dan quarrelled with Wen Qin and killed him, and Qin\'s sons Yang and Hu got over the wall and surrendered — and Zhao pardoned them and sent them riding round the walls calling: "Even Wen Qin\'s sons are not put to death. What has anyone else to fear?"\n\n'
+          + 'The garrison was delighted, and hungrier every day. Then the city fell.',
+      },
+      verdictZh:
+        '論曰:昭之取壽春,不以攻,以圍;'
+        + '不以殺,以赦 ——\n'
+        + '殺文欽者誕也,赦文欽之子者昭也。'
+        + '**使敵自相殺,而我專行其赦**,'
+        + '則城中之人,恨不在我。\n'
+        + '三叛既平,魏之異議者盡於此。'
+        + '明年甘露之變,天子死於南闕,而無一人起。',
+      verdictEn:
+        'The historian says: Zhao took Shouchun not by assault but by encirclement, and not by killing but by pardon. Zhuge Dan killed Wen Qin; Zhao pardoned Wen Qin\'s sons. Let the enemy do his own killing and keep the pardoning for yourself, and the men inside will not hate you. With the third revolt put down, dissent in Wei was finished. The next year the emperor was killed at the southern gate-tower and not one man rose.',
+      verdictLostZh:
+        '論曰:誕麾下數百人拱手為列,每斬一人,輒降之,'
+        + '終不變,曰:「為諸葛公死,不恨。」'
+        + '——時人比之田橫。',
+      verdictLostEn:
+        'The historian says: several hundred of Zhuge Dan\'s guards stood in ranks with their hands folded, and as each was beheaded he was offered his life, and not one changed, each saying, "To die for Lord Zhuge — I have no regret." People compared them to the followers of Tian Heng.',
+    },
+    huainan: {
+      defeat: {
+        titleZh: '豈可以社稷輸人',
+        titleEn: 'Hand the Altars to Another?',
+        textZh:
+          '昭使賈充觀誕。充曰:'
+          + '「洛中諸賢,皆願禪代,君以為云何?」\n\n'
+          + '誕厲聲曰:「卿非賈豫州子乎?'
+          + '世受魏恩,豈可以社稷輸人!'
+          + '若洛中有難,吾當死之。」\n\n'
+          + '充還,言於昭:「誕再在揚州,得士眾心。'
+          + '今徵,必不來,禍小事淺;不徵,事遲禍大。」\n\n'
+          + '——於是徵之。誕遂反。'
+          + '一問一答之間,淮南又反一次。',
+        textEn:
+          'Zhao sent Jia Chong to sound out Zhuge Dan. Chong said: "All the worthy men in Luoyang would like to see the succession pass. What does my lord think?"\n\n'
+          + 'Dan said sharply: "Are you not the son of Jia of Yu province? Your house has had Wei\'s favour for generations. How can you hand the altars of the state to another man? If there is trouble in Luoyang I shall die for it."\n\n'
+          + 'Chong went back and told Zhao: "Dan has been twice in Yang province and has the hearts of the men there. Summon him now and he will certainly not come — small harm and a shallow business. Do not summon him and it comes late and the harm is great."\n\n'
+          + 'So he was summoned, and he rebelled. Between one question and one answer, Huainan revolted again.',
+      },
+      verdictZh:
+        '論曰:誕之反,司馬氏逼之也;'
+        + '而誕之敗,亦誕自取 ——'
+        + '外求救於吳,則士心先貳;'
+        + '內殺文欽,則吳援自絕。\n'
+        + '**恃外援者,先失其內**:'
+        + '全氏數萬人一夕而降,即由吳中構隙。',
+      verdictEn:
+        'The historian says: the Simas forced Zhuge Dan into revolt, and he also brought his defeat on himself. Asking Wu for help split his own men\'s loyalty first; killing Wen Qin cut off the Wu relief. A man who leans on outside help loses his own house first — the Quan family and their tens of thousands went over in a single night because of a quarrel back in Wu.',
+      verdictLostZh:
+        '論曰:王淩以子為質而反,毌丘儉以檄而反,'
+        + '誕以一問而反 —— 十年三叛,'
+        + '而司馬氏之勢因三叛而定。'
+        + '**反者非不忠,是無術**。',
+      verdictLostEn:
+        'The historian says: Wang Ling revolted with his son as a hostage, Guanqiu Jian revolted with a manifesto, Zhuge Dan revolted over a single question. Three revolts in ten years, and the Simas were made secure by all three. The rebels did not lack loyalty; they lacked method.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '救之者三萬',
+        titleEn: 'Thirty Thousand for the Relief',
+        textZh:
+          '誕遣子靚為質求救,吳遣文欽、唐咨、全懌等'
+          + '將三萬眾入壽春。\n\n'
+          + '而魏長圍既合,朱異三攻黎漿,不得進,'
+          + '孫綝怒,斬異於鑊里。'
+          + '——自斬其將,而後退師。\n\n'
+          + '全懌兄子輝、儀在建業,與家內爭訟,'
+          + '將母奔魏。鍾會偽作其書,'
+          + '言吳怒懌等不能拔壽春,欲盡誅諸將家。'
+          + '懌等大懼,遂開東城門出降。',
+        textEn:
+          'Dan sent his son Jing as a hostage to ask for help, and Wu sent Wen Qin, Tang Zi and Quan Yi with thirty thousand into Shouchun.\n\n'
+          + 'But the Wei circumvallation had closed. Zhu Yi attacked Lijiang three times and could not get through, and Sun Chen in a rage had him executed at Huoli — beheaded his own commander, and then withdrew the army.\n\n'
+          + 'Quan Yi\'s nephews Hui and Yi were at Jianye, fell out with their family in a lawsuit, and took their mother over to Wei. Zhong Hui forged a letter in their hand saying that Wu was furious the Quans had failed to take Shouchun and meant to put all the commanders\' families to death. They were terrified, opened the east gate and surrendered.',
+      },
+      verdictZh:
+        '論曰:吳之救誕,兵入而援不繼,'
+        + '將帥斬於後,家書偽於前 ——'
+        + '三萬眾降於一紙。\n'
+        + '**內無以安其家者,不可以將兵於外**。'
+        + '孫綝殺朱異,與司馬昭赦文鴦,'
+        + '一日之間,高下判矣。',
+      verdictEn:
+        'The historian says: Wu put troops into Shouchun and then failed to follow them up — its commander executed behind them, a forged letter from home in front of them, and thirty thousand men surrendered to a piece of paper. A state that cannot keep its soldiers\' families safe cannot send them abroad. Sun Chen killing Zhu Yi and Sima Zhao pardoning Wen Yang happened within days of each other, and that settled which was which.',
+      verdictLostZh:
+        '論曰:自此吳不復北向。'
+        + '綝專朝而殺大臣,廢少帝;'
+        + '而江東之力,自壽春一役盡矣。',
+      verdictLostEn:
+        'The historian says: Wu never faced north again. Sun Chen ran the court, killed its ministers and deposed the young emperor; and the strength of the southeast had been used up at Shouchun.',
+    },
+  },
+  /* ── 264 鍾會之亂 ─────────────────────────────────────────────── */
+  'scn-264-zhonghui': {
+    zhonghui: {
+      defeat: {
+        titleZh: '事成則得天下',
+        titleEn: 'If It Comes Off, the Realm',
+        textZh:
+          '會既平蜀,威震西土,'
+          + '自謂功名蓋世,不可復為人下。\n\n'
+          + '姜維說之曰:「聞君自淮南以來,算無遺策,'
+          + '晉道克昌,皆君之力。'
+          + '今復定蜀,威德振世,民高其功,主畏其謀,'
+          + '欲以此安歸乎?」\n\n'
+          + '會矯太后遺詔,起兵廢昭,'
+          + '悉請護軍、郡守、牙門騎督以上,'
+          + '皆閉之於益州諸曹屋中。\n\n'
+          + '維勸會盡殺之,會猶豫未決。'
+          + '——十八日,亂作。會與維俱死,死者數百人。',
+        textEn:
+          'Having pacified Shu, Zhong Hui\'s authority shook the west, and he judged that with such a name he could no longer be anyone\'s subordinate.\n\n'
+          + 'Jiang Wei worked on him: "They say that since Huainan not one of your calculations has miscarried, and that the rise of the house of Jin is your doing. Now you have taken Shu as well; your name shakes the age, the people rate your achievement high and your master fears your cleverness. Where do you propose to retire to with all that?"\n\n'
+          + 'Hui forged a testamentary edict from the Empress Dowager to raise troops and depose Sima Zhao, summoned every army-protector, commandery administrator and cavalry commandant, and shut them up in the offices of Yi province.\n\n'
+          + 'Wei urged him to kill them all, and he hesitated. On the eighteenth the mutiny came. Hui and Wei died together, and several hundred with them.',
+      },
+      verdictZh:
+        '論曰:會之才,天下所共許;'
+        + '而其敗,在**謀成於密而發於猶豫** ——\n'
+        + '既閉諸將於屋,則已無回頭之路;'
+        + '既無回頭之路,而不能決一日之殺,'
+        + '是以死。\n'
+        + '昔昭遣會伐蜀,或言會不可信,昭曰:'
+        + '「取蜀之後,中國將士人人思歸,'
+        + '蜀之遺民,未離憂懼;會若作惡,'
+        + '祗自滅族耳。」—— 果如其言。',
+      verdictEn:
+        'The historian says: everyone granted Zhong Hui\'s ability, and he was destroyed by a plot laid in secret and launched in hesitation. Having locked the commanders up he had no road back; having no road back and being unable to decide on one day\'s killing, he died. When Zhao sent him against Shu and someone said Hui was not to be trusted, Zhao replied: "Once Shu is taken, every soldier of the middle realm will be thinking of home, and the surviving people of Shu will not yet be over their fright. If Hui makes trouble, he will only destroy his own clan." And so it turned out.',
+      verdictLostZh:
+        '論曰:維之勸會,非為會也 ——'
+        + '密書於後主曰:「願陛下忍數日之辱,'
+        + '臣欲使社稷危而復安,日月幽而復明。」\n'
+        + '事不成而身死,然其志可見。',
+      verdictLostEn:
+        'The historian says: Jiang Wei was not egging Zhong Hui on for Zhong Hui\'s sake. His secret letter to his own sovereign said: "I beg Your Majesty to endure the humiliation a few days more. Your servant means to bring the altars of the state back from danger to safety and the sun and moon from darkness back to light." It failed and he died, and his intention is plain enough.',
+    },
+    dengai: {
+      defeat: {
+        titleZh: '陰平小路',
+        titleEn: 'The Yinping Track',
+        textZh:
+          '艾自陰平行無人之地七百餘里,'
+          + '鑿山通道,造作橋閣。'
+          + '山高谷深,至為艱險,又糧運將匱,頻於危殆。'
+          + '艾以氈自裹,推轉而下。'
+          + '將士皆攀木緣崖,魚貫而進。\n\n'
+          + '出江油,破諸葛瞻於綿竹,遂至成都。'
+          + '——滅蜀之功,天下第一。\n\n'
+          + '而後艾輒承制拜官,言於眾曰:'
+          + '「姜維自一時雄兒也,與某相值,故窮耳。」'
+          + '又曰:「諸君賴遭某,故得有今日耳。」\n\n'
+          + '會白其反狀。檻車徵。'
+          + '衛瓘遣田續追殺之於綿竹西。',
+        textEn:
+          'Deng Ai went from Yinping seven hundred li through empty country, cutting a road through the mountains and building trestle bridges. The hills were high and the gorges deep and it was as dangerous as could be, and the supply train was failing, so that they were repeatedly at the point of ruin. Ai wrapped himself in a felt and rolled down; the officers and men went hand over hand along the cliffs and filed forward one behind another.\n\n'
+          + 'He came out at Jiangyou, broke Zhuge Zhan at Mianzhu, and reached Chengdu. No man in the realm had done more.\n\n'
+          + 'Afterwards he made appointments on his own authority, and said in company: "Jiang Wei was a hero of his day; he ran out of road because he came up against me." And: "You gentlemen are fortunate to have met me, or you would not be here today."\n\n'
+          + 'Zhong Hui reported him for treason. He was sent for in a cage-cart. Wei Guan sent Tian Xu after him and he was killed west of Mianzhu.',
+      },
+      verdictZh:
+        '論曰:艾之取蜀,自古用兵之奇,無以過之;'
+        + '而其死,不以奇,以言。\n'
+        + '**功大者宜口拙**。'
+        + '「諸君賴遭某」六字,'
+        + '比七百里陰平之險更難行。\n'
+        + '會雖誣之,而聽誣者早已在心;'
+        + '故艾之罪,不在反,在**不可制**。',
+      verdictEn:
+        'The historian says: as a stroke of arms, Deng Ai\'s conquest of Shu has never been bettered — and what killed him was not the stroke but his mouth. A man with a great achievement should be clumsy in speech. "You gentlemen are fortunate to have met me" is a harder road than seven hundred li of Yinping. Zhong Hui\'s charge was a fabrication and the man who believed it had already made up his mind. Deng Ai\'s offence was not rebellion; it was being impossible to control.',
+      verdictLostZh:
+        '論曰:泰始元年,詔曰:「艾有功勳,'
+        + '受罪不逃刑,而子孫為民隸,朕常愍之。」'
+        + '——赦在身後,官在子孫,兵法無此一條。',
+      verdictLostEn:
+        'The historian says: in the first year of Taishi an edict ran: "Deng Ai had merit and, charged, did not flee his punishment, and his descendants are bondsmen. I have always pitied it." A pardon after death and an office for the grandchildren: no manual of war has a section on that.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '以全策縻之',
+        titleEn: 'Tie It Up With a Whole Strategy',
+        textZh:
+          '或謂昭曰:「會不可信,不可令伐蜀。」'
+          + '昭笑曰:「取蜀之後,中國將士人人思歸,'
+          + '蜀之遺民,未離憂懼。'
+          + '會若作惡,祗自滅族耳。」\n\n'
+          + '及會反狀白,昭自將十萬屯長安,'
+          + '遣賈充將萬人入斜谷。\n\n'
+          + '會聞之,謂所親曰:「但取鄧艾,相國知我能獨辦之。'
+          + '今來大重,必覺我異矣,便當速發。」\n\n'
+          + '——十八日,眾軍攻之。'
+          + '會、維、艾,三人皆死於一月之內。'
+          + '天下遂為一。',
+        textEn:
+          'Someone said to Sima Zhao: "Zhong Hui is not to be trusted; he should not be given the Shu campaign." Zhao laughed: "Once Shu is taken, every soldier of the middle realm will be thinking of home and the surviving people of Shu will not yet be over their fright. If Hui makes trouble he will only destroy his own clan."\n\n'
+          + 'When the report of the plot came in, Zhao took a hundred thousand to Chang\'an himself and sent Jia Chong with ten thousand into the Xie valley.\n\n'
+          + 'Hui heard of it and said to his intimates: "For arresting Deng Ai alone, the Chancellor knows I can manage it by myself. Coming on this scale, he must have noticed something. We shall have to move quickly."\n\n'
+          + 'On the eighteenth the army turned on him. Hui, Jiang Wei and Deng Ai all died within one month. And the realm became one.',
+      },
+      verdictZh:
+        '論曰:昭之於會,知其才而用之,知其反而不禁 ——'
+        + '所恃者,不在會之忠,在**眾將之思歸**。\n'
+        + '故其用人也,不問其心,問其勢:'
+        + '勢不可為,則雖有心而無用。\n'
+        + '蜀既平,艾、會、維同月而死,'
+        + '而司馬氏無一人污手 —— 二年之後,禪代成。',
+      verdictEn:
+        'The historian says: Zhao knew Zhong Hui\'s ability and used him, knew he would rebel and did not stop him — because what he relied on was not Hui\'s loyalty but the soldiers\' longing for home. So in employing men he did not ask about their hearts but about their circumstances: where the circumstances forbid it, the intention is worthless. Shu fell, and Deng Ai, Zhong Hui and Jiang Wei died in the same month, and no Sima had to dirty his hands. Two years later the succession passed.',
+      verdictLostZh:
+        '論曰:蜀之亡,亡於一冬;而收其亡者三人,'
+        + '三人又相殺於一月 ——'
+        + '天下之事,有時不必自為,待之而已。',
+      verdictLostEn:
+        'The historian says: Shu fell in a single winter, three men divided the credit for it, and within a month the three had destroyed one another. Some things in this world do not need doing; they need waiting for.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
