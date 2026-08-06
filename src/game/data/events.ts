@@ -604,6 +604,73 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       },
     ],
   },
+  /* ─── 江東三節 —— 195 盤的收尾(chooser: 孫策) ─────────────────
+     195 孫策定江東的事件只有兩節:孫策征江東(第 1 回合)與太史慈酣鬥
+     小霸王(第 2 回合),此後三百餘回合沒有一件與江東有關的事。而他打的
+     那四家各有各的下場,史書寫得清清楚楚:王朗浮海而遁、華歆葛巾迎於道左、
+     嚴白虎的部下被許昭所庇而孫策不追。補三節,各自綁在**真的打下那座城**
+     之後 —— 與 184 宛城之圍同一個手法:戲是戰果的回響,不是戰果的前提。 */
+  {
+    id: 'evt-wanglang-sea',
+    name: { en: 'Wang Lang Puts to Sea', zh: '王朗浮海' },
+    yearMin: 195,
+    yearMax: 200,
+    requires: [
+      { kind: 'officer-active', officerId: 'sun-ce' },
+      { kind: 'city-owner-ruler', cityId: 'kuaiji', rulerOfficerId: 'sun-ce' },
+      { kind: 'flag-unset', key: 'wanglang-fled' },
+    ],
+    description:
+      "Wang Lang would not step aside — 'I am an officer of Han; I ought to hold my walls' — and met you at Guling, and could not be carried. Your uncle Sun Jing took the Zhadu road by night while the fires burned as a decoy, and the camp at Gaoqian fell. Now Wang Lang is at sea, running for Dongye, and the question is whether that is far enough.",
+    descriptionZh:
+      '王朗不肯避,曰:「吾為漢吏,宜保城邑。」拒於固陵,數渡水戰而不能克。'
+      + '叔父孫靜獻策:夜多然火為疑兵,分軍投查瀆道,襲高遷屯 —— 朗大駭,浮海而遁。'
+      + '今其舟已出東冶,而追與不追,在你一念。',
+    chooserRulerId: 'sun-ce',
+    choices: [
+      {
+        id: 'pursue',
+        label: { zh: '追至東冶,取之而後禮', en: 'Run him down at Dongye — then treat him well' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-ce', delta: 5 },
+          { kind: 'city-loyalty', cityId: 'kuaiji', delta: 8 },
+          { kind: 'flag', key: 'wanglang-fled' },
+        ],
+      },
+      {
+        id: 'let-go',
+        label: { zh: '縱之入海 —— 儒者不必窮追', en: 'Let the sea have him' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'kuaiji', delta: 14 },
+          { kind: 'flag', key: 'wanglang-fled' },
+        ],
+      },
+    ],
+    effects: [],
+  },
+  {
+    id: 'evt-huaxin-welcome',
+    name: { en: 'Hua Xin at the Roadside', zh: '華歆葛巾迎' },
+    yearMin: 195,
+    yearMax: 201,
+    requires: [
+      { kind: 'officer-active', officerId: 'sun-ce' },
+      { kind: 'city-owner-ruler', cityId: 'yuzhang', rulerOfficerId: 'sun-ce' },
+      { kind: 'flag-unset', key: 'huaxin-welcomed' },
+    ],
+    description:
+      "Yu Fan went ahead to talk: the general is a strategist beyond his age, and Your Honour has no talent for war. Hua Xin heard him out and said he had long wanted to go north anyway. Next morning he came out to the roadside in a plain kerchief, and Yuzhang never knew there had been an army in it.",
+    descriptionZh:
+      '虞翻先往說之:「討逆將軍智略超世,用兵如神。府君無用兵之才,不如避之。」'
+      + '歆曰:「久在江表,常欲北歸;孫會稽來,吾便去也。」明日,葛巾迎於道左 ——'
+      + '豫章之民,不知有兵。',
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-ce', delta: 8 },
+      { kind: 'city-loyalty', cityId: 'yuzhang', delta: 18 },
+      { kind: 'flag', key: 'huaxin-welcomed' },
+    ],
+    mood: 'auspicious',
+  },
   {
     id: 'evt-sun-ce-assassinated',
     name: { en: 'Sun Ce Assassinated', zh: '孫策死於刺客' },
