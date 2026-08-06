@@ -5321,6 +5321,285 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: Zhao She was rewarded with the title Lord of Mafu. His son was Zhao Kuo, the commander at Changping. She used to discuss war with Kuo and could not get the better of him in argument, and never said he was any good. His wife asked why, and She said: "War is where men die, and Kuo talks about it lightly. If Zhao does not make him a general, well and good; if it must, the man who destroys the armies of Zhao will be Kuo."',
     },
   },
+  /* ── 戰國·齊湣王稱帝 ──────────────────────────────────────────── */
+  'scn-ws-qimin': {
+    qi: {
+      defeat: {
+        titleZh: '東帝',
+        titleEn: 'Emperor of the East',
+        textZh:
+          '秦昭王自稱西帝,遣使立齊湣王為東帝。\n\n'
+          + '蘇代自燕來,王曰:「善,子來!'
+          + '秦使魏冉致帝,子以為何如?」\n\n'
+          + '對曰:「王之問臣也卒,而患之所從生者微。'
+          + '願王受之而勿稱也。\n'
+          + '秦稱之,天下安之,王乃稱之,無後也。\n'
+          + '且伐桀宋之利孰與伐秦之利?\n'
+          + '——願王明釋帝以收天下之望,'
+          + '倍約儐秦,勿使爭重,'
+          + '而王以其間舉宋。此湯武之舉也。」\n\n'
+          + '齊去帝復為王,秦亦去帝位。'
+          + '——而後齊獨滅宋。\n\n'
+          + '五國之兵遂西向,而齊為之的。',
+        textEn:
+          'King Zhao of Qin styled himself Emperor of the West and sent an envoy to make King Min of Qi Emperor of the East.\n\n'
+          + 'Su Dai arrived from Yan, and the King said: "Good, you are here. Qin has sent Wei Ran with the title. What do you make of it?"\n\n'
+          + 'He replied: "Your Majesty asks abruptly, and the trouble comes from something small. I would have you accept it and not use it.\n\n'
+          + 'If Qin uses the title and the world accepts it, then Your Majesty may use it, and nothing comes of it.\n\n'
+          + 'And which is worth more — attacking the tyrant of Song, or attacking Qin?\n\n'
+          + 'Renounce the title publicly and collect the goodwill of the world; break the agreement and shut Qin out, and while they are busy competing, take Song. That is what Tang and Wu did."\n\n'
+          + 'Qi gave up the title and went back to being a king, and Qin gave it up too. And then Qi swallowed Song by itself.\n\n'
+          + 'And five armies turned west, and Qi was what they were aimed at.',
+      },
+      verdictZh:
+        '論曰:湣王之亡,不亡於稱帝,亡於**去帝而仍獨吞宋** ——\n'
+        + '去帝所以避天下之忌,滅宋所以自為天下之忌。\n'
+        + '半途而止者,兩失之:'
+        + '既不得帝之名,又盡收帝之怨。\n'
+        + '**做一件招人恨的事,不如把它做全;'
+        + '而更好的是根本不做**。',
+      verdictEn:
+        'The historian says: King Min was not destroyed by taking the imperial title but by giving it up and then swallowing Song by himself. Giving up the title was meant to avoid being the object of the world\'s suspicion; swallowing Song made him exactly that. Stopping halfway lost him both: he had neither the name of emperor nor any less of the resentment that goes with it. If you are going to do the thing that makes everyone hate you, better to do all of it — and better still not to do it.',
+      verdictLostZh:
+        '論曰:湣王亡至莒,楚使淖齒將兵救齊,因為齊相。'
+        + '齒遂殺湣王,抽其筋,懸之廟梁,宿昔而死。'
+        + '——**求救於外者,先問來者所欲**。',
+      verdictLostEn:
+        "The historian says: King Min fled to Ju, and Chu sent Nao Chi with troops to save Qi, and he was made chancellor of Qi. And Nao Chi killed the King, drew out his sinews and hung him from a temple beam, and he took a night and a day to die. Whoever asks outsiders for rescue should first ask what the rescuers want.",
+    },
+    yan: {
+      defeat: {
+        titleZh: '請自隗始',
+        titleEn: 'Begin With Me',
+        textZh:
+          '燕昭王弔死問孤,與百姓同甘苦,'
+          + '卑身厚幣以招賢者 ——'
+          + '往見郭隗曰:'
+          + '「齊因孤國之亂而襲破燕。'
+          + '孤極知燕小力少,不足以報。'
+          + '然得賢士與共國,以雪先王之恥,孤之願也。」\n\n'
+          + '隗曰:「古之君人,有以千金求千里馬者,'
+          + '三年不能得。涓人言於君曰:「請求之。」'
+          + '君遣之,三月得千里馬,馬已死,'
+          + '買其首五百金,反以報君。\n'
+          + '君大怒。涓人曰:「死馬且買之五百金,'
+          + '況生馬乎?馬今至矣!」\n'
+          + '不期年,千里之馬至者三。\n\n'
+          + '今王誠欲致士,先從隗始 ——'
+          + '隗且見事,況賢於隗者乎?」\n\n'
+          + '於是築宮而師之。樂毅自魏往,'
+          + '鄒衍自齊往,劇辛自趙往,士爭趨燕。',
+        textEn:
+          'King Zhao of Yan condoled with the bereaved and enquired after orphans, shared what the people had, and humbled himself with rich presents to draw able men — and went to Guo Wei and said: "Qi took advantage of our disorder to break Yan. I know very well that Yan is small and weak and cannot avenge it. But to get able men and share the state with them and wipe out my predecessor\'s shame is what I want."\n\n'
+          + 'Wei said: "There was a ruler of old who offered a thousand in gold for a thousand-li horse and could not get one in three years. An attendant said, \'Let me look for it.\' He was sent, and in three months found a thousand-li horse — dead — and bought its head for five hundred and came back with it.\n\n'
+          + 'The ruler was furious. The attendant said: \'If you will pay five hundred for a dead horse, what will you pay for a live one? The horses are coming now.\' And within the year three thousand-li horses arrived.\n\n'
+          + 'If Your Majesty really wants men, begin with me — if Wei is employed, what of men better than Wei?"\n\n'
+          + 'So a residence was built and Guo Wei treated as a teacher. Yue Yi came from Wei, Zou Yan from Qi, Ju Xin from Zhao, and able men raced to get to Yan.',
+      },
+      verdictZh:
+        '論曰:燕之報齊,始於一句「請自隗始」;'
+        + '而其成也,在二十八年之後。\n'
+        + '**弱國之興,不在得一良將,在使天下相信'
+        + '此處值得來** ——\n'
+        + '故買死馬之首者,買的不是馬,是消息。\n'
+        + '然昭王一死,惠王疑毅,一戰而失七十城;'
+        + '則所買之信,亦一君而盡。',
+      verdictEn:
+        'The historian says: Yan\'s revenge on Qi began with one sentence — "begin with me" — and came off twenty-eight years later. A weak state does not rise by acquiring one good commander but by making the world believe it is worth coming to. The man who bought the dead horse\'s head was not buying a horse; he was buying news. And when King Zhao died and King Hui distrusted Yue Yi, seventy cities went in a single campaign. The credit that had been bought was used up with one sovereign.',
+      verdictLostZh:
+        '論曰:昭王之於毅,二十八年不易其將;'
+        + '惠王之於毅,一反間而易之。\n'
+        + '**用人之難,不在識,在久**。',
+      verdictLostEn:
+        'The historian says: King Zhao kept Yue Yi in command for twenty-eight years without a change; King Hui replaced him on one piece of enemy misinformation. The hard part of employing men is not recognising them but keeping them.',
+    },
+  },
+  /* ── 戰國·樂毅伐齊 ────────────────────────────────────────────── */
+  'scn-ws-yueyi': {
+    yan: {
+      defeat: {
+        titleZh: '下齊七十餘城',
+        titleEn: 'Seventy Cities of Qi',
+        textZh:
+          '毅並護趙、楚、韓、魏、燕之兵以伐齊,'
+          + '破之濟西。諸侯兵罷歸,而毅獨追至臨淄。\n\n'
+          + '盡取齊寶財物祭器輸之燕。\n\n'
+          + '而後**不急攻二城**:\n'
+          + '修整燕軍,禁止侵掠,'
+          + '求齊之逸民,顯而禮之,'
+          + '寬其賦斂,除其暴令,修其舊政 ——'
+          + '齊民喜悅。\n\n'
+          + '圍莒、即墨三年不下。'
+          + '或譖之曰:「毅之不下二城,'
+          + '欲久仗兵威以服齊人,南面而王齊耳。」\n\n'
+          + '昭王斬言者,而益尊毅。'
+          + '——昭王卒,惠王立,'
+          + '田單縱反間,遂以騎劫代毅。',
+        textEn:
+          'Yue Yi took command of the combined armies of Zhao, Chu, Hann, Wei and Yan against Qi and broke them west of the Ji. The other states\' contingents went home and Yue Yi alone pursued as far as Linzi.\n\n'
+          + 'Everything of value in Qi — treasure, goods, sacrificial vessels — was taken to Yan.\n\n'
+          + 'And then he did not press the last two cities. He put the Yan army in order and forbade plundering, sought out the men Qi had passed over and gave them honour and ceremony, lightened the taxes, repealed the harsh laws and restored the old administration — and the people of Qi were pleased with it.\n\n'
+          + 'He besieged Ju and Jimo for three years without taking them. Somebody slandered him: "The reason Yue Yi will not take those two cities is that he wants to lean on his army\'s prestige long enough to subject the people of Qi and then face south as king of Qi himself."\n\n'
+          + 'King Zhao beheaded the man who said it and honoured Yue Yi more than before. And King Zhao died, and King Hui came to the throne, and Tian Dan set the same story running again — and Qi Jie replaced Yue Yi.',
+      },
+      verdictZh:
+        '論曰:毅之下七十城易,而收齊人之心難;'
+        + '故三年不攻,非不能攻,是**攻之則七十城復叛**。\n'
+        + '此戰國之中最深之一著,'
+        + '而亦最易為讒者所用:\n'
+        + '**凡以慢為策者,必被說成有二心**。\n'
+        + '昭王能斬言者,惠王不能 ——'
+        + '燕之得齊與失齊,皆在此一念。',
+      verdictEn:
+        'The historian says: taking seventy cities was the easy part and winning the people of Qi was not, so three years without an assault was not inability — an assault would have put all seventy back in revolt. It is the deepest stroke in the whole period and the easiest for a slanderer to work on: anyone whose policy is slowness will be described as disloyal. King Zhao could behead the man who said it and King Hui could not. Yan\'s gaining and losing of Qi both turn on that.',
+      verdictLostZh:
+        '論曰:毅奔趙,惠王使人讓之。'
+        + '毅報書曰:「臣聞善作者不必善成,'
+        + '善始者不必善終。\n'
+        + '……臣聞古之君子,交絕不出惡聲;'
+        + '忠臣去國,不潔其名。」',
+      verdictLostEn:
+        'The historian says: Yue Yi fled to Zhao, and King Hui sent a man to reproach him. He wrote back: "I have heard that a man good at beginning a thing need not be good at completing it, and that a good start need not have a good end... I have heard that the gentlemen of old, when a friendship ended, did not speak ill; and that a loyal minister leaving his state does not try to clear his own name."',
+    },
+  },
+  /* ── 戰國·田單復國 ────────────────────────────────────────────── */
+  'scn-ws-tiandan': {
+    qi: {
+      defeat: {
+        titleZh: '火牛',
+        titleEn: 'The Fire Oxen',
+        textZh:
+          '單既以反間去樂毅,乃縱言曰:'
+          + '「吾唯懼燕人掘吾城外冢墓,僇先人,可為寒心。」'
+          + '燕軍盡掘壟墓,燒死人。'
+          + '即墨人從城上望見,皆涕泣,'
+          + '俱欲出戰,怒自十倍。\n\n'
+          + '乃收城中得千餘牛,為絳繒衣,畫以五彩龍文,'
+          + '束兵刃於其角,而灌脂束葦於尾,燒其端。\n'
+          + '鑿城數十穴,夜縱牛,壯士五千人隨其後。\n\n'
+          + '牛尾熱,怒而奔燕軍,燕軍夜大驚。'
+          + '牛尾炬火光明炫燿,燕軍視之皆龍文,'
+          + '所觸盡死傷。\n\n'
+          + '——七十餘城盡復為齊。',
+        textEn:
+          'Having got rid of Yue Yi by misinformation, Tian Dan set another story going: "The one thing I dread is the men of Yan digging up the graves outside our walls and dishonouring our ancestors. That would chill the heart." So the Yan army dug up all the grave mounds and burnt the dead. The people of Jimo watched from the walls and wept, and all of them wanted to go out and fight, and their rage was ten times what it had been.\n\n'
+          + 'Then he collected a thousand-odd oxen in the city, dressed them in crimson silk painted with five-coloured dragon patterns, bound blades to their horns and fat-soaked reeds to their tails, and set the ends alight. Dozens of openings were cut in the wall, the oxen were loosed at night, and five thousand picked men followed them.\n\n'
+          + 'The heat on their tails sent them raging into the Yan camp, and Yan panicked in the dark. In the glare of the burning tails the beasts seemed all dragon-pattern to them, and everything they touched was killed or maimed.\n\n'
+          + 'And seventy-odd cities went back to Qi.',
+      },
+      verdictZh:
+        '論曰:單之復國,凡三術:'
+        + '一去其將,二**激其民**,三驚其軍。\n'
+        + '而中間一著最要:'
+        + '燕人掘墓,非燕之本意,是單使之;\n'
+        + '**守城之難,難在守者不肯死;'
+        + '而使守者肯死,不在賞,在恨**。\n'
+        + '故七十城之復,始於一堆被燒的骨。',
+      verdictEn:
+        'The historian says: Tian Dan recovered his country by three devices — removing their commander, enraging his own people, and stampeding their army. The middle one mattered most. The men of Yan did not think of digging up graves; Tian Dan made them do it. The hard part of holding a city is that the defenders will not die for it, and what makes them willing is not reward but hatred. Seventy cities came back because of a heap of burnt bones.',
+      verdictLostZh:
+        '論曰:齊既復國,迎襄王於莒。'
+        + '而王孫賈之母嘗謂賈曰:'
+        + '「女朝出而晚來,則吾倚門而望;'
+        + '女暮出而不還,則吾倚閭而望。'
+        + '女今事王,王走,女不知其處,女尚何歸?」'
+        + '——賈遂入市呼曰:'
+        + '「淖齒亂齊國,殺閔王,欲與我誅者袒右!」'
+        + '市人從者四百人。',
+      verdictLostEn:
+        'The historian says: with the country recovered, King Xiang was brought back from Ju. And Wangsun Jia\'s mother had once said to him: "When you go out in the morning and are late back, I stand at the door and watch for you; when you go out at evening and do not come home, I stand at the gate of the lane and watch. Now you serve the King, and the King has fled and you do not know where he is — what are you coming home for?" So Jia went into the marketplace and shouted: "Nao Chi has thrown Qi into chaos and murdered King Min. Whoever will help me punish him, bare your right shoulder!" Four hundred men in the market followed him.',
+    },
+  },
+  /* ── 戰國·邯鄲之戰 ────────────────────────────────────────────── */
+  'scn-ws-handan': {
+    zhao: {
+      defeat: {
+        titleZh: '穎脫而出',
+        titleEn: 'The Point Comes Clear Through',
+        textZh:
+          '長平既敗,秦圍邯鄲。'
+          + '平原君約與食客門下有勇力文武備具者二十人偕,'
+          + '得十九人,餘無可取者。\n\n'
+          + '毛遂自薦。平原君曰:'
+          + '「夫賢士之處世也,譬若錐之處囊中,'
+          + '其末立見。今先生處勝之門下三年於此矣,'
+          + '左右未有所稱誦,'
+          + '勝未有所聞,是先生無所有也。」\n\n'
+          + '毛遂曰:「臣乃今日請處囊中耳。'
+          + '使遂蚤得處囊中,乃穎脫而出,非特其末見而已。」\n\n'
+          + '——至楚,日出而言之,日中不決。'
+          + '毛遂按劍歷階而上,'
+          + '楚王遂許歃血於堂上。',
+        textEn:
+          'After Changping, Qin invested Handan. The Lord of Pingyuan meant to take twenty of his retainers who were complete in courage and in civil and military accomplishment, and found nineteen, and there was nobody else worth taking.\n\n'
+          + 'Mao Sui put himself forward. The Lord of Pingyuan said: "An able man in the world is like an awl in a bag — the point shows at once. You have been in my household three years now, my people have said nothing about you and I have heard nothing, which means there is nothing there."\n\n'
+          + 'And Mao Sui said: "I am asking today to be put in the bag. Had I been in the bag earlier, the whole point would have come clear through, not just the tip of it."\n\n'
+          + 'In Chu they talked from sunrise to midday and nothing was decided. Mao Sui put his hand to his sword, went up the steps one at a time — and the King of Chu agreed to smear the blood of the covenant there in the hall.',
+      },
+      verdictZh:
+        '論曰:邯鄲之圍,趙以一城當秦之全力三年 ——'
+        + '而其解也,不在趙,在**楚與魏肯來**。\n'
+        + '長平之後,山東諸國本已各自求全;'
+        + '其復合者,以魯仲連一言:'
+        + '「彼秦者,棄禮義而上首功之國也。'
+        + '彼即肆然而為帝,則連有蹈東海而死耳,'
+        + '吾不忍為之民也。」\n\n'
+        + '**利可以散人,懼可以合人**:'
+        + '而使懼者成形的,是長平那四十萬。',
+      verdictEn:
+        'The historian says: at Handan, Zhao held one city against the whole weight of Qin for three years — and the siege was lifted not by Zhao but by Chu and Wei being willing to come. After Changping the states east of the mountains were each looking to their own safety; what brought them together again was a sentence of Lu Zhonglian\'s: "That Qin is a state which has thrown away rites and right conduct and puts severed heads first. If it becomes emperor as it pleases, then I shall walk into the eastern sea and drown; I cannot bear to be its subject." Interest scatters men and fear joins them — and what gave the fear a shape was those four hundred thousand at Changping.',
+      verdictLostZh:
+        '論曰:信陵君竊符救趙,侯嬴為謀,'
+        + '朱亥椎殺晉鄙,遂奪其軍。'
+        + '嬴曰:「臣宜從,老不能。'
+        + '請數公子行日,以至晉鄙軍之日,'
+        + '北鄉自剄,以送公子。」'
+        + '——果自剄。',
+      verdictLostEn:
+        'The historian says: the Lord of Xinling stole the tally to relieve Zhao. Hou Ying planned it and Zhu Hai killed Jin Bi with an iron mace and took over his army. Hou Ying had said: "I ought to go with you and am too old. Let me count the days of your journey, and on the day you reach Jin Bi\'s camp I shall face north and cut my throat to see you off." And he did.',
+    },
+    qin: {
+      defeat: {
+        titleZh: '邯鄲實未易攻',
+        titleEn: 'Handan Is Not Easy to Attack',
+        textZh:
+          '長平之後,武安君欲乘勝滅趙。'
+          + '應侯言於王曰:「秦兵勞,請許韓趙之割地以和,'
+          + '且休士卒。」王聽之。\n\n'
+          + '——九月,復發兵圍邯鄲。'
+          + '武安君病,不行。\n\n'
+          + '王自命之,起曰:'
+          + '「邯鄲實未易攻也。'
+          + '且諸侯救日至,彼諸侯怨秦之日久矣。\n'
+          + '今秦雖破長平軍,而秦卒死者過半,國內空。'
+          + '遠絕河山而爭人國都,'
+          + '趙應其內,諸侯攻其外,破秦軍必矣。」\n\n'
+          + '——王齕、鄭安平相繼敗,'
+          + '安平以兵二萬降趙。',
+        textEn:
+          'After Changping the Lord of Wu\'an wanted to press on and finish Zhao. The Marquis of Ying told the King: "Our troops are worn out. Accept the territory Hann and Zhao are offering and make peace, and rest the men." The King agreed.\n\n'
+          + 'And in the ninth month troops went out again to invest Handan. The Lord of Wu\'an was ill and did not go.\n\n'
+          + 'When the King ordered him in person, Bai Qi said: "Handan really is not easy to attack. And relief from the other states arrives daily; they have resented Qin for a long time.\n\n'
+          + 'Qin has destroyed the army at Changping, and more than half our own men are dead and the country is empty. To cross rivers and mountains and contend for another state\'s capital, with Zhao answering from inside and the other states attacking from outside, is certain destruction for our army."\n\n'
+          + 'Wang He and Zheng Anping were beaten one after another, and Anping surrendered to Zhao with twenty thousand men.',
+      },
+      verdictZh:
+        '論曰:秦之失邯鄲,失於**戰勝之後的那一個月** ——'
+        + '長平既克,不乘之而許和,'
+        + '既許和而復攻,則趙已得喘息,而諸侯已得聚謀。\n'
+        + '**兵之機,不在勝,在勝後幾日之內**。\n'
+        + '應侯之言,出於忌武安君之功;'
+        + '一將相之私,遲秦統一者三十餘年。',
+      verdictEn:
+        'The historian says: Qin lost Handan in the month after its victory. Having broken Changping it did not follow through but made peace, and having made peace it attacked again — by which time Zhao had got its breath and the other states had had time to confer. The opportunity in war lies not in winning but in the few days after winning. And the Marquis of Ying gave that advice out of jealousy of the Lord of Wu\'an\'s achievement. One quarrel between a chancellor and a general put Qin\'s unification back thirty years.',
+      verdictLostZh:
+        '論曰:秦王怒,免武安君為士伍,遷之陰密。'
+        + '行至杜郵,賜之劍。'
+        + '——**先不用其言,後責其不行**,古今同患。',
+      verdictLostEn:
+        'The historian says: the King of Qin in his anger reduced the Lord of Wu\'an to the ranks and banished him to Yinmi, and when he had got as far as Duyou sent him a sword. First refusing a man\'s advice and then blaming him for not carrying out the opposite is an old complaint.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
