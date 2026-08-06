@@ -4357,6 +4357,390 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: the Yuans arrived with thousands of horsemen, and Kang, afraid of what they might do, moved first. A fugitive cannot lodge anywhere long: when the guest is larger than the host, the host kills the guest.',
     },
   },
+  /* ── 221 蜀漢建國 ─────────────────────────────────────────────── */
+  'scn-221-shu-emperor': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '即皇帝位於武擔之南',
+        titleEn: 'Enthroned South of Wudan',
+        textZh:
+          '曹丕稱尊號,或傳言漢帝見害。'
+          + '於是備發喪制服,追諡曰孝愍皇帝。\n\n'
+          + '群下上言宜即尊號 —— 備乃即皇帝位於成都武擔之南,'
+          + '大赦,改年為章武。\n\n'
+          + '而是歲六月,張飛為其帳下將張達、范彊所害。'
+          + '飛營都督有表 —— 備聞飛都督之有表也,'
+          + '曰:「噫!飛死矣。」\n\n'
+          + '七月,親率諸軍伐吳。'
+          + '趙雲諫曰:「國賊是曹操,非孫權也。'
+          + '且先滅魏,則吳自服。'
+          + '不應置魏,先與吳戰;兵勢一交,不得卒解也。」\n\n'
+          + '備不聽。',
+        textEn:
+          'Cao Pi took the imperial title, and a rumour ran that the Han emperor had been murdered. So Liu Bei went into mourning and gave him the posthumous name Xiaomin.\n\n'
+          + 'His officers urged him to take the title himself — and he was enthroned south of Wudan at Chengdu, proclaimed an amnesty, and changed the reign-name to Zhangwu.\n\n'
+          + 'And in the sixth month of that year Zhang Fei was murdered by two of his own officers, Zhang Da and Fan Qiang. A memorial came in from the supervisor of Fei\'s camp — and hearing that it was from the supervisor and not from Fei, Bei said: "Ah. Fei is dead."\n\n'
+          + 'In the seventh month he led the army against Wu in person. Zhao Yun remonstrated: "The enemy of the state is Cao Cao, not Sun Quan. Destroy Wei first and Wu will submit of itself. We should not set Wei aside and fight Wu; once the armies are engaged it cannot be broken off quickly."\n\n'
+          + 'Bei did not listen.',
+      },
+      verdictZh:
+        '論曰:章武之立,名為繼漢,實為報讎。\n'
+        + '**一國之號可以繼,而一國之勢不可以憤取** ——'
+        + '雲之言,亮不能爭,秦宓以言下獄;'
+        + '明年猇亭一炬,蜀之精銳盡於彝陵之道。\n'
+        + '然備托孤白帝,曰:「若嗣子可輔,輔之;'
+        + '如其不才,君可自取。」'
+        + '——**敗至於此,而國不亂**,亦足以立矣。',
+      verdictEn:
+        'The historian says: the Zhangwu enthronement was called a continuation of Han and was really a revenge. A dynasty\'s name can be inherited; a state\'s position cannot be seized in anger. Zhuge Liang could not argue against Zhao Yun\'s point, and Qin Mi went to prison for making it; the next year one fire at Xiaoting consumed the best of Shu along the Yiling road. And yet at Baidi, entrusting his son, Bei said: "If the heir is worth supporting, support him; if he has no ability, take it yourself." To be beaten that badly and leave the state unshaken is itself an achievement.',
+      verdictLostZh:
+        '論曰:章武三年,亮上言:「先帝知臣謹慎,'
+        + '故臨崩寄臣以大事也。」'
+        + '——蜀之所恃,不在其君之能,在其臣之不欺。',
+      verdictLostEn:
+        'The historian says: in the third year of Zhangwu, Zhuge Liang wrote: "The late Emperor knew that I was careful, and so on his deathbed he entrusted me with the great affair." What Shu rested on was not the ability of its sovereign but the fact that its minister did not cheat him.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '舜禹之事,吾知之矣',
+        titleEn: 'Now I Know About Shun and Yu',
+        textZh:
+          '漢帝以眾望在魏,乃召群公卿士,'
+          + '告祠高廟,使兼御史大夫張音持節奉璽綬詔冊,'
+          + '禪位於魏。\n\n'
+          + '王三讓,乃受。'
+          + '築壇於繁陽,燎祭天地、五岳、四瀆。\n\n'
+          + '禮畢,顧謂群臣曰:'
+          + '「舜、禹之事,吾知之矣。」\n\n'
+          + '——封山陽公,邑一萬戶,'
+          + '位在諸侯王上,奏事不稱臣,'
+          + '受詔不拜,以天子車服郊祀天地。',
+        textEn:
+          'Since the wishes of the realm lay with Wei, the Han emperor called his ministers together, made announcement at the ancestral temple, and sent the acting Grandee Secretary Zhang Yin with the seals and cords and the edict of abdication.\n\n'
+          + 'The King declined three times and then accepted. An altar was raised at Fanyang and burnt offerings made to Heaven and Earth, the five peaks and the four rivers.\n\n'
+          + 'When the ceremony was over he turned to his officials and said: "Now I know about Shun and Yu."\n\n'
+          + 'The former emperor was made Duke of Shanyang with a fief of ten thousand households, ranked above the kings, permitted not to call himself a subject in memorials, not to bow when receiving an edict, and to sacrifice to Heaven and Earth in the imperial carriage and robes.',
+      },
+      verdictZh:
+        '論曰:「舜禹之事,吾知之矣」——'
+        + '此一語道破四百年之禪讓文章。\n'
+        + '然其待山陽公之厚,亦四百年所無:'
+        + '**篡而不殺,自丕始;'
+        + '而後之篡者,皆循其例** ——'
+        + '故司馬氏之於曹奐,亦如是。\n'
+        + '天下之禮,有時由最不敬者所立。',
+      verdictEn:
+        'The historian says: "Now I know about Shun and Yu" — one sentence goes through four hundred years of abdication literature. And his treatment of the Duke of Shanyang was more generous than anything in those four hundred years. Usurping without killing began with Cao Pi, and every usurper after him followed the precedent — the Simas treated Cao Huan the same way. Sometimes the observances of an age are established by the man with least reverence for them.',
+      verdictLostZh:
+        '論曰:魏之立國四十五年,而權移於臣者三十年。'
+        + '丕黜諸侯王,防宗室如防賊,'
+        + '及高平陵之變,無一人可援 ——'
+        + '**防其所親,而失其所恃**。',
+      verdictLostEn:
+        'The historian says: Wei lasted forty-five years and for thirty of them power was in a subject\'s hands. Cao Pi cut down the imperial kings and guarded against his own clan as against bandits, and when the coup at Gaoping Tombs came there was nobody to call on. Guard against your own kin and you lose what holds you up.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '屈身於陛下',
+        titleEn: 'Bending to Your Majesty',
+        textZh:
+          '劉備稱帝,將東伐。'
+          + '你遣使稱藩於魏,卑辭奉章,'
+          + '並送于禁等還。\n\n'
+          + '魏群臣皆賀,劉曄獨曰:'
+          + '「權無故求降,必內有急。'
+          + '今天下三分,中國十有其八。'
+          + '吳、蜀各保一州…宜大興師,'
+          + '徑渡江襲之。蜀攻其外,我襲其內,'
+          + '吳之亡不出旬月矣。」\n\n'
+          + '丕不從,受權降,拜為吳王。\n\n'
+          + '——明年陸遜破備於猇亭。'
+          + '又明年,魏三路伐吳,無功而還。',
+        textEn:
+          'Liu Bei took the imperial title and prepared to come east. You sent an envoy to Wei declaring yourself a vassal, with a humble memorial, and returned Yu Jin and the other prisoners.\n\n'
+          + 'The Wei court all offered congratulations, and Liu Ye alone said: "Sun Quan asks to submit for no reason; there must be something urgent at home. The realm is in three parts and the middle kingdom holds eight tenths of it. Wu and Shu each hold one province... We should raise a great army, cross the river directly and strike him. Shu attacks his outside and we strike his inside, and Wu is finished within the month."\n\n'
+          + 'Cao Pi would not have it; he accepted the submission and made Quan King of Wu.\n\n'
+          + 'The next year Lu Xun broke Liu Bei at Xiaoting. The year after, Wei came at Wu along three roads and went home with nothing.',
+      },
+      verdictZh:
+        '論曰:權之稱藩,不以其弱,以其**能弱** ——'
+        + '一歲之間,北面事魏而西破蜀軍;'
+        + '既破之,則不復稱藩。\n'
+        + '劉曄之言,一字不誤,而丕以「人稱臣而伐之,'
+        + '疑天下欲來者之心」拒之。\n'
+        + '**惜名者失時**:'
+        + '三國之勢,遂定於此一年。',
+      verdictEn:
+        'The historian says: Sun Quan submitted not because he was weak but because he was capable of being weak. Within a single year he faced north as a vassal of Wei and broke the Shu army in the west; and having broken it he stopped being a vassal. Every word of Liu Ye\'s advice was right, and Cao Pi refused it on the ground that attacking a man who has declared himself a subject would make anyone else hesitate to come in. A ruler who is careful of his good name misses his moment. The three-way balance was settled in that one year.',
+      verdictLostZh:
+        '論曰:趙咨使魏,丕問:「吳王何等主也?」'
+        + '對曰:「聰明仁智,雄略之主也。」'
+        + '丕問其狀,咨曰:「納魯肅於凡品,是其聰也;'
+        + '拔呂蒙於行陣,是其明也;'
+        + '獲于禁而不害,是其仁也;'
+        + '取荊州而兵不血刃,是其智也;'
+        + '據三州虎視於天下,是其雄也;'
+        + '屈身於陛下,是其略也。」',
+      verdictLostEn:
+        'The historian says: when Zhao Zi went as envoy to Wei, Cao Pi asked, "What sort of ruler is the King of Wu?" He replied: "A shrewd, clear-sighted, humane and wise one, and a ruler of great designs." Asked for particulars, Zi said: "He took Lu Su out of the common run — that is shrewdness. He raised Lü Meng out of the ranks — that is clear sight. He captured Yu Jin and did not harm him — that is humanity. He took Jing province without bloodying a blade — that is wisdom. He holds three provinces and looks out on the realm like a tiger — that is greatness. And he bends to Your Majesty — that is design."',
+    },
+  },
+  /* ── 228 石亭之戰 ─────────────────────────────────────────────── */
+  'scn-228-shiting': {
+    sun: {
+      defeat: {
+        titleZh: '割髮謝罪',
+        titleEn: 'He Cut His Hair to Apologise',
+        textZh:
+          '周魴密表:「求以譎計挾誘曹休。」'
+          + '權敕魴詐為郡中人所白,'
+          + '被詰讓,因懼自嫌,'
+          + '遣親人齎箋七條以誘休。\n\n'
+          + '而休猶未信 —— 郡吏數詣門下,'
+          + '魴乃詣門下,**割髮謝罪**。\n\n'
+          + '休遂信之,率步騎十萬向皖。\n\n'
+          + '陸遜為大都督,朱桓、全琮為左右督,'
+          + '各督三萬人。'
+          + '大破休於石亭,斬獲萬餘,'
+          + '牛馬騾驢車乘萬兩,軍資器械略盡。',
+        textEn:
+          'Zhou Fang sent a secret memorial asking leave to lure Cao Xiu by a trick. Sun Quan had him pretend to have been denounced by people in his own commandery, called to account, and so frightened and under suspicion that he sent a confidant with seven articles of proposals to draw Xiu in.\n\n'
+          + 'And Xiu still did not believe it — until, with commandery clerks repeatedly summoned to his gate, Zhou Fang went to the gate and cut off his hair in apology.\n\n'
+          + 'Then Xiu believed him, and moved on Wan with a hundred thousand horse and foot.\n\n'
+          + 'Lu Xun was Grand Commander with Zhu Huan and Quan Cong as commanders of left and right, thirty thousand each. They broke Xiu at Shiting, killed and captured over ten thousand, and took ten thousand carts, oxen, horses, mules and asses, and nearly all his stores and equipment.',
+      },
+      verdictZh:
+        '論曰:魴之詐,以髮為信 ——'
+        + '**身體髮膚,受之父母**,'
+        + '故割之而人信;'
+        + '而其所以能割者,正因人皆知其不可割。\n'
+        + '朱桓請斷夾石、掛車以絕其歸路,'
+        + '曰「休可生虜」,權不許 ——'
+        + '於是石亭之捷止於一勝,'
+        + '而魏之淮南如故。',
+      verdictEn:
+        'The historian says: Zhou Fang\'s deception was guaranteed with his hair — body, hair and skin are what one\'s parents gave one, so cutting it convinces people; and it convinces precisely because everyone knows it must not be cut. Zhu Huan asked to cut the Jiashi and Guache roads and close the line of retreat, saying "Xiu can be taken alive", and Sun Quan refused. So Shiting stayed a victory and nothing more, and Wei\'s Huainan was where it had been.',
+      verdictLostZh:
+        '論曰:是歲蜀出祁山,吳破石亭,'
+        + '東西並舉,魏之最危一年也。'
+        + '而街亭一失,兩路遂不相及 ——'
+        + '**同盟之難,難在同時**。',
+      verdictLostEn:
+        'The historian says: that year Shu came out at Qishan and Wu broke Cao Xiu at Shiting — east and west rising together, the most dangerous year Wei had. And Jieting was lost, and the two efforts never met. The hard part of an alliance is simultaneity.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '休雖明果而希用兵',
+        titleEn: 'Bright and Decisive, and Seldom in the Field',
+        textZh:
+          '蔣濟表曰:「深入虜地,與權精兵對,'
+          + '而朱然等在上流,乘休後,'
+          + '臣未見其利也。」\n\n'
+          + '休深入虜地,與賊相遇,'
+          + '賊斷夾石,兵敗於石亭 ——'
+          + '賴賈逵至,賊乃退。\n\n'
+          + '休不悅,表逵稽留。'
+          + '逵曰:「本為國家作豫州刺史,'
+          + '不是為曹休作長史也。」\n\n'
+          + '休還,以敗軍慚憤,疽發背薨。',
+        textEn:
+          'Jiang Ji memorialised: "To go deep into enemy country against Sun Quan\'s best troops, with Zhu Ran and the others upstream ready to come in behind Cao Xiu — I cannot see the advantage in it."\n\n'
+          + 'Xiu went deep in, met the enemy, had the Jiashi road cut behind him, and was beaten at Shiting — and got away only because Jia Kui arrived, at which the enemy withdrew.\n\n'
+          + 'Xiu was not pleased and impeached Kui for arriving late. Kui said: "I was made Inspector of Yu province for the state. I was not made chief clerk to Cao Xiu."\n\n'
+          + 'Xiu went home, sick with shame and rage at the defeat, and died of a carbuncle on his back.',
+      },
+      verdictZh:
+        '論曰:明帝之世,魏三面受敵而不亡,'
+        + '所恃者一句:**守而不出,以待其弊**。\n'
+        + '孫資之言:「但以現有之兵,分命大將據諸要險,'
+        + '威足以震攝彊寇,鎮靜疆埸,'
+        + '將士虎睡,百姓無事。」\n'
+        + '休不守此,遂有石亭;'
+        + '曹爽不守此,遂有興勢。\n'
+        + '——魏之敗,皆敗於欲有所立。',
+      verdictEn:
+        'The historian says: under Emperor Ming, Wei faced enemies on three sides and did not fall, on one principle: hold and do not go out, and wait for them to wear themselves down. As Sun Zi put it: "With the troops we have, assign our great commanders to the key positions. Our weight will be enough to overawe strong enemies and keep the frontier quiet; the soldiers sleep like tigers and the people are undisturbed." Cao Xiu departed from it and got Shiting; Cao Shuang departed from it and got Xingshi. Wei\'s defeats were all defeats of men wanting to make a name.',
+      verdictLostZh:
+        '論曰:逵之至,休得不沒。'
+        + '而休表逵稽留,逵不為屈。'
+        + '——**救人者見責,此軍中所以無人肯救**。',
+      verdictLostEn:
+        'The historian says: Jia Kui\'s arrival was the only reason Cao Xiu was not destroyed, and Xiu impeached him for arriving late, and Kui would not give way. When the man who comes to the rescue is the one who gets blamed, that is why nobody in an army wants to be the rescuer.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '此病不在兵少',
+        titleEn: 'The Trouble Was Not Too Few Men',
+        textZh:
+          '亮身率諸軍攻祁山,戎陣整齊,賞罰肅而號令明,'
+          + '南安、天水、安定三郡叛魏應亮,關中響震。\n\n'
+          + '而亮違眾拔謖,統大眾在前,'
+          + '與魏將張郃戰於街亭。'
+          + '謖違亮節度,舉措煩擾,'
+          + '舍水上山,不下據城 ——'
+          + '郃絕其汲道,大破之。\n\n'
+          + '亮拔西縣千餘家還漢中,戮謖以謝眾。\n\n'
+          + '上疏曰:「大軍在祁山、箕谷,皆多於賊,'
+          + '而不能破賊為賊所破者,'
+          + '則此病不在兵少也,在一人耳。」'
+          + '——請自貶三等。',
+        textEn:
+          'Zhuge Liang led the armies against Qishan in person, in good order, with strict rewards and punishments and clear orders, and three commanderies — Nan\'an, Tianshui and Anding — revolted from Wei and declared for him, and Guanzhong rang with it.\n\n'
+          + 'And then, against everyone\'s advice, he promoted Ma Su to command the van, and Su fought Zhang He of Wei at Jieting. Su departed from Liang\'s instructions, fussed and interfered, camped on the hill away from the water instead of holding the town below — and He cut his access to water and broke him.\n\n'
+          + 'Liang took a thousand-odd households from Xi county back to Hanzhong with him, and executed Ma Su to answer for it to the army.\n\n'
+          + 'His memorial said: "Our armies at Qishan and at Jigu were both larger than the enemy\'s, and they could not beat the enemy and were beaten by him. The trouble here is not too few soldiers. It is one man." And he asked to be demoted three grades.',
+      },
+      verdictZh:
+        '論曰:街亭之失,亮自任其咎,'
+        + '不言謖之違節度,而言己之違眾拔謖 ——'
+        + '**罪在用人者,不在被用者**,'
+        + '此一疏,蜀之法度所由立。\n'
+        + '故其後歲歲出兵而國不怨,'
+        + '兵敗將誅而眾不叛:'
+        + '賞罰之信,勝於一城之得失。',
+      verdictEn:
+        'The historian says: Zhuge Liang took the blame for Jieting himself, saying nothing about Ma Su departing from orders and everything about his own promoting Su against all advice. The fault lies with whoever appointed the man, not with the man appointed — and that memorial is the foundation of Shu\'s discipline. Which is why he could campaign year after year without the country resenting it, and lose battles and execute commanders without the army mutinying. Certainty in reward and punishment is worth more than the possession of a city.',
+      verdictLostZh:
+        '論曰:是歲十二月,亮復出散關,圍陳倉,'
+        + '郝昭拒之二十餘日,糧盡而還,斬王雙。'
+        + '——一年再出,不為其能勝,為其**不得不出**:'
+        + '以一州之力抗九州,守則坐斃。',
+      verdictLostEn:
+        'The historian says: in the twelfth month of that year he came out again by Sanguan and invested Chencang; Hao Zhao held him twenty-odd days, his grain ran out and he went back, killing Wang Shuang on the way. Twice out in one year, not because he expected to win but because he had to: with one province against nine, sitting still is dying slowly.',
+    },
+  },
+  /* ── 229 三帝鼎立 ─────────────────────────────────────────────── */
+  'scn-229-three-emperors': {
+    sun: {
+      defeat: {
+        titleZh: '中分天下',
+        titleEn: 'The Realm Halved by Treaty',
+        textZh:
+          '夏四月,你即皇帝位於武昌,大赦,改元黃龍。\n\n'
+          + '蜀遣衛尉陳震來賀 —— 乃與蜀盟,約:'
+          + '中分天下,豫、青、徐、幽屬吳,'
+          + '兗、冀、并、涼屬蜀,'
+          + '其司州之土,以函谷關為界。\n\n'
+          + '盟文曰:「若有害漢,則吳伐之;'
+          + '若有害吳,則漢伐之。'
+          + '各守分土,無相侵犯。」\n\n'
+          + '——所分者,兩家皆未有之地。\n\n'
+          + '秋九月,遷都建業。',
+        textEn:
+          'In the fourth month of summer you were enthroned as emperor at Wuchang, proclaimed an amnesty and changed the reign-name to Huanglong.\n\n'
+          + 'Shu sent the Guard Commandant Chen Zhen to congratulate you — and a treaty was made with Shu dividing the realm in half: Yu, Qing, Xu and You provinces to Wu; Yan, Ji, Bing and Liang to Shu; and the territory of Si province divided at the Hangu pass.\n\n'
+          + 'The text ran: "If any harm Han, Wu shall punish them; if any harm Wu, Han shall punish them. Each shall keep to its allotted land and neither shall encroach on the other."\n\n'
+          + 'What they divided, neither of them owned.\n\n'
+          + 'In the ninth month of autumn the capital moved to Jianye.',
+      },
+      verdictZh:
+        '論曰:中分天下之盟,分的是魏土 ——'
+        + '兩家所共有者,惟一敵而已。\n'
+        + '**盟以敵為本,故敵在則盟固**:'
+        + '此盟立三十年不變,'
+        + '三國之中,惟此一約始終未廢。\n'
+        + '而其所以未廢,亦正因兩家終身不能取其所分。',
+      verdictEn:
+        'The historian says: the treaty halving the realm divided Wei\'s territory. The only thing the two of them held in common was an enemy. A treaty founded on an enemy holds as long as the enemy does — this one stood unchanged for thirty years, the one agreement in the whole three-kingdoms period that was never broken. And it was never broken partly because neither party was ever able to take the land it had been allotted.',
+      verdictLostZh:
+        '論曰:蜀人或以為宜顯明正義,絕其盟好。'
+        + '亮曰:「權有僭逆之心久矣。'
+        + '國家所以略其釁情者,求掎角之援也。'
+        + '若就其不動而睦於我,我之北伐,無東顧之憂,'
+        + '河南之眾不得盡西,此之為利,亦已深矣。」',
+      verdictLostEn:
+        'The historian says: some in Shu held that they should declare the principle openly and break off the alliance. Zhuge Liang said: "Sun Quan has had usurping designs for a long time. The reason the state overlooks the offence is that we want a partner at the other horn. If he stays where he is and stays friendly with us, our northern campaigns have nothing to fear from the east and the troops south of the Yellow River cannot all go west. The advantage in that is very deep."',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '掎角之援',
+        titleEn: 'A Partner at the Other Horn',
+        textZh:
+          '孫權稱尊號,遣使告蜀。'
+          + '蜀之議者咸以為交之無益,而名體弗順,'
+          + '宜顯明正義,絕其盟好。\n\n'
+          + '亮曰:「權有僭逆之心久矣。'
+          + '國家所以略其釁情者,求掎角之援也。\n'
+          + '今若加顯絕,讎我必深,'
+          + '便當移兵東伐,與之角力,'
+          + '須並其土,乃議中原。\n'
+          + '彼賢才尚多,將相輯睦,'
+          + '未可一朝定也。」\n\n'
+          + '乃遣陳震賀權踐位。\n\n'
+          + '是歲,亮遣陳式攻武都、陰平,遂克定二郡。'
+          + '詔復亮丞相。',
+        textEn:
+          'Sun Quan took the imperial title and sent word to Shu. The debate at Chengdu was unanimous that there was nothing to be got from the connection and that it offended propriety, and that Shu should declare the principle openly and break off the alliance.\n\n'
+          + 'Zhuge Liang said: "Sun Quan has had usurping designs a long time. The reason the state overlooks the offence is that we want a partner at the other horn.\n\n'
+          + 'Break with him openly now, and his hatred of us will run deep, and we shall have to move the army east and match strength with him, and shall have to absorb his territory before we can talk about the central plain.\n\n'
+          + 'He still has plenty of able men and his ministers and commanders are on good terms. It is not a thing to be settled in a morning."\n\n'
+          + 'So Chen Zhen was sent to congratulate Quan on his accession.\n\n'
+          + 'That year Chen Shi was sent against Wudu and Yinping, and both commanderies were taken. An edict restored Liang to the chancellorship.',
+      },
+      verdictZh:
+        '論曰:漢賊不兩立,而蜀賀吳僭 ——'
+        + '此蜀立國以來最大之屈。\n'
+        + '而亮為之,不諱其屈,只論其利:'
+        + '「須並其土,乃議中原」八字,'
+        + '是把整件事算到底之後的結論。\n'
+        + '**能守名者未必能存國;'
+        + '能存國者,必先算得清哪一種名可以不要**。',
+      verdictEn:
+        'The historian says: Han and the usurper cannot both stand, and Shu sent congratulations on a usurpation — the largest humiliation the state had swallowed since its founding. Zhuge Liang did it without pretending it was not a humiliation, and argued only from advantage: "we shall have to absorb his territory before we can talk about the central plain" is the conclusion of having worked the whole thing through to the end. A man who keeps his good name may not keep his state; a man who keeps his state has first worked out precisely which sort of good name he can do without.',
+      verdictLostZh:
+        '論曰:是歲取武都、陰平二郡,'
+        + '蜀之北伐,實得地者惟此一次。'
+        + '——五出祁山,所得二郡而已;'
+        + '而以二郡之得,足使一國十年不疑其相。',
+      verdictLostEn:
+        'The historian says: that year Wudu and Yinping were taken — the only northern campaign that actually gained ground. Five expeditions to Qishan, and two commanderies to show for it; and those two commanderies were enough to keep a whole country from doubting its chancellor for ten years.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '虎睡',
+        titleEn: 'Let the Tigers Sleep',
+        textZh:
+          '吳、蜀並稱帝,天下三分之名始定。'
+          + '群臣或請大舉伐吳。\n\n'
+          + '孫資曰:「昔武皇帝征南鄭,取張魯,'
+          + '陽平之役,危而後濟。'
+          + '又自往拔出夏侯淵軍,數言南鄭直為天獄,'
+          + '中斜谷道為五百里石穴耳。\n'
+          + '——武皇帝聖於用兵,察蜀賊棲於山巖,'
+          + '視吳虜竄於江湖,'
+          + '皆桡而避之,不責將士之力,'
+          + '不爭一朝之忿,誠所謂見勝而戰,'
+          + '知難而退也。\n\n'
+          + '若今分命大將據諸要險,'
+          + '威足以震攝彊寇,鎮靜疆埸,'
+          + '將士虎睡,百姓無事。\n'
+          + '數年之間,中國日盛,吳蜀二虜必自罷弊。」',
+        textEn:
+          'Wu and Shu both declared emperors, and the three-way division of the realm had its formal shape. Some at court asked for a great campaign against Wu.\n\n'
+          + 'Sun Zi said: "When the Martial Emperor campaigned at Nanzheng and took Zhang Lu, the affair at Yangping was touch and go before it came right. He went himself to extricate Xiahou Yuan\'s army, and said more than once that Nanzheng was simply a prison built by Heaven, and the Xie valley road nothing but five hundred li of stone burrow.\n\n'
+          + 'The Martial Emperor was a genius at war, and seeing the Shu rebels perched among their crags and the Wu rebels hiding in their rivers and lakes, he bent aside and avoided them both. He did not spend his officers\' strength and did not contend over a morning\'s anger. That is what is meant by fighting when you see the victory and withdrawing when you know the difficulty.\n\n'
+          + 'Assign our great commanders now to hold the key positions. Our weight will be enough to overawe strong enemies and keep the frontier quiet; the soldiers sleep like tigers and the people are undisturbed. In a few years the middle kingdom grows stronger daily and the two enemies must wear themselves out."',
+      },
+      verdictZh:
+        '論曰:三國相持四十年,'
+        + '而魏未嘗以一大役定天下 ——'
+        + '所行者,孫資「虎睡」四字而已。\n'
+        + '**以九州之富,行不爭之策,'
+        + '則時間即為兵力**:'
+        + '諸葛五出而國愈疲,'
+        + '孫吳歲攻而力愈竭,'
+        + '而魏坐收其弊。\n'
+        + '及其亡也,亦非亡於吳蜀,亡於其臣。',
+      verdictEn:
+        'The historian says: the three states faced each other for forty years and Wei never settled the realm with one great campaign — what it did was Sun Zi\'s four words about sleeping tigers. Use the wealth of nine provinces to follow a policy of not contending, and time itself becomes military strength: Zhuge Liang went out five times and his country grew more exhausted; Wu attacked every year and its strength ran out; and Wei sat and collected the proceeds. And when Wei fell, it did not fall to Wu or Shu. It fell to its own minister.',
+      verdictLostZh:
+        '論曰:明帝之世,吳蜀不能為患;'
+        + '而帝崩之年,託孤於曹爽、司馬懿 ——'
+        + '**四十年不敗於外,而敗於一次託孤**。',
+      verdictLostEn:
+        'The historian says: in Emperor Ming\'s reign Wu and Shu could do Wei no harm; and in the year he died he entrusted his heir to Cao Shuang and Sima Yi. Forty years without a defeat abroad, undone by one deathbed arrangement.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
