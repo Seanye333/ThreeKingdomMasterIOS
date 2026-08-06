@@ -1482,6 +1482,244 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: not attacking each other is, in a broken age, already a rare kind of relationship.',
     },
   },
+  /* ── 222 夷陵之戰 ─────────────────────────────────────────────── */
+  'scn-222-yiling': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '連營七百里',
+        titleEn: 'Seven Hundred Li of Camps',
+        textZh:
+          '關羽死,荊州失。趙雲諫曰:「國賊是曹操,非孫權也。'
+          + '且先滅魏,則吳自服。」不從。\n\n'
+          + '自巫峽建平連圍至夷陵界,立數十屯,以金錦爵賞誘動諸夷。'
+          + '而陸遜堅守七八月不戰 —— 及暑,蜀軍疲頓,乃使士各持一把茅,'
+          + '以火攻拔之。\n\n'
+          + '舟船器械,水步軍資,一時略盡,屍骸塞江而下。'
+          + '走還白帝,慚恚曰:「吾乃為遜所折辱,豈非天邪!」',
+        textEn:
+          'Guan Yu is dead and Jing province gone. Zhao Yun remonstrates: "The traitor to the state is Cao, not Sun. Destroy Wei first and Wu submits of itself." He is not heeded.\n\n'
+          + 'The line of camps runs from the Wu gorge and Jianping down to the Yiling boundary, dozens of stockades, with gold and brocade and titles held out to move the tribes. And Lu Xun holds without fighting for seven or eight months — until the heat, when the Shu army is worn down, and each of his men takes a bundle of thatch and burns it out.\n\n'
+          + 'Boats and gear, the whole supply of a river-and-land army, gone at a stroke; the corpses came down the river thick enough to block it. He got back to Baidi and said, burning with shame: "That I should be brought down and disgraced by Xun — is this not Heaven\'s doing?"',
+      },
+      verdictZh:
+        '論曰:先主以雪恥興師,而所失者國之精銳。'
+        + '兵法忌怒而興師 —— 「主不可以怒而興師,將不可以慍而致戰」,'
+        + '此語出於孫子,而先主讀過。'
+        + '然關羽張飛俱以非命終,而三人者名為君臣,恩猶父子:'
+        + '天下之義,有時不在兵法之內。',
+      verdictEn:
+        'The historian says: he raised the army to wipe out a disgrace and spent the best troops the state had. The classics forbid marching in anger — "a ruler must not raise troops out of rage, nor a general give battle out of pique." Sunzi wrote that, and the First Lord had read it. But Guan Yu and Zhang Fei had both died violently, and though the three were nominally lord and subjects, the bond was a father\'s and sons\'. There are obligations in this world that fall outside the art of war.',
+      verdictLostZh:
+        '論曰:夷陵之敗,蜀之元氣盡矣。'
+        + '此後諸葛亮六出祁山,所將者皆新募之兵 —— 而老兵在猇亭的火裡。',
+      verdictLostEn:
+        'The historian says: after Yiling the vitality of Shu was spent. Zhuge Liang went out at Qishan six times afterwards with newly raised men — the veterans were in the fire at Xiaoting.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '七八月不戰',
+        titleEn: 'Seven Months without a Battle',
+        textZh:
+          '諸將並曰:「攻備當在初,今乃令入五六百里,相銜持經七八月,'
+          + '其諸要害皆已固守,擊之必無利矣。」\n\n'
+          + '遜曰:「備是猾虜,更嘗事多,其軍始集,思慮精專,未可干也。'
+          + '今住已久,不得我便,兵疲意沮,計不復生,'
+          + '掎角此寇,正在今日。」\n\n'
+          + '而諸將皆孫策時舊將、或公室貴戚,各自矜恃,不相聽從。'
+          + '遜按劍曰:「僕雖書生,受命主上。國家所以屈諸君使相承望者,'
+          + '以僕有尺寸可稱,能忍辱負重故也。」',
+        textEn:
+          'The generals said with one voice: "Bei should have been struck at the outset. Now we have let him come five or six hundred li in and stood locked with him seven or eight months, and every key point is fortified. There is nothing to be gained by attacking now."\n\n'
+          + 'And Xun said: "Bei is a cunning old campaigner with a great deal of experience. When his army first gathered, his thinking was sharp and concentrated and he could not be touched. He has been sitting a long time now and has got nothing from us; his men are tired and their spirits low, and no new plan is coming. Today is the day to close on him."\n\n'
+          + 'His generals were Sun Ce\'s old officers or relations of the ruling house, each standing on his own dignity, and none of them would listen. Xun laid his hand on his sword: "I am a scholar, but I hold the sovereign\'s commission. The state has put you gentlemen under me because I have some small merit — namely that I can swallow insult and carry weight."',
+      },
+      verdictZh:
+        '論曰:遜之勝,勝在能忍。七八月不戰,而諸將日謗其怯 ——'
+        + '忍敵易,忍自己人難。及火起,一夕而破四十餘營。'
+        + '故曰:大將之才,不在能戰,在能不戰。',
+      verdictEn:
+        'The historian says: he won by waiting. Seven or eight months without a battle, and his own officers calling him a coward every day of it — enduring the enemy is easy, enduring your own side is not. When the fires went up, forty camps went in a night. Hence: the mark of a great commander is not that he can fight but that he can decline to.',
+      verdictLostZh:
+        '論曰:吳之勝夷陵,與蜀之勝鹵城同 —— 皆勝而不能進。'
+        + '三分之勢,至此鑄定:不是誰打贏了,是誰都贏不下去。',
+      verdictLostEn:
+        'The historian says: Wu\'s victory at Yiling was like Shu\'s at Lucheng — a win that could not be followed up. The three-way split was cast at that point: not because anyone had won, but because nobody could keep winning.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '備不曉兵',
+        titleEn: 'Bei Does Not Understand War',
+        textZh:
+          '權遣使稱藩,而後與備相攻。群臣皆賀,唯劉曄曰:'
+          + '「權無故求降,必內有急。宜大興師,徑渡江襲之。'
+          + '蜀攻其外,我襲其內,吳之亡不出旬月矣。」\n\n'
+          + '帝不從,曰:「人稱降而伐之,疑天下欲來者心。」\n\n'
+          + '及聞備連營七百里,曰:「備不曉兵,豈有七百里營可以拒敵者乎!'
+          + '苞原隰險阻而為軍者為敵所禽,此兵忌也。孫權上事今至矣。」'
+          + '後七日,吳破蜀書到。\n\n'
+          + '他看對了那一仗,而錯過了那一年。',
+        textEn:
+          'Quan sent envoys to submit as a vassal, and then went to war with Bei. The court all offered congratulations; only Liu Ye said: "Quan has asked to submit for no reason, so something is pressing at home. We should raise a great army, cross the river directly and strike him. Shu attacks his outside, we strike his inside, and Wu is finished within the month."\n\n'
+          + 'The emperor would not: "To attack a man who has declared his submission would make everyone in the realm who might come over think twice."\n\n'
+          + 'Then he heard about the seven hundred li of camps: "Bei does not understand war. Whoever heard of holding off an enemy with seven hundred li of camps? To make your position in marsh and thicket and broken ground is to be taken by the enemy — the art of war forbids it. Sun Quan\'s dispatch will arrive presently." Seven days later the news of Wu\'s victory came in.\n\n'
+          + 'He read the battle correctly and missed the year.',
+      },
+      verdictZh:
+        '論曰:文帝之不襲吳,以信也;而劉曄之策,以利也。'
+        + '信與利,人主終身所擇 —— 而三分之世,信者常後於利者一步。'
+        + '及吳破蜀而復叛,魏乃三路伐之,已無其時矣。',
+      verdictEn:
+        'The historian says: Emperor Wen declined to strike Wu out of good faith; Liu Ye\'s plan was pure advantage. Faith or advantage — that is the choice a sovereign makes all his life, and in an age of three powers the man of faith is usually one step behind the man of advantage. When Wu had beaten Shu and turned on Wei again, Wei sent three armies against it, and the moment was gone.',
+      verdictLostZh:
+        '論曰:兩虎相鬥而不取,非仁也,是不知其為兩虎也。',
+      verdictLostEn:
+        'The historian says: to watch two tigers fight and take nothing is not mercy. It is failing to notice that they are tigers.',
+    },
+  },
+  /* ── 263 滅蜀之役 ─────────────────────────────────────────────── */
+  'scn-263-shu-fall': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '陰平無人',
+        titleEn: 'Nobody on the Yinping Road',
+        textZh:
+          '鍾會出斜谷,姜維斂眾守劍閣 —— 會攻之不能克,糧道險遠,'
+          + '議欲還。\n\n'
+          + '而鄧艾自陰平道行無人之地七百餘里,鑿山通道,造作橋閣。'
+          + '山高谷深,至為艱險;糧運將匱,頻於危殆。艾以氈自裹,推轉而下。'
+          + '將士皆攀木緣崖,魚貫而進。\n\n'
+          + '諸葛瞻拒之於綿竹,敗死。後主遣使奉璽綬 ——'
+          + '而劍閣之師,一箭未發。',
+        textEn:
+          'Zhong Hui came out through the Xie valley, and Jiang Wei drew his forces in and held Jiange. Hui could not carry it; his supply road was long and dangerous, and he talked of going home.\n\n'
+          + 'And Deng Ai went by the Yinping road, seven hundred li through country with nobody in it, cutting through hills and building plank bridges. The mountains were high and the valleys deep and it was as hard as ground gets; the grain nearly ran out and they were in danger again and again. Ai wrapped himself in felt and rolled down the slope. The officers and men went hand over hand down the cliffs and through in single file.\n\n'
+          + 'Zhuge Zhan met them at Mianzhu and died. The Later Lord sent out the seals — and the army at Jiange never loosed an arrow.',
+      },
+      verdictZh:
+        '論曰:蜀之亡,非亡於劍閣,亡於一條沒有人設防的小路。'
+        + '姜維九伐中原而國小民疲,譙周作《仇國論》,黃皓用事於內 ——'
+        + '陰平之險,守之者一屯足矣,而三十年無人置一卒。',
+      verdictEn:
+        'The historian says: Shu did not fall at Jiange. It fell on one road nobody was guarding. Jiang Wei went north nine times and the country was small and its people worn out; Qiao Zhou wrote his essay against the war; Huang Hao ran things inside the palace. One post would have held the Yinping route, and in thirty years nobody put a single soldier on it.',
+      verdictLostZh:
+        '論曰:後主之降,群臣多勸;而北地王諶哭於昭烈之廟,'
+        + '殺妻子而後自殺。一國之亡,總有一個人不肯。',
+      verdictLostEn:
+        'The historian says: the court urged the Later Lord to surrender, and he did. The Prince of Beidi wept at the shrine of the Illustrious Founder, killed his wife and children, and then himself. When a state falls there is always one man who will not.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '三路伐蜀',
+        titleEn: 'Three Roads into Shu',
+        textZh:
+          '司馬昭曰:「今宜先取蜀,三年之後,因巴蜀順流之勢,'
+          + '水陸並進,此滅虞定虢,吞韓並魏之勢也。」\n\n'
+          + '而朝臣多以為不可,唯鍾會與昭意同。乃使會統十餘萬眾,'
+          + '鄧艾、諸葛緒各將三萬餘人 —— 三路俱進。\n\n'
+          + '及蜀既平,會謀反於成都,艾為衛瓘所收 ——'
+          + '滅一國之後,先死的是滅它的兩個人。',
+        textEn:
+          'Sima Zhao said: "We should take Shu first. Three years later, using the downstream advantage from Ba and Shu, we go by land and water together — this is the way Yu was destroyed and Guo settled, the way Han was swallowed and Wei absorbed."\n\n'
+          + 'Most of the court thought it could not be done; only Zhong Hui agreed with him. So Hui was given more than a hundred thousand, and Deng Ai and Zhuge Xu thirty thousand each — three roads at once.\n\n'
+          + 'And when Shu had fallen, Hui plotted rebellion at Chengdu and Ai was arrested by Wei Guan. After a state was destroyed, the first two men to die were the two who destroyed it.',
+      },
+      verdictZh:
+        '論曰:昭之取蜀,決於一人之議而成不世之功 ——'
+        + '而功成之日,即疑其將。鍾會之反,鄧艾之死,皆在蜀亡之後三月。'
+        + '故曰:滅國者,先自防其人。',
+      verdictEn:
+        'The historian says: Sima Zhao took Shu on one man\'s advice and achieved something no age had matched — and on the day it was achieved he began to suspect his generals. Zhong Hui\'s revolt and Deng Ai\'s death both fell within three months of Shu\'s fall. Hence: the man who destroys a state guards first against his own people.',
+      verdictLostZh:
+        '論曰:伐蜀之議,朝臣皆以為不可 —— 而不可者,常是最後成的那一件。',
+      verdictLostEn:
+        'The historian says: the whole court said the invasion could not be done. The thing that cannot be done is often the thing that gets done.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '救蜀之師,行至半途',
+        titleEn: 'The Relief Column Got Halfway',
+        textZh:
+          '蜀告急。吳遣丁奉向壽春,留平、施績向南郡,丁封、孫異向沔中 ——'
+          + '三道以救之。\n\n'
+          + '而蜀已降。諸軍聞之,乃還。\n\n'
+          + '四十年的同盟,最後一次履約,走到一半就沒有必要了。',
+        textEn:
+          'Shu sent word that it was in extremity. Wu sent Ding Feng towards Shouchun, Liu Ping and Shi Ji towards Nan commandery, Ding Feng the younger and Sun Yi towards Mianzhong — three roads to relieve it.\n\n'
+          + 'And Shu had already surrendered. The columns heard, and turned round.\n\n'
+          + 'Forty years of alliance, and the last time it was honoured the march became unnecessary halfway.',
+      },
+      verdictZh:
+        '論曰:蜀亡而吳救不及,非不欲救,是不能及。'
+        + '唇亡齒寒,吳人知之久矣 —— 而知之與能之,是兩件事。'
+        + '自是之後十七年,晉伐吳,而無人救吳。',
+      verdictEn:
+        'The historian says: Wu\'s relief did not arrive in time — not for want of will but for want of reach. When the lips are gone the teeth are cold; the men of Wu had known that a long time. Knowing a thing and being able to act on it are two different matters. Seventeen years later Jin came for Wu, and nobody marched to relieve them.',
+      verdictLostZh:
+        '論曰:同盟之用,在於使敵不敢先取其一。'
+        + '一旦其一已取,盟即無所附麗。',
+      verdictLostEn:
+        'The historian says: an alliance works by making the enemy afraid to take either party first. Once one of them has been taken, there is nothing left for the alliance to attach to.',
+    },
+  },
+  /* ── 280 晉滅吳 ───────────────────────────────────────────────── */
+  'scn-280-jin-unite': {
+    sun: {
+      defeat: {
+        titleZh: '一片降幡出石頭',
+        titleEn: 'One White Banner over Shitou',
+        textZh:
+          '吳人於江磧要害處,並以鐵鎖橫截之;又作鐵錐長丈餘,暗置江中,'
+          + '以逆距船。\n\n'
+          + '而王濬作大筏數十,方百餘步,縛草為人,被甲持杖,'
+          + '令善水者以筏先行,錐輒著筏去。又作火炬,長十餘丈,'
+          + '大數十圍,灌以麻油,在船前 —— 遇鎖,然炬燒之,'
+          + '須臾,融液斷絕。\n\n'
+          + '於是船無所礙。三月,濬至石頭,皓面縛輿櫬,詣軍門降。',
+        textEn:
+          'The men of Wu ran iron chains across the river at the shoals and narrows, and set iron spikes more than ten feet long under the water to catch the hulls.\n\n'
+          + 'So Wang Jun built dozens of great rafts a hundred paces square, bound straw men in armour holding staves, and had strong swimmers take the rafts down first — and the spikes fastened into the rafts and went away with them. He also made torches ten and more fathoms long and dozens of spans thick, soaked in hemp oil, mounted in the bows: when they met a chain they lit them, and in a little while the iron ran molten and parted.\n\n'
+          + 'After that nothing was in the way of the ships. In the third month Jun reached Shitou, and Hao had himself bound and brought a coffin to the gate of the camp and surrendered.',
+      },
+      verdictZh:
+        '論曰:吳之亡,不亡於王濬之樓船,亡於孫皓之刑戮。'
+        + '剝人之面,鑿人之眼,而以為威;'
+        + '及晉師既至,守江者無一人肯死。'
+        + '鐵鎖橫江,而人心不橫。',
+      verdictEn:
+        "The historian says: Wu did not fall to Wang Jun's tower-ships. It fell to Sun Hao's executions — flaying men's faces and gouging out their eyes, and calling it authority. When the armies of Jin came down, not one man on the river was willing to die for him. The chains lay across the water. Nothing lay across the hearts.",
+      verdictLostZh:
+        '論曰:王濬樓船下益州,金陵王氣黯然收。'
+        + '千尋鐵鎖沉江底,一片降幡出石頭。',
+      verdictLostEn:
+        "The historian says: Wang Jun's tower-ships came down from Yi province, and the king-aura of Jinling went out. A thousand fathoms of iron chain went to the river bottom, and one white banner came out over Shitou.",
+    },
+    sima: {
+      defeat: {
+        titleZh: '天下歸一',
+        titleEn: 'The Realm Made One',
+        textZh:
+          '自中平元年黃巾起,至太康元年吳亡 —— 九十六年。\n\n'
+          + '其間稱帝者十餘人,擁兵者百餘家,'
+          + '戶口自五千餘萬減至七百餘萬。\n\n'
+          + '而後三十六年,永嘉之亂起,洛陽再破。',
+        textEn:
+          'From the Yellow Turban rising in the first year of Zhongping to the fall of Wu in the first year of Taikang — ninety-six years.\n\n'
+          + 'In that time more than ten men called themselves emperor and a hundred houses held armies, and the registered population fell from over fifty million to a little over seven million.\n\n'
+          + 'And thirty-six years after that, the Yongjia disorder began and Luoyang was sacked again.',
+      },
+      verdictZh:
+        '論曰:晉之一天下,收九十六年之亂 —— 而所以能收者,'
+        + '非其德過於魏蜀吳,是三家自相消耗至盡而已。'
+        + '故太康之世不過十年,而神州陸沉。'
+        + '合久必分者,非天道,是人事未修。',
+      verdictEn:
+        'The historian says: Jin gathered up ninety-six years of disorder — and could do it not because its virtue exceeded Wei, Shu or Wu, but because the three had ground each other down to nothing. So the Taikang peace lasted barely ten years before the heartland went under. "Long united, it must divide" is not a law of Heaven. It is unfinished human business.',
+      verdictLostZh:
+        '論曰:統一者,收拾之功也;而收拾之後,能否守之,是另一件事。',
+      verdictLostEn:
+        'The historian says: unification is the work of tidying up. Whether the tidied thing can be kept is a separate question entirely.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
