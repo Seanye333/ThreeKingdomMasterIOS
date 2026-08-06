@@ -600,6 +600,20 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         descriptionZh: "消滅曹操勢力。",
         goal: { kind: 'defeat-force', forceId: 'cao', byYear: 207 },
       },
+      secondary: [
+        {
+          title: { zh: '渡河而南', en: 'Cross the River' },
+          description: 'Take Guandu by 203 — the fortified camp that held him for half a year.',
+          descriptionZh: '於203年前攻取官渡 —— 那座壘擋了他半年。',
+          goal: { kind: 'hold-cities', cityIds: ['guandu'], byYear: 203 },
+        },
+        {
+          title: { zh: '田豐之言', en: "Tian Feng's Counsel" },
+          description: 'Keep Tian Feng alive and in your service to 205 — he told you not to march, and you jailed him for it.',
+          descriptionZh: '至205年田豐仍在麾下 —— 他勸你別南征,而你把他下了獄。',
+          goal: { kind: 'recruit-officer', officerId: 'tian-feng', byYear: 205 },
+        },
+      ],
     },
     /* 孫策 — 史實上他在出兵前死於刺客。這一局他還活著,而許都空虛。 */
     {
