@@ -685,6 +685,45 @@ export const SCENARIO_200_GUANDU: Scenario = {
     'Dong Zhuo and Lu Bu are long dead. Ma Teng watches from Liang.',
   descriptionZh: "公元200年秋。袁紹於鄴城聚兵十萬，欲一舉殲滅崛起之曹操。江南之地，孫策已定江東；劉備兵敗投奔徐州。董卓、呂布皆已身死多年，馬騰於涼州冷眼觀變。",
   startDate: { year: 200, season: 'autumn' },
+  /*
+   * 開局外交 —— 這張盤原本一條都沒有,八家兩兩中立,於是曹操同時對著袁紹、
+   * 孫策、劉表、劉備四面開戰。體檢十二輪:**曹操覆滅九次**,終局零城,而他是
+   * 這張盤的主角。補滿部曲之後(9→19 將)仍是六次 —— 人不是問題,是他在
+   * 打一場史實上不存在的四面戰爭。
+   *
+   * 200 年的真實局面:曹操只與**兩家**為敵。
+   *  - 袁紹:官渡,這張盤的題目。
+   *  - 劉備:200 年正月曹操東征破之,備奔袁紹,而後屯汝南擾其後 —— 兩家連手。
+   * 其餘四家都不是他的敵人:
+   *  - 孫策:曹操表其為討逆將軍,又結姻;他確曾密謀襲許,而未發身死。
+   *  - 馬騰:鍾繇撫關中,騰遣子入侍,名義上奉曹操號令。
+   *  - 劉表:與袁紹通,而終不出兵 —— 敵意有,兵鋒無。
+   *  - 劉璋:遠在益州,與中原無交涉。
+   * 烏丸蹋頓則是袁氏的姻黨,袁尚兄弟後來正是奔他。
+   *
+   * 孫策與劉表之間給到 −70:孫堅死於黃祖之手,孫策打了黃祖十年 —— 那是這張盤
+   * 南方唯一真正的戰線。
+   */
+  openingRelations: [
+    // ── 官渡的兩造 ──
+    { a: 'cao', b: 'yuan-shao', score: -90, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -60, status: 'neutral' },
+    { a: 'yuan-shao', b: 'liu-bei', score: 70, status: 'allied' },   // 備奔紹,屯汝南擾曹後
+    { a: 'yuan-shao', b: 'wuhuan', score: 75, status: 'allied' },    // 蹋頓為袁氏姻黨
+    { a: 'yuan-shao', b: 'liu-biao', score: 50, status: 'non-aggression' },
+    // ── 曹操沒在打的那幾家 ──
+    { a: 'cao', b: 'sun', score: 40, status: 'non-aggression' },     // 表為討逆將軍,又結姻
+    { a: 'cao', b: 'ma-teng', score: 45, status: 'non-aggression' }, // 鍾繇撫關中,騰遣子入侍
+    { a: 'cao', b: 'liu-biao', score: -25, status: 'neutral' },      // 通袁而不出兵
+    { a: 'cao', b: 'liu-zhang', score: 15, status: 'non-aggression' },
+    // ── 南方唯一真正的戰線 ──
+    { a: 'sun', b: 'liu-biao', score: -70, status: 'neutral' },      // 父讎在黃祖
+    { a: 'sun', b: 'liu-bei', score: 20, status: 'non-aggression' },
+    { a: 'liu-biao', b: 'liu-zhang', score: 25, status: 'non-aggression' },
+    { a: 'ma-teng', b: 'liu-zhang', score: 10, status: 'non-aggression' },
+    { a: 'ma-teng', b: 'yuan-shao', score: -20, status: 'neutral' },
+    { a: 'wuhuan', b: 'cao', score: -55, status: 'neutral' },
+  ],
   cities: buildInitialCities(CITY_OWNERSHIP_200),
   forces: FORCES_200,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_200, DEAD_BY_200),

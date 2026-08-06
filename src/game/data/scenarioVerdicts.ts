@@ -469,6 +469,244 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: frontier troops can make another man a king; they cannot make one of their own. Not because the men lack valour, but because the country behind them cannot feed a court.',
     },
   },
+  /* ── 200 官渡之戰 ────────────────────────────────────────────────
+     這張盤只有一個題目:**以少勝多之後,怎麼辦。**
+     官渡是漢末唯一一場真正決定天下的仗,而八家的敗法,寫的都是他們
+     在那一戰前後**沒能想通的那一件事**。 */
+  'scn-200-guandu': {
+    cao: {
+      defeat: {
+        titleZh: '許都空,而糧已盡',
+        titleEn: 'Xu Is Empty, and the Grain Is Gone',
+        textZh:
+          '官渡相持,自八月至十月。軍糧將盡,士卒疲乏,書與荀彧議欲還許 —— '
+          + '彧報曰:「公以十分居一之眾,畫地而守之,扼其喉而不得進,已半年矣。'
+          + '情見勢竭,必將有變,此用奇之時,不可失也。」\n\n'
+          + '而那一夜沒有人來降,沒有人說出烏巢二字。糧盡則軍散,軍散則許都無備。'
+          + '袁紹之騎過官渡而南,一日夜至許 —— 天子在焉,而迎之者非我。\n\n'
+          + '史官記此一戰曰:「紹之強,非操所能敵也。」下一句本該是「然卒破之者」——'
+          + '而這一次,沒有下一句。',
+        textEn:
+          "The lines at Guandu hold from the eighth month to the tenth. The grain runs down, the men are worn through, and you write to Xun Yu about falling back on Xu. He writes back: 'With one man to their ten you have drawn a line and held it, gripped their throat so they cannot advance, for half a year now. Their situation is plain and their strength spent. Something must break. This is the hour for the unexpected stroke, and it must not be missed.'\n\n"
+          + 'And that night nobody comes over to your side, and nobody says the word Wuchao. When the grain is gone the army scatters; when the army scatters Xu stands open. The Yuan horse cross Guandu going south and reach the capital in a day and a night — the Son of Heaven is there, and it is not you who receives him.\n\n'
+          + "Of this battle the historian wrote: 'Shao's strength was more than Cao could match.' The next clause should have been 'and yet he broke him.' This time there is no next clause.",
+      },
+      verdictZh:
+        '論曰:官渡之勝,不在兵多,在能忍。'
+        + '自八月至十月,以一敵十而不退者半年 —— 天下之強,先強在肯守。'
+        + '及烏巢火起,一夜而定十年之局:機不在謀者之手,在守得住到那一夜的人手裡。',
+      verdictEn:
+        'The historian says: Guandu was not won by numbers but by endurance. From the eighth month to the tenth, one man against ten, and he did not fall back — the strongest thing in the realm is the willingness to hold. When Wuchao burned, a single night settled the next ten years. The opening does not belong to the man who plans it; it belongs to the man who was still standing when it came.',
+      verdictLostZh:
+        '論曰:操之敗,敗於糧,不敗於兵。'
+        + '夫以寡當眾者,所恃者一擊之機;機未至而糧先盡,則雖有奇謀,無所施矣。',
+      verdictLostEn:
+        'The historian says: he was beaten by his supply line, not by their army. A man who fights the many with the few is betting everything on one opening. If the grain runs out before the opening comes, the cleverest plan in the world has nowhere to land.',
+    },
+    'yuan-shao': {
+      defeat: {
+        titleZh: '田豐在獄中',
+        titleEn: 'Tian Feng Is Still in the Cell',
+        textZh:
+          '田豐諫:「曹公善用兵,變化無方,眾雖少,未可輕也,不如以久持之。」'
+          + '紹不從,以為沮眾,械繫之。沮授諫分兵之非,亦不用。\n\n'
+          + '烏巢火起之夜,張郃請救之,郭圖請攻官渡 —— 兩議並陳,而紹用其半:'
+          + '遣輕騎救烏巢,以重兵攻官渡。兩處俱敗。\n\n'
+          + '軍潰而還,或謂田豐曰:「君必見重。」豐曰:「若軍有利,吾必全;'
+          + '今軍敗,吾其死矣。」紹還,曰:「吾不用田豐言,果為所笑。」遂殺之。',
+        textEn:
+          "Tian Feng warns you: 'Cao is a fine commander and his shape changes without pattern. Few as they are, they cannot be taken lightly. Better to hold him at length.' You take this for demoralising the host and put him in irons. Ju Shou warns against splitting the army; you do not use that either.\n\n"
+          + 'On the night Wuchao burns, Zhang He begs to relieve it and Guo Tu begs to storm Guandu. Two counsels, and you take half of each: light horse to Wuchao, the weight of the army against Guandu. Both fail.\n\n'
+          + 'The army breaks and comes home. Someone tells Tian Feng he will surely be honoured now. "If the army had won, I would have lived," he says. "It lost. I shall die." You come back and say: "I did not use Tian Feng\'s words, and now he will laugh at me." So you have him killed.',
+      },
+      verdictZh:
+        '論曰:紹有冀青幽并四州之地,帶甲數十萬,謀臣如雨,猛將如雲 —— '
+        + '而所以敗者,以其能聚人而不能用人也。'
+        + '田豐、沮授之言,非不聞也,聞而惡之;郭圖、審配之言,非不知其非也,'
+        + '知而樂之。故曰:亡袁氏者,袁氏也,非曹氏。',
+      verdictEn:
+        'The historian says: he held four provinces, tens of thousands under arms, counsellors like rain and captains like cloud — and he lost because he could gather men and could not use them. He heard Tian Feng and Ju Shou; hearing them, he disliked them. He knew Guo Tu and Shen Pei were wrong; knowing it, he enjoyed them. What destroyed the house of Yuan was the house of Yuan.',
+      verdictLostZh:
+        '論曰:官渡既敗,發病嘔血;而三子爭立,河北遂為他人所有。'
+        + '一敗未足以亡國,亡之者,敗後之三年也。',
+      verdictLostEn:
+        'The historian says: after Guandu he sickened and vomited blood; his three sons quarrelled over the succession, and Hebei passed to another house. One defeat does not end a state. What ended it was the three years after the defeat.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '面如此,尚可復建功立事乎',
+        titleEn: 'With a Face Like This, Can a Man Still Do Anything?',
+        textZh:
+          '策為人美姿顏,好笑語,性闊達聽受,善於用人 —— 士民見者,莫不盡心,樂為致死。'
+          + '五年之間,盡有江東六郡。\n\n'
+          + '而許貢之客三人,伏於丹徒西山,射之中頰。創甚,引鏡自照,'
+          + '謂左右曰:「面如此,尚可復建功立事乎!」椎几大奮,創皆分裂,'
+          + '其夜卒 —— 年二十六。\n\n'
+          + '呼權佩以印綬,曰:「舉江東之眾,決機於兩陣之間,與天下爭衡,卿不如我;'
+          + '舉賢任能,各盡其心,以保江東,我不如卿。」',
+        textEn:
+          'He was handsome, quick to laugh, open to what he was told, and good at using men — those who met him gave him everything and were glad to die for him. In five years he took the six commanderies of the east.\n\n'
+          + "Then three retainers of Xu Gong lie in wait in the western hills at Dantu and put an arrow through his cheek. The wound is bad. He calls for a mirror, looks, and says to those around him: 'With a face like this, can a man still do anything?' He strikes the table and heaves himself up; every wound splits open; he dies that night, aged twenty-six.\n\n"
+          + "He calls Quan and hangs the seals on him: 'To lead the host of the east, to decide the moment between two battle lines and contend with the realm — in that you are not my equal. To raise up the worthy and use the able, so that each gives you his whole heart and the east is kept — in that I am not yours.'",
+      },
+      verdictZh:
+        '論曰:策英氣傑濟,猛銳冠世,覽奇取異,志陵中夏 —— 而輕佻果躁,'
+        + '殞身致敗。夫以匹夫之勇取江東,亦以匹夫之身失之:'
+        + '「性不好眾,常獨行」,是其取禍之道也。',
+      verdictEn:
+        'The historian says: his spirit was high, his edge unmatched in his age, his eye for the extraordinary sure, and his ambition reached into the central plain — and he was rash and quick-tempered, and it killed him. He took the east on personal daring and lost it the same way. He did not like company and rode out alone: that, and not the arrow, was the road to his ruin.',
+      verdictLostZh:
+        '論曰:江東之基,兄取之而弟守之。'
+        + '取之者以勇,守之者以人 —— 兄弟二人合為一世,天下乃有三分。',
+      verdictLostEn:
+        'The historian says: the elder brother took the east and the younger kept it. One did it by daring, the other by handling men. Between the two of them they made one whole reign — and because of that, the realm had three parts instead of two.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '妻子屢陷,而終不為人下',
+        titleEn: 'He Lost His Family Again and Again, and Never Served',
+        textZh:
+          '徐州再失,妻子為曹公所虜,關羽降於下邳 —— 而備身走青州,轉投袁紹。'
+          + '此非第一次:呂布襲下邳,妻子已陷一次;曹公東征,又陷一次。\n\n'
+          + '半生流離,所至皆客:公孫瓚、陶謙、呂布、曹操、袁紹、劉表 —— '
+          + '六易其主,而未嘗為人所有。\n\n'
+          + '曹公曾與之論天下英雄,曰:「今天下英雄,唯使君與操耳。」'
+          + '備方食,失匕箸。而後終身,他所做的每一件事,都在證明那句話。',
+        textEn:
+          'Xu province is lost a second time, your wife and children taken by Cao, Guan Yu surrendered at Xiapi — and you ride for Qing province and go over to Yuan Shao. It is not the first time: Lü Bu took Xiapi and your family with it once already; Cao came east and took them again.\n\n'
+          + 'Half a life on the road, a guest everywhere you go: Gongsun Zan, Tao Qian, Lü Bu, Cao Cao, Yuan Shao, Liu Biao — six lords, and never once anyone\'s man.\n\n'
+          + 'Cao Cao once talked over the heroes of the age with you and said: "The heroes of the realm today are you, sir, and Cao." You were eating; you dropped your chopsticks. Everything you did for the rest of your life was an argument that he was right.',
+      },
+      verdictZh:
+        '論曰:備之為人,弘毅寬厚,知人待士,蓋有高祖之風,英雄之器焉。'
+        + '機權幹略,不逮魏武,是以基宇亦狹 —— 然折而不撓,終不為下者,'
+        + '抑揆彼之量必不容己,非唯競利,且以避害云爾。',
+      verdictEn:
+        'The historian says: he was broad, firm, and generous, he knew men and treated his officers well; there was something of the Exalted Founder in him, the shape of a hero. In craft and calculation he fell short of Cao, and so his ground was always narrow. But he bent and never broke, and never in the end served another — knowing, one supposes, that the other man\'s measure would never leave room for him. Not ambition alone, then: also survival.',
+      verdictLostZh:
+        '論曰:一生六易其主,而世不以為反覆者,以其所守者一。'
+        + '所守者何?不為人下而已。',
+      verdictLostEn:
+        'The historian says: he changed lords six times and no one calls him a turncoat, because through all of it he kept one thing. What thing? Only this: he would not be another man\'s subordinate.',
+    },
+    'liu-biao': {
+      defeat: {
+        titleZh: '二子爭立,舉州以降',
+        titleEn: 'Two Sons, One Surrender',
+        textZh:
+          '官渡相持,袁紹求援 —— 你許之而不至;曹操與紹相拒於官渡,'
+          + '從事中郎韓嵩、別駕劉先勸你「舉州以附曹公」,蒯越亦勸之。你猶豫不決。\n\n'
+          + '八年之間,荊州獨安:兵不出境,士人南奔者以萬計,學官立而詩書行。'
+          + '而八年之後,你臥病;蔡氏立琮而黜琦;曹公南下,琮舉州降 ——'
+          + '十萬之眾,未嘗一戰而易主。\n\n'
+          + '你一生沒有做錯任何一件小事,只錯過了一件大事:那八年,天下正在分。',
+        textEn:
+          'While the lines hold at Guandu, Yuan Shao asks for help — you promise it and send none. Han Song and Liu Xian urge you to bring the whole province over to Cao; Kuai Yue urges the same. You cannot decide.\n\n'
+          + 'For eight years Jing province alone is at peace: no army crosses its border, the displaced come south in their tens of thousands, schools are founded and the classics taught.\n\n'
+          + 'And after eight years you take to your bed; the Cai family enthrones Cong and puts Qi aside; Cao comes south and Cong surrenders the province entire. A hundred thousand men change masters without a battle.\n\n'
+          + 'You never got a small thing wrong in your life. You missed one large thing: during those eight years, the realm was being divided.',
+      },
+      verdictZh:
+        '論曰:表雍容有威儀,而所守者一州之靜。'
+        + '夫靜者,治世之美德,亂世之惰名也。'
+        + '袁曹相持於官渡,天下之勢在此一舉,而表擁十萬之眾,坐觀其成敗 ——'
+        + '成敗既分,則觀者亦在所分之中矣。',
+      verdictEn:
+        'The historian says: he was dignified and imposing, and what he guarded was the quiet of one province. Quiet is a virtue in a settled age and a name for sloth in a broken one. While Yuan and Cao locked at Guandu the whole realm turned on that one throw, and he sat with a hundred thousand men and watched to see who won. Once the winner is decided, the watcher is part of what gets divided.',
+      verdictLostZh:
+        '論曰:守成者不敗於敵,敗於子。'
+        + '八年之積,一紙降書而盡 —— 所積者財,所不積者人心之屬。',
+      verdictLostEn:
+        'The historian says: the man who only holds is not undone by his enemies but by his heirs. Eight years of accumulation ended with one letter of surrender: he had stored up wealth and not the loyalty that decides where it goes.',
+    },
+    'liu-zhang': {
+      defeat: {
+        titleZh: '父子在州二十餘年,無恩德以加百姓',
+        titleEn: 'Twenty Years in This Province, and No Kindness Done',
+        textZh:
+          '張魯據漢中而不奉命,你殺其母及弟 —— 於是漢中與益州為讎。'
+          + '曹公將征張魯,你懼;張松勸迎劉備以拒之,你從之。\n\n'
+          + '及備反攻,雒城守一年而破,成都尚有精兵三萬,穀帛支一年,'
+          + '吏民咸欲死戰 —— 而你曰:「父子在州二十餘年,無恩德以加百姓;'
+          + '百姓攻戰三年,肌膏草野者,以璋故也,何心能安!」遂開城出降。\n\n'
+          + '群下莫不流涕。你走出成都那一日,是這一州二十餘年來,'
+          + '第一次有人替百姓算過帳。',
+        textEn:
+          'Zhang Lu holds Hanzhong and will not obey; you kill his mother and his brother, and from then on Hanzhong and Yi are blood enemies. When Cao moves against Zhang Lu you take fright, and when Zhang Song urges you to bring in Liu Bei to shield you, you do it.\n\n'
+          + 'When Bei turns on you, Luocheng holds a year before it falls. Chengdu still has thirty thousand good troops and a year of grain and cloth, and the officials and people all want to fight to the end — and you say: "Father and son, we have held this province more than twenty years, and done its people no kindness. They have fought three years, and their flesh has manured the wild grass, because of Zhang. How can I be easy in my mind?" And you open the gates.\n\n'
+          + 'Not a man of your household could keep from weeping. The day you walked out of Chengdu was the first time in twenty years that anyone had done the arithmetic on the people\'s side.',
+      },
+      verdictZh:
+        '論曰:璋闇弱,而非無仁。'
+        + '成都尚可守一年而出降,史稱其「無恩德以加百姓」—— 此語出於其口,'
+        + '而後世引之以譏其闇。然當日城中吏民願死戰者,正是他所謂無恩之百姓也。'
+        + '闇者失其國,而仁者不失其心 —— 二者可以並存,亦可以並亡。',
+      verdictEn:
+        'The historian says: he was weak, and not without mercy. Chengdu could have held another year and he opened it; the line about having done the people no kindness is his own, and later ages quote it to mock his weakness. Yet the officials and people who wanted to fight to the death that day were the very people he said he had done nothing for. A weak man loses his state; a merciful one does not lose their goodwill. Both can be true, and both can end.',
+      verdictLostZh:
+        '論曰:引虎自衛者,虎入而主易。'
+        + '張松、法正之謀,非備之能取,乃璋自開之也。',
+      verdictLostEn:
+        'The historian says: bring in a tiger to guard your house and the tiger becomes the householder. Zhang Song and Fa Zheng did not deliver the province to Liu Bei by their cleverness — Liu Zhang opened the door.',
+    },
+    'ma-teng': {
+      defeat: {
+        titleZh: '關中十部',
+        titleEn: 'The Ten Companies of Guanzhong',
+        textZh:
+          '關中諸將十部:馬騰、韓遂、楊秋、李堪、成宜、張橫、梁興、侯選、程銀、馬玩 —— '
+          + '各擁部曲,互為盟讎,而無一人能統之。曹公遣鍾繇撫關中,'
+          + '騰遣子超領其部曲,而自入朝為衛尉。\n\n'
+          + '這是一筆算不清的帳:入朝則兵權旁落,不入則名為叛。你選了入朝,'
+          + '而超反於關中 —— 於是三族俱夷。\n\n'
+          + '關中之兵甲天下,而關中之主未嘗有天下:十部者,十個為別人打仗的人。',
+        textEn:
+          'Ten companies held Guanzhong: Ma Teng, Han Sui, Yang Qiu, Li Kan, Cheng Yi, Zhang Heng, Liang Xing, Hou Xuan, Cheng Yin, Ma Wan — each with his own retainers, allies one year and enemies the next, and not one of them able to command the rest. Cao Cao sent Zhong Yao to settle the region; you gave your troops to your son Chao and went to court as Commandant of the Guards.\n\n'
+          + 'It was a sum that would not come out. Go to court and your army passes to someone else; refuse and you are a rebel. You went — and Chao revolted in Guanzhong, and three degrees of your family died for it.\n\n'
+          + 'The soldiers of Guanzhong were the best in the realm, and no lord of Guanzhong ever held it. Ten companies: ten men fighting other men\'s wars.',
+      },
+      verdictZh:
+        '論曰:關中十部,兵強而無主。'
+        + '強者不能相下,故無一能成;而其地扼隴蜀之衝,天下欲取中原者必先安之。'
+        + '是以關中常為勝負之資,而不為勝負之家。',
+      verdictEn:
+        'The historian says: ten companies in Guanzhong, strong in arms and with no master. The strong would not defer to one another, so none of them came to anything — and their country sits astride the road between Long and Shu, so whoever wants the central plain must settle it first. Guanzhong was always the stake in the game and never one of the players.',
+      verdictLostZh:
+        '論曰:騰之入朝,非不智也,勢不得已耳。'
+        + '邊將之於朝廷:不入則疑,入則質。此非一人之過,是一代之制。',
+      verdictLostEn:
+        'The historian says: going to court was not stupidity, it was the only move left. For a frontier general the court offers two options: stay away and be suspected, or come in and be a hostage. That is not one man\'s failing; it is the shape of the age.',
+    },
+    wuhuan: {
+      defeat: {
+        titleZh: '白狼山',
+        titleEn: 'White Wolf Mountain',
+        textZh:
+          '蹋頓驍武,為烏丸諸部所服,袁紹矯制賜其單于印綬 —— 袁氏兄弟敗走,'
+          + '遂奔遼西依之。你欲為之復河北,如當年冒頓之於漢。\n\n'
+          + '而曹公用郭嘉之言,輕兵兼道,出盧龍塞,塹山堙谷五百餘里,'
+          + '卒然登白狼山,與虜遇。眾甚盛,而軍在後,被甲者少 —— '
+          + '曹公登高望之,見虜陣不整,乃縱兵擊之,使張遼為先鋒。\n\n'
+          + '虜眾大崩,斬蹋頓於陣。胡漢降者二十餘萬口。自此三郡烏丸,'
+          + '為天下名騎 —— 為別人的名騎。',
+        textEn:
+          "Tadun was fierce and able and the Wuhuan tribes deferred to him; Yuan Shao had forged an edict granting him the seals of a chanyu. When the Yuan brothers were beaten they fled to Liaoxi and took shelter with him, and he meant to win Hebei back for them, as the Xiongnu once did for a Han claimant.\n\n"
+          + 'Then Cao Cao took Guo Jia\'s advice, went light and fast out through the Lulong pass, cut through hills and filled valleys for five hundred li, and came suddenly onto White Wolf Mountain and into contact. The tribal host was very large; his own baggage was far behind and few of his men were even in armour. He climbed for a look, saw the tribal line was ragged, and loosed his troops with Zhang Liao at the point.\n\n'
+          + 'The host broke utterly and Tadun was killed in the ranks. Two hundred thousand Hu and Han came in and surrendered. From that day the Wuhuan of the three commanderies were the most famous cavalry in the realm — somebody else\'s famous cavalry.',
+      },
+      verdictZh:
+        '論曰:烏丸之強,強於騎;其亡,亡於為人之援。'
+        + '袁氏之敗,非烏丸之事,而蹋頓以一部之眾當中國之師,是代人受禍也。'
+        + '故曰:外族之興衰,常繫於所依之人,而不繫於己。',
+      verdictEn:
+        'The historian says: the Wuhuan were strong in horse and were destroyed for being someone else\'s reinforcement. The fall of the Yuan was no business of theirs, and Tadun took the field against the armies of the middle realm on their behalf. The rise and fall of a border people usually turns on whom they lean against, not on themselves.',
+      verdictLostZh:
+        '論曰:白狼一戰,三郡烏丸盡為魏之精騎。'
+        + '其眾未嘗少,其名未嘗墜 —— 所失者,只是為誰而戰。',
+      verdictLostEn:
+        'The historian says: after White Wolf Mountain the Wuhuan of the three commanderies became the finest cavalry of Wei. Their numbers did not shrink and their name did not fall. What they lost was the answer to the question of whom they fought for.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
