@@ -207,6 +207,10 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'The previous year Cao Cao\'s father, travelling out of Langya, was killed by officers of Tao Qian — for his money, some said; on purpose, said others. Cao Cao marched east into Xuzhou to avenge him and slaughtered as he went, until the Si River would not flow for the bodies.\n\nThis year he goes east again — and behind him Zhang Miao and Chen Gong open Yan province to Lü Bu. Every commandery goes over; three towns hold out. Cao Cao turns his army round and discovers he no longer has a home.',
     },
     forces: {
+      'ma-teng': {
+        zh: '你是馬騰。伏波將軍馬援之後,而母親是羌女 —— 涼州人叫你「馬兒」,中原人不太提你的出身。\n\n身長八尺餘,面鼻雄異,而性賢厚,人多敬之。你和韓遂結為異姓兄弟,一起在涼州打了很多年。\n\n這裡沒有朝廷。誰有兵,誰就是刺史。\n\n關中的糧不夠養這麼多兵,所以你們每隔幾年就要往東走一趟。',
+        en: 'You are Ma Teng, descended from the Wave-Calming General Ma Yuan, and your mother was a Qiang woman — in Liang they call you \'the horse boy\'; in the central plain they do not raise the subject.\n\nEight feet and more, a striking face and nose, and a generous temper: men respect you.\n\nThere is no court out here. Whoever has troops is the inspector.\n\nGuanzhong does not grow enough to feed this many soldiers, which is why every few years you all have to walk east.',
+      },
       gongsun: {
         zh: '你是公孫瓚。白馬義從追著烏丸的騎兵打了十年,邊地的人叫你白馬將軍。\n\n界橋一戰輸給了袁紹的大戟士。自此你退,再退。\n\n易京的樓還沒有築起來 —— 現在動手,還來得及不用築它。',
         en: 'You are Gongsun Zan. For ten years the White Horse Volunteers ran down Wuhuan cavalry, and the frontier called you the White Horse General.\n\nAt Jieqiao you lost to Yuan Shao\'s halberdiers. Since then you have drawn back, and back again.\n\nThe towers at Yi have not been built yet. Move now and you may never need them.',
@@ -305,6 +309,10 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Yuan Shao has broken Gongsun Zan outside Yijing; You and Ji are one realm now, with hundreds of thousands under arms, advisers like clouds and generals like rain.\n\nCao Cao is at Xu with fewer than ten thousand men, a fifth of them wounded. Kong Rong says Yuan Shao cannot be fought. Xun Yu answers: his troops are many but his discipline is not; Tian Feng is rigid and offends his lord, Xu You is greedy and unruly, Shen Pei is domineering and unsubtle, Feng Ji is decisive and self-willed — these men cannot coexist, and the break will come from inside.\n\nOn both banks of the Yellow River, the granaries fill.',
     },
     forces: {
+      'ma-teng': {
+        zh: '你是馬騰。你和韓遂鬧翻了 —— 兄弟一場,而涼州只有那麼多糧。\n\n他殺了你的妻子。你殺了他的部曲。然後朝廷派人來調解,你們又和好了。\n\n這種和好在涼州不算稀奇。稀奇的是它一次也沒有真的成立過。\n\n兒子馬超今年二十二,已經有了名聲。',
+        en: 'You are Ma Teng. You and Han Sui have fallen out — sworn brothers once, and Liang province only grows so much grain.\n\nHe killed your wife. You killed his retainers. Then the court sent someone to reconcile you, and you were friends again.\n\nReconciliation of that kind is not unusual in Liang. What is unusual is that not one of them has ever actually held.\n\nYour son Ma Chao is twenty-two this year and already has a name.',
+      },
       'yuan-shu': {
         zh: '你是袁術。傳國玉璽在你手上,你稱了帝,國號仲氏。\n\n然後淮南大旱,士卒散,部將叛。你的宮室還在修。\n\n四世三公之後 —— 你一直覺得那四個字是給你的,不是給你那個庶出的哥哥的。',
         en: 'You are Yuan Shu. The Heirloom Seal is in your hands; you have taken the imperial title and named your dynasty Zhong.\n\nThen the drought came to Huainan, the soldiers scattered and the generals went over. Your palace is still being built.\n\nFour generations of ministers — you always felt those words were meant for you, and not for that half-brother of yours.',
@@ -338,6 +346,10 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'In winter Cao Cao besieged Lü Bu at Xiapi, beat him in three engagements, and shut him inside the walls.\n\nChen Gong proposed a plan: take the cavalry out and camp beyond the siege lines, leave the infantry to hold the city; if they turn on you, I strike their rear; if they storm the city, you relieve it from outside. Ten days and their grain fails. Lü Bu thought it good. His wife said: "Chen Gong and Gao Shun have never got on. The moment you ride out, how will they hold together?" So he stayed.\n\nIn the twelfth month they turned the Yi and Si rivers onto the walls. The city broke. Lü Bu climbed the White Gate Tower and had himself bound.',
     },
     forces: {
+      'ma-teng': {
+        zh: '你是馬騰。鍾繇來了 —— 曹操派他鎮撫關中,而他做的第一件事是寫信給你和韓遂。\n\n信裡說得很客氣:朝廷不欲用兵於西,諸君能各安其部,則爵祿可保。\n\n你送了兒子去許都當人質。這在涼州叫識時務。\n\n識時務的人通常活得比較久,只是活得比較不像自己。',
+        en: 'You are Ma Teng. Zhong Yao has arrived — Cao Cao sent him to pacify Guanzhong, and the first thing he did was write to you and Han Sui.\n\nThe letter was very courteous: the court has no wish to use arms in the west, and if you gentlemen each keep your own commands, your ranks and stipends are safe.\n\nYou sent a son to Xuchang as a hostage. In Liang that is called reading the times.\n\nPeople who read the times generally live longer. They just live less like themselves.',
+      },
       cao: {
         zh: '你圍了下邳半年,兵疲,想撤。荀攸、郭嘉說:呂布勇而無謀,今屢戰皆北,銳氣衰矣。三軍以將為主,主衰則軍無奮意。\n\n於是決水。城破後,呂布在樓上喊:「明公所患不過於布,今已服矣,天下不足憂。」你確實動心了 —— 然後劉備在旁邊說了一句話。',
         en: 'Six months of siege, your army tired, and you are ready to lift it. Xun You and Guo Jia stop you: Lü Bu is brave and unsubtle; he has been beaten repeatedly and his edge is gone. An army takes its spirit from its commander, and his is broken.\n\nSo you flood the city. When it falls he calls down from the tower: "What troubled you was only me, and now I submit. The realm need not concern you." You did in fact consider it — and then Liu Bei, standing beside you, said one sentence.',
@@ -363,6 +375,10 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'In the third month Yuan Shao attacked Yijing. Gongsun Zan sent his son to the Black Mountain bands for relief and meant to lead his cavalry out; his chief clerk Guan Jing stopped him — "The moment you ride out, no unit in this fortress will hold." So he stayed.\n\nThe relief force was to signal with fires on a set night. Yuan Shao intercepted the letter and lit the fires himself. Gongsun Zan came out believing help had come, and was destroyed. Yuan Shao mined beneath the towers and they came down one by one. Knowing the end, Gongsun Zan killed his own family and then set the tower alight.',
     },
     forces: {
+      'ma-teng': {
+        zh: '你是馬騰。袁曹要在官渡決勝負,而兩邊都遣使來拉你。\n\n鍾繇說:曹公方有事於東,若將軍與之,則西方無憂矣。你派了馬超率萬餘人去助他打郭援。\n\n那一仗龐德斬了郭援 —— 你的人替曹操打贏了。\n\n替別人打贏的仗,記在別人的功勞簿上。這一點你當時大概沒有多想。',
+        en: 'You are Ma Teng. Yuan and Cao are about to settle it at Guandu, and both sides have sent men to court you.\n\nZhong Yao says: the Duke of Cao has business in the east; if you side with him, the west need not worry him.\n\nYou sent Ma Chao with ten thousand and more to help against Guo Yuan. Pang De took Guo Yuan\'s head in that battle — your men won it for Cao Cao.\n\nBattles won for other people go into other people\'s ledgers. You probably did not think much about that at the time.',
+      },
       'liu-biao': {
         zh: '你是劉表。易京的樓燒起來的時候,你在襄陽聽學。\n\n荊州的學官比中原任何一處都齊全,綦毋闓、宋忠在寫五經章句。北方每死一個人,你這裡就多幾個讀書人。\n\n這不是逃避。這是你選的那一種天下。',
         en: 'You are Liu Biao. When the towers at Yi burned you were at Xiangyang, listening to a lecture.\n\nJing province keeps more classical scholars than anywhere in the central plain; Qiwu Kai and Song Zhong are writing commentaries on the Five Classics. Every man who dies in the north sends you another reader.\n\nThis is not evasion. It is the kind of realm you chose.',
@@ -388,6 +404,10 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Cao Cao besieges Ye and turns the Zhang River onto it; more than half the people inside starve. In the eighth month Shen Pei\'s nephew opens the east gate.\n\nYuan Shao has been dead four years and his three sons have split the inheritance: Yuan Tan in Qing, Yuan Shang at Ye, Yuan Xi in You. Cao Cao does not have to beat all of them — he only has to wait for the brothers to start. Guo Jia put it plainly: press them and they close ranks; ease off and their ambitions do the work.',
     },
     forces: {
+      'ma-teng': {
+        zh: '你是馬騰。曹操在河北收拾袁氏,而關中安靜了幾年。\n\n你和韓遂又鬧翻了,朝廷又來調解,你們又和好了。這是第幾次,涼州沒有人數。\n\n有人勸你入朝為衛尉 —— 交出兵權,換一個九卿。\n\n你今年五十多了。打了一輩子,而涼州的糧還是不夠。',
+        en: 'You are Ma Teng. Cao Cao is finishing the Yuan family in the north, and Guanzhong has had a few quiet years.\n\nYou and Han Sui have fallen out again, the court has mediated again, and you are friends again. Nobody in Liang is counting which time this is.\n\nSomeone is suggesting you come to court as Commandant of the Guards — hand over the troops, take a seat among the Nine Ministers.\n\nYou are past fifty. A lifetime of fighting, and Liang still does not grow enough grain.',
+      },
       'zhang-lu': {
         zh: '你是張魯。祖父張陵在鶴鳴山造符書,父親張衡傳之,到你這裡是第三代。\n\n漢中的路是你自己斷的:殺漢使,絕斜谷閣道。朝廷拿你沒辦法,就給了個鎮民中郎將,領漢寧太守 —— 承認你在這裡是合法的。\n\n治下不置長吏,以祭酒為治;置義舍,米肉懸於道,行路者量腹取足。犯法者三原而後刑。\n\n民、夷便樂之。這句話是史書寫的,不是你自己說的。',
         en: 'You are Zhang Lu. Your grandfather Zhang Ling wrote the talismans at Heming mountain, your father Zhang Heng passed them on, and you are the third.\n\nYou cut the road to Hanzhong yourself: killed the court\'s envoys, broke the plank galleries through the Xie valley. Unable to reach you, the court made you a General of the Household and Grand Administrator of Hanning — which is to say, legal.\n\nYou appoint no magistrates; the libationers govern. You keep charity lodges with rice and meat hung by the road for travellers to take what they need. An offender is forgiven three times before he is punished.\n\n',
@@ -471,6 +491,10 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Liu Bei is quartered at Xinye. Xu Shu, leaving his service, recommends Zhuge Liang: "This man can be visited; he cannot be summoned. You should go to him yourself."\n\nThree journeys before the meeting. Then, with the room cleared: "The House of Han is falling, treacherous men have stolen the mandate, the emperor is a fugitive. Without measuring my own virtue or strength I have wanted to make right prevail in the realm, and my judgement has been so shallow that I am reduced to this. Yet the ambition has not left me. What plan would you give me?"\n\nThe answer: "Cao Cao has a million men and holds the Son of Heaven to command the lords — there is no contesting him head-on. Sun Quan holds Jiangdong through three generations — he may be made an ally, not a target. Jing province commands the Han and Mian rivers, draws profit from the southern sea, links to Wu in the east and Ba-Shu in the west: it is a land made for war. Yi province is walled by its passes, a thousand li of rich fields, the storehouse of Heaven…"',
     },
     forces: {
+      'ma-teng': {
+        zh: '你是馬騰。北方定了。曹操平了烏桓,回過頭來,西邊只剩你們。\n\n徵你入朝的詔書會來的 —— 不是今年就是明年。去了,兵是馬超的;不去,就是反。\n\n三年後你會去。你的兒子會反。你和你的兩百多口宗族會死在許都。\n\n這件事現在還沒有發生。現在你還在涼州,還有兵。',
+        en: 'You are Ma Teng. The north is settled. Cao Cao has finished the Wuhuan, and when he turns round, the west is what is left.\n\nThe summons to court will come — this year or next. Go, and the army becomes Ma Chao\'s; refuse, and it is rebellion.\n\nIn three years you will go. Your son will rebel. You and more than two hundred of your kin will die at Xuchang.\n\nNone of that has happened yet. For now you are still in Liang, and you still have the army.',
+      },
       'zhang-lu': {
         zh: '你是張魯。漢中十七年了。\n\n北面曹操剛剛平定烏桓,南面劉璋殺了你的母親而不敢再北上。你夾在兩個人中間,而兩個人都還沒空。\n\n有人在民間掘出玉印,勸你稱漢寧王。閻圃說:「漢川之民,戶出十萬,財富土沃,四面險固;上匡天子,則為桓文,次及竇融,不失富貴。今承制署置,勢足斬斷,不煩於王。」\n\n你聽了他的。稱王的人先死,這件事你比誰都清楚。',
         en: 'You are Zhang Lu. Seventeen years in Hanzhong.\n\nNorth of you Cao Cao has just finished the Wuhuan; south of you Liu Zhang killed your mother and has not dared come up since. You are between two men, and neither has time for you yet.\n\nSomeone dug a jade seal out of a field and they want you to call yourself King of Hanning. Yan Pu said: \'The people of the Han valley are a hundred thousand households, the land rich, the passes strong on every side. Aid the Son of Heaven and you are a Duke Huan; failing that, a Dou Rong, and you keep your wealth. You already appoint whom you please and can execute whom you please. A crown adds nothing.\'\n\nYou listened. You know better than anyone that the ones who take crowns die first.',
@@ -661,6 +685,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Sun Quan brought a hundred thousand men against Hefei. There were seven thousand inside.\n\nBefore leaving for Zhang Lu, Cao Cao had left a sealed letter marked "open when the enemy comes." It read: "If Sun Quan arrives, Generals Zhang and Li shall go out and fight; General Yue shall hold the city; the protector-of-the-army shall not join the battle." The officers were baffled. Zhang Liao said: "Our lord is far away. By the time relief comes they will certainly have broken us. The order means we should strike before they concentrate — break their momentum, steady our men, and then the place can be held. Success or failure turns on this one action. What is there to doubt?"\n\nThat night he called for eight hundred volunteers and killed oxen to feast them. At dawn Zhang Liao put on his armour, took his halberd, went in first, killed some dozens of men and two officers, shouted his own name, broke through the palisade and reached Sun Quan\'s own standard. Sun Quan was appalled; nobody knew what to do; he fled up a burial mound and held it with a long halberd.',
     },
     forces: {
+      xianbei: {
+        zh: '你是鮮卑。檀石槐死後,漠南分為三部,而你是軻比能。\n\n你出身小種,不是王族 —— 靠勇健、斷法平端、不貪財物,被推為大人。部落三千餘落,控弦十餘萬。\n\n中原的鐵器與工匠從邊市流進來,你的人開始學漢人的兵器與旗鼓。\n\n幽州的刺史換了幾任,每一任都想過怎麼分化你。',
+        en: 'You are the Xianbei. After Tanshihuai died the steppe south of the desert split into three, and you are Kebi Neng.\n\nYou came out of a minor clan, not the royal line — men made you chieftain because you were brave, judged evenly, and did not take for yourself. Three thousand tents and more; a hundred thousand bows.\n\nIron and craftsmen come up through the border markets, and your people are learning Han weapons, banners and drums.\n\nYouzhou has had several inspectors. Every one of them has thought about how to split you.',
+      },
+      nanman: {
+        zh: '你是南蠻。南中四郡:越巂、益州、牂柯、永昌 —— 山高林密,漢人的兵走進來就出不去。\n\n你是孟獲,漢夷所服。這四個字的意思是:漢人的移民和本地的夷人都聽你的,而那在南中很少見。\n\n成都的號令到得了郡治,到不了寨子。\n\n他們叫這裡不毛之地。不毛之地養活了幾十萬人。',
+        en: 'You are the Nanman. Four commanderies in the south — Yuexi, Yizhou, Zangke, Yongchang — high hills and thick forest, where a Han army that walks in does not walk out.\n\nYou are Meng Huo, and both Han and tribe follow you. That combination is rare down here.\n\nChengdu\'s orders reach the commandery seats. They do not reach the stockades.\n\nThey call this barren country. The barren country feeds several hundred thousand people.',
+      },
       sun: {
         zh: '十萬對七千。你在逍遙津差點被八百人活捉,凌統的親兵三百人全部戰死,你自己靠著甘寧和呂蒙斷後,騎馬躍過斷橋才逃出來。\n\n「張遼止啼」四個字從此傳遍江東 —— 小孩夜哭,說一聲張遼來了就不哭了。這是你一生最丟臉的一仗,你以後還要打七次合肥。',
         en: 'A hundred thousand against seven thousand — and eight hundred of them nearly took you alive at Xiaoyaojin. Ling Tong\'s three hundred household troops all died. You got out because Gan Ning and Lü Meng covered the rear and your horse cleared a broken bridge.\n\nAfter this, "Zhang Liao stops the crying" passes into speech across Jiangdong: a child weeping at night is quieted by his name. It is the most humiliating battle of your life, and you will attack Hefei seven more times.',
@@ -682,6 +714,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Liu Bei advanced into Hanzhong and camped at Yangping Pass. In the first month he crossed the Mian south of Yangping, worked his way along the hills, and made his camp on the heights of Mount Dingjun.\n\nXiahou Yuan came up to contest the ground. Fa Zheng said: "Now he can be struck." Liu Bei sent Huang Zhong down from the height with drums beating; Xiahou Yuan\'s army was broken and Xiahou Yuan himself killed, with the Wei general Zhao Yong.\n\nCao Cao brought his whole force south from Chang\'an. Liu Bei judged it from a distance: "Cao Cao may come, but he can do nothing. Hanzhong will be mine." When Cao Cao arrived, Liu Bei kept his men behind the high ground and refused battle for months; nothing was taken and desertions mounted daily. In summer Cao Cao withdrew.',
     },
     forces: {
+      xianbei: {
+        zh: '你是鮮卑。曹操在漢中和劉備打,而幽州的邊防因此薄了。\n\n你送馬、送牛,受了魏的封號 —— 附義王。名號是給的,馬是真的。\n\n你的人在學漢法:立旗鼓,習戰陣。有人說這是歸化,有人說這是準備。\n\n兩種說法都對。',
+        en: 'You are the Xianbei. Cao Cao is fighting Liu Bei over Hanzhong, and the frontier garrisons in Youzhou are thinner for it.\n\nYou have sent horses and cattle and taken a Wei title — King Who Cleaves to Right. The title is a gift. The horses were real.\n\nYour men are learning Han methods: standards and drums, formations and drill. Some call that submission. Others call it preparation.\n\nBoth are correct.',
+      },
+      nanman: {
+        zh: '你是南蠻。北面在爭漢中,益州的兵都調上去了。\n\n南中的守備從來就薄,現在更薄。雍闓在益州郡已經開始不聽話。\n\n你可以現在動,也可以等。等的好處是:他們會打得更累。\n\n等的壞處是:他們也會騰出手來。',
+        en: 'You are the Nanman. They are fighting over Hanzhong in the north and Yi province has sent its soldiers up.\n\nThe garrisons in the south were always thin. They are thinner now. Yong Kai in Yizhou commandery has already stopped obeying.\n\nYou can move now or you can wait. Waiting means they get more tired.\n\nIt also means they get free.',
+      },
       'liu-bei': {
         zh: '這是你第一次在正面戰場上贏曹操。你五十八歲,等了三十年。\n\n黃忠已經六十多,諸將都覺得該用張飛。法正說:用黃忠,激之。定軍山那一刀砍下去,漢中就是你的了。',
         en: 'This is the first time you beat Cao Cao in a stand-up fight. You are fifty-eight. You have waited thirty years.\n\nHuang Zhong is past sixty and your officers all think Zhang Fei should have the command. Fa Zheng says: use Huang Zhong, and provoke him into it. When that blade comes down at Dingjun, Hanzhong is yours.',
@@ -703,6 +743,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'In the seventh month Liu Bei\'s officers raised him to King of Hanzhong. In the eighth Guan Yu attacked Cao Ren at Fan. Heavy rain came, the Han River flooded, and the seven armies under Yu Jin were drowned. Guan Yu took Yu Jin alive and beheaded Pang De, and his fame shook the realm. Cao Cao discussed moving the capital out of his reach.\n\nSima Yi and Jiang Ji said: "Yu Jin was lost to floodwater, not to a defeat in the field; the state has taken no real damage. Liu Bei and Sun Quan are close in appearance and estranged in fact, and Sun Quan will not welcome Guan Yu\'s success. Send someone to urge him to strike the rear, and offer him the land south of the river. The siege of Fan will lift itself."\n\nIn the intercalary tenth month, Lü Meng crossed the river in white.',
     },
     forces: {
+      xianbei: {
+        zh: '你是鮮卑。關羽在襄樊,曹操在議遷都,而北邊沒有人看著。\n\n你統一了漠南,部眾十餘萬騎。素利、彌加、步度根各有其部,而他們的人一年比一年少。\n\n田豫在幽州,王雄在後面。他們拿你沒有辦法,只能離間。\n\n最後殺死你的不是軍隊,是一個刺客。那是十六年後的事。',
+        en: 'You are the Xianbei. Guan Yu is at Fancheng, Cao Cao\'s court is debating moving the capital, and nobody is watching the north.\n\nYou have united the steppe south of the desert: a hundred thousand horse and more. Suli, Mijia and Budugen each hold their own people, and each year there are fewer of them.\n\nTian Yu is in Youzhou and Wang Xiong behind him. They cannot beat you, so they divide you.\n\nWhat kills you in the end is not an army. It is one assassin, sixteen years from now.',
+      },
+      nanman: {
+        zh: '你是南蠻。劉備進位漢中王,而南中沒有人去道賀。\n\n雍闓遣使通吳,孫權遙署他為永昌太守 —— 兩個大國隔著兩千里在爭一塊他們都沒去過的地方。\n\n你在中間。他們給的官職你都收下,他們的兵你一個也不放進來。\n\n這就是南中活了幾百年的辦法。',
+        en: 'You are the Nanman. Liu Bei has taken the title King of Hanzhong, and nobody in the south went to congratulate him.\n\nYong Kai has opened a line to Wu, and Sun Quan has appointed him Grand Administrator of Yongchang from two thousand li away — two great states contending over ground neither has ever seen.\n\nYou are in the middle. You accept every office they offer and let in none of their soldiers.\n\nThat is how the south has stayed alive for several hundred years.',
+      },
       'liu-bei': {
         zh: '進位漢中王,置百官,封五虎。這是你一生的最高點。\n\n關羽在北面打得極好。荊州的後背交給了糜芳和傅士仁 —— 這兩個名字你以後不會想再聽到。',
         en: 'King of Hanzhong, a full set of officers appointed, the five great generals invested. This is the summit of your life.\n\nGuan Yu is doing magnificently in the north. The back door of Jing province is in the hands of Mi Fang and Fu Shiren — two names you will not want to hear again.',
@@ -724,6 +772,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'In the first month Cao Cao died at Luoyang, aged sixty-six. In the tenth month Cao Pi received the abdication, named his dynasty Wei, and changed the era to Huangchu.\n\nIn the fourth month of the following year Liu Bei took the imperial title at Chengdu, named his dynasty Han, and changed the era to Zhangwu.\n\nEight years later Sun Quan took the title at Wuchang. The tripod now has its names as well as its shape — three Sons of Heaven, none of whom acknowledges the others.',
     },
     forces: {
+      xianbei: {
+        zh: '你是鮮卑。漢沒有了。三個皇帝在南邊互相稱帝,而長城以北照舊。\n\n你遣使去魏,受了印綬;也和蜀漢通過信 —— 諸葛亮北伐時要你出兵。\n\n兩邊都要你。這是你這一生最有價值的一段時間。\n\n價值來自於他們互相打。一旦停下來,你就只是邊患。',
+        en: 'You are the Xianbei. There is no Han any more. Three emperors call themselves emperor in the south, and north of the Wall nothing has changed.\n\nYou sent envoys to Wei and took their seals; you have also corresponded with Shu Han — Zhuge Liang wants your horse when he marches north.\n\nBoth sides want you. This is the most valuable stretch of your life.\n\nThe value comes from their fighting each other. The moment they stop, you are just a border nuisance.',
+      },
+      nanman: {
+        zh: '你是南蠻。漢沒有了,而南中連消息都晚了三個月才到。\n\n三個皇帝,三套年號。你這裡用的還是各寨子自己的曆。\n\n雍闓愈來愈大膽,高定在越巂自稱王。北面亂,南中就亂 —— 這是幾百年的規律。\n\n亂對你有利,只要不亂到有人來平它。',
+        en: 'You are the Nanman. There is no Han any more, and the news took three months to reach the south.\n\nThree emperors, three reign-titles. Down here people still keep their own stockade calendars.\n\nYong Kai grows bolder and Gao Ding has styled himself king in Yuexi. When the north is disordered the south is disordered — that has been the rule for centuries.\n\nDisorder suits you, so long as it does not become disorderly enough that someone comes to settle it.',
+      },
       cao: {
         zh: '你是曹丕。受禪臺上,你回頭對左右說:「舜禹之事,吾知之矣。」\n\n父親留下的天下你接住了。父親留下的問題也一併接住:宗室不得干政,兵權在外姓,而司馬懿正在關中替你擋著諸葛亮。',
         en: 'You are Cao Pi. On the abdication platform you turn to your attendants and say: "Now I understand what happened between Shun and Yu."\n\nYou have caught the realm your father left. You have also caught his problems: the imperial clan is barred from power, the armies are in other men\'s hands, and Sima Yi is out west holding Zhuge Liang off for you.',
@@ -745,6 +801,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'In the fourth month Liu Bei took the imperial title south of Wudan at Chengdu. His edict began: "I, of scant virtue, have unworthily succeeded to the great position, and I go in fear that I cannot bring peace."\n\nIn the seventh month he moved against Wu in force. Zhao Yun objected: "The traitor to the state is Cao Cao, not Sun Quan. Destroy Wei first and Wu will submit of itself." He was not heeded. As the army set out, Zhang Fei was murdered by his own officers Zhang Da and Fan Qiang.\n\nWhen Liu Bei was told a memorial had come from the commander of Zhang Fei\'s camp, he said: "Ah. Zhang Fei is dead."',
     },
     forces: {
+      xianbei: {
+        zh: '你是鮮卑。南邊三個皇帝,而你是三個皇帝都寫過信的人。\n\n你的部下開始用漢人的兵器,你的號令開始像中原的號令。這讓你更強,也讓魏更怕你。\n\n田豫已經在挑撥素利與你了。他知道打不過你,所以他要你們自己打。\n\n你這一生最大的敵人不是魏軍,是「分化」這兩個字。',
+        en: 'You are the Xianbei. Three emperors in the south, and you are the man all three have written to.\n\nYour men now carry Han weapons and your orders begin to sound like orders from the central plain. That makes you stronger, and it makes Wei more afraid of you.\n\nTian Yu is already setting Suli against you. He knows he cannot beat you, so he wants you to beat each other.\n\nThe great enemy of your life is not the Wei army. It is the word \'divide\'.',
+      },
+      nanman: {
+        zh: '你是南蠻。劉備稱帝了,而他馬上要東征。\n\n蜀漢的兵會全部去打吳。南中這幾年不會有人來。\n\n雍闓殺了太守正昂,把接任的張裔綁去送給孫權。他做得比你更急。\n\n急的人先被記住。三年後來的那個人,手上會有一份名單。',
+        en: 'You are the Nanman. Liu Bei has taken the imperial title, and he is about to march east.\n\nEvery soldier Shu Han has will go to fight Wu. Nobody is coming south for a few years.\n\nYong Kai has killed the Grand Administrator Zheng Ang and shipped his replacement Zhang Yi to Sun Quan in ropes. He is in more of a hurry than you are.\n\nPeople in a hurry get remembered first. The man who comes in three years will arrive with a list.',
+      },
       'liu-bei': {
         zh: '你六十一歲,終於坐上了那個位子 —— 而桃園裡的三個人只剩你一個。\n\n諸葛亮沒有勸你。他後來說:「法孝直若在,則能制主上,令不東行。」',
         en: 'You are sixty-one and you have finally reached the seat — and of the three men in the peach garden only you are left.\n\nZhuge Liang did not try to stop you. He said afterwards: "Had Fa Xiaozhi been alive, he could have restrained our lord and kept him from going east."',
@@ -766,6 +830,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Liu Bei advanced from Zigui, cutting along the ridges, and camped at Xiaoting near Yidao.\n\nLu Xun sat still for seven or eight months. His officers all wanted to attack. He told them: "Liu Bei has come east with his whole army and his edge is still keen; he holds the heights and the difficult ground, and cannot be rushed. Even a successful assault would not finish him, and a failure would cost us the whole position. For now, encourage the men, extend our arrangements, and watch for the change."\n\nIn the sixth month: "Now he can be attacked." Each man was issued a bundle of straw, and it was taken with fire. Zhang Nan, Feng Xi and the tribal king Shamoke were killed and forty-odd camps broken. Liu Bei climbed Mount Ma\'an and drew his troops around him; Lu Xun pressed in from every side, and it came apart, with dead in the tens of thousands.',
     },
     forces: {
+      xianbei: {
+        zh: '你是鮮卑。蜀漢在夷陵燒了連營,吳魏在江淮相持,而北邊三年沒有戰事。\n\n三年是很長的時間。長到足夠把三千落變成十萬騎,也長到足夠讓對面想清楚該派誰來。\n\n王雄接了幽州。他是個文人,對你很客氣。\n\n對你客氣的人,你要多看兩眼。',
+        en: 'You are the Xianbei. Shu Han\'s camps burned at Yiling, Wu and Wei are locked along the Huai, and the north has had three years without a war.\n\nThree years is a long time. Long enough to turn three thousand tents into a hundred thousand horse — and long enough for the other side to work out whom to send.\n\nWang Xiong has taken Youzhou. He is a civil man and very courteous to you.\n\nPeople who are courteous to you deserve a second look.',
+      },
+      nanman: {
+        zh: '你是南蠻。劉備在夷陵大敗,退到白帝城,病了。\n\n這是南中最好的機會,也是最後一個 —— 蜀漢若就此崩了,南中自然無主;蜀漢若緩過來,第一個要收拾的就是後院。\n\n雍闓已經反了。高定反了。朱褒反了。\n\n你還沒有。他們都在等你。',
+        en: 'You are the Nanman. Liu Bei has been broken at Yiling, fallen back to Baidi, and taken ill.\n\nThis is the south\'s best opening and also its last — if Shu Han collapses now the south is nobody\'s; if Shu Han recovers, the first thing it tidies is its own back yard.\n\nYong Kai has revolted. Gao Ding has revolted. Zhu Bao has revolted.\n\nYou have not. They are all waiting on you.',
+      },
       'liu-bei': {
         zh: '你連營七百餘里。曹丕聽說之後笑了:「備不曉兵,豈有七百里連營可以拒敵者乎!」\n\n夏天到了,天太熱,你把水軍移上岸,把營寨紮進林子裡。這是你一生最後一個決定。',
         en: 'Your camps run for seven hundred li. When Cao Pi heard of it he laughed: "Liu Bei does not understand war. Whoever heard of resisting an enemy with seven hundred li of linked camps?"\n\nSummer comes and the heat is unbearable, so you bring the marines ashore and pitch your camps in the woods. It is the last decision of your life.',
@@ -812,6 +884,10 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Zhuge Liang came out at Qishan with his ranks in perfect order, his discipline strict and his orders clear. Three commanderies — Nan\'an, Tianshui and Anding — went over to him, and Guanzhong shook.\n\nThe Wei emperor came west to Chang\'an and sent Zhang He against him. Zhuge Liang put Ma Su in command of the vanguard, and he met Zhang He at Jieting. Ma Su departed from his instructions, fussed at his dispositions, left the water and went up the hill instead of holding the town below. Zhang He cut him off from the stream, attacked, and destroyed him.\n\nZhuge Liang carried a thousand households of Xi county back to Hanzhong and executed Ma Su before the army. His memorial read: "With my feeble talent I have usurped a place I could not fill… I ask to be demoted three grades, to answer for the fault."',
     },
     forces: {
+      xianbei: {
+        zh: '你是鮮卑。諸葛亮出祁山,遣使約你出兵 —— 你答應了,騎兵到了石城。\n\n魏國兩線用兵,而你在第三條線上。\n\n這是你這一生離「成為天下棋手」最近的一次。\n\n王雄派的那個人叫韓龍。他還沒有出發。',
+        en: 'You are the Xianbei. Zhuge Liang has come out through Qishan and sent to ask you to move — you agreed, and your horse reached Shicheng.\n\nWei is fighting on two fronts, and you are the third.\n\nThis is the closest you will ever come to being a player rather than a piece.\n\nThe man Wang Xiong will send is called Han Long. He has not set out yet.',
+      },
       'liu-bei': {
         zh: '出師表已上:「今南方已定,兵甲已足,當獎率三軍,北定中原。」\n\n三郡響應,隴右震動。你把先鋒交給了馬謖 —— 諸將都說該用魏延或吳懿。先主臨終說過:「馬謖言過其實,不可大用。」',
         en: 'The memorial has gone in: "The south is settled now and our armour is sufficient; I should lead the three armies north and set the Central Plain in order."\n\nThree commanderies have risen for you and the whole of Longyou is shaking. You have given the vanguard to Ma Su — every officer said it should be Wei Yan or Wu Yi. The First Sovereign said on his deathbed: "Ma Su\'s words outrun his substance. He must not be given great responsibility."',
@@ -880,6 +956,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Sun Quan took the imperial title at Wuchang. Shu sent the Guard Commandant Chen Zhen with congratulations, and the two courts divided the realm between them: Yu, Qing, Xu and You to Wu; Yan, Ji, Bing and Liang to Shu; and Si province split at the Hangu Pass.\n\nIt is a treaty that very seriously partitions a great deal of land neither party holds. Three Sons of Heaven now reign at once, each with his own era name, each writing his own history, each certain the others are traitors.\n\nFor the fifty-one years that follow, no one of them can break the deadlock alone.',
     },
     forces: {
+      xianbei: {
+        zh: '你是鮮卑。三個皇帝都認得你的名字。\n\n諸葛亮要你的騎兵,魏要你的馬,吳離得太遠只能寫信。你什麼都答應,什麼都不全給。\n\n這不是狡猾。統一漠南的人只有一個籌碼:別人正在互相打。\n\n籌碼是有期限的。',
+        en: 'You are the Xianbei. All three emperors know your name.\n\nZhuge Liang wants your horsemen, Wei wants your horses, Wu is too far away to do more than write. You agree to everything and deliver all of nothing.\n\nThat is not cunning. A man who has united the steppe has exactly one asset: that the others are busy with each other.\n\nAssets of that kind have an expiry date.',
+      },
+      nanman: {
+        zh: '你是南蠻。四年前那個人來過了。\n\n他七次擒你,七次放你。最後一次你說:公,天威也,南人不復反矣。\n\n他沒有留兵,沒有運糧,用你們自己的人管你們自己的地。有人說那是恩,有人說那是他沒有兵可留。\n\n兩種說法都對。而南中確實沒有再反。',
+        en: 'You are the Nanman. Four years ago that man came.\n\nHe took you seven times and let you go seven times. The last time you said: your authority is heaven\'s, and the men of the south will not revolt again.\n\nHe left no garrison and shipped no grain; he governs your ground with your own men. Some call that generosity. Others say he had no garrison to leave.\n\nBoth are correct. And the south has not revolted since.',
+      },
       cao: {
         zh: '你是魏。曹叡即位三年,而三面都有人稱帝了。\n\n西邊諸葛亮出祁山已經兩次,司馬懿與張郃在關中往來奔命;東邊孫權剛剛在武昌即位,遣使來說要中分天下;北邊公孫淵在遼東,名義上是你的太守。\n\n十州之地,帶甲數十萬,而你的難處不是打不過誰 —— 是三條戰線同時要人。\n\n魏一朝四十六年沒有一統天下,也一次沒有動搖。這兩件事是同一件事。',
         en: 'You are Wei. Cao Rui is three years on the throne, and there are now emperors on three sides of you.\n\nIn the west Zhuge Liang has come out through Qishan twice; Sima Yi and Zhang He run back and forth across Guanzhong. In the east Sun Quan has just been enthroned at Wuchang and sends envoys proposing to halve the realm. In the north Gongsun Yuan sits in Liaodong, nominally your Grand Administrator.\n\nTen provinces, several hundred thousand under arms — and your difficulty is not that you cannot beat anyone. It is that three fronts want men at the same time.\n\nIn forty-six years Wei never united the realm and never once wobbled. Those are the same fact.',
