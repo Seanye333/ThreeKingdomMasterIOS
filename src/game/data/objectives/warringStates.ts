@@ -7,12 +7,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-ws7-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '橫掃六合', en: 'Sweep Up the Six' },
-        description: 'Bring all under one banner — from behind the Hangu Pass, one province at a time.',
-        descriptionZh: "混一天下 —— 據函谷之險,遠交而近攻,蠶食諸侯。",
-        goal: { kind: 'unify-realm' },
+        title: { zh: '據崤函之固', en: 'Behind the Passes of Xiao and Han' },
+        description: "Still hold Chang'an, Hanguguan, Tongguan, Hanzhong and Chengdu in 200 — the base six generations built.",
+        descriptionZh: "至200年仍據長安、函谷關、潼關、漢中、成都 —— 六世之餘烈,先是守得住這一塊。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'hanguguan', 'tongguan', 'hanzhong', 'chengdu'], byYear: 200 },
       },
       secondary: [
+        {
+          title: { zh: '橫掃六合', en: 'Sweep Up the Six' },
+          description: 'Bring all under one banner — from behind the Hangu Pass, one province at a time.',
+          descriptionZh: "混一天下 —— 據函谷之險,遠交而近攻,蠶食諸侯。",
+          goal: { kind: 'unify-realm' },
+        },
         {
           title: { zh: '東出函谷', en: 'East Through Hangu' },
           description: 'Take Luoyang and Chenliu by 200.',
@@ -139,12 +145,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wswen-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '收復河西', en: 'Win Back the West Bank' },
-        description: "Still hold Chang'an in 195 — before Shang Yang, Qin is the weak one.",
-        descriptionZh: "至195年仍守長安 —— 商鞅未至,此時的秦是弱國。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 195 },
+        title: { zh: '保關中', en: 'Hold Guanzhong' },
+        description: "Still hold Chang'an, Chencang and Hanzhong in 195 — Qin before the reforms is the weakest of the seven.",
+        descriptionZh: "至195年仍據長安、陳倉、漢中 —— 變法之前的秦是七國最弱的一個,先活下來。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang', 'hanzhong'], byYear: 195 },
       },
       secondary: [
+        {
+          title: { zh: '收復河西', en: 'Win Back the West Bank' },
+          description: "Still hold Chang'an in 195 — before Shang Yang, Qin is the weak one.",
+          descriptionZh: "至195年仍守長安 —— 商鞅未至,此時的秦是弱國。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 195 },
+        },
         {
           title: { zh: '終有天下', en: 'The Long Game' },
           description: 'Bring all under one banner.',
@@ -181,12 +193,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wssy-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '徙木立信', en: 'The Pole at the South Gate' },
-        description: 'Take Tongguan, Luoyang and Chenliu by 200 — law before conquest, then conquest.',
-        descriptionZh: "於200年前東取潼關、洛陽、陳留 —— 先立法,後出兵。",
-        goal: { kind: 'hold-cities', cityIds: ['tongguan', 'luoyang', 'chenliu'], byYear: 200 },
+        title: { zh: '法行十年', en: 'Ten Years of the Law' },
+        description: "Still hold Chang'an, Tongguan and Chencang in 200 — the law needs a decade before it needs an army.",
+        descriptionZh: "至200年仍據長安、潼關、陳倉 —— 法行十年,秦民大悅,道不拾遺;東出是那之後的事。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'chencang'], byYear: 200 },
       },
       secondary: [
+        {
+          title: { zh: '徙木立信', en: 'The Pole at the South Gate' },
+          description: 'Take Tongguan, Luoyang and Chenliu by 200 — law before conquest, then conquest.',
+          descriptionZh: "於200年前東取潼關、洛陽、陳留 —— 先立法,後出兵。",
+          goal: { kind: 'hold-cities', cityIds: ['tongguan', 'luoyang', 'chenliu'], byYear: 200 },
+        },
         {
           title: { zh: '席捲天下', en: 'Roll Up the Realm' },
           description: 'Bring all under one banner.',
@@ -279,11 +297,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wsgl-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '坐觀三晉', en: 'Watch the Three Jin Bleed' },
-        description: 'Take Luoyang and Tongguan by 202 — let Wei and Qi wear each other out.',
-        descriptionZh: "於202年前東取洛陽、潼關 —— 三晉相攻,秦收其利。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'tongguan'], byYear: 202 },
+        title: { zh: '坐觀三晉', en: 'Watch the Three Jins' },
+        description: "Still hold Chang'an, Tongguan and Hanzhong in 202 — let Wei and Qi bleed each other first.",
+        descriptionZh: "至202年仍據長安、潼關、漢中 —— 三晉相攻,秦坐收其弊,此時不必東出。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanzhong'], byYear: 202 },
       },
+      secondary: [
+        {
+          title: { zh: '坐觀三晉', en: 'Watch the Three Jin Bleed' },
+          description: 'Take Luoyang and Tongguan by 202 — let Wei and Qi wear each other out.',
+          descriptionZh: "於202年前東取洛陽、潼關 —— 三晉相攻,秦收其利。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'tongguan'], byYear: 202 },
+        },
+      ],
     },
   ],
 
@@ -485,11 +511,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wsyu-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '取閼與', en: 'Take Yuyu' },
-        description: 'Take Shangdang by 196 — a road too narrow for the loser to retreat.',
-        descriptionZh: "於196年前攻取上黨 —— 其道遠險狹,譬之猶兩鼠鬥於穴中。",
-        goal: { kind: 'hold-cities', cityIds: ['shangdang'], byYear: 196 },
+        title: { zh: '關中之固', en: 'Guanzhong Unshaken' },
+        description: "Still hold Chang'an, Tongguan and Hanzhong in 196 — Yuyu was the one defeat; it cost Qin nothing at home.",
+        descriptionZh: "至196年仍據長安、潼關、漢中 —— 閼與是秦東出以來唯一的敗仗,而關中未損分毫。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanzhong'], byYear: 196 },
       },
+      secondary: [
+        {
+          title: { zh: '取閼與', en: 'Take Yuyu' },
+          description: 'Take Shangdang by 196 — a road too narrow for the loser to retreat.',
+          descriptionZh: "於196年前攻取上黨 —— 其道遠險狹,譬之猶兩鼠鬥於穴中。",
+          goal: { kind: 'hold-cities', cityIds: ['shangdang'], byYear: 196 },
+        },
+      ],
     },
     {
       id: 'obj-wsyu-wei',
@@ -607,11 +641,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wsyi-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '東方兩敗', en: 'Both Eastern Powers Bleed' },
-        description: 'Take Luoyang, Chenliu and Shangdang by 200.',
-        descriptionZh: "於200年前取洛陽、陳留、上黨 —— 燕齊相殘,秦得從容東出。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'chenliu', 'shangdang'], byYear: 200 },
+        title: { zh: '東方兩敗', en: 'The East Ruins Itself' },
+        description: "Still hold Chang'an, Tongguan and Hanzhong in 200 — Qi and Yan are destroying the only rival Qin feared.",
+        descriptionZh: "至200年仍據長安、潼關、漢中 —— 齊燕互毀,秦所畏者自去,不必費一兵。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanzhong'], byYear: 200 },
       },
+      secondary: [
+        {
+          title: { zh: '東方兩敗', en: 'Both Eastern Powers Bleed' },
+          description: 'Take Luoyang, Chenliu and Shangdang by 200.',
+          descriptionZh: "於200年前取洛陽、陳留、上黨 —— 燕齊相殘,秦得從容東出。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'chenliu', 'shangdang'], byYear: 200 },
+        },
+      ],
     },
     {
       id: 'obj-wsyi-zhao',
@@ -631,12 +673,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wscp-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '長平坑降', en: 'The Pit at Changping' },
-        description: 'Take Shangdang and Ye by 198 — swap the general in secret, cut the supply road, then wait.',
-        descriptionZh: "於198年前取上黨、鄴城 —— 陰使武安君為將,絕其糧道,然後圍之。",
-        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'ye'], byYear: 198 },
+        title: { zh: '取上黨', en: 'Take Shangdang' },
+        description: "Hold Shangdang by 198 — the plateau is what the whole war was fought for.",
+        descriptionZh: "於198年前據上黨 —— 這場仗打的就是這片高地;邯鄲是後話。",
+        goal: { kind: 'hold-cities', cityIds: ['shangdang'], byYear: 198 },
       },
       secondary: [
+        {
+          title: { zh: '長平坑降', en: 'The Pit at Changping' },
+          description: 'Take Shangdang and Ye by 198 — swap the general in secret, cut the supply road, then wait.',
+          descriptionZh: "於198年前取上黨、鄴城 —— 陰使武安君為將,絕其糧道,然後圍之。",
+          goal: { kind: 'hold-cities', cityIds: ['shangdang', 'ye'], byYear: 198 },
+        },
         {
           title: { zh: '滅趙', en: 'End Zhao' },
           description: 'Destroy the Zhao force by 205.',
@@ -691,12 +739,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wshd-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '圍邯鄲', en: 'Besiege Handan' },
-        description: 'Take Ye by 197 — Bai Qi refused this campaign and was ordered to die for it.',
-        descriptionZh: "於197年前攻下鄴城 —— 武安君稱病不行,終賜劍杜郵。",
-        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 197 },
+        title: { zh: '河東不失', en: 'Hold What Was Won' },
+        description: "Still hold Shangdang and Tongguan in 200 — the siege failed; the plateau taken at Changping did not.",
+        descriptionZh: "至200年仍據上黨、潼關 —— 邯鄲圍三年不下而還,長平所得的高地卻沒有丟。",
+        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'tongguan'], byYear: 200 },
       },
       secondary: [
+        {
+          title: { zh: '圍邯鄲', en: 'Besiege Handan' },
+          description: 'Take Ye by 197 — Bai Qi refused this campaign and was ordered to die for it.',
+          descriptionZh: "於197年前攻下鄴城 —— 武安君稱病不行,終賜劍杜郵。",
+          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 197 },
+        },
         {
           title: { zh: '滅趙', en: 'End Zhao' },
           description: 'Destroy the Zhao force by 205.',
@@ -779,11 +833,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wstd-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '遠交近攻', en: 'Befriend the Far, Attack the Near' },
-        description: 'Take Luoyang, Xuchang and Shangdang by 200.',
-        descriptionZh: "於200年前取洛陽、許昌、上黨 —— 范雎之策,自韓魏始。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'shangdang'], byYear: 200 },
+        title: { zh: '遠交近攻', en: 'Befriend the Far, Strike the Near' },
+        description: "Still hold Chang'an, Tongguan, Hanzhong and Chengdu in 200 — while Yan and Qi ruin each other, consolidate.",
+        descriptionZh: "至200年仍據長安、潼關、漢中、成都 —— 燕齊兩弊之際,范雎之策是先固其本。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanzhong', 'chengdu'], byYear: 200 },
       },
+      secondary: [
+        {
+          title: { zh: '遠交近攻', en: 'Befriend the Far, Attack the Near' },
+          description: 'Take Luoyang, Xuchang and Shangdang by 200.',
+          descriptionZh: "於200年前取洛陽、許昌、上黨 —— 范雎之策,自韓魏始。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'shangdang'], byYear: 200 },
+        },
+      ],
     },
     {
       id: 'obj-wstd-zhao',
