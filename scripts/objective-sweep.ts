@@ -46,6 +46,7 @@ import { useGameStore } from '../src/game/state/store';
 import { SCENARIOS } from '../src/game/data/scenarios';
 import { SCENARIO_OBJECTIVES } from '../src/game/data/objectives';
 import { evaluateGoal } from '../src/game/systems/objectives';
+import { PROVINCE_BY_CITY } from '../src/game/data/provinces';
 
 type Goal = Parameters<typeof evaluateGoal>[0];
 
@@ -132,5 +133,42 @@ for (const scenario of SCENARIOS) {
   }
 }
 
+/*
+ * 死目標印出來時**順便分類** —— 這一步原本是我每次手工做的,而它決定了下一步:
+ *
+ *  - `守成`  開局就全握著 → 0 表示他**丟了**,是平衡或姿態問題,不是目標寫錯。
+ *  - `取得`  一座都不在手上 → 0 多半是「要 AI 走到它不會去的地方」,
+ *            或「寫成他史書上沒做到的事」。
+ *  - `半守半取` 兩者皆有 → 通常是目標把腹地和奢望寫在同一條裡,拆開就好。
+ *  - `大州`  control-province 且該州 >8 城 → 邊城 AI 永遠不去(揚荊涼交幽益)。
+ */
+function shapeOf(scenario: (typeof SCENARIOS)[number], forceId: string, goal: Goal): string {
+  const own: Record<string, string | null> = {};
+  for (const c of scenario.cities) own[c.id] = c.ownerForceId ?? null;
+  const g = goal as { kind: string; cityIds?: string[]; provinceId?: string };
+  if (g.kind === 'hold-cities' && g.cityIds) {
+    const mine = g.cityIds.filter((c) => own[c] === forceId).length;
+    const shape = mine === g.cityIds.length ? '守成' : mine ? '半守半取' : '取得';
+    const missing = g.cityIds.filter((c) => own[c] !== forceId)
+      .map((c) => `${c}@${own[c] ?? '無主'}`).join(' ');
+    return missing ? `${shape} 缺 ${missing}` : shape;
+  }
+  if (g.kind === 'control-province' && g.provinceId) {
+    const inProv = Object.entries(PROVINCE_BY_CITY as Record<string, string>)
+      .filter(([, p]) => p === g.provinceId).map(([c]) => c);
+    const mine = inProv.filter((c) => own[c] === forceId).length;
+    return `${inProv.length > 8 ? '大州' : '州'} ${mine}/${inProv.length}`;
+  }
+  if (g.kind === 'defeat-force') {
+    const t = (g as unknown as { forceId: string }).forceId;
+    const n = Object.values(own).filter((o) => o === t).length;
+    return `滅 ${t}(開局 ${n} 城)`;
+  }
+  return g.kind;
+}
+
 console.log(`\n=== ${boards} 張盤,${RUNS} 輪;主目標 0 中的 ${dead.length} 條 ===`);
-for (const d of dead) console.log(`  ${d.zh}(${d.id}) / ${d.forceId} 「${d.title}」 ${d.goal}`);
+for (const d of dead) {
+  const sc = SCENARIOS.find((s) => s.id === d.id)!;
+  console.log(`  ${d.zh}(${d.id}) / ${d.forceId} 「${d.title}」 [${shapeOf(sc, d.forceId, JSON.parse(d.goal) as Goal)}]`);
+}
