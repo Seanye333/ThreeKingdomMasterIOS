@@ -58,6 +58,7 @@ import {
 import { TACTIC_DEFS, type TacticId } from '../data/officerAttributes';
 import { commandFitMultiplier, isCombatLiability } from './traitEffects';
 import { personalityAttackMul, personalityDiplomacyAppetite } from './rulerPersonality';
+import { decideBetrayals, applyBetrayal, type BetrayalDecision } from './aiBetrayal';
 import { officerGrade, gradeRank } from './officerGrade';
 import { attackDeterrence, recruitPreferenceScore, runtimeSwornPair, runtimeFeudPair } from './relationshipEffects';
 import { addFriction } from './friction';
@@ -156,6 +157,8 @@ export interface AIPlanOutput {
   rapport?: Record<string, number>;
   /** Updated tax rates (AI forces only; player's entry passes through). */
   taxPolicy: Record<EntityId, TaxRate>;
+  /** 本季撕毀盟約的 AI —— 呼叫端據此扣信譽、記積怨(見 aiBetrayal.ts)。 */
+  oathbreakers: BetrayalDecision[];
   entries: ReportEntry[];
 }
 
@@ -182,6 +185,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
   let rapport = { ...(input.rapport ?? {}) };
   const taxPolicy = { ...(input.taxPolicy ?? {}) };
   const entries: ReportEntry[] = [];
+  const oathbreakers: BetrayalDecision[] = [];
 
   // Group cities by owning force.
   const citiesByForce = new Map<EntityId, City[]>();
@@ -498,9 +502,42 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
       'normal';
   }
 
+  const aiForceIds = Array.from(citiesByForce.keys());
+
+  /*
+   * ── AI 背盟 —— 撕毀互不侵犯,這件事此前只有玩家做得到。
+   *
+   * `isHostilePermitted` 只在關係為 neutral 時放行,而 `breakAlliance` 是
+   * store 上的玩家動作。後果不是「AI 比較守信」,是好幾張盤的前提在 AI 手上
+   * 演不出來:211 渭南盤劉備與劉璋是 non-aggression(史實上他正是被請進去的),
+   * 於是 AI 劉備永遠打不了益州,而他的主目標就叫「西取益州」。
+   *
+   * 代價與玩家那一側同數:信譽 −25、對方積怨 +30、四鄰各 −8。
+   * 門檻見 aiBetrayal.ts —— 打不過的人不會背盟,只會守約。
+   */
+  const betrayals = decideBetrayals({
+    forces: input.forces,
+    cities,
+    diplomacy,
+    aiForceIds,
+    // 求和的胃口反過來就是背盟的胃口:暴虐/積極的敢,守成/學者的不敢。
+    appetiteOf: (fid) => personalityAttackMul(input.forces[fid]?.personality),
+    rng,
+  });
+  const allForceIds = Object.keys(input.forces);
+  for (const b of betrayals) {
+    diplomacy = applyBetrayal(diplomacy, b, allForceIds);
+    oathbreakers.push(b);
+    entries.push({
+      cityId: b.prizeCityId,
+      kind: 'note',
+      text: `${input.forces[b.byForceId]?.name.en ?? '?'} tears up its pact with ${input.forces[b.targetForceId]?.name.en ?? '?'}.`,
+      textZh: `${input.forces[b.byForceId]?.name.zh ?? '?'}背${input.forces[b.targetForceId]?.name.zh ?? '?'}之盟,兵指${cities[b.prizeCityId]?.name.zh ?? '?'}。`,
+    });
+  }
+
   // ── AI-initiated diplomacy: weak AI forces seek NAPs with much
   //    stronger neighbors (player included) to buy time.
-  const aiForceIds = Array.from(citiesByForce.keys());
   for (const forceId of aiForceIds) {
     // 君主性格 — warmongers (tyrant/aggressive) rarely sue for peace; cautious /
     // defensive rulers court it readily. Base 25%/season scaled by appetite.
@@ -985,7 +1022,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     }
   }
 
-  return { cities, officers, pendingCommands, newTrainings, diplomacy, runtimeBonds, rapport, taxPolicy, entries };
+  return { cities, officers, pendingCommands, newTrainings, diplomacy, runtimeBonds, rapport, taxPolicy, oathbreakers, entries };
 }
 
 interface Decision {

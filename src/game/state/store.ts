@@ -183,6 +183,7 @@ import { growFrictionFromProximity, reconcilePair } from '../systems/friction';
 import { pairKey, getRelation } from '../types/diplomacy';
 import { OATH_BONDS } from '../data';
 import { planAITurn } from '../systems/ai';
+import { BETRAYAL_CREDIBILITY_COST, BETRAYAL_GRUDGE } from '../systems/aiBetrayal';
 import { planAIAppointments } from '../systems/aiAppointments';
 import { planAICourt } from '../systems/aiCourt';
 import { rollFactionEvents } from '../systems/factionEvents';
@@ -7354,6 +7355,24 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         let nextDeterrences = state.deterrences ?? []; // §7.1 買安 refreshes a hold
         let credibilityAfterPacts = state.credibility;
         let grudgesAfterPacts = grudgesAfterSpies;
+        /*
+         * AI 背盟的代價 —— 與玩家那一側(`breakAlliance` action)刻意同數:
+         * 信譽 −25、被撕約者積怨 +30。外交表本身已在 planAITurn 內改好,
+         * 這裡只補信譽與積怨兩本帳(它們住在 store,不在 AI 的純函數裡)。
+         */
+        for (const b of planned.oathbreakers) {
+          credibilityAfterPacts = {
+            ...credibilityAfterPacts,
+            [b.byForceId]: Math.max(0, (credibilityAfterPacts[b.byForceId] ?? 100) - BETRAYAL_CREDIBILITY_COST),
+          };
+          // 積怨以「對誰」為鍵 —— 玩家被背叛時記在背信者頭上。
+          if (b.targetForceId === state.playerForceId) {
+            grudgesAfterPacts = {
+              ...grudgesAfterPacts,
+              [b.byForceId]: Math.min(100, (grudgesAfterPacts[b.byForceId] ?? 0) + BETRAYAL_GRUDGE),
+            };
+          }
+        }
         if (seasonBoundary) {
           // ② A sworn league whose foe has fallen crowns its 盟主; one that
           //    lapses with the foe intact shames them.
