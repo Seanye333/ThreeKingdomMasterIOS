@@ -97,10 +97,26 @@ async function main() {
   const runs: RunResult[] = [];
 
   for (let run = 0; run < RUNS; run++) {
-  // 觀戰 — the player force is nominally the first one, but we never issue an
-  // order, so every side is AI-driven. That is the point: this measures the
-  // board's own dynamics, not a strategy.
-  st.getState().loadScenario(scenario, scenario.forces[0].id, 'normal');
+  /*
+   * 觀戰 —— **必須用 `observeScenario`,不能用 `loadScenario(…, forces[0].id)`**。
+   *
+   * 這一行原本是後者,註解還寫著「我們從不下令,所以每一家都是 AI 驅動」——
+   * 那句話是錯的。`planAITurn` 會用 `isHuman()` **跳過玩家勢力**,於是
+   * `forces[0]` 從頭到尾一兵不出,只被別人吃。而 forces[0] 在多數盤上正是
+   * 那張盤的主角。
+   *
+   * 代價有多大,量過:208 赤壁盤 200 回合 ×3 輪 ——
+   *   舊法(曹操當玩家):曹操 48 → 11 城(9–19),孫權 14 → 36
+   *   新法(observeScenario):曹操 48 → 39 城(30–44),孫權 14 → 18
+   * 先前據此得出的「曹操在 195/200/208 都會結構性崩潰、模擬撐不起大帝國」
+   * 是這個 bug 的產物,不是模擬的性質。
+   *
+   * ⚠ 別改成傳一個假的 playerForceId(如 `'__observer__'`):那樣玩家勢力 0 城,
+   * `victoryStatus` 立刻變 `defeat`,整盤停在原地不動(實測 200 回合零易主)。
+   * `observeScenario` 把 playerForceId 設成 null 並進 `observing`,才是對的那條路。
+   */
+  (st.getState() as unknown as { observeScenario: (s: typeof scenario, d: 'normal') => void })
+    .observeScenario(scenario, 'normal');
 
   const tracks = new Map<string, Track>();
   for (const f of scenario.forces) {
