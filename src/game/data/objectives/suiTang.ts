@@ -10,7 +10,7 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '居關中而制天下', en: 'Hold Guanzhong, Command the Realm' },
         description: "Still hold Chang'an, Taiyuan, Tongguan and Shangdang in 195 — take the passes first; Luoyang comes three years later.",
         descriptionZh: "至195年仍據長安、太原、潼關、上黨 —— 先據關中根本;洛陽是三年後的事。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'taiyuan', 'tongguan', 'shangdang'], byYear: 195 },
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan'], byYear: 195 },
       },
       secondary: [
         {
@@ -70,7 +70,7 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '河北夏王', en: 'Xia King of Hebei' },
         description: "Still hold Ye, Bohai and Pingyuan in 197 — Hebei first; Luoyang is what killed him.",
         descriptionZh: "至197年仍據鄴、渤海、平原 —— 先坐穩河北;去救洛陽的那一趟要了他的命。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai', 'pingyuan'], byYear: 197 },
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai'], byYear: 197 },
       },
       secondary: [
         {
@@ -88,7 +88,7 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '隴右自立', en: 'A Realm in Longyou' },
         description: "Still hold Jincheng, Tianshui and Anding in 194 — Xue Ju died before he could enter the passes.",
         descriptionZh: "至194年仍據金城、天水、安定 —— 薛舉死在入關之前,而隴右本來就是他的。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui', 'anding'], byYear: 194 },
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui'], byYear: 194 },
       },
       secondary: [
         {
@@ -106,7 +106,7 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '借突厥之力', en: 'The Turkic Horse' },
         description: "Still hold Yanmen, Yunzhong and Shuofang in 194 — Liu Wuzhou's power was borrowed, and borrowed things go back.",
         descriptionZh: "至194年仍據雁門、雲中、朔方 —— 劉武周的兵是借突厥的,借來的東西要還。",
-        goal: { kind: 'hold-cities', cityIds: ['yanmen', 'yunzhong', 'shuofang'], byYear: 194 },
+        goal: { kind: 'hold-cities', cityIds: ['yanmen', 'yunzhong'], byYear: 194 },
       },
       secondary: [
         {
@@ -124,14 +124,14 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '江淮自立', en: 'The Huai Between' },
         description: "Still hold Jianye, Shouchun and Hefei in 196 — Du Fuwei held the Huai until he chose to submit.",
         descriptionZh: "至196年仍據建業、壽春、合肥 —— 杜伏威守得住江淮,他是自己選擇入朝的。",
-        goal: { kind: 'hold-cities', cityIds: ['jianye', 'shouchun', 'hefei'], byYear: 196 },
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'shouchun'], byYear: 196 },
       },
       secondary: [
         {
           title: { zh: '江淮自立', en: 'The Jianghuai Host' },
           description: 'Hold Jianye, Shouchun and Hefei by 196.',
           descriptionZh: "於196年前據建業、壽春、合肥 —— 杜伏威領江淮群盜,自成一方。",
-          goal: { kind: 'hold-cities', cityIds: ['jianye', 'shouchun', 'hefei'], byYear: 196 },
+          goal: { kind: 'hold-cities', cityIds: ['jianye', 'shouchun'], byYear: 196 },
         },
       ],
     },
@@ -164,7 +164,7 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '隴右之師', en: 'The Host of Longyou' },
         description: "Still hold Jincheng, Tianshui and Anding in 193 — you beat the Prince of Qin at Qianshuiyuan, then died of illness.",
         descriptionZh: "至193年仍據金城、天水、安定 —— 淺水原你贏了秦王,然後病死在入關之前。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui', 'anding'], byYear: 193 },
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui'], byYear: 193 },
       },
       secondary: [
         {
@@ -206,7 +206,7 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '柏壁堅壁', en: 'Dig In at Bobi' },
         description: "Still hold Chang'an, Tongguan and Hedong in 194 — refuse battle for five months; Song Jingang's grain will run out.",
         descriptionZh: "至194年仍據長安、潼關、河東 —— 堅壁五月不出戰,宋金剛的糧自己會盡。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hulao'], byYear: 194 },
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan'], byYear: 194 },
       },
       secondary: [
         {
@@ -258,7 +258,7 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '趁虛而西', en: 'Westward While They Fight' },
         description: "Still hold Ye, Bohai and Pingyuan in 197 — Hebei is the base; the ride west is the gamble.",
         descriptionZh: "至197年仍據鄴、渤海、平原 —— 河北是本;西行是賭。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai', 'pingyuan'], byYear: 197 },
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai'], byYear: 197 },
       },
       secondary: [
         {
@@ -308,7 +308,7 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '毋赴虎牢', en: 'Do Not Ride to Hulao' },
         description: "Still hold Ye, Bohai and Pingyuan in 195 — Ling Jing begged him to strike Shanxi instead; he rode to Hulao and lost everything.",
         descriptionZh: "至195年仍據鄴、渤海、平原 —— 凌敬勸他北取山西,他去了虎牢,一戰盡失。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai', 'pingyuan'], byYear: 195 },
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai'], byYear: 195 },
       },
       secondary: [
         {
@@ -354,7 +354,7 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         title: { zh: '漁陽鼙鼓', en: 'The Drums of Yuyang' },
         description: "Still hold Luoyang, Ye, Xuchang and Hulao in 193 — An Lushan took the eastern capital in thirty-four days; Chang'an is the next year's problem.",
         descriptionZh: "至193年仍據洛陽、鄴、許昌、虎牢 —— 三十四日下東都,長安是明年的事。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'ye', 'xuchang', 'hulao'], byYear: 193 },
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'ye'], byYear: 193 },
       },
       secondary: [
         {

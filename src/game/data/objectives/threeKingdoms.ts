@@ -1122,7 +1122,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '受禪定鼎', en: 'The Abdication Received' },
         description: "Still hold Luoyang, Xuchang, Chang'an and Ye in 226 — the dynasty is new; first it must not wobble.",
         descriptionZh: "至226年仍據洛陽、許昌、長安、鄴 —— 新朝初立,先站得住再談一統。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'changan', 'ye'], byYear: 226 },
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 226 },
       },
       secondary: [
         {
@@ -2133,7 +2133,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '荊襄之守', en: 'The Jing Heartland' },
         description: "Still hold Xiangyang, Jiangling, Jiangxia, Changsha and Wancheng in 206 — the nine commanderies were never all yours at once.",
         descriptionZh: "至206年仍據襄陽、江陵、江夏、長沙、宛城 —— 荊襄九郡從來沒有同時全在你手上。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia', 'changsha', 'wancheng'], byYear: 206 },
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 206 },
       },
       secondary: [
         {
@@ -2315,7 +2315,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '守此蜀土', en: 'Hold the Shu Lands' },
         description: "Still hold Chengdu, Jiangzhou, Luocheng, Fucheng and Mianzhu in 214 — Yi also runs down to Nanzhong, which answers to no one.",
         descriptionZh: "至214年仍據成都、江州、雒城、涪城、綿竹 —— 益州名下還有南中,那裡誰的號令也不聽。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng', 'fucheng', 'mianzhu'], byYear: 214 },
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'mianzhu'], byYear: 214 },
       },
       secondary: [
         {
@@ -2649,7 +2649,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '入主西川', en: 'Master of the West' },
         description: "Still hold Chengdu, Jiangzhou, Luocheng, Fucheng and Baxi in 218 — the heart of Yi; Nanzhong will need its own campaign.",
         descriptionZh: "至218年仍據成都、江州、雒城、涪城、巴西 —— 益州之心;南中要另打一場仗。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng', 'fucheng', 'baxi'], byYear: 218 },
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'baxi'], byYear: 218 },
       },
       secondary: [
         {
@@ -2815,7 +2815,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '守成之君', en: 'Keep What Was Received' },
         description: "Still hold Luoyang, Xuchang, Chang'an and Ye in 230 — Wei never unified; it also never wobbled.",
         descriptionZh: "至230年仍據洛陽、許昌、長安、鄴 —— 魏未曾一統,而四十六年未曾動搖。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'changan', 'ye'], byYear: 230 },
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 230 },
       },
       secondary: [
         {
@@ -2921,7 +2921,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '隴右三郡', en: 'The Three Commanderies of Longyou' },
         description: "Still hold Tianshui, Shangui, Wudu and Yinping in 233 — the gains of the first expedition.",
         descriptionZh: "至233年仍據天水、上邽、武都、陰平 —— 一出祁山所得,守得住才算數。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui', 'wudu', 'yinping'], byYear: 233 },
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui'], byYear: 233 },
       },
       secondary: [
         {
@@ -2977,7 +2977,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '江表無虞', en: 'The Southland Untouched' },
         description: "Still hold Wuchang, Jianye, Jiangxia and Chaisang in 236 — Zhou Fang's false surrender was to break an army, not to take a city.",
         descriptionZh: "至236年仍據武昌、建業、江夏、柴桑 —— 周魴斷髮詐降,要的是曹休那十萬人,不是一座城。",
-        goal: { kind: 'hold-cities', cityIds: ['wuchang', 'jianye', 'jiangxia', 'chaisang'], byYear: 236 },
+        goal: { kind: 'hold-cities', cityIds: ['wuchang', 'jiangxia'], byYear: 236 },
       },
       secondary: [
         {
@@ -3033,7 +3033,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '中原之固', en: 'The Central Plain Holds' },
         description: "Still hold Luoyang, Xuchang, Chang'an and Ye in 245 — the empire that outlasts both rivals.",
         descriptionZh: "至245年仍據洛陽、許昌、長安、鄴 —— 魏未曾一統,但也未曾動搖。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'changan', 'ye'], byYear: 245 },
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 245 },
       },
       secondary: [
         {

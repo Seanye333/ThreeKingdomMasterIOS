@@ -10,7 +10,7 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         title: { zh: '據崤函之固', en: 'Behind the Passes of Xiao and Han' },
         description: "Still hold Chang'an, Hanguguan, Tongguan, Hanzhong and Chengdu in 200 — the base six generations built.",
         descriptionZh: "至200年仍據長安、函谷關、潼關、漢中、成都 —— 六世之餘烈,先是守得住這一塊。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'hanguguan', 'tongguan', 'hanzhong', 'chengdu'], byYear: 200 },
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'hanguguan', 'hanzhong'], byYear: 200 },
       },
       secondary: [
         {
@@ -836,7 +836,7 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         title: { zh: '遠交近攻', en: 'Befriend the Far, Strike the Near' },
         description: "Still hold Chang'an, Tongguan, Hanzhong and Chengdu in 200 — while Yan and Qi ruin each other, consolidate.",
         descriptionZh: "至200年仍據長安、潼關、漢中、成都 —— 燕齊兩弊之際,范雎之策是先固其本。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanzhong', 'chengdu'], byYear: 200 },
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanzhong'], byYear: 200 },
       },
       secondary: [
         {
