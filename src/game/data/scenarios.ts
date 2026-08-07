@@ -3906,7 +3906,7 @@ export const SCENARIO_189_EUNUCHS: Scenario = {
   // 宦官富有禁中而無一兵,董卓有兵而無寸土
   cities: buildInitialCities(CITY_OWNERSHIP_189,
     {
-      han:       { troops: 0.95, food: 1.10, gold: 1.25, defense: 6,  loyalty: 6 },   // 名分尚在,兵權已不在
+      han:       { troops: 0.75, food: 0.90, gold: 0.60, defense: -8, loyalty: -12 }, // 名分尚在,兵權與國庫都不在 —— 何進要召外兵入京正是為此
       eunuchs:   { troops: 0.55, food: 0.90, gold: 1.60, defense: 10, loyalty: -20 }, // 富有禁中而天下側目
       dong:      { troops: 1.45, food: 0.85, gold: 0.90, defense: 0,  loyalty: -12 }, // 西涼兵而無根本
       'yuan-shao': { troops: 1.05, food: 1.00, gold: 1.15, defense: 0, loyalty: 6 },  // 四世三公,門生故吏遍天下
@@ -5042,7 +5042,7 @@ export const SCENARIO_192_WANGYUN: Scenario = {
   // 王允手裡是名分不是兵,呂布手裡是兵不是地
   cities: buildInitialCities(CITY_OWNERSHIP_192,
     {
-      han:       { troops: 0.70, food: 0.90, gold: 1.10, defense: 4,  loyalty: -8 },  // 長安殘破,詔書出不了城
+      han:       { troops: 0.65, food: 0.80, gold: 0.55, defense: -6, loyalty: -14 }, // 長安殘破,詔書出不了城,府庫更出不了糧
       lubu:      { troops: 1.30, food: 0.60, gold: 0.70, defense: -6, loyalty: -14 }, // 飛將而無家
       lijue:     { troops: 1.40, food: 0.85, gold: 0.95, defense: 0,  loyalty: -18 }, // 西涼餘部十萬,無人約束
       cao:       { troops: 1.05, food: 1.05, gold: 0.95, defense: 0,  loyalty: 4 },   // 收青州兵三十萬
