@@ -1151,6 +1151,21 @@ const OFFICER_ASSIGNMENTS_GATHERING: Record<string, OfficerAssignment> = {
 
 export const SCENARIO_GATHERING_OF_HEROES: Scenario = {
   id: 'scn-gathering-of-heroes',
+  openingRelations: [
+    { a: 'dong', b: 'cao', score: -85, status: 'neutral' },  // 反董聯軍之首,誓不兩立
+    { a: 'dong', b: 'yuan-shao', score: -90, status: 'neutral' },  // 盟主
+    { a: 'dong', b: 'sun', score: -85, status: 'neutral' },  // 孫堅為聯軍前鋒,獨破華雄
+    { a: 'dong', b: 'yuan-shu', score: -70, status: 'neutral' },
+    { a: 'cao', b: 'yuan-shao', score: 45, status: 'non-aggression' },  // 少時遊俠之交
+    { a: 'yuan-shao', b: 'yuan-shu', score: -60, status: 'neutral' },  // 兄弟鬩牆,袁術罵其為家奴
+    { a: 'yuan-shu', b: 'sun', score: 50, status: 'non-aggression' },  // 孫堅受其節度,借兵而戰
+    { a: 'liu-biao', b: 'sun', score: -80, status: 'neutral' },  // 峴山之伏,孫堅死於黃祖之手
+    { a: 'gongsun', b: 'yuan-shao', score: -75, status: 'neutral' },  // 界橋之戰
+    { a: 'tao', b: 'cao', score: -70, status: 'neutral' },  // 徐州之屠
+    { a: 'lubu', b: 'dong', score: -40, status: 'neutral' },  // 義父子之名已裂
+    { a: 'liu-yan', b: 'ma-teng', score: -20, status: 'neutral' },
+    { a: 'shi-xie', b: 'liu-biao', score: 20, status: 'non-aggression' },  // 交趾遙奉荊州
+  ],
   name: { en: 'Gathering of Heroes', zh: '英雄集結' },
   kind: 'whatif',
   description:
@@ -7109,6 +7124,13 @@ const DEAD_BY_GUANYU_JING: string[] = [
 
 export const SCENARIO_WHATIF_GUANYU_JING: Scenario = {
   id: 'scn-whatif-guanyu-jing',
+  openingRelations: [
+    { a: 'cao', b: 'liu-bei', score: -90, status: 'neutral' },  // 漢賊不兩立
+    { a: 'cao', b: 'sun', score: -45, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: -25, status: 'neutral' },  // 荊州仍在關羽手中,同盟名存而實已離
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'nanman', score: -45, status: 'neutral' },
+  ],
   name: { en: 'Guan Yu Holds Jingzhou', zh: '關羽守住荊州' },
   kind: 'whatif',
   description:
@@ -7276,6 +7298,11 @@ const DEAD_BY_ZHUGE_LIVES: string[] = [
 
 export const SCENARIO_WHATIF_ZHUGE_LIVES: Scenario = {
   id: 'scn-whatif-zhuge-lives',
+  openingRelations: [
+    { a: 'cao', b: 'liu-bei', score: -95, status: 'neutral' },  // 漢已復長安,魏失關中
+    { a: 'liu-bei', b: 'sun', score: 60, status: 'allied' },  // 兩路北伐之約猶在
+    { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
+  ],
   name: { en: 'What if Zhuge Liang Lived', zh: '諸葛亮活到八十' },
   kind: 'whatif',
   description:
@@ -7516,6 +7543,16 @@ const DEAD_BY_CHIBI_WIN: string[] = [
 
 export const SCENARIO_WHATIF_CAO_WINS_CHIBI: Scenario = {
   id: 'scn-whatif-cao-wins-chibi',
+  openingRelations: [
+    { a: 'cao', b: 'sun', score: -95, status: 'neutral' },  // 孫權已斬於江岸,殘部猶在
+    { a: 'cao', b: 'liu-bei', score: -90, status: 'neutral' },
+    { a: 'liu-bei', b: 'liu-zhang', score: 55, status: 'non-aggression' },  // 攜孔明西奔,乞庇於劉璋羽翼
+    { a: 'cao', b: 'liu-zhang', score: -30, status: 'neutral' },
+    { a: 'cao', b: 'zhang-lu', score: -25, status: 'neutral' },
+    { a: 'cao', b: 'ma-teng', score: -40, status: 'neutral' },
+    { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },  // 殺母之讎
+    { a: 'cao', b: 'shi-xie', score: 15, status: 'non-aggression' },
+  ],
   name: { en: 'Cao Cao Wins Red Cliffs', zh: '曹操贏赤壁' },
   kind: 'whatif',
   description:
@@ -7736,6 +7773,15 @@ const DEAD_BY_WOMEN: string[] = [];
 
 export const SCENARIO_WHATIF_WOMEN: Scenario = {
   id: 'scn-whatif-women',
+  openingRelations: [
+    { a: 'diaochan-han', b: 'caiyan-ye', score: -60, status: 'neutral' },  // 長安與鄴,關西關東之爭
+    { a: 'lady-sun', b: 'yueying', score: -45, status: 'neutral' },  // 江東與荊州,大江上下之爭
+    { a: 'lady-sun', b: 'qiao', score: 55, status: 'allied' },  // 二喬本江東之媳
+    { a: 'yueying', b: 'zhurong-nan', score: -40, status: 'neutral' },  // 荊益之爭
+    { a: 'caiyan-ye', b: 'bian-liang', score: -70, status: 'neutral' },  // 鄴與許都,兩朝並立
+    { a: 'diaochan-han', b: 'bian-liang', score: -35, status: 'neutral' },
+    { a: 'zhurong-nan', b: 'lady-sun', score: 20, status: 'non-aggression' },  // 南中與江東不相及
+  ],
   name: { en: 'Age of Heroines', zh: '女傑時代' },
   kind: 'whatif',
   description:
@@ -7783,6 +7829,15 @@ const FORCES_YUAN_GUANDU: Force[] = FORCES_200.map((f) =>
 );
 export const SCENARIO_WHATIF_YUAN_GUANDU: Scenario = {
   id: 'scn-whatif-yuan-guandu',
+  openingRelations: [
+    { a: 'yuan-shao', b: 'cao', score: -95, status: 'neutral' },  // 官渡既勝,許昌已下,只餘宛城一隅
+    { a: 'yuan-shao', b: 'liu-biao', score: 40, status: 'non-aggression' },  // 南北相結以夾曹
+    { a: 'cao', b: 'liu-biao', score: -60, status: 'neutral' },  // 宛城正在荊州之肘腋
+    { a: 'yuan-shao', b: 'sun', score: -30, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -50, status: 'neutral' },
+    { a: 'yuan-shao', b: 'wuhuan', score: 45, status: 'non-aggression' },  // 蹋頓受袁氏之恩
+    { a: 'yuan-shao', b: 'ma-teng', score: 10, status: 'non-aggression' },
+  ],
   name: { en: 'If Yuan Shao Had Won Guandu', zh: '若袁紹勝官渡' },
   kind: 'whatif',
   description:
@@ -7802,6 +7857,15 @@ const CITY_OWNERSHIP_LUBU_XUZHOU: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_LUBU_XUZHOU: Scenario = {
   id: 'scn-whatif-lubu-xuzhou',
+  openingRelations: [
+    { a: 'lubu', b: 'cao', score: -95, status: 'neutral' },  // 下邳未陷,曹操疲師而退
+    { a: 'lubu', b: 'yuan-shu', score: -40, status: 'neutral' },  // 轅門射戟之後,婚約既絕
+    { a: 'cao', b: 'yuan-shao', score: 30, status: 'non-aggression' },  // 官渡未至,盟猶未破
+    { a: 'cao', b: 'yuan-shu', score: -70, status: 'neutral' },  // 僭號者,人人得而討之
+    { a: 'sun', b: 'yuan-shu', score: -65, status: 'neutral' },  // 孫策已與仲家決裂
+    { a: 'yuan-shao', b: 'gongsun', score: -80, status: 'neutral' },  // 易京之圍
+    { a: 'liu-biao', b: 'sun', score: -55, status: 'neutral' },  // 黃祖之讎
+  ],
   name: { en: 'If Lü Bu Had Held Xuzhou', zh: '若呂布割據徐州' },
   kind: 'whatif',
   description:
@@ -7824,6 +7888,17 @@ const FORCES_MACHAO_GUANZHONG: Force[] = FORCES_211.map((f) =>
 );
 export const SCENARIO_WHATIF_MACHAO_GUANZHONG: Scenario = {
   id: 'scn-whatif-machao-guanzhong',
+  openingRelations: [
+    { a: 'ma-chao', b: 'cao', score: -95, status: 'neutral' },  // 潼關既下,長安已入西涼之手
+    { a: 'ma-chao', b: 'han-sui', score: 65, status: 'allied' },  // 離間之計未成,盟好不疑
+    { a: 'cao', b: 'han-sui', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 50, status: 'allied' },
+    { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
+    { a: 'liu-bei', b: 'liu-zhang', score: 35, status: 'non-aggression' },
+    { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
+    { a: 'ma-chao', b: 'zhang-lu', score: 25, status: 'non-aggression' },  // 涼漢之間相倚
+  ],
   name: { en: 'If Ma Chao Had Taken Guanzhong', zh: '若馬超盡得關中' },
   kind: 'whatif',
   description:
@@ -7843,6 +7918,15 @@ const CITY_OWNERSHIP_SUNCE_LIVES: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_SUNCE_LIVES: Scenario = {
   id: 'scn-whatif-sunce-lives',
+  openingRelations: [
+    { a: 'sun', b: 'cao', score: -90, status: 'neutral' },  // 小霸王北上襲許,直取天子
+    { a: 'cao', b: 'yuan-shao', score: -90, status: 'neutral' },  // 官渡相持
+    { a: 'sun', b: 'yuan-shao', score: 35, status: 'non-aggression' },  // 南北並舉,共擊曹操
+    { a: 'sun', b: 'liu-biao', score: -75, status: 'neutral' },  // 黃祖未誅,父讎未報
+    { a: 'cao', b: 'liu-bei', score: -55, status: 'neutral' },
+    { a: 'yuan-shao', b: 'liu-biao', score: 40, status: 'non-aggression' },
+    { a: 'yuan-shao', b: 'wuhuan', score: 45, status: 'non-aggression' },
+  ],
   name: { en: 'If Sun Ce Had Lived', zh: '若孫策不死' },
   kind: 'whatif',
   description:
@@ -7862,6 +7946,20 @@ const CITY_OWNERSHIP_DONG_LIVES: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_DONG_LIVES: Scenario = {
   id: 'scn-whatif-dong-lives',
+  openingRelations: [
+    { a: 'dong', b: 'cao', score: -90, status: 'neutral' },
+    { a: 'dong', b: 'yuan-shao', score: -90, status: 'neutral' },  // 關東盟主
+    { a: 'dong', b: 'yuan-shu', score: -75, status: 'neutral' },
+    { a: 'dong', b: 'sun', score: -85, status: 'neutral' },  // 孫堅獨破華雄,兵入洛陽
+    { a: 'dong', b: 'liu-biao', score: -45, status: 'neutral' },
+    { a: 'dong', b: 'gongsun', score: -40, status: 'neutral' },
+    { a: 'yuan-shao', b: 'yuan-shu', score: -60, status: 'neutral' },  // 兄弟鬩牆
+    { a: 'yuan-shao', b: 'gongsun', score: -75, status: 'neutral' },  // 界橋
+    { a: 'yuan-shu', b: 'sun', score: 50, status: 'non-aggression' },
+    { a: 'liu-biao', b: 'sun', score: -70, status: 'neutral' },
+    { a: 'tao', b: 'cao', score: -55, status: 'neutral' },
+    { a: 'dong', b: 'ma-teng', score: 15, status: 'non-aggression' },  // 同出西涼
+  ],
   name: { en: 'If Dong Zhuo Had Not Fallen', zh: '若董卓未亡' },
   kind: 'whatif',
   description:
@@ -7881,6 +7979,16 @@ const CITY_OWNERSHIP_YUANSHU_EMPIRE: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_YUANSHU_EMPIRE: Scenario = {
   id: 'scn-whatif-yuanshu-empire',
+  openingRelations: [
+    { a: 'yuan-shu', b: 'cao', score: -90, status: 'neutral' },  // 僭號仲家,漢臣共討
+    { a: 'yuan-shu', b: 'sun', score: -80, status: 'neutral' },  // 孫策絕之,江東自立
+    { a: 'yuan-shu', b: 'yuan-shao', score: -55, status: 'neutral' },  // 兄弟鬩牆,而今一為帝一為公
+    { a: 'yuan-shu', b: 'lubu', score: -45, status: 'neutral' },  // 轅門射戟,婚約既絕
+    { a: 'cao', b: 'lubu', score: -70, status: 'neutral' },
+    { a: 'cao', b: 'yuan-shao', score: 30, status: 'non-aggression' },
+    { a: 'yuan-shao', b: 'gongsun', score: -80, status: 'neutral' },
+    { a: 'liu-biao', b: 'sun', score: -55, status: 'neutral' },
+  ],
   name: { en: 'If Yuan Shu\'s Empire Had Stood', zh: '若袁術稱帝成' },
   kind: 'whatif',
   description:
@@ -7896,6 +8004,16 @@ export const SCENARIO_WHATIF_YUANSHU_EMPIRE: Scenario = {
 //    sharpest mind still alive to read the river and the southern wind. ──
 export const SCENARIO_WHATIF_GUOJIA_LIVES: Scenario = {
   id: 'scn-whatif-guojia-lives',
+  openingRelations: [
+    { a: 'cao', b: 'sun', score: -70, status: 'neutral' },  // 大軍南下,飲馬長江
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 45, status: 'non-aggression' },  // 孫劉之盟方成
+    { a: 'cao', b: 'liu-biao', score: -50, status: 'neutral' },
+    { a: 'liu-bei', b: 'liu-biao', score: 25, status: 'non-aggression' },  // 寄寓新野
+    { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
+    { a: 'cao', b: 'ma-teng', score: 20, status: 'non-aggression' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+  ],
   name: { en: 'If Guo Jia Had Lived', zh: '若郭嘉不死' },
   kind: 'whatif',
   description:
@@ -7911,6 +8029,16 @@ export const SCENARIO_WHATIF_GUOJIA_LIVES: Scenario = {
 //    presses his bold design — take Shu before Liu Bei can. ──
 export const SCENARIO_WHATIF_ZHOUYU_LIVES: Scenario = {
   id: 'scn-whatif-zhouyu-lives',
+  openingRelations: [
+    { a: 'sun', b: 'liu-bei', score: -20, status: 'neutral' },  // 公瑾在,西取益州要搶在劉備之前
+    { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'ma-chao', score: -95, status: 'neutral' },
+    { a: 'ma-chao', b: 'han-sui', score: 60, status: 'allied' },
+    { a: 'liu-bei', b: 'liu-zhang', score: 30, status: 'non-aggression' },
+    { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+  ],
   name: { en: 'If Zhou Yu Had Lived', zh: '若周瑜不死' },
   kind: 'whatif',
   description:
@@ -7926,6 +8054,14 @@ export const SCENARIO_WHATIF_ZHOUYU_LIVES: Scenario = {
 //    he holds Shu so the Sleeping Dragon need never leave Jingzhou. ──
 export const SCENARIO_WHATIF_PANGTONG_LIVES: Scenario = {
   id: 'scn-whatif-pangtong-lives',
+  openingRelations: [
+    { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 20, status: 'non-aggression' },  // 孔明未西去,荊州之爭未起
+    { a: 'cao', b: 'zhang-lu', score: -30, status: 'neutral' },
+    { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'nanman', score: -40, status: 'neutral' },
+  ],
   name: { en: 'If Pang Tong Had Lived', zh: '若龐統不死' },
   kind: 'whatif',
   description:
@@ -8579,6 +8715,13 @@ const CITY_OWNERSHIP_WHATIF_GUANYU_NORTH: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_GUANYU_NORTH: Scenario = {
   id: 'scn-whatif-guanyu-north',
+  openingRelations: [
+    { a: 'cao', b: 'liu-bei', score: -95, status: 'neutral' },  // 威震華夏,朝議遷都以避其鋒
+    { a: 'cao', b: 'sun', score: 25, status: 'non-aggression' },  // 孫曹密約既通,而書未至江陵
+    { a: 'liu-bei', b: 'sun', score: -15, status: 'neutral' },  // 湘水之界猶在,而背後已有人磨刀
+    { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
+    { a: 'liu-bei', b: 'nanman', score: -40, status: 'neutral' },
+  ],
   name: { en: 'If Guan Yu Had Taken Fan', zh: '若關羽威震華夏' },
   kind: 'whatif',
   description:
@@ -8621,6 +8764,14 @@ const FORCES_WHATIF_GAOPINGLING: Force[] = [
 ];
 export const SCENARIO_WHATIF_GAOPINGLING: Scenario = {
   id: 'scn-whatif-gaopingling',
+  openingRelations: [
+    { a: 'cao', b: 'sima', score: -95, status: 'neutral' },  // 挾天子疾走許昌,傳檄討司馬為叛逆
+    { a: 'cao', b: 'liu-bei', score: -70, status: 'neutral' },
+    { a: 'sima', b: 'liu-bei', score: -70, status: 'neutral' },
+    { a: 'cao', b: 'sun', score: -65, status: 'neutral' },
+    { a: 'sima', b: 'sun', score: -65, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 50, status: 'allied' },  // 魏室自裂,吳蜀之盟正當其時
+  ],
   name: { en: 'If Cao Shuang Had Struck First', zh: '若曹爽先發制人' },
   kind: 'whatif',
   description:
@@ -8645,6 +8796,13 @@ export const SCENARIO_WHATIF_GAOPINGLING: Scenario = {
 //    pillar of Wu into the age of the boy-emperor and the regents. ──
 export const SCENARIO_WHATIF_LUXUN_LIVES: Scenario = {
   id: 'scn-whatif-luxun-lives',
+  openingRelations: [
+    { a: 'sima', b: 'cao', score: -95, status: 'neutral' },  // 高平陵之變
+    { a: 'sima', b: 'liu-bei', score: -70, status: 'neutral' },
+    { a: 'sima', b: 'sun', score: -70, status: 'neutral' },  // 陸伯言尚在,江表之師可期
+    { a: 'cao', b: 'sun', score: -55, status: 'neutral' },
+    { a: 'liu-bei', b: 'sun', score: 55, status: 'allied' },
+  ],
   name: { en: 'If Lu Xun Had Not Been Hounded to Death', zh: '若陸遜不冤死' },
   kind: 'whatif',
   description:

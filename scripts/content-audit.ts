@@ -140,6 +140,21 @@ async function main() {
   findings.push({ level: 'warn', where: 'coverage', what: `${noRel.length}/${covered.length} 個歷史劇本沒有開局外交(兩兩中立 = 盤上沒有敵我)` });
   findings.push({ level: 'warn', where: 'coverage', what: `${noVer.length}/${covered.length} 個歷史劇本沒有落幕文本(亡國時讀通用輓歌)` });
 
+  /*
+   * 假想盤也要數。
+   *
+   * 這兩行原本只數 `kind !== 'whatif'`,於是歷史線歸零之後看起來很乾淨,
+   * 而**十七張假想盤的開局外交與落幕文本全是空的** —— 兩兩中立,盤上沒有
+   * 敵我。偏偏假想盤最靠開局外交撐前提:「郭嘉還在」那張的孫劉之盟、
+   * 「呂布據徐州」那張的呂曹死仇,不寫進關係表就只是換了城池歸屬而已。
+   */
+  const whatif = (SCENARIOS as Array<{ id: string; kind?: string; openingRelations?: unknown[] }>)
+    .filter((s) => s.kind === 'whatif');
+  const wiNoRel = whatif.filter((s) => !s.openingRelations?.length);
+  const wiNoVer = whatif.filter((s) => !(SCENARIO_VERDICTS as Record<string, unknown>)[s.id]);
+  findings.push({ level: 'warn', where: 'coverage', what: `${wiNoRel.length}/${whatif.length} 個假想劇本沒有開局外交` });
+  findings.push({ level: 'warn', where: 'coverage', what: `${wiNoVer.length}/${whatif.length} 個假想劇本沒有落幕文本` });
+
   // ── 印出來 ──
   const errs = findings.filter((f) => f.level === 'error');
   const warns = findings.filter((f) => f.level === 'warn');
