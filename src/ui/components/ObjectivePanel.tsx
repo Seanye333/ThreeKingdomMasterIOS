@@ -89,6 +89,7 @@ export function ObjectivePanel() {
 
   return (
     <div
+      data-testid="objective-card"
       style={{
         background: '#10161e',
         border: '1px solid #2b3845',

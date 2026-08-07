@@ -16,8 +16,12 @@ test('目標卡畫得出次要目標與期限,而且不溢出畫面', async ({ p
   test.setTimeout(180_000);
   await startCampaign(page);
 
-  // 主目標的標題(反董卓聯軍第一家是曹操,主目標「兗州之叛」)
-  const card = page.locator('div', { hasText: /^目標/ }).first();
+  /*
+   * ⚠ 這裡本來寫 `page.locator('div', { hasText: /^目標/ })` —— 它命中的是整片
+   * 地圖 chrome(連季節、天氣、圖層、城名都在裡面),於是「不溢出」那一條
+   * 等於什麼都沒驗。用 testid 指到卡片本身。
+   */
+  const card = page.getByTestId('objective-card');
   await expect(card).toBeVisible({ timeout: 30_000 });
 
   // ① 次要那一欄要在
