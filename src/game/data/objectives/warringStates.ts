@@ -31,12 +31,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-ws7-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '地方五千里', en: 'Five Thousand Li of Land' },
-        description: "Take Chang'an by 205 — the largest state has never once used its size.",
-        descriptionZh: "於205年前西取長安 —— 楚地五千里,帶甲百萬,從未真正用出來過。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 205 },
+        title: { zh: '地方五千里', en: 'Five Thousand Li' },
+        description: "Still hold Jiangling, Shouchun and Wancheng in 205 — Chu is the largest realm under heaven; Xianyang was never in reach.",
+        descriptionZh: "至205年仍據江陵、壽春、宛城 —— 楚地方五千里,持戟百萬;咸陽從來不在能到的地方。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'shouchun', 'wancheng'], byYear: 205 },
       },
       secondary: [
+        {
+          title: { zh: '地方五千里', en: 'Five Thousand Li of Land' },
+          description: "Take Chang'an by 205 — the largest state has never once used its size.",
+          descriptionZh: "於205年前西取長安 —— 楚地五千里,帶甲百萬,從未真正用出來過。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 205 },
+        },
         {
           title: { zh: '合縱抗秦', en: 'The Vertical Alliance' },
           description: 'Destroy the Qin force.',
@@ -67,11 +73,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-ws7-yan',
       forceId: 'yan',
       primary: {
-        title: { zh: '黃金台', en: 'The Terrace of Gold' },
-        description: 'Take Linzi by 198 — twenty-eight years of humiliation, repaid in one campaign.',
-        descriptionZh: "於198年前攻取臨淄 —— 築黃金台以求士,雪二十八年之恥。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi'], byYear: 198 },
+        title: { zh: '築黃金台', en: 'The Terrace of Gold' },
+        description: "Still hold Ji and Beiping in 198 — pile gold on a terrace and the able will come; Linzi is what comes after.",
+        descriptionZh: "至198年仍據薊、北平 —— 築台置金以招賢,樂毅郭隗劇辛皆自此來;臨淄是那之後的事。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 198 },
       },
+      secondary: [
+        {
+          title: { zh: '黃金台', en: 'The Terrace of Gold' },
+          description: 'Take Linzi by 198 — twenty-eight years of humiliation, repaid in one campaign.',
+          descriptionZh: "於198年前攻取臨淄 —— 築黃金台以求士,雪二十八年之恥。",
+          goal: { kind: 'hold-cities', cityIds: ['linzi'], byYear: 198 },
+        },
+      ],
     },
     {
       id: 'obj-ws7-zhao',
@@ -95,11 +109,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-ws7-wei',
       forceId: 'wei',
       primary: {
-        title: { zh: '重整武卒', en: 'Rebuild the Wu Zu' },
-        description: 'Hold Chenliu, Luoyang and Puyang by 198 — the first hegemon, fallen to a buffer state.',
-        descriptionZh: "於198年前據陳留、洛陽、濮陽 —— 戰國首霸,如今夾在秦齊之間。",
-        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'luoyang', 'puyang'], byYear: 198 },
+        title: { zh: '重整武卒', en: 'Rebuild the Wuzu' },
+        description: "Still hold Chenliu and Puyang in 198 — Daliang and the Yellow River bend; Wei's greatness was a century ago.",
+        descriptionZh: "至198年仍據陳留、濮陽 —— 大梁與河曲之地。魏之強是一百年前的事了。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang'], byYear: 198 },
       },
+      secondary: [
+        {
+          title: { zh: '重整武卒', en: 'Rebuild the Wu Zu' },
+          description: 'Hold Chenliu, Luoyang and Puyang by 198 — the first hegemon, fallen to a buffer state.',
+          descriptionZh: "於198年前據陳留、洛陽、濮陽 —— 戰國首霸,如今夾在秦齊之間。",
+          goal: { kind: 'hold-cities', cityIds: ['chenliu', 'luoyang', 'puyang'], byYear: 198 },
+        },
+      ],
     },
     {
       id: 'obj-ws7-han',
@@ -127,12 +149,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wswen-wei',
       forceId: 'wei',
       primary: {
-        title: { zh: '盡取西河', en: 'Take the West of the River' },
-        description: "Take Chang'an and Tongguan by 195 — Wu Qi held this line against Qin for decades.",
-        descriptionZh: "於195年前西取長安、潼關 —— 吳起守西河,秦兵不敢東向。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan'], byYear: 195 },
+        title: { zh: '盡取西河', en: 'Take the Hexi' },
+        description: "Hold Tongguan by 195 — Wu Qi took the west bank of the river from Qin and held it as its governor.",
+        descriptionZh: "於195年前取潼關 —— 吳起奪秦河西之地,遂為西河守。咸陽不在這場仗裡。",
+        goal: { kind: 'hold-cities', cityIds: ['tongguan'], byYear: 195 },
       },
       secondary: [
+        {
+          title: { zh: '盡取西河', en: 'Take the West of the River' },
+          description: "Take Chang'an and Tongguan by 195 — Wu Qi held this line against Qin for decades.",
+          descriptionZh: "於195年前西取長安、潼關 —— 吳起守西河,秦兵不敢東向。",
+          goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan'], byYear: 195 },
+        },
         {
           title: { zh: '首霸中原', en: 'First Hegemon' },
           description: 'Hold Chenliu, Luoyang and Ye by 198.',
@@ -180,10 +208,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '吳起變法', en: "Wu Qi's Reforms" },
-        description: 'Take Wancheng and Xuchang by 200 — Wu Qi went south after Wei drove him out.',
-        descriptionZh: "於200年前北取宛城、許昌 —— 吳起去魏入楚,楚亦可強。",
-        goal: { kind: 'hold-cities', cityIds: ['wancheng', 'xuchang'], byYear: 200 },
+        description: "Still hold Wancheng and Jiangling in 200 — Wu Qi went south to Chu and made its law; the nobles killed him over the corpse of the king.",
+        descriptionZh: "至200年仍據宛城、江陵 —— 吳起南走楚而變其法;悼王一死,貴戚射之於王屍之上。",
+        goal: { kind: 'hold-cities', cityIds: ['wancheng', 'jiangling'], byYear: 200 },
       },
+      secondary: [
+        {
+          title: { zh: '吳起變法', en: "Wu Qi's Reforms" },
+          description: 'Take Wancheng and Xuchang by 200 — Wu Qi went south after Wei drove him out.',
+          descriptionZh: "於200年前北取宛城、許昌 —— 吳起去魏入楚,楚亦可強。",
+          goal: { kind: 'hold-cities', cityIds: ['wancheng', 'xuchang'], byYear: 200 },
+        },
+      ],
     },
   ],
 
@@ -217,12 +253,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wssy-wei',
       forceId: 'wei',
       primary: {
-        title: { zh: '悔不殺鞅', en: 'We Should Have Killed Him' },
-        description: 'Destroy the Qin force by 205 — you had Shang Yang in your court and let him go west.',
-        descriptionZh: "於205年前擊滅秦國 —— 公叔痤說「不用則殺之」,你沒有聽。",
-        goal: { kind: 'defeat-force', forceId: 'qin', byYear: 205 },
+        title: { zh: '悔不殺鞅', en: 'The Regret' },
+        description: "Still hold Chenliu and Puyang in 205 — 'I regret not heeding Gongshu Zuo.' Wei never did put Qin down.",
+        descriptionZh: "至205年仍據陳留、濮陽 ——「寡人恨不用公叔座之言」。魏終究沒能除掉秦。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang'], byYear: 205 },
       },
       secondary: [
+        {
+          title: { zh: '悔不殺鞅', en: 'We Should Have Killed Him' },
+          description: 'Destroy the Qin force by 205 — you had Shang Yang in your court and let him go west.',
+          descriptionZh: "於205年前擊滅秦國 —— 公叔痤說「不用則殺之」,你沒有聽。",
+          goal: { kind: 'defeat-force', forceId: 'qin', byYear: 205 },
+        },
         {
           title: { zh: '保有河西', en: 'Keep the West Bank' },
           description: 'Still hold Chenliu and Luoyang in 198.',
@@ -235,11 +277,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wssy-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '合縱長', en: 'Lead the Vertical Alliance' },
-        description: "Take Chang'an by 208.",
-        descriptionZh: "於208年前攻取長安 —— 六國合縱,楚為縱長。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 208 },
+        title: { zh: '合縱長', en: 'Chief of the Vertical League' },
+        description: "Still hold Jiangling, Shouchun and Wancheng in 208 — Chu led the league; leading it is not the same as entering the passes.",
+        descriptionZh: "至208年仍據江陵、壽春、宛城 —— 楚為合縱長,而合縱長不等於入關。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'shouchun', 'wancheng'], byYear: 208 },
       },
+      secondary: [
+        {
+          title: { zh: '合縱長', en: 'Lead the Vertical Alliance' },
+          description: "Take Chang'an by 208.",
+          descriptionZh: "於208年前攻取長安 —— 六國合縱,楚為縱長。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 208 },
+        },
+      ],
     },
     {
       id: 'obj-wssy-qi',
