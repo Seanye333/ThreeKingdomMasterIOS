@@ -162,6 +162,22 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'In the fourth month the Minister over the Masses Wang Yun and Lü Bu killed Dong Zhuo at the northern palace gate. The people of Chang\'an sang and danced in the streets and sold their jewellery to pay for the celebration. His corpse was exposed in the market, and the guard set a great wick in the navel; it burned till dawn, and for days after.\n\nThen Wang Yun refused to pardon the Liang soldiers. Li Jue and Guo Si were ready to scatter and go home until Jia Xu told them: "If Chang\'an means to kill every Liang man, and you disband and travel alone, one village constable could arrest you." So they gathered instead and marched west. In ten days Chang\'an fell again.',
     },
     forces: {
+      'yuan-shao': {
+        zh: '你是袁紹。討董的盟主散了,而你手上多了一個渤海。\n\n韓馥讓出冀州那天,你連一兵都沒有動 —— 逢紀說「取冀州,只需一封信與公孫瓚的兵鋒」,他說對了。\n\n四世三公之後,門生故吏遍於天下。現在你要的不再是名望,是地。',
+        en: 'You are Yuan Shao. The coalition against Dong Zhuo has come apart, and you have Bohai out of it.\n\nOn the day Han Fu handed over Ji province you had not moved a single soldier — Feng Ji had said it would take one letter and the threat of Gongsun Zan\'s cavalry, and he was right.\n\nFour generations of ministers; your family\'s clients are everywhere. What you need now is not reputation. It is ground.',
+      },
+      'liu-biao': {
+        zh: '你是劉表。單騎入宜城,誅宗賊五十五人,而後荊州定。\n\n八郡之地,帶甲十餘萬,兵不出境,士不遠征。北方在打,你聽著。\n\n人說你是坐談客。也許。但荊州這十七年沒有兵災,那是你做到的。',
+        en: 'You are Liu Biao. You rode into Yicheng alone, had fifty-five bandit-chiefs of the great houses put to death, and Jing province settled.\n\nEight commanderies, a hundred thousand under arms, and no army sent beyond the border. The north is fighting. You listen.\n\nThey call you a man for talk. Perhaps. But Jing province has seventeen years without war in it, and that was your doing.',
+      },
+      'tao-qian': {
+        zh: '你是陶謙。徐州殷實,穀米豐贍,流民多歸之。\n\n而你老了。曹嵩死在你的地界上 —— 不論那是不是你的意思,曹操已經來過一次。\n\n守得住一年,是一年。',
+        en: 'You are Tao Qian. Xu province is rich, its granaries full, and refugees keep coming to it.\n\nAnd you are old. Cao Song died on your ground — whatever your part in it, Cao Cao has already come once.\n\nEvery year it holds is a year won.',
+      },
+      'liu-yan': {
+        zh: '你是劉焉。你求益州牧,是因為望氣者說益州有天子氣。\n\n到任第一件事,是遣張魯斷絕斜谷閣道,殺漢使。從此朝廷的詔書進不來。\n\n私造乘輿車具千餘乘。這件事沒有人問過你要做什麼。',
+        en: 'You are Liu Yan. You asked for Yi province because the diviners said it had the air of a Son of Heaven.\n\nThe first thing you did on arrival was send Zhang Lu to cut the plank roads through the Xie valley and kill the court\'s envoys. No edict has reached you since.\n\nA thousand carriages of imperial pattern, quietly built. Nobody has yet asked you what they are for.',
+      },
       han: {
         zh: '你是王允。連環之計成了,天下以為漢室復興 —— 而你在最要緊的一件事上失了分寸:蔡邕為董卓之死嘆了一聲,你殺了他;涼州數萬人請赦,你不許。\n\n你手上有天子、有呂布、有滿朝公卿。你缺的只是一道赦書。',
         en: 'You are Wang Yun. The chained stratagem worked and the realm believes the Han restored — and on the one thing that mattered you lost your judgement. Cai Yong sighed at Dong Zhuo\'s death, so you killed him. Tens of thousands of Liang soldiers asked for pardon, and you refused.\n\nYou hold the emperor, Lü Bu and the whole court. What you are short of is a single amnesty.',
@@ -191,6 +207,18 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'The previous year Cao Cao\'s father, travelling out of Langya, was killed by officers of Tao Qian — for his money, some said; on purpose, said others. Cao Cao marched east into Xuzhou to avenge him and slaughtered as he went, until the Si River would not flow for the bodies.\n\nThis year he goes east again — and behind him Zhang Miao and Chen Gong open Yan province to Lü Bu. Every commandery goes over; three towns hold out. Cao Cao turns his army round and discovers he no longer has a home.',
     },
     forces: {
+      gongsun: {
+        zh: '你是公孫瓚。白馬義從追著烏丸的騎兵打了十年,邊地的人叫你白馬將軍。\n\n界橋一戰輸給了袁紹的大戟士。自此你退,再退。\n\n易京的樓還沒有築起來 —— 現在動手,還來得及不用築它。',
+        en: 'You are Gongsun Zan. For ten years the White Horse Volunteers ran down Wuhuan cavalry, and the frontier called you the White Horse General.\n\nAt Jieqiao you lost to Yuan Shao\'s halberdiers. Since then you have drawn back, and back again.\n\nThe towers at Yi have not been built yet. Move now and you may never need them.',
+      },
+      'kong-rong': {
+        zh: '你是孔融。孔子二十世孫,北海相。\n\n你立學校,表顯儒術,收葬枯骨 —— 而黃巾就在城外,管亥圍城,你派太史慈突圍求救於平原。\n\n士人稱你為天下名士。名士守不住城。',
+        en: 'You are Kong Rong, twentieth in descent from Confucius, Chancellor of Beihai.\n\nYou founded schools, honoured the classics, buried the unclaimed dead — and the Turbans are outside the wall. Guan Hai has you surrounded and you have sent Taishi Ci through the lines to beg help from Pingyuan.\n\nThe gentry call you the first scholar of the age. Scholarship does not hold walls.',
+      },
+      'liu-biao': {
+        zh: '你是劉表。北方打成一片,而荊州安。\n\n孫堅死在峴山,他的兒子在江東長大;袁術在南陽吃你的糧。你既不北上,也不南下。\n\n這叫守成。守成之主的難處是:守到什麼時候為止?',
+        en: 'You are Liu Biao. The north is one long war, and Jing province is quiet.\n\nSun Jian died at Xian hill; his son is growing up in the Southland. Yuan Shu is in Nanyang eating your grain. You march neither north nor south.\n\nThey call it keeping what you have. The trouble with keeping is knowing when to stop.',
+      },
       cao: {
         zh: '父讎在徐州,叛徒在兗州,而糧只夠一個月。程昱替你保住了三座城,荀彧在鄄城拒張邈之使。\n\n有人勸你去投袁紹。荀彧說:不可。這一年你要在復仇與生存之間選一個 —— 史書上你選了生存,回師打呂布,一年才打完。',
         en: 'Your father\'s killers are in Xuzhou, the men who betrayed you are in Yan, and you have a month\'s grain. Cheng Yu saved three towns for you; Xun Yu turned Zhang Miao\'s envoy away from Juancheng.\n\nSomeone suggests you go over to Yuan Shao. Xun Yu says no. This year you choose between vengeance and survival — in the histories you chose survival, turned back on Lü Bu, and it took a year.',
@@ -277,6 +305,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Yuan Shao has broken Gongsun Zan outside Yijing; You and Ji are one realm now, with hundreds of thousands under arms, advisers like clouds and generals like rain.\n\nCao Cao is at Xu with fewer than ten thousand men, a fifth of them wounded. Kong Rong says Yuan Shao cannot be fought. Xun Yu answers: his troops are many but his discipline is not; Tian Feng is rigid and offends his lord, Xu You is greedy and unruly, Shen Pei is domineering and unsubtle, Feng Ji is decisive and self-willed — these men cannot coexist, and the break will come from inside.\n\nOn both banks of the Yellow River, the granaries fill.',
     },
     forces: {
+      'yuan-shu': {
+        zh: '你是袁術。傳國玉璽在你手上,你稱了帝,國號仲氏。\n\n然後淮南大旱,士卒散,部將叛。你的宮室還在修。\n\n四世三公之後 —— 你一直覺得那四個字是給你的,不是給你那個庶出的哥哥的。',
+        en: 'You are Yuan Shu. The Heirloom Seal is in your hands; you have taken the imperial title and named your dynasty Zhong.\n\nThen the drought came to Huainan, the soldiers scattered and the generals went over. Your palace is still being built.\n\nFour generations of ministers — you always felt those words were meant for you, and not for that half-brother of yours.',
+      },
+      'liu-biao': {
+        zh: '你是劉表。曹操在宛城折了長子與典韋,袁紹在河北收拾公孫瓚。\n\n而荊州無事。張繡在宛城替你擋著北面,你給他糧。\n\n這是最好的一年。最好的一年之後,通常沒有更好的了。',
+        en: 'You are Liu Biao. Cao Cao has lost his eldest son and Dian Wei at Wancheng; Yuan Shao is finishing Gongsun Zan in the north.\n\nAnd Jing province is untouched. Zhang Xiu holds Wancheng as your shield to the north, and you send him grain.\n\nThis is the best year. After the best year there is usually not a better one.',
+      },
       cao: {
         zh: '你兵少糧少,唯一的優勢是:你的命令出得去,而且回得來。\n\n荀彧替你數過袁紹帳下每一個人的毛病。這些毛病要等到烏巢那一夜才會全部發作 —— 在那之前,你要在黃河邊上撐住。',
         en: 'You are short of men and short of grain. Your one advantage: your orders go out and come back again.\n\nXun Yu has itemised the flaws of every man in Yuan Shao\'s tent for you. Those flaws will all come due on one night at Wuchao — until then, you have to hold the river line.',
@@ -327,6 +363,10 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'In the third month Yuan Shao attacked Yijing. Gongsun Zan sent his son to the Black Mountain bands for relief and meant to lead his cavalry out; his chief clerk Guan Jing stopped him — "The moment you ride out, no unit in this fortress will hold." So he stayed.\n\nThe relief force was to signal with fires on a set night. Yuan Shao intercepted the letter and lit the fires himself. Gongsun Zan came out believing help had come, and was destroyed. Yuan Shao mined beneath the towers and they came down one by one. Knowing the end, Gongsun Zan killed his own family and then set the tower alight.',
     },
     forces: {
+      'liu-biao': {
+        zh: '你是劉表。易京的樓燒起來的時候,你在襄陽聽學。\n\n荊州的學官比中原任何一處都齊全,綦毋闓、宋忠在寫五經章句。北方每死一個人,你這裡就多幾個讀書人。\n\n這不是逃避。這是你選的那一種天下。',
+        en: 'You are Liu Biao. When the towers at Yi burned you were at Xiangyang, listening to a lecture.\n\nJing province keeps more classical scholars than anywhere in the central plain; Qiwu Kai and Song Zhong are writing commentaries on the Five Classics. Every man who dies in the north sends you another reader.\n\nThis is not evasion. It is the kind of realm you chose.',
+      },
       'yuan-shao': {
         zh: '公孫瓚困守孤樓,河北就要姓袁。此戰之後,你有四州、十萬眾、天下第一的名望。\n\n然後你要面對的,是那個帶著天子、糧不滿一年的老朋友。沮授說「宜徐徐圖之」,你不想聽。',
         en: 'Gongsun Zan is sealed in his tower and the north is about to be yours: four provinces, a hundred thousand men, the first name in the realm.\n\nAfter that comes the old friend who holds the emperor and less than a year\'s grain. Ju Shou says to take it slowly. You do not want to hear it.',
