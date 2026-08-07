@@ -76,9 +76,9 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '破釜沉舟', en: 'Break the Cauldrons' },
-        description: "Destroy the Qin force by 196 — sink the boats, smash the pots, carry three days' rations. Julu is Zhao's city; what you break there is Qin.",
-        descriptionZh: "於196年前擊滅秦 —— 沉船破釜,持三日糧。鉅鹿是趙的城,你在那裡打碎的是秦。",
-        goal: { kind: 'defeat-force', forceId: 'qin', byYear: 196 },
+        description: "Take Luoyang and Chang'an by 196 — sink the boats, smash the pots, carry three days' rations. Julu is Zhao's city; the road it opens runs west.",
+        descriptionZh: "於196年前取洛陽、長安 —— 沉船破釜,持三日糧。鉅鹿是趙的城,那一戰打開的路通向西邊。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 196 },
       },
       secondary: [
         {
