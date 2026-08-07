@@ -70,6 +70,25 @@ function deadlineOf(goal: Goal): number {
   return g.byYear ?? g.year ?? 0;
 }
 
+/*
+ * 具名例外 —— **有些主目標 0 是設計如此。**
+ *
+ * 這幾家在史書上就是輸了,而那正是那張盤要玩家改寫的東西:呂布死於白門樓、
+ * 公孫瓚自焚於易京樓、袁術嘔血於江亭、袁尚失鄴而走遼東。他們的主目標寫的是
+ * 「守住」,AI 自走時當然守不住 —— 那不是資料錯,是題目。
+ *
+ * 列在這裡,是為了讓掃描的頭條數字表示**沒有解釋的**死目標。
+ * 沿用 `scenario-audit.ts` 的體例:要進來就得寫理由。
+ */
+const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
+  { scenario: 'scn-195-jiangdong', force: 'lu-bu',      why: '「白門樓之前」—— 標題就是說他到得了那一天;史書上他 198 年就沒了。' },
+  { scenario: 'scn-195-jiangdong', force: 'gongsun',    why: '易京樓積穀三百萬斛而自焚於 199 —— 守到 200 年正是要玩家改寫的事。' },
+  { scenario: 'scn-198-xiapi',     force: 'yuan-shu',   why: '「仲氏不亡」—— 他 199 年嘔血死於江亭,問廚下惟有麥屑三十斛。' },
+  { scenario: 'scn-204-yecheng',   force: 'yuan-shang', why: '「鄴城固守」—— 鄴城陷落是這張盤的名字。' },
+  { scenario: 'scn-199-yijing',    force: 'gongsun',    why: '同 195:易京之戰的結局就是樓焚。' },
+];
+const byDesign = (sid: string, fid: string) => BY_DESIGN.some((e) => e.scenario === sid && e.force === fid);
+
 const st = useGameStore;
 const dead: Array<{ id: string; zh: string; forceId: string; title: string; goal: string }> = [];
 let boards = 0;
@@ -167,8 +186,15 @@ function shapeOf(scenario: (typeof SCENARIOS)[number], forceId: string, goal: Go
   return g.kind;
 }
 
-console.log(`\n=== ${boards} 張盤,${RUNS} 輪;主目標 0 中的 ${dead.length} 條 ===`);
-for (const d of dead) {
+const designed = dead.filter((d) => byDesign(d.id, d.forceId));
+const unexplained = dead.filter((d) => !byDesign(d.id, d.forceId));
+console.log(`\n=== ${boards} 張盤,${RUNS} 輪;主目標 0 中的 ${dead.length} 條(其中 ${designed.length} 條設計如此,未解釋 ${unexplained.length} 條)===`);
+for (const d of designed) {
+  const e = BY_DESIGN.find((x) => x.scenario === d.id && x.force === d.forceId)!;
+  console.log(`  · ${d.zh}(${d.id}) / ${d.forceId} 「${d.title}」 —— ${e.why}`);
+}
+if (designed.length) console.log('');
+for (const d of unexplained) {
   const sc = SCENARIOS.find((s) => s.id === d.id)!;
   console.log(`  ${d.zh}(${d.id}) / ${d.forceId} 「${d.title}」 [${shapeOf(sc, d.forceId, JSON.parse(d.goal) as Goal)}]`);
 }
