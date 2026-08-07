@@ -1153,21 +1153,37 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-234-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '北伐成就', en: 'Complete the Northern Campaign' },
-        description: 'Take Chang\'an before Zhuge Liang dies (236 AD).',
-        descriptionZh: "於諸葛亮歸天(236年)前攻取長安。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 236 },
+        title: { zh: '屯田渭濱', en: 'Farming the Wei Banks' },
+        description: "Still hold Hanzhong, Wudu and Yinping in 240 — dig in among the people and outlast him.",
+        descriptionZh: "至240年仍據漢中、武都、陰平 —— 分兵屯田,雜於渭濱居民之間,百姓安堵而軍無私。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'wudu', 'yinping'], byYear: 240 },
       },
+      secondary: [
+        {
+          title: { zh: '北伐成就', en: 'Complete the Northern Campaign' },
+          description: 'Take Chang\'an before Zhuge Liang dies (236 AD).',
+          descriptionZh: "於諸葛亮歸天(236年)前攻取長安。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 236 },
+        },
+      ],
     },
     {
       id: 'obj-234-wei',
       forceId: 'cao',
       primary: {
-        title: { zh: '蜀漢殲滅', en: 'Crush Shu' },
-        description: 'Eliminate the Liu Bei force.',
-        descriptionZh: "於245年前消滅劉備勢力。",
-        goal: { kind: 'defeat-force', forceId: 'liu-bei', byYear: 245 },
+        title: { zh: '拒亮於渭南', en: 'Hold the Wei' },
+        description: "Still hold Chang'an, Anding and Longxi in 240 — refuse battle; the grain will decide it.",
+        descriptionZh: "至240年仍據長安、安定、隴西 —— 堅壁拒守,不與交鋒,以待其變。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'anding', 'longxi'], byYear: 240 },
       },
+      secondary: [
+        {
+          title: { zh: '蜀漢殲滅', en: 'Crush Shu' },
+          description: 'Eliminate the Liu Bei force.',
+          descriptionZh: "於245年前消滅劉備勢力。",
+          goal: { kind: 'defeat-force', forceId: 'liu-bei', byYear: 245 },
+        },
+      ],
     },
   ],
 
@@ -2712,12 +2728,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-228jt-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '街亭不失', en: 'Jieting Must Hold' },
-        description: 'Hold Jieting and Tianshui by 233 — do not camp on the hill.',
-        descriptionZh: "於233年前據街亭、天水 —— 當道下寨,勿屯南山。",
-        goal: { kind: 'hold-cities', cityIds: ['jieting', 'tianshui'], byYear: 233 },
+        title: { zh: '隴右三郡', en: 'The Three Commanderies of Longyou' },
+        description: "Still hold Tianshui, Shangui, Wudu and Yinping in 233 — the gains of the first expedition.",
+        descriptionZh: "至233年仍據天水、上邽、武都、陰平 —— 一出祁山所得,守得住才算數。",
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui', 'wudu', 'yinping'], byYear: 233 },
       },
       secondary: [
+        {
+          title: { zh: '街亭不失', en: 'Jieting Must Hold' },
+          description: 'Hold Jieting and Tianshui by 233 — do not camp on the hill.',
+          descriptionZh: "於233年前據街亭、天水 —— 當道下寨,勿屯南山。",
+          goal: { kind: 'hold-cities', cityIds: ['jieting', 'tianshui'], byYear: 233 },
+        },
         {
           title: { zh: '克復長安', en: "Take Chang'an" },
           description: "Take Chang'an by 240.",
@@ -2790,11 +2812,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-228st-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '再出祁山', en: 'Out from Qishan Again' },
-        description: "Take Chang'an by 240.",
-        descriptionZh: "於240年前克復長安。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 240 },
+        title: { zh: '祁山之道', en: 'The Qishan Road' },
+        description: "Still hold Tianshui, Shangui and Hanzhong in 236 — the road out must stay open.",
+        descriptionZh: "至236年仍據天水、上邽、漢中 —— 出祁山的那條路,得先握在手裡。",
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui', 'hanzhong'], byYear: 236 },
       },
+      secondary: [
+        {
+          title: { zh: '再出祁山', en: 'Out from Qishan Again' },
+          description: "Take Chang'an by 240.",
+          descriptionZh: "於240年前克復長安。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 240 },
+        },
+      ],
     },
   ],
 
@@ -2804,12 +2834,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-229-wei',
       forceId: 'cao',
       primary: {
-        title: { zh: '中原正統', en: 'The Legitimate Centre' },
-        description: 'Bring all under Wei.',
-        descriptionZh: "混一天下 —— 據中原十州之富,本當如此。",
-        goal: { kind: 'unify-realm' },
+        title: { zh: '中原之固', en: 'The Central Plain Holds' },
+        description: "Still hold Luoyang, Xuchang, Chang'an and Ye in 245 — the empire that outlasts both rivals.",
+        descriptionZh: "至245年仍據洛陽、許昌、長安、鄴 —— 魏未曾一統,但也未曾動搖。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'changan', 'ye'], byYear: 245 },
       },
       secondary: [
+        {
+          title: { zh: '中原正統', en: 'The Legitimate Centre' },
+          description: 'Bring all under Wei.',
+          descriptionZh: "混一天下 —— 據中原十州之富,本當如此。",
+          goal: { kind: 'unify-realm' },
+        },
         {
           title: { zh: '先滅蜀漢', en: 'Shu First' },
           description: 'Destroy the Shu force by 250.',
@@ -2822,12 +2858,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-229-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '漢賊不兩立', en: 'Han and Traitor Cannot Both Stand' },
-        description: "Take Chang'an and Luoyang by 245.",
-        descriptionZh: "於245年前克復長安、洛陽。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 245 },
+        title: { zh: '武都陰平', en: 'Wudu and Yinping' },
+        description: "Still hold Wudu, Yinping and Hanzhong in 235 — the one lasting territorial gain of the expeditions.",
+        descriptionZh: "至235年仍據武都、陰平、漢中 —— 建興七年陳式所取,是歷次北伐唯一守得住的地。",
+        goal: { kind: 'hold-cities', cityIds: ['wudu', 'yinping', 'hanzhong'], byYear: 235 },
       },
       secondary: [
+        {
+          title: { zh: '漢賊不兩立', en: 'Han and Traitor Cannot Both Stand' },
+          description: "Take Chang'an and Luoyang by 245.",
+          descriptionZh: "於245年前克復長安、洛陽。",
+          goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 245 },
+        },
         {
           title: { zh: '出隴右', en: 'Into Longyou' },
           description: 'Hold Tianshui by 238.',
@@ -2840,22 +2882,36 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-229-wu',
       forceId: 'sun',
       primary: {
-        title: { zh: '全據長江', en: 'The Whole River' },
-        description: 'Hold Jiangling, Xiangyang and Hefei by 245.',
-        descriptionZh: "於245年前兼據江陵、襄陽、合肥 —— 長江之險,與人共之則不險。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang', 'hefei'], byYear: 245 },
+        title: { zh: '江表之守', en: 'The Lands Beyond the River' },
+        description: "Still hold Jiangling, Wuchang and Jianye in 245 — the river is the realm.",
+        descriptionZh: "至245年仍據江陵、武昌、建業 —— 限江自保,是吳立國五十二年的本錢。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'wuchang', 'jianye'], byYear: 245 },
       },
+      secondary: [
+        {
+          title: { zh: '全據長江', en: 'The Whole River' },
+          description: 'Hold Jiangling, Xiangyang and Hefei by 245.',
+          descriptionZh: "於245年前兼據江陵、襄陽、合肥 —— 長江之險,與人共之則不險。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang', 'hefei'], byYear: 245 },
+        },
+      ],
     },
     {
       id: 'obj-229-gongsun',
       forceId: 'gongsun',
       primary: {
-        title: { zh: '燕王之號', en: 'King of Yan' },
-        description: 'Declare yourself emperor — Liaodong has been its own country for forty years.',
-        descriptionZh: "稱帝建號 —— 遼東割據四十年,何必為人臣?",
-        goal: { kind: 'declare-emperor' },
+        title: { zh: '遼東自立', en: 'Liaodong Stands Alone' },
+        description: "Survive to 238 — the year Sima Yi came.",
+        descriptionZh: "撐到238年 —— 那一年司馬懿來了,四十日而襄平破。",
+        goal: { kind: 'survive-until', year: 238 },
       },
       secondary: [
+        {
+          title: { zh: '燕王之號', en: 'King of Yan' },
+          description: 'Declare yourself emperor — Liaodong has been its own country for forty years.',
+          descriptionZh: "稱帝建號 —— 遼東割據四十年,何必為人臣?",
+          goal: { kind: 'declare-emperor' },
+        },
         {
           title: { zh: '襄平不陷', en: 'Xiangping Shall Not Fall' },
           description: 'Still hold Xiangping in 245 — history sends Sima Yi in 238.',
@@ -2872,17 +2928,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-231-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '甲首三千', en: 'Three Thousand Helmets' },
-        description: "Take Tianshui and Chang'an by 240 — the one field battle Sima Yi lost outright.",
-        descriptionZh: "於240年前取天水、長安 —— 鹵城一戰,獲甲首三千,司馬懿自此斂兵。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 240 },
+        title: { zh: '糧不誤期', en: 'The Grain Must Not Be Late' },
+        description: "Still hold Hanzhong in 240 — the last campaign ended not in battle but in Li Yan's late supply.",
+        descriptionZh: "至240年仍固守漢中 —— 上一次退兵不是敗於陣前,是李嚴的糧沒到。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 240 },
       },
       secondary: [
         {
-          title: { zh: '糧不誤期', en: 'The Grain Must Not Be Late' },
-          description: 'Hold Hanzhong through 240 — Li Yan\'s late supply ended this campaign.',
-          descriptionZh: "至240年仍固守漢中 —— 上一次退兵,是因為李嚴的糧沒到。",
-          goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 240 },
+          title: { zh: '甲首三千', en: 'Three Thousand Helmets' },
+          description: "Take Tianshui and Chang'an by 240 — the one field battle Sima Yi lost outright.",
+          descriptionZh: "於240年前取天水、長安 —— 鹵城一戰,獲甲首三千,司馬懿自此斂兵。",
+          goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 240 },
         },
       ],
     },
@@ -2950,11 +3006,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-238-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '乘隙北伐', en: 'March While Wei Looks Northeast' },
-        description: "Take Chang'an by 248.",
-        descriptionZh: "於248年前克復長安 —— 魏之大軍在遼東。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 248 },
+        title: { zh: '漢中之守', en: 'Hanzhong Holds' },
+        description: "Still hold Hanzhong and Yangping Pass in 248 — Wei is busy in the northeast; do not lose the gate.",
+        descriptionZh: "至248年仍據漢中、陽平關 —— 魏方用兵遼東,而漢中之門不可失。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'yangping'], byYear: 248 },
       },
+      secondary: [
+        {
+          title: { zh: '乘隙北伐', en: 'March While Wei Looks Northeast' },
+          description: "Take Chang'an by 248.",
+          descriptionZh: "於248年前克復長安 —— 魏之大軍在遼東。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 248 },
+        },
+      ],
     },
     {
       id: 'obj-238-wu',
@@ -3016,12 +3080,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-244-wei',
       forceId: 'cao',
       primary: {
-        title: { zh: '曹爽伐蜀', en: "Cao Shuang's Invasion" },
-        description: 'Take Hanzhong by 249 — you need a victory to hold the court.',
-        descriptionZh: "於249年前攻取漢中 —— 你需要一場勝仗來坐穩朝堂。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 249 },
+        title: { zh: '關中不搖', en: 'Guanzhong Unshaken' },
+        description: "Still hold Chang'an, Anding and Longxi in 249 — the retreat from Xingshi cost dearly, but not the west.",
+        descriptionZh: "至249年仍據長安、安定、隴西 —— 興勢之退折兵甚眾,關中卻未曾動搖。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'anding', 'longxi'], byYear: 249 },
       },
       secondary: [
+        {
+          title: { zh: '曹爽伐蜀', en: "Cao Shuang's Invasion" },
+          description: 'Take Hanzhong by 249 — you need a victory to hold the court.',
+          descriptionZh: "於249年前攻取漢中 —— 你需要一場勝仗來坐穩朝堂。",
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 249 },
+        },
         {
           title: { zh: '滅蜀', en: 'Destroy Shu' },
           description: 'Destroy the Shu force.',
@@ -3102,11 +3172,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-249-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '姜維北伐', en: "Jiang Wei's Northern Campaigns" },
-        description: "Take Tianshui and Chang'an by 262.",
-        descriptionZh: "於262年前取天水、長安 —— 魏室內亂,正可乘之。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 262 },
+        title: { zh: '漢中之險', en: 'The Hanzhong Passes' },
+        description: "Still hold Hanzhong and Yangping Pass in 262 — Jiang Wei's raids mean nothing if the gate falls.",
+        descriptionZh: "至262年仍據漢中、陽平關 —— 姜維九伐中原,守不住這道門則一切皆空。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'yangping'], byYear: 262 },
       },
+      secondary: [
+        {
+          title: { zh: '姜維北伐', en: "Jiang Wei's Northern Campaigns" },
+          description: "Take Tianshui and Chang'an by 262.",
+          descriptionZh: "於262年前取天水、長安 —— 魏室內亂,正可乘之。",
+          goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 262 },
+        },
+      ],
     },
     {
       id: 'obj-249-wu',
@@ -3154,11 +3232,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-252-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '出狄道', en: 'Out by Didao' },
-        description: "Take Tianshui and Chang'an by 262.",
-        descriptionZh: "於262年前取天水、長安。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 262 },
+        title: { zh: '隴右之出', en: 'Out Through Longyou' },
+        description: "Still hold Wudu, Yinping and Hanzhong in 262 — the two commanderies are the staging ground.",
+        descriptionZh: "至262年仍據武都、陰平、漢中 —— 二郡在手,出隴右才有立足之地。",
+        goal: { kind: 'hold-cities', cityIds: ['wudu', 'yinping', 'hanzhong'], byYear: 262 },
       },
+      secondary: [
+        {
+          title: { zh: '出狄道', en: 'Out by Didao' },
+          description: "Take Tianshui and Chang'an by 262.",
+          descriptionZh: "於262年前取天水、長安。",
+          goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 262 },
+        },
+      ],
     },
   ],
 
@@ -3196,11 +3282,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-253-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '與吳並舉', en: 'March With Wu' },
-        description: "Take Tianshui and Chang'an by 262.",
-        descriptionZh: "於262年前取天水、長安 —— 東西並舉,魏不能兩顧。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 262 },
+        title: { zh: '與吳並舉', en: 'Two Fronts' },
+        description: "Still hold Hanzhong and Wudu in 262 — strike west while Wu strikes east, but hold what you have.",
+        descriptionZh: "至262年仍據漢中、武都 —— 東西並舉是好謀,前提是自家的地還在。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'wudu'], byYear: 262 },
       },
+      secondary: [
+        {
+          title: { zh: '與吳並舉', en: 'March With Wu' },
+          description: "Take Tianshui and Chang'an by 262.",
+          descriptionZh: "於262年前取天水、長安 —— 東西並舉,魏不能兩顧。",
+          goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 262 },
+        },
+      ],
     },
   ],
 
@@ -3256,11 +3350,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-255-shu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '洮西大捷', en: 'The Victory West of Tao' },
-        description: "Take Tianshui and Chang'an by 264.",
-        descriptionZh: "於264年前取天水、長安 —— 洮西一戰,魏人死者數萬。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 264 },
+        title: { zh: '洮西大捷', en: 'The Victory at Taoxi' },
+        description: "Still hold Wudu, Yinping and Hanzhong in 264 — Taoxi killed tens of thousands and changed nothing.",
+        descriptionZh: "至264年仍據武都、陰平、漢中 —— 洮西破王經,死者數萬,而隴右終不可得。",
+        goal: { kind: 'hold-cities', cityIds: ['wudu', 'yinping', 'hanzhong'], byYear: 264 },
       },
+      secondary: [
+        {
+          title: { zh: '洮西大捷', en: 'The Victory West of Tao' },
+          description: "Take Tianshui and Chang'an by 264.",
+          descriptionZh: "於264年前取天水、長安 —— 洮西一戰,魏人死者數萬。",
+          goal: { kind: 'hold-cities', cityIds: ['tianshui', 'changan'], byYear: 264 },
+        },
+      ],
     },
   ],
 
