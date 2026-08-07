@@ -650,17 +650,17 @@ const OFFICER_ASSIGNMENTS_200: Record<string, OfficerAssignment> = {
   'yuan-shao':   { forceId: 'yuan-shao', cityId: 'ye' },
   'yan-liang':   { forceId: 'yuan-shao', cityId: 'ye' },
   'wen-chou':    { forceId: 'yuan-shao', cityId: 'ye' },
-  'zhang-he':    { forceId: 'yuan-shao', cityId: 'bohai' },
-  'tian-feng':   { forceId: 'yuan-shao', cityId: 'ye' },
+  'zhang-he':    { forceId: 'yuan-shao', cityId: 'bohai', loyalty: 45 },  // 烏巢既焚,郭圖譖之,遂陣前降曹
+  'tian-feng':   { forceId: 'yuan-shao', cityId: 'ye', loyalty: 55 },  // 諫止南征而下獄 —— 官渡未敗已囚
   // Sun
   'sun-ce':      { forceId: 'sun',       cityId: 'jianye' },
   'sun-quan':    { forceId: 'sun',       cityId: 'jianye' },
   'cheng-pu':    { forceId: 'sun',       cityId: 'jianye' },
-  'huang-gai':   { forceId: 'sun',       cityId: 'shouchun' },
+  'huang-gai':   { forceId: 'sun',       cityId: 'shouchun', loyalty: 85 },
   'zhou-tai':    { forceId: 'sun',       cityId: 'jianye' },
   'han-dang':    { forceId: 'sun',       cityId: 'changsha' },
   // Liu Bei
-  'liu-bei':     { forceId: 'liu-bei',   cityId: 'pengcheng' },
+  'liu-bei':     { forceId: 'liu-bei',   cityId: 'pengcheng', loyalty: 80 },  // 此時已自為一家
   'guan-yu':     { forceId: 'liu-bei',   cityId: 'pengcheng' },
   'zhang-fei':   { forceId: 'liu-bei',   cityId: 'xiapi' },
   // Liu Biao
@@ -2088,19 +2088,19 @@ const OFFICER_ASSIGNMENTS_197: Record<string, OfficerAssignment> = {
   'dian-wei':    { forceId: 'cao',       cityId: 'wancheng' }, // Dies at Wancheng 197 — historical
   'xun-yu':      { forceId: 'cao',       cityId: 'xuchang' },
   'guo-jia':     { forceId: 'cao',       cityId: 'xuchang' },
-  'jia-xu':      { forceId: 'cao',       cityId: 'wancheng' },
+  'jia-xu':      { forceId: 'cao',       cityId: 'wancheng', loyalty: 35 },  // 此時實在張繡幕中 —— 宛城之變出其謀
   // Yuan Shao
   'yuan-shao':   { forceId: 'yuan-shao', cityId: 'ye' },
   'yan-liang':   { forceId: 'yuan-shao', cityId: 'ye' },
   'wen-chou':    { forceId: 'yuan-shao', cityId: 'ye' },
-  'zhang-he':    { forceId: 'yuan-shao', cityId: 'bohai' },
-  'tian-feng':   { forceId: 'yuan-shao', cityId: 'ye' },
+  'zhang-he':    { forceId: 'yuan-shao', cityId: 'bohai', loyalty: 65 },  // 河北四庭柱,而三年後陣前降曹
+  'tian-feng':   { forceId: 'yuan-shao', cityId: 'ye', loyalty: 70 },  // 剛而犯上,紹表面禮之
   // Yuan Shu
   'yuan-shu':    { forceId: 'yuan-shu',  cityId: 'shouchun' },
-  'ji-ling':     { forceId: 'yuan-shu',  cityId: 'shouchun' },
+  'ji-ling':     { forceId: 'yuan-shu',  cityId: 'shouchun', loyalty: 75 },  // 袁術之將,而術方欲稱帝
   // Lü Bu
   'lu-bu':       { forceId: 'lu-bu',     cityId: 'xiapi' },
-  'diaochan':    { forceId: 'lu-bu',     cityId: 'xiapi' },
+  'diaochan':    { forceId: 'lu-bu',     cityId: 'xiapi', loyalty: 88 },
   // Sun
   'sun-ce':      { forceId: 'sun',       cityId: 'jianye' },
   'sun-quan':    { forceId: 'sun',       cityId: 'jianye' },
@@ -2115,7 +2115,7 @@ const OFFICER_ASSIGNMENTS_197: Record<string, OfficerAssignment> = {
   'gongsun-zan': { forceId: 'gongsun',   cityId: 'beiping' },
   // Ma Teng
   'ma-teng':     { forceId: 'ma-teng',   cityId: 'wuwei' },
-  'ma-chao':     { forceId: 'ma-teng',   cityId: 'jincheng' },
+  'ma-chao':     { forceId: 'ma-teng',   cityId: 'jincheng', loyalty: 85 },  // 子從父,而十四年後獨舉關中
 };
 
 const DEAD_BY_197 = ['sun-jian', 'dong-zhuo', 'li-ru', 'tao-qian', 'kong-rong'];
@@ -2199,8 +2199,8 @@ const OFFICER_ASSIGNMENTS_219: Record<string, OfficerAssignment> = {
   'xu-chu':      { forceId: 'cao',     cityId: 'xuchang' },
   'zhang-he':    { forceId: 'cao',     cityId: 'changan' },
   'xu-huang':    { forceId: 'cao',     cityId: 'xiangyang' },
-  'yu-jin':      { forceId: 'cao',     cityId: 'xiangyang' },
-  'pang-de':     { forceId: 'cao',     cityId: 'xiangyang' },
+  'yu-jin':      { forceId: 'cao',     cityId: 'xiangyang', loyalty: 65 },  // 樊城水至,三十營皆沒 —— 降
+  'pang-de':     { forceId: 'cao',     cityId: 'xiangyang', loyalty: 95 },  // 「吾聞良將不怯死以苟免」
   'sima-yi':     { forceId: 'cao',     cityId: 'xuchang' },
   'jia-xu':      { forceId: 'cao',     cityId: 'xuchang' },
   // Liu Bei
@@ -2211,9 +2211,9 @@ const OFFICER_ASSIGNMENTS_219: Record<string, OfficerAssignment> = {
   'zhao-yun':    { forceId: 'liu-bei', cityId: 'chengdu' },
   'ma-chao':     { forceId: 'liu-bei', cityId: 'hanzhong' },
   'huang-zhong': { forceId: 'liu-bei', cityId: 'hanzhong' },
-  'wei-yan':     { forceId: 'liu-bei', cityId: 'hanzhong' },
+  'wei-yan':     { forceId: 'liu-bei', cityId: 'hanzhong', loyalty: 78 },  // 漢中太守,一軍皆驚 —— 而與楊儀不相能
   'fa-zheng':    { forceId: 'liu-bei', cityId: 'chengdu' },
-  'liu-feng':    { forceId: 'liu-bei', cityId: 'jiangling' },
+  'liu-feng':    { forceId: 'liu-bei', cityId: 'jiangling', loyalty: 55 },  // 上庸不救關羽,明年賜死
   // Sun
   'sun-quan':    { forceId: 'sun',     cityId: 'jianye' },
   'lu-meng':     { forceId: 'sun',     cityId: 'jiangxia' },
@@ -2571,25 +2571,25 @@ const OFFICER_ASSIGNMENTS_198: Record<string, OfficerAssignment> = {
   'xun-you':     { forceId: 'cao', cityId: 'xuchang' },
   'guo-jia':     { forceId: 'cao', cityId: 'xuchang' },
   'cheng-yu':    { forceId: 'cao', cityId: 'xuchang' },
-  'liu-bei':     { forceId: 'cao', cityId: 'pengcheng' }, // serving Cao after losing Xu
-  'guan-yu':     { forceId: 'cao', cityId: 'pengcheng' },
-  'zhang-fei':   { forceId: 'cao', cityId: 'pengcheng' },
-  'mi-zhu':      { forceId: 'cao', cityId: 'pengcheng' },
-  'mi-fang':     { forceId: 'cao', cityId: 'pengcheng' },
-  'sun-qian':    { forceId: 'cao', cityId: 'pengcheng' },
-  'jian-yong':   { forceId: 'cao', cityId: 'pengcheng' },
+  'liu-bei':     { forceId: 'cao', cityId: 'pengcheng', loyalty: 22 },  // serving Cao after losing Xu;身在曹營 —— 煮酒論英雄就在明年
+  'guan-yu':     { forceId: 'cao', cityId: 'pengcheng', loyalty: 28 },  // 所隨者劉備
+  'zhang-fei':   { forceId: 'cao', cityId: 'pengcheng', loyalty: 28 },
+  'mi-zhu':      { forceId: 'cao', cityId: 'pengcheng', loyalty: 30 },
+  'mi-fang':     { forceId: 'cao', cityId: 'pengcheng', loyalty: 30 },
+  'sun-qian':    { forceId: 'cao', cityId: 'pengcheng', loyalty: 32 },
+  'jian-yong':   { forceId: 'cao', cityId: 'pengcheng', loyalty: 32 },
 
   // ── Lü Bu (cornered at Xiapi) ──
   'lu-bu':       { forceId: 'lubu', cityId: 'xiapi' },
-  'chen-gong':   { forceId: 'lubu', cityId: 'xiapi' },
-  'gao-shun':    { forceId: 'lubu', cityId: 'xiapi' },
+  'chen-gong':   { forceId: 'lubu', cityId: 'xiapi', loyalty: 55 },  // 同死白門樓,而生前屢諫不從
+  'gao-shun':    { forceId: 'lubu', cityId: 'xiapi', loyalty: 88 },  // 陷陣營七百人 —— 忠而不見信
   'cao-xing':    { forceId: 'lubu', cityId: 'xiapi' },
-  'song-xian':   { forceId: 'lubu', cityId: 'xiapi' },
-  'hou-cheng':   { forceId: 'lubu', cityId: 'xiapi' },
-  'wei-xu':      { forceId: 'lubu', cityId: 'xiapi' },
+  'song-xian':   { forceId: 'lubu', cityId: 'xiapi', loyalty: 32 },  // 縛呂布獻曹者,正是此三人
+  'hou-cheng':   { forceId: 'lubu', cityId: 'xiapi', loyalty: 30 },  // 盜馬事發,懼誅
+  'wei-xu':      { forceId: 'lubu', cityId: 'xiapi', loyalty: 32 },
   'diaochan':    { forceId: 'lubu', cityId: 'xiapi' },
-  'chen-deng':   { forceId: 'lubu', cityId: 'xiapi' }, // betrays Lü Bu in this scenario
-  'chen-gui':    { forceId: 'lubu', cityId: 'xiapi' },
+  'chen-deng':   { forceId: 'lubu', cityId: 'xiapi', loyalty: 18 },  // betrays Lü Bu in this scenario;名為呂布之臣,實為曹操之內應
+  'chen-gui':    { forceId: 'lubu', cityId: 'xiapi', loyalty: 18 },
 
   // ── Yuan Shao (peak power) ──
   'yuan-shao':   { forceId: 'yuan-shao', cityId: 'ye' },
@@ -2597,10 +2597,10 @@ const OFFICER_ASSIGNMENTS_198: Record<string, OfficerAssignment> = {
   'wen-chou':    { forceId: 'yuan-shao', cityId: 'ye' },
   'zhang-he':    { forceId: 'yuan-shao', cityId: 'ye' },
   'tian-feng':   { forceId: 'yuan-shao', cityId: 'ye' },
-  'ju-shou':     { forceId: 'yuan-shao', cityId: 'ye' },
+  'ju-shou':     { forceId: 'yuan-shao', cityId: 'ye', loyalty: 72 },  // 監軍而見奪其兵
   'guo-tu':      { forceId: 'yuan-shao', cityId: 'ye' },
-  'yuan-tan':    { forceId: 'yuan-shao', cityId: 'pingyuan' },
-  'yuan-shang':  { forceId: 'yuan-shao', cityId: 'ye' },
+  'yuan-tan':    { forceId: 'yuan-shao', cityId: 'pingyuan', loyalty: 60 },  // 兄弟已相圖
+  'yuan-shang':  { forceId: 'yuan-shao', cityId: 'ye', loyalty: 60 },
 
   // ── Yuan Shu (collapsing) ──
   'yuan-shu':    { forceId: 'yuan-shu', cityId: 'shouchun' },
@@ -2991,8 +2991,8 @@ const OFFICER_ASSIGNMENTS_211: Record<string, OfficerAssignment> = {
   'xu-chu':      { forceId: 'cao', cityId: 'changan' }, // duels Ma Chao
   'pang-de':     { forceId: 'cao', cityId: 'wuwei' }, // initially with Ma Chao, surrenders to Cao later
   'man-chong':   { forceId: 'cao', cityId: 'shouchun' },
-  'zang-ba':     { forceId: 'cao', cityId: 'pengcheng' },
-  'wen-pin':     { forceId: 'cao', cityId: 'xiangyang' },
+  'zang-ba':     { forceId: 'cao', cityId: 'pengcheng', loyalty: 62 },  // 泰山之眾,名附而實半自立
+  'wen-pin':     { forceId: 'cao', cityId: 'xiangyang', loyalty: 70 },  // 荊州降將,曹操以舊禮待之
 
   // ── Ma Chao (the avenging son) ──
   'ma-chao':     { forceId: 'ma-chao', cityId: 'wuwei' },
@@ -3002,13 +3002,13 @@ const OFFICER_ASSIGNMENTS_211: Record<string, OfficerAssignment> = {
 
   // ── Han Sui (and the ten Liang warlords) ──
   'han-sui':     { forceId: 'han-sui', cityId: 'jincheng' },
-  'cheng-yi':    { forceId: 'han-sui', cityId: 'jincheng' },
-  'hou-xuan':    { forceId: 'han-sui', cityId: 'jincheng' },
-  'liang-xing':  { forceId: 'han-sui', cityId: 'wudu' },
-  'yang-qiu':    { forceId: 'han-sui', cityId: 'wudu' },
-  'ma-wan':      { forceId: 'han-sui', cityId: 'jincheng' },
-  'cheng-yin':   { forceId: 'han-sui', cityId: 'jincheng' },
-  'li-kan':      { forceId: 'han-sui', cityId: 'wudu' },
+  'cheng-yi':    { forceId: 'han-sui', cityId: 'jincheng', loyalty: 48 },  // 關中十部,合而不相統
+  'hou-xuan':    { forceId: 'han-sui', cityId: 'jincheng', loyalty: 48 },
+  'liang-xing':  { forceId: 'han-sui', cityId: 'wudu', loyalty: 48 },
+  'yang-qiu':    { forceId: 'han-sui', cityId: 'wudu', loyalty: 45 },  // 渭南既敗,獨保安定降曹
+  'ma-wan':      { forceId: 'han-sui', cityId: 'jincheng', loyalty: 48 },
+  'cheng-yin':   { forceId: 'han-sui', cityId: 'jincheng', loyalty: 48 },
+  'li-kan':      { forceId: 'han-sui', cityId: 'wudu', loyalty: 48 },
 
   // ── Liu Bei (Jingzhou seat at Jiangling) ──
   'liu-bei':     { forceId: 'liu-bei', cityId: 'jiangling' },
@@ -3043,17 +3043,17 @@ const OFFICER_ASSIGNMENTS_211: Record<string, OfficerAssignment> = {
 
   // ── Liu Zhang ──
   'liu-zhang':   { forceId: 'liu-zhang', cityId: 'chengdu' },
-  'zhang-ren':   { forceId: 'liu-zhang', cityId: 'chengdu' },
-  'yan-yan':     { forceId: 'liu-zhang', cityId: 'jiangzhou' },
-  'wu-yi':       { forceId: 'liu-zhang', cityId: 'chengdu' },
-  'fa-zheng':    { forceId: 'liu-zhang', cityId: 'chengdu' }, // about to defect
-  'zhang-song':  { forceId: 'liu-zhang', cityId: 'chengdu' }, // about to defect
-  'huang-quan':  { forceId: 'liu-zhang', cityId: 'chengdu' },
-  'meng-da':     { forceId: 'liu-zhang', cityId: 'yongan' },
+  'zhang-ren':   { forceId: 'liu-zhang', cityId: 'chengdu', loyalty: 92 },  // 「老臣終不復事二主」
+  'yan-yan':     { forceId: 'liu-zhang', cityId: 'jiangzhou', loyalty: 85 },  // 「但有斷頭將軍,無有降將軍」
+  'wu-yi':       { forceId: 'liu-zhang', cityId: 'chengdu', loyalty: 62 },  // 軍敗而降,後為蜀之國舅
+  'fa-zheng':    { forceId: 'liu-zhang', cityId: 'chengdu', loyalty: 22 },  // about to defect;使荊州而歸,所報者非劉璋
+  'zhang-song':  { forceId: 'liu-zhang', cityId: 'chengdu', loyalty: 15 },  // about to defect;西川地圖已在袖中
+  'huang-quan':  { forceId: 'liu-zhang', cityId: 'chengdu', loyalty: 90 },  // 閉城拒守,最後降者
+  'meng-da':     { forceId: 'liu-zhang', cityId: 'yongan', loyalty: 30 },  // 將四千人迎劉備入蜀
 
   // ── Zhang Lu ──
   'zhang-lu':    { forceId: 'zhang-lu', cityId: 'hanzhong' },
-  'yang-song':   { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'yang-song':   { forceId: 'zhang-lu', cityId: 'hanzhong', loyalty: 35 },  // 受曹操金而賣張魯
 
   // ── Shi Xie ──
   'shi-xie':     { forceId: 'shi-xie', cityId: 'jiaozhi' },
@@ -3778,26 +3778,26 @@ const OFFICER_ASSIGNMENTS_194: Record<string, OfficerAssignment> = {
   'tao-qian':    { forceId: 'tao', cityId: 'xiapi' },
   'tao-shang':   { forceId: 'tao', cityId: 'pengcheng' },
   'tao-ying':    { forceId: 'tao', cityId: 'xiapi' },
-  'cao-bao':     { forceId: 'tao', cityId: 'xiapi' },
-  'chen-deng':   { forceId: 'tao', cityId: 'xiapi' },
-  'chen-gui':    { forceId: 'tao', cityId: 'pengcheng' },
+  'cao-bao':     { forceId: 'tao', cityId: 'xiapi', loyalty: 40 },  // 明年他就要引呂布入下邳
+  'chen-deng':   { forceId: 'tao', cityId: 'xiapi', loyalty: 35 },  // 陳氏父子所圖者曹操
+  'chen-gui':    { forceId: 'tao', cityId: 'pengcheng', loyalty: 35 },
   // Liu Bei marching to relieve Xu (en route from Beihai → Xiaopei)
-  'liu-bei':     { forceId: 'tao', cityId: 'xiaopei' },
-  'guan-yu':     { forceId: 'tao', cityId: 'xiaopei' },
-  'zhang-fei':   { forceId: 'tao', cityId: 'xiaopei' },
-  'mi-zhu':      { forceId: 'tao', cityId: 'xiapi' },
-  'mi-fang':     { forceId: 'tao', cityId: 'xiapi' },
-  'sun-qian':    { forceId: 'tao', cityId: 'xiapi' },
-  'jian-yong':   { forceId: 'tao', cityId: 'xiaopei' },
+  'liu-bei':     { forceId: 'tao', cityId: 'xiaopei', loyalty: 48 },  // 豫州刺史,陶謙表之而已 —— 客將
+  'guan-yu':     { forceId: 'tao', cityId: 'xiaopei', loyalty: 42 },  // 他忠的是劉備
+  'zhang-fei':   { forceId: 'tao', cityId: 'xiaopei', loyalty: 42 },
+  'mi-zhu':      { forceId: 'tao', cityId: 'xiapi', loyalty: 45 },  // 糜氏之財歸劉備,不歸陶謙
+  'mi-fang':     { forceId: 'tao', cityId: 'xiapi', loyalty: 45 },
+  'sun-qian':    { forceId: 'tao', cityId: 'xiapi', loyalty: 48 },
+  'jian-yong':   { forceId: 'tao', cityId: 'xiaopei', loyalty: 48 },
 
   // ── Lü Bu (driven from Chang'an, now ravaging Yan) ──
   'lu-bu':       { forceId: 'lubu', cityId: 'puyang' },
-  'chen-gong':   { forceId: 'lubu', cityId: 'puyang' },
-  'gao-shun':    { forceId: 'lubu', cityId: 'puyang' },
+  'chen-gong':   { forceId: 'lubu', cityId: 'puyang', loyalty: 52 },  // 迎呂布者是他,而「布每不從其計」
+  'gao-shun':    { forceId: 'lubu', cityId: 'puyang', loyalty: 85 },  // 忠而不見信 —— 呂布數奪其兵
   'cao-xing':    { forceId: 'lubu', cityId: 'puyang' },
   'diaochan':    { forceId: 'lubu', cityId: 'puyang' },
-  'zhang-miao':  { forceId: 'lubu', cityId: 'puyang' }, // defected from Cao Cao
-  'zhang-chao':  { forceId: 'lubu', cityId: 'puyang' },
+  'zhang-miao':  { forceId: 'lubu', cityId: 'puyang', loyalty: 55 },  // defected from Cao Cao;與曹操舊交而叛之,自知無退路
+  'zhang-chao':  { forceId: 'lubu', cityId: 'puyang', loyalty: 55 },
 
   // ── Yuan Shao (consolidating Hebei) ──
   'yuan-shao':   { forceId: 'yuan-shao', cityId: 'ye' },
@@ -3813,24 +3813,24 @@ const OFFICER_ASSIGNMENTS_194: Record<string, OfficerAssignment> = {
   // ── Yuan Shu (holding the Sun family hostage) ──
   'yuan-shu':    { forceId: 'yuan-shu', cityId: 'shouchun' },
   'ji-ling':     { forceId: 'yuan-shu', cityId: 'wancheng' },
-  'sun-ce':      { forceId: 'yuan-shu', cityId: 'shouchun' }, // not yet broken free
-  'sun-quan':    { forceId: 'yuan-shu', cityId: 'shouchun' },
-  'cheng-pu':    { forceId: 'yuan-shu', cityId: 'shouchun' },
-  'huang-gai':   { forceId: 'yuan-shu', cityId: 'shouchun' },
-  'han-dang':    { forceId: 'yuan-shu', cityId: 'shouchun' },
-  'zhou-yu':     { forceId: 'yuan-shu', cityId: 'shouchun' }, // boyhood friend, in the south
+  'sun-ce':      { forceId: 'yuan-shu', cityId: 'shouchun', loyalty: 30 },  // not yet broken free;明年渡江,袁術再也叫不動他
+  'sun-quan':    { forceId: 'yuan-shu', cityId: 'shouchun', loyalty: 30 },
+  'cheng-pu':    { forceId: 'yuan-shu', cityId: 'shouchun', loyalty: 35 },  // 孫堅舊部,所奉者孫氏
+  'huang-gai':   { forceId: 'yuan-shu', cityId: 'shouchun', loyalty: 35 },
+  'han-dang':    { forceId: 'yuan-shu', cityId: 'shouchun', loyalty: 35 },
+  'zhou-yu':     { forceId: 'yuan-shu', cityId: 'shouchun', loyalty: 28 },  // boyhood friend, in the south;居巢長,與策相結,本不為術用
 
   // ── Gongsun Zan (still mighty in Youzhou; Liu Bei was his subordinate till now) ──
   'gongsun-zan': { forceId: 'gongsun', cityId: 'beiping' },
   'gongsun-yue': { forceId: 'gongsun', cityId: 'liaodong' },
   'tian-kai':    { forceId: 'gongsun', cityId: 'pingyuan' },
-  'zhao-yun':    { forceId: 'gongsun', cityId: 'beiping' }, // still with Gongsun in 194
+  'zhao-yun':    { forceId: 'gongsun', cityId: 'beiping', loyalty: 45 },  // still with Gongsun in 194;從公孫瓚而心不安,後託兄喪去
 
   // ── Liu Biao (Jing) ──
   'liu-biao':    { forceId: 'liu-biao', cityId: 'xiangyang' },
   'kuai-liang':  { forceId: 'liu-biao', cityId: 'xiangyang' },
-  'kuai-yue':    { forceId: 'liu-biao', cityId: 'xiangyang' },
-  'cai-mao':     { forceId: 'liu-biao', cityId: 'xiangyang' },
+  'kuai-yue':    { forceId: 'liu-biao', cityId: 'xiangyang', loyalty: 62 },  // 十四年後勸劉琮降曹的也是他
+  'cai-mao':     { forceId: 'liu-biao', cityId: 'xiangyang', loyalty: 60 },  // 荊州豪族,所保者蔡氏
   'huang-zu':    { forceId: 'liu-biao', cityId: 'jiangxia' },
   'wen-pin':     { forceId: 'liu-biao', cityId: 'jiangling' },
 
