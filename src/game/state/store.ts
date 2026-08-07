@@ -3158,6 +3158,33 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
 
       endSeason: () => {
+        /*
+         * 名器登記重新對齊 —— **這是「同種子同世界」的一個洞**。
+         *
+         * `REFINE_REGISTRY` 那一族(精煉/突破/鑲嵌/典故/覺醒/進化/磨損/詞條)是
+         * store 的鏡像,只在「精煉動作、開新局、讀檔」時由 `set*Registry` 推過去,
+         * 讓 combat/duel/傷害預估 這些純函數不必把整張表穿進每一層簽名。
+         *
+         * 問題出在**任何繞過那三個入口的 setState**:重播測試就是這樣做的
+         * (`st.setState({ ...snapshot })`)。於是第一次重播裡 AI 鍛出來的精煉
+         * 留在模組變數裡,第二次重播從第 1 旬就用著上一輪的裝備數值 ——
+         * 症狀是野戰的 `blendedStat` 對不上(134.1 vs 135),而最終 officers 一致,
+         * 因為變的不是裝備 id 是它的**live 效果**。查了半天不是隨機源:
+         * patch 掉 `Math.random` 計數,endSeason 期間裸呼叫是 0。
+         *
+         * 每旬對齊一次,代價是八個賦值。
+         */
+        {
+          const s = get();
+          setRefineRegistry(s.itemRefinements);
+          setBreakthroughRegistry(s.itemBreakthroughs);
+          setGemRegistry(s.itemGems);
+          setLoreRegistry(s.itemLore);
+          setAwakeningRegistry(s.itemAwakenings);
+          setEvolvedRegistry(s.evolvedItems);
+          setWearRegistry(s.itemWear);
+          setAffixRegistry(s.itemAffixes);
+        }
         // 戰役隨機源 — every SIMULATION roll below this line draws from here
         // instead of bare randomness, so the same campaign state resolves the
         // same season twice. That is what lets an all-AI observation run be
