@@ -1190,7 +1190,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '拒亮於渭南', en: 'Hold the Wei' },
         description: "Still hold Chang'an, Anding and Longxi in 240 — refuse battle; the grain will decide it.",
         descriptionZh: "至240年仍據長安、安定、隴西 —— 堅壁拒守,不與交鋒,以待其變。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'anding', 'longxi'], byYear: 240 },
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 240 },
       },
       secondary: [
         {
@@ -3001,7 +3001,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '淮南不失', en: 'Huainan Holds' },
         description: 'Still hold Hefei and Shouchun in 236.',
         descriptionZh: "至236年仍保合肥、壽春 —— 曹休輕進,幾覆全軍。",
-        goal: { kind: 'hold-cities', cityIds: ['hefei', 'shouchun'], byYear: 236 },
+        goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 236 },
       },
     },
     {
@@ -3285,7 +3285,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '關中不搖', en: 'Guanzhong Unshaken' },
         description: "Still hold Chang'an, Anding and Longxi in 249 — the retreat from Xingshi cost dearly, but not the west.",
         descriptionZh: "至249年仍據長安、安定、隴西 —— 興勢之退折兵甚眾,關中卻未曾動搖。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'anding', 'longxi'], byYear: 249 },
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 249 },
       },
       secondary: [
         {
@@ -3567,7 +3567,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '洮西大捷', en: 'The Victory at Taoxi' },
         description: "Still hold Wudu, Yinping and Hanzhong in 264 — Taoxi killed tens of thousands and changed nothing.",
         descriptionZh: "至264年仍據武都、陰平、漢中 —— 洮西破王經,死者數萬,而隴右終不可得。",
-        goal: { kind: 'hold-cities', cityIds: ['wudu', 'yinping', 'hanzhong'], byYear: 264 },
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'wudu'], byYear: 264 },
       },
       secondary: [
         {
