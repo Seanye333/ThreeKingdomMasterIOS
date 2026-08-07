@@ -2935,9 +2935,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '隴右三郡', en: 'The Three Commanderies of Longyou' },
-        description: "Still hold Tianshui, Shangui, Wudu and Yinping in 233 — the gains of the first expedition.",
-        descriptionZh: "至233年仍據天水、上邽、武都、陰平 —— 一出祁山所得,守得住才算數。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui'], byYear: 233 },
+        description: "Still hold Tianshui in 233 — three commanderies revolted to Zhuge Liang in the first expedition; keeping one of them is the test.",
+        descriptionZh: "至233年仍據天水 —— 一出祁山,南安天水安定三郡叛魏應亮;守得住才算數。",
+        goal: { kind: 'hold-cities', cityIds: ['tianshui'], byYear: 233 },
       },
       secondary: [
         {
@@ -3025,9 +3025,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '祁山之道', en: 'The Qishan Road' },
-        description: "Still hold Tianshui, Shangui and Hanzhong in 236 — the road out must stay open.",
-        descriptionZh: "至236年仍據天水、上邽、漢中 —— 出祁山的那條路,得先握在手裡。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui', 'hanzhong'], byYear: 236 },
+        description: "Still hold Tianshui and Hanzhong in 236 — the road out must stay open.",
+        descriptionZh: "至236年仍據天水、漢中 —— 出祁山的那條路,得先握在手裡。",
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'hanzhong'], byYear: 236 },
       },
       secondary: [
         {

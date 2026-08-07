@@ -3355,6 +3355,11 @@ const FORCES_228: Force[] = [
 ];
 
 const CITY_OWNERSHIP_228: Record<string, string> = {
+  // 建興六年春,南安、天水、安定三郡叛魏應亮 —— 天水是那一次真正到手的。
+  // 上邽沒有:郭淮退保上邽,張郃自那裡出兵街亭。這兩座此前都是補位來的,
+  // 而 228 兩張盤的目標正建立在誰握著它們之上,所以明列。
+  tianshui: 'liu-bei',
+  shanggui: 'cao',
   // Wei holds the entire north
   luoyang:   'cao',
   xuchang:   'cao',
@@ -8515,6 +8520,8 @@ export const SCENARIO_207_BAILANG: Scenario = {
 //    springs the trap at Shiting and shatters the Wei army — the wound that kills
 //    Cao Xiu and crowns Lu Xun supreme commander. (228 board, eastern front.) ──
 const CITY_OWNERSHIP_228_SHITING: Record<string, string> = {
+  tianshui: 'liu-bei',
+  shanggui: 'cao',
   ...CITY_OWNERSHIP_228,
   wan: 'cao', // Cao Xiu, gulled by Zhou Fang, has pushed deep into Wu and taken Wan
 };
