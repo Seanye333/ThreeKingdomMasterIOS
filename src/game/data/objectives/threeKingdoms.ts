@@ -636,12 +636,27 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-200-yuan',
       forceId: 'yuan-shao',
       primary: {
-        title: { zh: '河北統一', en: 'Conquer Cao Cao' },
-        description: 'Eliminate the Cao Cao force.',
-        descriptionZh: "消滅曹操勢力。",
-        goal: { kind: 'defeat-force', forceId: 'cao', byYear: 207 },
+        /*
+         * 主次對調(2026-08-06,量測修好之後)。原本主目標是「於207年前消滅曹操」——
+         * 四輪 0 中,而史實上他也沒做到:官渡之後兩年他就死了,再五年河北盡入曹手。
+         * 照本專案的準則(**主目標寫他真正做到的事**),滅曹該是次要。
+         *
+         * 他真正做到的是**四州在手**:冀州鄴、青州臨淄、幽州薊、并州晉陽 ——
+         * 「橫大河之北,合四州之地」正是沮授說給他聽的那句話。這條是守成型:
+         * 開局四座都在他手裡,問題從來不是取,是守得住幾年。
+         */
+        title: { zh: '合四州之地', en: 'Four Provinces Under One Hand' },
+        description: 'Still hold Ye, Linzi, Ji and Jinyang in 205 — "lie across the north of the river and join four provinces."',
+        descriptionZh: '至205年仍據鄴、臨淄、薊、晉陽 —— 沮授說的「橫大河之北,合四州之地」。',
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'linzi', 'ji', 'taiyuan'], byYear: 205 },
       },
       secondary: [
+        {
+          title: { zh: '河北統一', en: 'Conquer Cao Cao' },
+          description: 'Eliminate the Cao Cao force by 207.',
+          descriptionZh: '於207年前消滅曹操 —— 這一件,他沒做到。',
+          goal: { kind: 'defeat-force', forceId: 'cao', byYear: 207 },
+        },
         {
           title: { zh: '渡河而南', en: 'Cross the River' },
           description: 'Take Guandu by 203 — the fortified camp that held him for half a year.',
@@ -717,17 +732,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-200-liubiao',
       forceId: 'liu-biao',
       primary: {
-        title: { zh: '天下之重', en: 'The Weight of the Realm' },
-        description: 'Take Xuchang while the two powers are locked — Liu Xian told him the empire turned on him, and he did nothing.',
-        descriptionZh: '趁兩強相持攻取許昌 —— 劉先說「天下之重,在於將軍」,而他沒有動。',
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 207 },
+        /* 主次對調(2026-08-06):取許昌四輪 0 中,而史實上劉先勸他動、他沒有動。
+           他真正做到的是那安靜的十八年 —— 主目標改成守江漢,取許昌降為次要。 */
+        title: { zh: '保江漢間', en: 'Hold the Han and the River' },
+        description: 'Still hold Xiangyang, Jiangling and Jiangxia in 208 — the eighteen quiet years.',
+        descriptionZh: '至208年仍據襄陽、江陵、江夏 —— 那安靜的十八年,他做到的就是這一件。',
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 208 },
       },
       secondary: [
         {
-          title: { zh: '保江漢間', en: 'Hold the Han and the River' },
-          description: 'Still hold Xiangyang and Jiangling in 208 — the eighteen quiet years.',
-          descriptionZh: '208年時仍據有襄陽與江陵 —— 那安靜的十八年。',
-          goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 208 },
+          title: { zh: '天下之重', en: 'The Weight of the Realm' },
+          description: 'Take Xuchang while the two powers are locked — Liu Xian told him the empire turned on him, and he did nothing.',
+          descriptionZh: '趁兩強相持攻取許昌 —— 劉先說「天下之重,在於將軍」,而他沒有動。',
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 207 },
         },
         {
           title: { zh: '南陽之北', en: 'North of Nanyang' },
@@ -767,17 +784,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-200-mateng',
       forceId: 'ma-teng',
       primary: {
-        title: { zh: '關中十部', en: 'The Ten of Guanzhong' },
-        description: "Take Chang'an and hold it — with the north locked at Guandu, no one is watching the pass.",
-        descriptionZh: '攻取並據守長安 —— 兩強鎖在官渡,關中無人看管。',
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 207 },
+        /* 主次對調(2026-08-06):取長安四輪 0 中,而長安在這張盤上是曹操的(鍾繇鎮之),
+           史實上馬騰也沒去取 —— 他在槐里,受徵而後入朝。改成涼州一統為主。 */
+        title: { zh: '涼州一統', en: 'One Command in Liang' },
+        description: 'Hold Wuwei, Jincheng and Anding by 205 — the Liang country under a single seal.',
+        descriptionZh: '至205年據有武威、金城、安定 —— 涼州只認一個印。',
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 205 },
       },
       secondary: [
         {
-          title: { zh: '涼州一統', en: 'One Command in Liang' },
-          description: 'Hold Wuwei, Jincheng and Anding — the Liang country under a single seal.',
-          descriptionZh: '據有武威、金城、安定 —— 涼州只認一個印。',
-          goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 205 },
+          title: { zh: '關中十部', en: 'The Ten of Guanzhong' },
+          description: "Take Chang'an and hold it — with the north locked at Guandu, no one is watching the pass.",
+          descriptionZh: '攻取並據守長安 —— 兩強鎖在官渡,關中無人看管。',
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 207 },
         },
         {
           title: { zh: '不入京師', en: 'Never Go to Court' },
