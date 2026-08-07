@@ -1523,6 +1523,8 @@ const FORCES_234: Force[] = [
 ];
 
 const CITY_OWNERSHIP_234: Record<string, string> = {
+  tianshui: 'cao',  // 隴右在魏手裡 —— 228 三張盤例外(一出祁山所得,見該盤目標)
+  shanggui: 'cao',  // 同上
   // Wei — most of the realm
   xuchang:   'cao',
   luoyang:   'cao',
@@ -1698,6 +1700,8 @@ const FORCES_220: Force[] = [
 ];
 
 const CITY_OWNERSHIP_220: Record<string, string> = {
+  tianshui: 'cao',  // 隴右在魏手裡 —— 228 三張盤例外(一出祁山所得,見該盤目標)
+  shanggui: 'cao',  // 同上
   // Wei — sprawling northern + central + Liang empire
   xuchang:   'cao',
   luoyang:   'cao',
@@ -2297,6 +2301,8 @@ const FORCES_219: Force[] = [
 ];
 
 const CITY_OWNERSHIP_219: Record<string, string> = {
+  chencang: 'cao',  // 陳倉在關中,蜀漢從來沒有過
+  sanguan: 'cao',  // 散關同上
   // Cao Cao consolidated the north
   xuchang: 'cao', luoyang: 'cao', changan: 'cao', ye: 'cao',
   chenliu: 'cao', wancheng: 'cao', runan: 'cao', xinye: 'cao',
@@ -2422,6 +2428,8 @@ const FORCES_222: Force[] = [
 ];
 
 const CITY_OWNERSHIP_222: Record<string, string> = {
+  chencang: 'cao',  // 陳倉在關中,蜀漢從來沒有過
+  sanguan: 'cao',  // 散關同上
   // Wei holds the north and Jingzhou's north
   luoyang: 'cao', xuchang: 'cao', changan: 'cao', ye: 'cao',
   chenliu: 'cao', wancheng: 'cao', runan: 'cao', xinye: 'cao',
@@ -2536,6 +2544,8 @@ const FORCES_225: Force[] = [
 ];
 
 const CITY_OWNERSHIP_225: Record<string, string> = {
+  chencang: 'cao',  // 陳倉在關中,蜀漢從來沒有過
+  sanguan: 'cao',  // 散關同上
   // Wei holds the north
   luoyang: 'cao', xuchang: 'cao', changan: 'cao', ye: 'cao',
   chenliu: 'cao', wancheng: 'cao', runan: 'cao', xinye: 'cao',
@@ -8234,6 +8244,8 @@ export const SCENARIO_272_XILING: Scenario = {
 //    of Yan. Cao Rui still reigns; he sends Sima Yi four thousand li to erase
 //    the upstart realm at Xiangping. (New 'yan' force on the 234 board.) ──
 const CITY_OWNERSHIP_238: Record<string, string> = {
+  tianshui: 'cao',  // 隴右在魏手裡 —— 228 三張盤例外(一出祁山所得,見該盤目標)
+  shanggui: 'cao',  // 同上
   ...CITY_OWNERSHIP_234,
   liaodong: 'yan',
   xiangping: 'yan',
@@ -8906,6 +8918,8 @@ const ST_POSTURE: Record<string, ForcePosture> = {
 };
 
 const CITY_OWNERSHIP_WS_SEVEN: Record<string, string> = {
+  huguan: 'zhao',  // 壺關是上黨之門,趙的
+  qiao: 'chu',  // 譙在沛地,楚的
   // 秦 — Guanzhong, the Long corridor, Hanzhong and the conquered Ba-Shu.
   changan: 'qin', mei: 'qin', chencang: 'qin', tongguan: 'qin', wuguan: 'qin',
   sanguan: 'qin', xiaoguan: 'qin', baishuiguan: 'qin', jianmen: 'qin', jieting: 'qin',
@@ -8938,7 +8952,7 @@ const CITY_OWNERSHIP_WS_SEVEN: Record<string, string> = {
   wuchang: 'chu', xiling: 'chu', yiling: 'chu', xiaoting: 'chu', maicheng: 'chu',
   gongan: 'chu', bowang: 'chu', guangling: 'chu', nanhai: 'chu', hepu: 'chu',
   jiaozhi: 'chu', guilin: 'chu', cangwu: 'chu', jiuzhen: 'chu', rinan: 'chu',
-  zhuyai: 'chu', linhai: 'chu', 'yi-county': 'chu', chibi: 'chu', changban: 'chu',
+  zhuyai: 'chu', linhai: 'chu', 'yi-county': 'yan', chibi: 'chu', changban: 'chu',
 };
 
 const ASSIGN_WS_SEVEN: Record<string, OfficerAssignment> = {
@@ -9117,6 +9131,7 @@ const FORCES_WS_YUEYI: Force[] = FORCES_WS_SEVEN.map((f) =>
   f.id === 'qi' ? { ...f, rulerOfficerId: 'hist-tian-fazhang', capitalCityId: 'langya' } : f,
 );
 const CITY_OWNERSHIP_WS_YUEYI: Record<string, string> = {
+  qiao: 'chu',  // 譙在沛地,楚的
   ...CITY_OWNERSHIP_WS_SEVEN,
   linzi: 'yan', pengcheng: 'yan', xiapi: 'yan', xiaopei: 'yan', // Yan overruns Qi
   // Qi clings to two towns: Ju (langya) and Jimo (beihai)
@@ -9692,6 +9707,7 @@ const FORCES_WS_TIANDAN: Force[] = FORCES_WS_SEVEN.map((f) => {
   return f;
 });
 const CITY_OWNERSHIP_WS_TIANDAN: Record<string, string> = {
+  qiao: 'chu',  // 譙在沛地,楚的
   ...CITY_OWNERSHIP_WS_SEVEN,
   linzi: 'yan', pengcheng: 'yan', xiapi: 'yan', xiaopei: 'yan', // Yan still holds conquered Qi
 };
@@ -9764,6 +9780,8 @@ const FORCES_WS_WEIWEN: Force[] = FORCES_WS_SEVEN.map(WS_PRE_KINGSHIP).map((f) =
   return f;
 });
 const CITY_OWNERSHIP_WS_WEIWEN: Record<string, string> = {
+  'yi-county': 'yan',  // 易水是燕的地(荊軻「風蕭蕭兮易水寒」),補位卻把它給了全圖最南的楚
+  qiao: 'chu',  // 譙在沛地,楚的
   ...CITY_OWNERSHIP_WS_SEVEN,
   ye: 'wei',     // Ye is Wei's, where Ximen Bao tames the Zhang and its witches
   boling: 'wei', // Yue Yang has swallowed Zhongshan
@@ -9902,6 +9920,7 @@ const FORCES_CHUHAN: Force[] = [
   { id: 'jiujiang', name: { en: 'Jiujiang',    zh: '九江'   }, rulerOfficerId: 'hist-ying-bu',   capitalCityId: 'shouchun',  color: '#9a5a9a', imperialRank: 'king', isPlayer: false },
 ];
 const CITY_OWNERSHIP_CHUHAN: Record<string, string> = {
+  huguan: 'zhao',  // 壺關是上黨之門,趙的
   // 漢 — Liu Bang, banished to Hanzhong and the Ba-Shu basin
   hanzhong: 'han', yangping: 'han', xincheng: 'han', shangyong: 'han', wudu: 'han',
   chengdu: 'han', jiangzhou: 'han', yongan: 'han', zitong: 'han', fucheng: 'han',
@@ -9934,7 +9953,7 @@ const CITY_OWNERSHIP_CHUHAN: Record<string, string> = {
   changsha: 'chu', lingling: 'chu', wuling: 'chu', guiyang: 'chu', baqiu: 'chu',
   wuchang: 'chu', luling: 'chu', nanhai: 'chu', hepu: 'chu', jiaozhi: 'chu',
   guilin: 'chu', cangwu: 'chu', jiuzhen: 'chu', rinan: 'chu', zhuyai: 'chu',
-  linhai: 'chu', 'yi-county': 'chu', chibi: 'chu', changban: 'chu',
+  linhai: 'chu', 'yi-county': 'zhao', chibi: 'chu', changban: 'chu',
 };
 const ASSIGN_CHUHAN: Record<string, OfficerAssignment> = {
   // 西楚 — the Hegemon-King and his marshals
