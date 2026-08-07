@@ -4791,8 +4791,8 @@ export const SCENARIO_280_JIN_UNITE: Scenario = {
   // 王濬樓船下益州,金陵王氣黯然收
   cities: buildInitialCities(CITY_OWNERSHIP_280,
     {
-      sima: { troops: 1.35, food: 1.30, gold: 1.25, defense: 8, loyalty: 12 },
-      sun:  { troops: 0.75, food: 0.80, gold: 0.75, defense: 0, loyalty: -28 },
+      sima: { troops: 1.50, food: 1.35, gold: 1.25, defense: 8,   loyalty: 14 },
+      sun:  { troops: 0.60, food: 0.75, gold: 0.70, defense: -10, loyalty: -35 },
     }),
   forces: FORCES_280,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_280, DEAD_BY_280, 280),

@@ -3136,17 +3136,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-249-sima',
       forceId: 'sima',
       primary: {
-        title: { zh: '閉城奪權', en: 'Shut the Gates, Take the Court' },
-        description: 'Destroy the Cao Shuang force by 253 — ten years of feigned illness, one morning to act.',
-        descriptionZh: "於253年前翦滅曹爽 —— 詐病十年,發於一朝。",
-        goal: { kind: 'defeat-force', forceId: 'cao', byYear: 253 },
+        title: { zh: '據武庫,屯浮橋', en: 'The Armoury and the Bridge' },
+        description: "Still hold Luoyang, Xuchang and Ye in 253 — what one morning seized, ten years must keep.",
+        descriptionZh: "至253年仍據洛陽、許昌、鄴 —— 詐病十年發於一朝,而奪來的東西要守得住才算數。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'ye'], byYear: 253 },
       },
       secondary: [
         {
-          title: { zh: '洛陽在握', en: 'Hold Luoyang' },
-          description: 'Still hold Luoyang in 255.',
-          descriptionZh: "至255年仍據洛陽 —— 據武庫,屯洛水浮橋。",
-          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 255 },
+          title: { zh: '翦滅曹爽', en: 'End the Cao Shuang Faction' },
+          description: 'Destroy the Cao Shuang force by 253.',
+          descriptionZh: "於253年前翦滅曹爽 —— 史書上他三日而族滅,盤上他還握著半個天下。",
+          goal: { kind: 'defeat-force', forceId: 'cao', byYear: 253 },
         },
       ],
     },
@@ -3155,9 +3155,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '挾帝幸許', en: 'Take the Emperor to Xuchang' },
-        description: 'Destroy the Sima faction by 253 — Huan Fan begged you to fight; you went home instead.',
-        descriptionZh: "於253年前翦滅司馬氏 —— 桓範勸你挾天子走許昌,你選擇了回家做富家翁。",
-        goal: { kind: 'defeat-force', forceId: 'sima', byYear: 253 },
+        description: "Take Xuchang by 253 — Huan Fan begged you to go there and call up the realm; you went home instead.",
+        descriptionZh: "於253年前取許昌 —— 桓範勸你挾天子走許昌、召天下兵,你選擇了回家做富家翁。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 253 },
       },
       secondary: [
         {
@@ -3550,17 +3550,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-265-jin',
       forceId: 'sima',
       primary: {
-        title: { zh: '混一宇內', en: 'One Realm Under Jin' },
-        description: 'Bring all under Jin — sixty years of division end here.',
-        descriptionZh: "混一天下 —— 六十年分裂,當終於此。",
-        goal: { kind: 'unify-realm' },
+        title: { zh: '樓船下益州', en: 'The Tower Ships Sail' },
+        description: 'Destroy the Wu force by 285 — sixty years of division end when the last of them does.',
+        descriptionZh: "於285年前滅吳 —— 王濬樓船下益州,金陵王氣黯然收。六十年分裂,終於此。",
+        goal: { kind: 'defeat-force', forceId: 'sun', byYear: 285 },
       },
       secondary: [
         {
-          title: { zh: '樓船下益州', en: 'The Tower Ships Sail' },
-          description: 'Destroy the Wu force by 285.',
-          descriptionZh: "於285年前滅吳 —— 王濬樓船下益州,金陵王氣黯然收。",
-          goal: { kind: 'defeat-force', forceId: 'sun', byYear: 285 },
+          title: { zh: '混一宇內', en: 'One Realm Under Jin' },
+          description: 'Bring all under Jin.',
+          descriptionZh: "混一天下 —— 滅吳只是收官,四夷與遼東還在外頭。",
+          goal: { kind: 'unify-realm' },
         },
       ],
     },
@@ -3568,12 +3568,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-265-wu',
       forceId: 'sun',
       primary: {
-        title: { zh: '江東不亡', en: 'Wu Shall Not Fall' },
-        description: 'Survive to 290 — history gives you until 280.',
-        descriptionZh: "存續至290年 —— 史書只給了你到280年。",
-        goal: { kind: 'survive-until', year: 290 },
+        title: { zh: '苟延十五年', en: 'Fifteen Years More' },
+        description: 'Survive to 280 — that is exactly how long history gave you.',
+        descriptionZh: "存續至280年 —— 史書給你的,不多不少就是這十五年。",
+        goal: { kind: 'survive-until', year: 280 },
       },
       secondary: [
+        {
+          title: { zh: '江東不亡', en: 'Wu Shall Not Fall' },
+          description: 'Survive to 290 — ten years longer than you were given.',
+          descriptionZh: "存續至290年 —— 比史書多給你的那十年。",
+          goal: { kind: 'survive-until', year: 290 },
+        },
         {
           title: { zh: '固守上游', en: 'Hold the Upper River' },
           description: 'Still hold Jiangling and Xiling in 285 — Wu dies when the upper river is lost.',
