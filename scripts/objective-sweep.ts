@@ -51,8 +51,17 @@ type Goal = Parameters<typeof evaluateGoal>[0];
 
 const RUNS = Number(process.argv[2] ?? 3);
 const PREFIX = process.argv[3] ?? '';
-/** 一年三十六旬。窗口再長也就跑到這裡 —— 再長是體檢不是掃描。 */
-const MAX_TURNS = 620;
+/**
+ * 一年三十六旬。窗口再長也就跑到這裡 —— 再長是體檢不是掃描。
+ *
+ * **這個數字自己咬過我一次。** 原本是 620,而戰國/楚漢/隋唐三線的盤一律
+ * `startDate.year = 178`(它們借三國的曆法軸),期限卻寫到 200–208 ——
+ * 要跑滿得 (208-178+1)×36 = 1116 旬。620 只走到 195 年,於是那三線**所有**
+ * 守成目標(「函谷不開」「邯鄲三年」…)一律 0,而它們一條都沒死:
+ * 是掃描沒跑到判定的那一年。三國線同樣中招的有 scn-265(期限 290)。
+ * 判準:輸出裡 `旬` 剛好等於這個上限的盤,結果一律不可信。
+ */
+const MAX_TURNS = 1200;
 
 /** 這條目標最晚要在哪一年之前判完。沒有期限的(如 recruit-officer)算 0。 */
 function deadlineOf(goal: Goal): number {

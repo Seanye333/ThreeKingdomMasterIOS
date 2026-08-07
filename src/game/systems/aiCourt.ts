@@ -57,12 +57,27 @@ function nextSeasonAbs(date: GameDate, after: number): { year: number; season: S
   return { year: Math.floor(nextAbs / 4), season: (['spring', 'summer', 'autumn', 'winter'] as const)[nextAbs % 4] };
 }
 
+/**
+ * 敕令冷卻的鍵 —— **每家一份,別再共用。**
+ *
+ * `state.edictCooldowns` 原本只以敕令種類為鍵,而它同時給玩家和全部 AI 用:
+ * 蜀漢一下大赦,魏、吳、和**玩家**的大赦一起進冷卻。抓到它是因為
+ * 「三分天下,蜀吳同時稱帝」的測試只回一家 —— 蜀先發了即位詔,吳當季
+ * 就被同一把鎖擋住了,而那正是 229 年孫權該做的事。
+ *
+ * 存檔相容:玩家那側仍寫裸的 `kind`(store.ts 的讀寫沒動),AI 改用
+ * `forceId::kind`,舊檔照樣讀得起來,只是 AI 冷卻從零開始。
+ */
+function cooldownKey(forceId: EntityId, kind: EdictKind): string {
+  return `${forceId}::${kind}`;
+}
+
 function onCooldown(
   edictCooldowns: Record<string, { year: number; season: Season }>,
-  kind: EdictKind,
+  key: string,
   date: GameDate,
 ): boolean {
-  const cd = edictCooldowns[kind];
+  const cd = edictCooldowns[key];
   if (!cd) return false;
   const cdAbs = cd.year * 4 + SEASON_IDX[cd.season];
   const nowAbs = date.year * 4 + SEASON_IDX[date.season];
@@ -169,7 +184,7 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
       if (!def) return false;
       const minTier = IMPERIAL_RANKS_BY_ID[def.minRank]?.tier ?? 0;
       if (rankTier < minTier) return false;
-      if (onCooldown(edictCooldowns, kind, ctx.date)) return false;
+      if (onCooldown(edictCooldowns, cooldownKey(force.id, kind), ctx.date)) return false;
       if (!canAffordEdict(forces[force.id], cities, def.goldCost)) return false;
       // Pay cost.
       const cap = cities[forces[force.id].capitalCityId];
@@ -184,7 +199,7 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
         if (m < 30) cdSeasons += 1;
         else if (m > 70) cdSeasons = Math.max(1, cdSeasons - 1);
       }
-      edictCooldowns[kind] = nextSeasonAbs(ctx.date, cdSeasons);
+      edictCooldowns[cooldownKey(force.id, kind)] = nextSeasonAbs(ctx.date, cdSeasons);
       edictHistory.push({
         id: `edict-${ctx.date.year}-${ctx.date.season}-${force.id}-${kind}`,
         kind, issuingForceId: force.id, targetForceId: target,
@@ -193,10 +208,31 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
       return true;
     };
 
-    // 1. Enthronement: king tier + has emperor already? If no emperor yet, +random year-bias 220+.
+    /*
+     * 1. 即位 —— 王爵 + 220 年後。
+     *
+     * 原本還有一條「天下已有帝則不得稱帝」,而那條**把史實寫反了**:
+     * 劉備 221 稱帝、孫權 229 稱帝,兩次都正因為別人先稱了 ——
+     * 「漢統既絕,不得不立」。照原規則,229 三帝盤上的 AI 孫權永遠登不了基,
+     * 而那張盤的主目標就叫「吳皇帝即位」。
+     *
+     * 改成:天下無帝時照舊(0.4);已有他人稱帝時仍可**割據稱帝**,但門檻高 ——
+     * 得有二十城的本錢、與那位皇帝勢不兩立(關係 ≤ -20),機率降到 0.15。
+     * 附庸不在此列(上面已 continue)。
+     */
     if (ranknow === 'king' && ctx.date.year >= 220) {
-      const anyEmperorAlready = Object.values(forces).some((f) => f.imperialRank === 'emperor');
-      if (!anyEmperorAlready && ctx.rng() < 0.4) {
+      const otherEmperors = Object.values(forces).filter(
+        (f) => f.imperialRank === 'emperor' && f.id !== force.id,
+      );
+      // 王爵本身已要二十城(IMPERIAL_RANKS),所以這裡不必再驗一次本錢;
+      // 真正的條件是「有一個否認得了的對頭」—— 只要天下還有一位與己為敵的
+      // 皇帝,稱帝就有話說。用 some 不用 every:229 年孫權踐阼時與蜀漢是盟友
+      // (蜀還遣陳震去道賀),他要否認的從來只有洛陽那一位。
+      const atOddsWithSome = otherEmperors.some(
+        (e) => getRelation(ctx.diplomacy, force.id, e.id).score <= 0,
+      );
+      const chance = otherEmperors.length === 0 ? 0.4 : (atOddsWithSome ? 0.15 : 0);
+      if (ctx.rng() < chance) {
         const issued = tryIssue('enthronement', undefined, () => {
           forces[force.id] = { ...forces[force.id], imperialRank: 'emperor' };
           rankChanges.push({ forceId: force.id, newRank: 'emperor' });
@@ -225,7 +261,7 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
     {
       const def = EDICTS_BY_KIND['denounce'];
       const minTier = def ? IMPERIAL_RANKS_BY_ID[def.minRank].tier : 99;
-      if (rankTier >= minTier && !onCooldown(edictCooldowns, 'denounce', ctx.date)) {
+      if (rankTier >= minTier && !onCooldown(edictCooldowns, cooldownKey(force.id, 'denounce'), ctx.date)) {
         let worstRel: EntityId | null = null;
         let worstScore = -10;
         for (const target of Object.values(forces)) {

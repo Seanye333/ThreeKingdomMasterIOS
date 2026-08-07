@@ -72,8 +72,31 @@ export function planAIAppointments(ctx: AIAppointmentsContext): AIAppointmentsOu
       appointments.filter((a) => a.forceId === force.id).map((a) => a.officerId),
     );
 
-    // Civic title pass.
-    for (const titleDef of CIVIC_TITLES as CivicTitle[]) {
+    /*
+     * Civic title pass.
+     *
+     * **朝官先於太守 —— 這個順序是修過的 bug,別調回去。**
+     *
+     * `prefect` 在 CIVIC_TITLES 裡排第一,而它是「一城一個」;於是原本的順序
+     * 是先把全部城的太守派滿,再輪到丞相/軍師/尚書令。`heldByOfficer` 又規定
+     * 一人一職 —— 結果**城愈多的勢力,朝廷愈空**:229 三帝盤跑六十旬,
+     * 魏(60 城)與吳(29 城)的非太守職位是**零**,六十位政治最高的人
+     * 全去當太守了;蜀漢只有 20 城,反而湊得出七個朝官。
+     *
+     * 這不只是難看。丞相是進「公」爵的硬條件(canPromoteToRank 的
+     * requiresChancellor),公才能進王,王才能稱帝 —— 於是 AI 永遠卡在侯,
+     * 而「孫權稱帝」這類主目標從機制上就達不到。諸葛亮該是丞相,
+     * 不是某座城的太守。
+     */
+    // 丞相又排在朝官之前 —— 同樣的道理再走一層:軍師在表上排在丞相之上,
+    // 於是諸葛亮先被派為軍師,蜀漢就再也湊不出第二個白金政治去拜丞相。
+    // 史書上諸葛亮是丞相,軍師是他兼的。
+    const civicOrder = [
+      ...(CIVIC_TITLES as CivicTitle[]).filter((t) => t.id === 'chancellor'),
+      ...(CIVIC_TITLES as CivicTitle[]).filter((t) => t.id !== 'prefect' && t.id !== 'chancellor'),
+      ...(CIVIC_TITLES as CivicTitle[]).filter((t) => t.id === 'prefect'),
+    ];
+    for (const titleDef of civicOrder) {
       if (titleDef.id === 'prefect') {
         // One prefect per owned city.
         const ownCities = Object.values(ctx.cities).filter((c) => c.ownerForceId === force.id);
