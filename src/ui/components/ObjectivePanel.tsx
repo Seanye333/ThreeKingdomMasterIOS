@@ -5,6 +5,13 @@ import { findChallenge } from '../../game/data/challenges';
 import { useGameStore } from '../../game/state/store';
 import { Name } from './Name';
 import { useT } from '../i18n';
+import type { ObjectiveGoal } from '../../game/types';
+
+/** 這條目標的期限年(沒有期限的回 null)。goal 是聯合型別,只有部分成員帶年份。 */
+function deadlineOf(goal: ObjectiveGoal): number | null {
+  const g = goal as { byYear?: number; year?: number };
+  return g.byYear ?? g.year ?? null;
+}
 
 export function ObjectivePanel() {
   const t = useT();
@@ -77,6 +84,8 @@ export function ObjectivePanel() {
 
   if (!objective) return null;
   const primaryRes = evaluateGoal(objective.primary.goal, ctx);
+  const secondary = objective.secondary ?? [];
+  const primaryDeadline = deadlineOf(objective.primary.goal);
 
   return (
     <div
@@ -99,11 +108,50 @@ export function ObjectivePanel() {
       <div style={{ fontSize: '0.95rem', color: primaryRes.status === 'success' ? '#7ed68a' : primaryRes.status === 'failure' ? '#b8442e' : '#e6c473' }}>
         <Name pair={objective.primary.title} />
       </div>
-      <div style={{ fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace' }}>
-        {primaryRes.status === 'success' && t('✓ 達成', '✓ Achieved')}
-        {primaryRes.status === 'failure' && t('✗ 失敗', '✗ Failed')}
-        {primaryRes.status === 'pending' && (primaryRes.progress ?? t('進行中…', 'In progress…'))}
+      <div style={{ fontSize: '0.7rem', fontFamily: 'ui-monospace, monospace', display: 'flex', justifyContent: 'space-between', gap: '0.6rem' }}>
+        <span>
+          {primaryRes.status === 'success' && t('✓ 達成', '✓ Achieved')}
+          {primaryRes.status === 'failure' && t('✗ 失敗', '✗ Failed')}
+          {primaryRes.status === 'pending' && (primaryRes.progress ?? t('進行中…', 'In progress…'))}
+        </span>
+        {primaryRes.status === 'pending' && primaryDeadline !== null && (
+          <span style={{ color: primaryDeadline - year <= 1 ? '#c0504a' : '#7a8893' }}>
+            {t(`期限 ${primaryDeadline} · 餘 ${Math.max(0, primaryDeadline - year)} 年`,
+              `by ${primaryDeadline} · ${Math.max(0, primaryDeadline - year)}y left`)}
+          </span>
+        )}
       </div>
+      {/* 目標的來由 —— 每一條主目標都寫了它在史書上是什麼事,不顯示等於沒寫。 */}
+      <div style={{ fontSize: '0.68rem', color: '#7a8893', lineHeight: 1.5 }}>
+        {t(objective.primary.descriptionZh ?? objective.primary.description, objective.primary.description)}
+      </div>
+      {/*
+       * 次要目標 —— 本專案的準則是「主目標寫他真正做到的事,次要寫他沒做到的」,
+       * 於是次要那一欄放的正是名場面(取長安、盡有荊州、翦滅曹爽…)。
+       * 面板此前只畫主目標,那些全都沒有人看得到。
+       */}
+      {secondary.length > 0 && (
+        <div style={{ borderTop: '1px solid #1e2833', marginTop: '0.25rem', paddingTop: '0.3rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+          <div style={{ fontSize: '0.62rem', letterSpacing: '0.06rem', color: '#5e6a75', textTransform: 'uppercase' }}>
+            {t('次要', 'Also')}
+          </div>
+          {secondary.map((g, i) => {
+            const r = evaluateGoal(g.goal, ctx);
+            const by = deadlineOf(g.goal);
+            return (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.6rem', fontSize: '0.72rem' }}>
+                <span style={{ color: r.status === 'success' ? '#7ed68a' : r.status === 'failure' ? '#8a5548' : '#9aa6b0' }}>
+                  {r.status === 'success' ? '✓ ' : r.status === 'failure' ? '✗ ' : '· '}
+                  <Name pair={g.title} />
+                </span>
+                <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: '0.66rem', color: '#5e6a75', whiteSpace: 'nowrap' }}>
+                  {r.status === 'pending' ? (r.progress ?? (by !== null ? `→ ${by}` : '')) : ''}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

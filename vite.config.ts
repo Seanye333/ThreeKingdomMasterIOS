@@ -1,7 +1,7 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import { readdir, rm, stat } from 'node:fs/promises'
+import { copyFile, mkdir, readdir, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 
 // The duel folder holds many Mixamo packs (~259MB) kept on disk for future use,
@@ -10,6 +10,48 @@ import { join } from 'node:path'
 // uses the Pro-Magic and Gestures packs. This prunes the rest from the BUILD
 // OUTPUT (dist only — source files are never touched) so iOS/Vercel ship a
 // fraction of the 259MB. Keep these in sync with duelAssets.ts + debateAssets.ts.
+/*
+ * public/ 自己複製 —— **因為 Vite 會把 5GB 的 Blender 工作檔也搬進 dist**。
+ *
+ * `public/models/duel/_src` 是建模的來源檔(.blend、.blend1 自動備份、
+ * MakeHuman 素材),git 早已 ignore,而 Vite 的 publicDir 是整包複製,
+ * 攔不住。下面的 prune 外掛確實會把它從 dist 刪掉 —— 但那是**複製完之後**。
+ * 於是每次 build 都要先寫 5GB 再刪 5GB;磁碟只剩 3.8GB 時就直接 ENOSPC,
+ * build 掛在 `prepare-out-dir`,而 dist 只留半套 —— e2e 整批紅,
+ * 錯誤訊息卻是「找不到『下一步:選擇勢力』」,看不出跟磁碟有關。
+ *
+ * 改成 `build.copyPublicDir: false` + 自己複製,跳過 EXCLUDE。
+ * 順帶:public 不含 _src 只有 625MB,build 因此快得多。
+ */
+const PUBLIC_EXCLUDE = [join('models', 'duel', '_src')]
+
+function copyPublicExcept(): Plugin {
+  return {
+    name: 'copy-public-except-sources',
+    apply: 'build',
+    async writeBundle() {
+      const outDir = 'dist'
+      let copied = 0
+      const walk = async (rel: string) => {
+        if (PUBLIC_EXCLUDE.includes(rel)) return
+        const from = join('public', rel)
+        let entries
+        try { entries = await readdir(from, { withFileTypes: true }) } catch { return }
+        await mkdir(join(outDir, rel), { recursive: true })
+        for (const e of entries) {
+          const childRel = rel ? join(rel, e.name) : e.name
+          if (e.isDirectory()) { await walk(childRel); continue }
+          if (PUBLIC_EXCLUDE.includes(childRel)) continue
+          await copyFile(join('public', childRel), join(outDir, childRel))
+          copied++
+        }
+      }
+      await walk('')
+      console.log(`\n[copy-public] ${copied} files (skipped ${PUBLIC_EXCLUDE.join(', ')})`)
+    },
+  }
+}
+
 function pruneUnusedDuelPacks(): Plugin {
   // Keep in sync with duelAssets.ts + debateAssets.ts. The duel uses Sword/Great
   // + the Axe pack (斧 class & the shared 挑釁/突刺/連擊/缴械 clips) + the Longbow
@@ -73,8 +115,11 @@ export default defineConfig({
   // GitHub Pages serves from /<repo>/ — set only by the deploy workflow so
   // local dev, preview and the E2E webServer keep plain '/'.
   base: process.env.GHPAGES ? '/three-kingdom-masters/' : '/',
+  // public/ 由 copyPublicExcept() 自己搬 —— 見那個外掛的註解。
+  build: { copyPublicDir: false },
   plugins: [
     react(),
+    copyPublicExcept(),
     pruneUnusedDuelPacks(),
     // PWA — installable on phone home screens (fullscreen, offline-capable)
     // and as a desktop app window; the browser experience is unchanged.
