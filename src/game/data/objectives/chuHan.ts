@@ -43,11 +43,19 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       id: 'obj-chdz-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '楚雖三戶', en: 'Though Chu Has But Three Households' },
-        description: "Take Pengcheng and Chang'an by 196 — Xiang Liang raises the old Chu banner in Kuaiji.",
-        descriptionZh: "於196年前取彭城、長安 —— 項梁起於會稽,立楚後以從民望。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'changan'], byYear: 196 },
+        title: { zh: '江東子弟八千人', en: 'Eight Thousand Sons of the East' },
+        description: "Still hold Pengcheng in 192 — Xiang Liang crossed the river with eight thousand; Xianyang is four years away.",
+        descriptionZh: "至192年仍據彭城 —— 項梁渡江時只有八千人;咸陽是四年後的事。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng'], byYear: 192 },
       },
+      secondary: [
+        {
+          title: { zh: '楚雖三戶', en: 'Though Chu Has But Three Households' },
+          description: "Take Pengcheng and Chang'an by 196 — Xiang Liang raises the old Chu banner in Kuaiji.",
+          descriptionZh: "於196年前取彭城、長安 —— 項梁起於會稽,立楚後以從民望。",
+          goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'changan'], byYear: 196 },
+        },
+      ],
     },
     {
       id: 'obj-chdz-qi',
@@ -67,12 +75,18 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       id: 'obj-chjl-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '破釜沉舟', en: 'Break the Cauldrons, Sink the Boats' },
-        description: 'Take Ye by 192 — three days of rations, no way back across the river.',
-        descriptionZh: "於192年前攻取鉅鹿(鄴) —— 皆沉船,破釜甑,持三日糧,以示士卒必死。",
-        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 192 },
+        title: { zh: '破釜沉舟', en: 'Break the Cauldrons' },
+        description: "Destroy the Qin force by 196 — sink the boats, smash the pots, carry three days' rations. Julu is Zhao's city; what you break there is Qin.",
+        descriptionZh: "於196年前擊滅秦 —— 沉船破釜,持三日糧。鉅鹿是趙的城,你在那裡打碎的是秦。",
+        goal: { kind: 'defeat-force', forceId: 'qin', byYear: 196 },
       },
       secondary: [
+        {
+          title: { zh: '破釜沉舟', en: 'Break the Cauldrons, Sink the Boats' },
+          description: 'Take Ye by 192 — three days of rations, no way back across the river.',
+          descriptionZh: "於192年前攻取鉅鹿(鄴) —— 皆沉船,破釜甑,持三日糧,以示士卒必死。",
+          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 192 },
+        },
         {
           title: { zh: '諸侯膝行', en: 'The Lords Came in on Their Knees' },
           description: 'Destroy the Qin force by 198.',
@@ -85,12 +99,18 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       id: 'obj-chjl-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '章邯不降', en: 'Zhang Han Does Not Surrender' },
-        description: "Still hold Chang'an and Luoyang in 198 — the last army Qin had, and a court that would not back it.",
-        descriptionZh: "至198年仍保長安、洛陽 —— 秦最後一支軍隊,和一個不肯支持它的朝廷。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 198 },
+        title: { zh: '關中未失', en: 'Guanzhong Still Stands' },
+        description: "Still hold Chang'an, Tongguan and Hanguguan in 192 — Zhang Han surrendered at Yin Ruins; before that, the passes held.",
+        descriptionZh: "至192年仍據長安、潼關、函谷關 —— 章邯降於殷墟是後來的事;在那之前,關是關得住的。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanguguan'], byYear: 192 },
       },
       secondary: [
+        {
+          title: { zh: '章邯不降', en: 'Zhang Han Does Not Surrender' },
+          description: "Still hold Chang'an and Luoyang in 198 — the last army Qin had, and a court that would not back it.",
+          descriptionZh: "至198年仍保長安、洛陽 —— 秦最後一支軍隊,和一個不肯支持它的朝廷。",
+          goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 198 },
+        },
         {
           title: { zh: '先破鉅鹿', en: 'Take Julu First' },
           description: 'Take Ye by 192.',
@@ -114,10 +134,18 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '魏地復國', en: 'Wei Restored' },
-        description: 'Hold Puyang and take Luoyang by 196.',
-        descriptionZh: "於196年前守濮陽並取洛陽 —— 魏豹得一城而稱王,總要再取一城。",
-        goal: { kind: 'hold-cities', cityIds: ['puyang', 'luoyang'], byYear: 196 },
+        description: "Still hold Puyang and Chenliu in 196 — Wei Bao got his ancestors' land back; Luoyang was never part of it.",
+        descriptionZh: "至196年仍據濮陽、陳留 —— 魏豹復得魏地;洛陽從來不在其中。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'chenliu'], byYear: 196 },
       },
+      secondary: [
+        {
+          title: { zh: '魏地復國', en: 'Wei Restored' },
+          description: 'Hold Puyang and take Luoyang by 196.',
+          descriptionZh: "於196年前守濮陽並取洛陽 —— 魏豹得一城而稱王,總要再取一城。",
+          goal: { kind: 'hold-cities', cityIds: ['puyang', 'luoyang'], byYear: 196 },
+        },
+      ],
     },
     {
       id: 'obj-chjl-qi',
@@ -155,12 +183,18 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       id: 'obj-chch-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '力拔山兮', en: 'My Strength Uprooted Mountains' },
-        description: 'Destroy the Han force by 198 — you win every battle; that has never been the problem.',
-        descriptionZh: "於198年前擊滅漢 —— 你每戰必勝,問題從來不在戰場上。",
-        goal: { kind: 'defeat-force', forceId: 'han', byYear: 198 },
+        title: { zh: '西楚霸王', en: 'Hegemon-King of Western Chu' },
+        description: "Still hold Pengcheng, Xuchang, Chenliu and Wancheng in 196 — nine commanderies of Western Chu, and eighteen kings enfeoffed by your word.",
+        descriptionZh: "至196年仍據彭城、許昌、陳留、宛城 —— 西楚九郡,十八諸侯出於你一言。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xuchang', 'chenliu', 'wancheng'], byYear: 196 },
       },
       secondary: [
+        {
+          title: { zh: '力拔山兮', en: 'My Strength Uprooted Mountains' },
+          description: 'Destroy the Han force by 198 — you win every battle; that has never been the problem.',
+          descriptionZh: "於198年前擊滅漢 —— 你每戰必勝,問題從來不在戰場上。",
+          goal: { kind: 'defeat-force', forceId: 'han', byYear: 198 },
+        },
         {
           title: { zh: '守成皋滎陽', en: 'Hold the Chenggao Line' },
           description: 'Still hold Guandu and Hulao in 196.',
@@ -173,11 +207,19 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       id: 'obj-chch-yong',
       forceId: 'yong',
       primary: {
-        title: { zh: '三秦拒漢', en: 'The Three Qin Hold the Passes' },
-        description: "Still hold Chang'an and Chencang in 194 — you were Qin's last general; hold what Xiang Yu gave you.",
-        descriptionZh: "至194年仍保長安、陳倉 —— 你是秦最後的大將,守住項羽分給你的地方。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang'], byYear: 194 },
+        title: { zh: '廢丘死守', en: 'Feiqiu Holds' },
+        description: "Still hold Chang'an in 192 — the other two of the Three Qin folded in weeks; you held out ten months.",
+        descriptionZh: "至192年仍據長安 —— 三秦另外兩家數週而降,你守了十個月。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 192 },
       },
+      secondary: [
+        {
+          title: { zh: '三秦拒漢', en: 'The Three Qin Hold the Passes' },
+          description: "Still hold Chang'an and Chencang in 194 — you were Qin's last general; hold what Xiang Yu gave you.",
+          descriptionZh: "至194年仍保長安、陳倉 —— 你是秦最後的大將,守住項羽分給你的地方。",
+          goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang'], byYear: 194 },
+        },
+      ],
     },
     {
       id: 'obj-chch-qi',
@@ -342,10 +384,18 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'yong',
       primary: {
         title: { zh: '廢丘之圍', en: 'The Siege of Feiqiu' },
-        description: "Still hold Chang'an in 194.",
-        descriptionZh: "至194年仍守長安 —— 章邯困守廢丘十月,終自刎。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 194 },
+        description: "Still hold Chang'an in 192 — ten months, until they turned the river on the walls.",
+        descriptionZh: "至192年仍據長安 —— 十個月,直到他們引水灌城。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 192 },
       },
+      secondary: [
+        {
+          title: { zh: '廢丘之圍', en: 'The Siege of Feiqiu' },
+          description: "Still hold Chang'an in 194.",
+          descriptionZh: "至194年仍守長安 —— 章邯困守廢丘十月,終自刎。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 194 },
+        },
+      ],
     },
     {
       id: 'obj-chpc-qi',
@@ -481,12 +531,18 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       id: 'obj-chws-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '救齊之師', en: 'The Army Sent to Save Qi' },
-        description: 'Hold Linzi by 194 and Guandu through 196 — Long Ju took twenty legions east and lost them all.',
-        descriptionZh: "於194年前取臨淄、196年前仍守滎陽 —— 龍且將二十萬東救,全軍覆沒。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi'], byYear: 194 },
+        title: { zh: '保彭城', en: 'Hold Pengcheng' },
+        description: "Still hold Pengcheng and Xuchang in 194 — Long Ju went east to save Qi and died in the Wei's sand-dammed flood.",
+        descriptionZh: "至194年仍據彭城、許昌 —— 龍且東救齊,死於濰水囊沙之下。西楚的本在彭城。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xuchang'], byYear: 194 },
       },
       secondary: [
+        {
+          title: { zh: '救齊之師', en: 'The Army Sent to Save Qi' },
+          description: 'Hold Linzi by 194 and Guandu through 196 — Long Ju took twenty legions east and lost them all.',
+          descriptionZh: "於194年前取臨淄、196年前仍守滎陽 —— 龍且將二十萬東救,全軍覆沒。",
+          goal: { kind: 'hold-cities', cityIds: ['linzi'], byYear: 194 },
+        },
         {
           title: { zh: '守住正面', en: 'Hold the Front' },
           description: 'Still hold Guandu and Hulao in 196.',
