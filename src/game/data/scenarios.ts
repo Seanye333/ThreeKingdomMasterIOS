@@ -1186,6 +1186,11 @@ const FORCES_208: Force[] = [
 ];
 
 const CITY_OWNERSHIP_208: Record<string, string> = {
+  baxi: 'zhang-lu',  // 朴胡杜濩為其巴夷之帥;明列是因為補位會連鎖(見下方註)
+  // 補位陷阱:這五座益州北部的城離武都(馬騰)比離成都近,於是涼州的馬騰
+  // 憑空得了劍閣白水關 —— 那是劉璋的門戶。
+  yinping: 'liu-zhang', jiameng: 'liu-zhang', zitong: 'liu-zhang',
+  jianmen: 'liu-zhang', baishuiguan: 'liu-zhang',
   // ── Cao Cao — colossal northern empire ──
   xuchang:   'cao',
   luoyang:   'cao',
@@ -1343,6 +1348,14 @@ const OFFICER_ASSIGNMENTS_208: Record<string, OfficerAssignment> = {
 
   // Shi Xie
   'shi-xie':     { forceId: 'shi-xie', cityId: 'jiaozhi' },
+  // 補上史書上真有的班底 —— 一個武將守四座城是資料缺口,不是設定。
+  'zhang-wei': { forceId: 'zhang-lu', cityId: 'yangping' },  // 守陽平關者
+  'yan-pu': { forceId: 'zhang-lu', cityId: 'hanzhong' },  // 功曹
+  'yang-ang': { forceId: 'zhang-lu', cityId: 'yangping' },
+  'yang-ren': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'yang-bo-zl': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'shi-shuo': { forceId: 'shi-xie', cityId: 'nanhai' },  // 士壹,燮之弟
+  'shi-hui': { forceId: 'shi-xie', cityId: 'jiaozhi' },  // 燮之子
 };
 
 const DEAD_BY_208 = [
@@ -1853,6 +1866,9 @@ const OFFICER_ASSIGNMENTS_220: Record<string, OfficerAssignment> = {
   'ahui-nan':    { forceId: 'nanman', cityId: 'yunnan' },
   'wutugu':      { forceId: 'nanman', cityId: 'yuexi' },
   'zhu-rong':    { forceId: 'nanman', cityId: 'jianning' },
+  // 補上史書上真有的班底 —— 一個武將守四座城是資料缺口,不是設定。
+  'shi-shuo': { forceId: 'shi-xie', cityId: 'nanhai' },  // 士壹,燮之弟
+  'shi-hui': { forceId: 'shi-xie', cityId: 'jiaozhi' },  // 燮之子
 };
 
 export const SCENARIO_220_DECLARATION: Scenario = {
@@ -1901,6 +1917,9 @@ const FORCES_215: Force[] = [
 ];
 
 const CITY_OWNERSHIP_215: Record<string, string> = {
+  // 補位陷阱:張魯憑空得了隴右的天水上邽陰平、與劉備的梓潼劍閣白水關。
+  tianshui: 'cao', shanggui: 'cao', yinping: 'cao',
+  zitong: 'liu-bei', jianmen: 'liu-bei', baishuiguan: 'liu-bei',
   // Cao Cao — northern empire
   xuchang:   'cao',
   luoyang:   'cao',
@@ -2056,6 +2075,12 @@ const OFFICER_ASSIGNMENTS_215: Record<string, OfficerAssignment> = {
   'ahui-nan':    { forceId: 'nanman', cityId: 'yunnan' },
   'wutugu':      { forceId: 'nanman', cityId: 'yuexi' },
   'zhu-rong':    { forceId: 'nanman', cityId: 'jianning' },
+  // 補上史書上真有的班底 —— 一個武將守四座城是資料缺口,不是設定。
+  'yan-pu': { forceId: 'zhang-lu', cityId: 'hanzhong' },  // 功曹,勸張魯封府庫而降
+  'yang-ang': { forceId: 'zhang-lu', cityId: 'yangping' },
+  'yang-ren': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'shi-shuo': { forceId: 'shi-xie', cityId: 'nanhai' },  // 士壹,燮之弟
+  'shi-hui': { forceId: 'shi-xie', cityId: 'jiaozhi' },  // 燮之子
 };
 
 export const SCENARIO_215_HEFEI: Scenario = {
@@ -2817,6 +2842,10 @@ const FORCES_207: Force[] = [
 ];
 
 const CITY_OWNERSHIP_207: Record<string, string> = {
+  // 補位陷阱:漢中是陳倉與散關最近的已列城,於是張魯憑空多了兩座**關中**的城,
+  // 直接和曹操的本土接壤 —— 實測他第 1 旬就丟陳倉、第 12 旬丟漢中,一年內亡國。
+  // (巴西葭萌不在此列:張魯確實據巴,朴胡杜濩為其巴夷之帥,那是他的縱深。)
+  chencang: 'cao', sanguan: 'cao',
   // ── Cao Cao — north reunified ──
   xuchang:   'cao',
   luoyang:   'cao',
@@ -2965,6 +2994,20 @@ const OFFICER_ASSIGNMENTS_207: Record<string, OfficerAssignment> = {
 
   // ── Shi Xie ──
   'shi-xie':     { forceId: 'shi-xie', cityId: 'jiaozhi' },
+  // 補上史書上真有的班底 —— 一個武將守四座城是資料缺口,不是設定。
+  'zhang-wei': { forceId: 'zhang-lu', cityId: 'yangping' },  // 守陽平關者
+  'yan-pu': { forceId: 'zhang-lu', cityId: 'hanzhong' },  // 功曹,諫張魯毋稱漢寧王
+  'yang-ang': { forceId: 'zhang-lu', cityId: 'yangping' },
+  'yang-ren': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'yang-bo-zl': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'gongsun-gong': { forceId: 'gongsun-du', cityId: 'xiangping' },  // 康之弟
+  'bei-yan': { forceId: 'gongsun-du', cityId: 'liaodong' },
+  'shi-shuo': { forceId: 'shi-xie', cityId: 'nanhai' },  // 士壹,燮之弟
+  'shi-hui': { forceId: 'shi-xie', cityId: 'jiaozhi' },  // 燮之子
+  'pang-de-ye': { forceId: 'ma-teng', cityId: 'wuwei' },  // 此時尚為馬騰部曲
+  'hou-xuan': { forceId: 'ma-teng', cityId: 'anding' },
+  'cheng-yin': { forceId: 'ma-teng', cityId: 'anding' },
+  'yang-qiu': { forceId: 'ma-teng', cityId: 'jincheng' },
 };
 
 const DEAD_BY_207 = [
@@ -2999,6 +3042,7 @@ export const SCENARIO_207_THREE_VISITS: Scenario = {
      張魯與劉璋有殺母之恨 —— 曹操此時尚未南下,天下最後一段安靜。
    */
   openingRelations: [
+    { a: 'cao', b: 'zhang-lu', score: 15, status: 'non-aggression' },  // 受漢廷鎮民中郎將之號,曹操西征在 215 年
     { a: 'cao', b: 'sun', score: -40, status: 'neutral' },
     { a: 'cao', b: 'liu-biao', score: -35, status: 'neutral' },
     { a: 'sun', b: 'liu-biao', score: -80, status: 'neutral' },
@@ -3016,7 +3060,7 @@ export const SCENARIO_207_THREE_VISITS: Scenario = {
       'liu-biao': { troops: 0.80, food: 1.25, gold: 1.15, defense: 4, loyalty: -6 },  // 蔡蒯專權,主暮而嗣弱
       sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
       'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: -6 },
-      'zhang-lu': { troops: 0.90, food: 1.30, gold: 1.10, defense: 20, loyalty: 20 },
+      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
       'ma-teng': { troops: 1.15, food: 0.85, gold: 0.85, defense: 0,  loyalty: -8 },
       'gongsun-du': { troops: 0.90, food: 1.00, gold: 0.95, defense: 8, loyalty: 6 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
@@ -3044,6 +3088,10 @@ const FORCES_211: Force[] = [
 ];
 
 const CITY_OWNERSHIP_211: Record<string, string> = {
+  baxi: 'zhang-lu',  // 朴胡杜濩為其巴夷之帥;明列是因為補位會連鎖(見下方註)
+  // 同 208 的補位陷阱,這一盤落到韓遂手上。
+  yinping: 'liu-zhang', jiameng: 'liu-zhang', zitong: 'liu-zhang',
+  jianmen: 'liu-zhang', baishuiguan: 'liu-zhang',
   // ── Cao Cao — the empire north of the Yangtze ──
   xuchang:   'cao',
   luoyang:   'cao',
@@ -3190,6 +3238,15 @@ const OFFICER_ASSIGNMENTS_211: Record<string, OfficerAssignment> = {
 
   // ── Shi Xie ──
   'shi-xie':     { forceId: 'shi-xie', cityId: 'jiaozhi' },
+  // 補上史書上真有的班底 —— 一個武將守四座城是資料缺口,不是設定。
+  'zhang-wei': { forceId: 'zhang-lu', cityId: 'yangping' },  // 守陽平關者
+  'yan-pu': { forceId: 'zhang-lu', cityId: 'hanzhong' },  // 功曹
+  'yang-ang': { forceId: 'zhang-lu', cityId: 'yangping' },
+  'yang-ren': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'shi-shuo': { forceId: 'shi-xie', cityId: 'nanhai' },  // 士壹,燮之弟
+  'shi-hui': { forceId: 'shi-xie', cityId: 'jiaozhi' },  // 燮之子
+  'pang-de-ye': { forceId: 'ma-chao', cityId: 'wuwei' },  // 渭南從馬超
+  'zhang-heng-lw': { forceId: 'ma-chao', cityId: 'jincheng' },  // 關中十部之一
 };
 
 const DEAD_BY_211 = [
@@ -3239,7 +3296,7 @@ export const SCENARIO_211_WEINAN: Scenario = {
     { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
     { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
     { a: 'liu-bei', b: 'liu-zhang', score: 35, status: 'non-aggression' },
-    { a: 'cao', b: 'zhang-lu', score: -20, status: 'neutral' },
+    { a: 'cao', b: 'zhang-lu', score: 5, status: 'non-aggression' },  // 此時方與孫權相持於濡須,西征漢中在兩年後
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
   ],
   // 關中十部是十支軍隊,不是一支 —— 離間才用得上
@@ -3251,7 +3308,7 @@ export const SCENARIO_211_WEINAN: Scenario = {
       'liu-bei': { troops: 1.00, food: 1.00, gold: 0.90, defense: 0,  loyalty: 12 },
       sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
       'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: -8 },
-      'zhang-lu': { troops: 0.90, food: 1.30, gold: 1.10, defense: 20, loyalty: 18 },
+      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
     }),
   forces: FORCES_211,
@@ -4093,6 +4150,8 @@ const FORCES_214: Force[] = [
 ];
 
 const CITY_OWNERSHIP_214: Record<string, string> = {
+  // 劉備已入成都,巴西葭萌隨益州而歸,不再是補位給張魯的。
+  baxi: 'liu-bei', jiameng: 'liu-bei',
   // ── Cao Cao — almost the whole north ──
   xuchang:   'cao',
   luoyang:   'cao',
@@ -4242,6 +4301,13 @@ const OFFICER_ASSIGNMENTS_214: Record<string, OfficerAssignment> = {
 
   // ── Shi Xie ──
   'shi-xie':     { forceId: 'shi-xie', cityId: 'jiaozhi' },
+  // 補上史書上真有的班底 —— 一個武將守四座城是資料缺口,不是設定。
+  'zhang-wei': { forceId: 'zhang-lu', cityId: 'yangping' },  // 守陽平關者
+  'yan-pu': { forceId: 'zhang-lu', cityId: 'hanzhong' },  // 功曹
+  'yang-ren': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'yang-bo-zl': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'shi-shuo': { forceId: 'shi-xie', cityId: 'nanhai' },  // 士壹,燮之弟
+  'shi-hui': { forceId: 'shi-xie', cityId: 'jiaozhi' },  // 燮之子
 };
 
 const DEAD_BY_214: string[] = [
@@ -4304,7 +4370,7 @@ export const SCENARIO_214_XICHUAN: Scenario = {
       'liu-zhang': { troops: 0.60, food: 0.85, gold: 0.70, defense: -8, loyalty: -25 },
       cao:       { troops: 1.30, food: 1.20, gold: 1.15, defense: 6,  loyalty: 8 },
       sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
-      'zhang-lu': { troops: 0.85, food: 1.20, gold: 1.10, defense: 18, loyalty: 12 },
+      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
     }),
   forces: FORCES_214,
@@ -5181,6 +5247,14 @@ const OFFICER_ASSIGNMENTS_204: Record<string, OfficerAssignment> = {
 
   // ── Shi Xie ──
   'shi-xie':     { forceId: 'shi-xie', cityId: 'jiaozhi' },
+  // 補上史書上真有的班底 —— 一個武將守四座城是資料缺口,不是設定。
+  'yan-pu': { forceId: 'zhang-lu', cityId: 'hanzhong' },  // 功曹,諫張魯毋稱漢寧王
+  'yang-ang': { forceId: 'zhang-lu', cityId: 'yangping' },
+  'yang-ren': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'yang-bo-zl': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'shi-shuo': { forceId: 'shi-xie', cityId: 'nanhai' },  // 士壹,燮之弟,領合浦
+  'shi-hui': { forceId: 'shi-xie', cityId: 'jiaozhi' },  // 燮之子
+  'bei-yan': { forceId: 'gongsun', cityId: 'xiangping' },
 };
 
 const DEAD_BY_204: string[] = [
@@ -5227,6 +5301,7 @@ export const SCENARIO_204_YECHENG: Scenario = {
      郭嘉曰:「急之則相持,緩之而後爭心生。」
    */
   openingRelations: [
+    { a: 'cao', b: 'zhang-lu', score: 15, status: 'non-aggression' },  // 同上;此時曹操方與袁氏相持於河北
     { a: 'cao', b: 'yuan-shang', score: -95, status: 'neutral' },
     { a: 'yuan-shang', b: 'yuan-tan', score: -85, status: 'neutral' },
     { a: 'cao', b: 'yuan-tan', score: 45, status: 'non-aggression' },
@@ -5248,7 +5323,7 @@ export const SCENARIO_204_YECHENG: Scenario = {
       'liu-biao': { troops: 0.85, food: 1.20, gold: 1.15, defense: 4, loyalty: 6 },
       'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: 0 },
       'ma-teng': { troops: 1.10, food: 0.85, gold: 0.85, defense: 0,  loyalty: -6 },
-      'zhang-lu': { troops: 0.85, food: 1.25, gold: 1.10, defense: 18, loyalty: 18 }, // 政教合一,漢中三十年不見兵
+      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 }, // 政教合一,漢中三十年不見兵
       gongsun:   { troops: 0.90, food: 1.00, gold: 0.95, defense: 8,  loyalty: 4 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
     }),
@@ -5275,6 +5350,8 @@ const FORCES_213: Force[] = [
 ];
 
 const CITY_OWNERSHIP_213: Record<string, string> = {
+  // 補位陷阱:天水上邽離漢中最近,於是張魯憑空得了隴右兩城。
+  tianshui: 'cao', shanggui: 'cao',
   // Cao Cao — the north entire, plus Liang after Weinan, holding the Ruxu line
   xuchang:   'cao',
   luoyang:   'cao',
@@ -5446,6 +5523,12 @@ const OFFICER_ASSIGNMENTS_213: Record<string, OfficerAssignment> = {
 
   // ── Shi Xie ──
   'shi-xie':     { forceId: 'shi-xie', cityId: 'jiaozhi' },
+  // 補上史書上真有的班底 —— 一個武將守四座城是資料缺口,不是設定。
+  'yan-pu': { forceId: 'zhang-lu', cityId: 'hanzhong' },  // 功曹
+  'yang-ang': { forceId: 'zhang-lu', cityId: 'yangping' },
+  'yang-ren': { forceId: 'zhang-lu', cityId: 'hanzhong' },
+  'shi-shuo': { forceId: 'shi-xie', cityId: 'nanhai' },  // 士壹,燮之弟
+  'shi-hui': { forceId: 'shi-xie', cityId: 'jiaozhi' },  // 燮之子
 };
 
 const DEAD_BY_213: string[] = [
@@ -5510,7 +5593,7 @@ export const SCENARIO_213_FENGPO: Scenario = {
       'liu-zhang': { troops: 0.90, food: 1.30, gold: 1.15, defense: 10, loyalty: -22 },// 益州殷富而人心已貳
       cao:       { troops: 1.30, food: 1.20, gold: 1.15, defense: 6,  loyalty: 8 },
       sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
-      'zhang-lu': { troops: 0.90, food: 1.30, gold: 1.10, defense: 20, loyalty: 18 },
+      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
     }),
   forces: FORCES_213,
