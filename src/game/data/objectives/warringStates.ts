@@ -176,7 +176,7 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         title: { zh: '保關中', en: 'Hold Guanzhong' },
         description: "Still hold Chang'an, Chencang and Hanzhong in 195 — Qin before the reforms is the weakest of the seven.",
         descriptionZh: "至195年仍據長安、陳倉、漢中 —— 變法之前的秦是七國最弱的一個,先活下來。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang', 'hanzhong'], byYear: 195 },
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'hanzhong'], byYear: 195 },
       },
       secondary: [
         {

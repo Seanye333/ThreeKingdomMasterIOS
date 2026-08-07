@@ -1562,7 +1562,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
         description: "Still hold Ji, Beiping, Yuyang and Yi County in 199 — You province also runs out to Lelang and Daifang, which no one contests.",
         descriptionZh: "至199年仍據薊、北平、漁陽、易縣 —— 幽州名下還有樂浪帶方,那是沒有人去爭的地方。",
-        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping', 'yuyang', 'yi-county'], byYear: 199 },
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping', 'yuyang'], byYear: 199 },
       },
       secondary: [
         {
@@ -1656,7 +1656,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '西涼鐵騎', en: 'The Iron Horse of Liang' },
         description: "Still hold Jincheng, Wuwei, Anding and Longxi in 202 — Liang also counts Dunhuang and Jiuquan, a month's ride past anyone's interest.",
         descriptionZh: "至202年仍據金城、武威、安定、隴西 —— 涼州名下還有敦煌酒泉,那是誰也不會去的河西盡頭。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding', 'longxi'], byYear: 202 },
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding'], byYear: 202 },
       },
       secondary: [
         {
@@ -2239,7 +2239,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '交州王', en: 'King of Jiao' },
         description: "Still hold Jiaozhi, Nanhai, Hepu and Cangwu in 210 — Jiao also counts Zhuyai and Rinan, past the end of the roads.",
         descriptionZh: "至210年仍據交趾、南海、合浦、蒼梧 —— 交州名下還有珠崖日南,那是路的盡頭之外。",
-        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai', 'hepu', 'cangwu'], byYear: 210 },
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai', 'hepu'], byYear: 210 },
       },
       secondary: [
         {
@@ -2343,7 +2343,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '不入許都', en: 'Do Not Go to Xuchang' },
         description: "Still hold Wuwei, Jincheng, Anding and Longxi in 213 — stay in the west; the summons to court is a cage.",
         descriptionZh: "至213年仍據武威、金城、安定、隴西 —— 留在西邊。徵你入朝的那道詔書是個籠子。",
-        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding', 'longxi'], byYear: 213 },
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 213 },
       },
       secondary: [
         {
@@ -2361,7 +2361,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
         description: "Still hold Jiaozhi, Nanhai, Hepu and Cangwu in 212 — forty years in which the south saw no war.",
         descriptionZh: "至212年仍據交趾、南海、合浦、蒼梧 —— 兄弟並為列郡守,四十餘年疆場無事。",
-        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai', 'hepu', 'cangwu'], byYear: 212 },
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai', 'hepu'], byYear: 212 },
       },
       secondary: [
         {
@@ -2431,7 +2431,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '益州自守', en: 'Yi Keeps to Itself' },
         description: "Still hold Chengdu, Jiangzhou, Luocheng and Fucheng in 214 — while the north settles itself, shut the passes.",
         descriptionZh: "至214年仍據成都、江州、雒城、涪城 —— 北方自去廝殺,你只要把關閉上。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng', 'fucheng'], byYear: 214 },
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng'], byYear: 214 },
       },
       secondary: [
         {
