@@ -3376,6 +3376,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           mandate: state.mandate,
           date: state.date,
           playerForceId: state.playerForceId,
+          laterHanBoard: isLaterHanBoard(state.scenarioId),
           rng,
         });
         const forcesAfterCourt = aiCourt.forces;
@@ -4807,17 +4808,25 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         // ── Religious rebellion roll (season boundary only) ──
         let nextPacifyMissions = state.pacifyMissions ?? {};
         if (seasonBoundary) {
-          // §8.4-deep 黃巾總爆發 — spring 184: the Way of Great Peace rises in
-          // several provinces at once (fires once; only pre-184 campaigns).
-          const yt = rollYellowTurbanRising({
+          /*
+           * §8.4-deep 黃巾總爆發 — spring 184: the Way of Great Peace rises in
+           * several provinces at once (fires once; only pre-184 campaigns).
+           *
+           * **外傳三線不在此列。** 戰國/楚漢/隋唐借的是同一條曆法軸
+           * (startDate 178),於是照樣會走到「184 年」—— 全 AI 觀察跑戰國七雄盤,
+           * 太平道從秦手裡拿走了**長安**、巴西、犍為。同型的漏法(林邑國早生
+           * 四百年)已由 tribesOnBoard 擋掉,`rollReligiousRebellion` 也早有
+           * sectsAvailable,唯獨這條總爆發沒接上。
+           */
+          const yt = isLaterHanBoard(state.scenarioId) ? rollYellowTurbanRising({
             cities: postCities,
             forces: postForces,
             officers: postOfficers,
             date: result.date,
             rng,
             eventFlags: postFlags,
-          });
-          if (yt.flagSet) {
+          }) : null;
+          if (yt?.flagSet) {
             postCities = yt.cities;
             postForces = yt.forces;
             postOfficers = yt.officers;

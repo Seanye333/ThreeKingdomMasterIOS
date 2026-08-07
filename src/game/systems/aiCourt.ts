@@ -31,6 +31,15 @@ export interface AICourtContext {
   mandate: { byForce: Record<EntityId, number> };
   date: GameDate;
   playerForceId: EntityId | null;
+  /**
+   * 這張盤是不是漢末三國(`isLaterHanBoard`)。
+   *
+   * 只影響即位的年份門檻:220 是曹丕受禪那一年,對三國線是對的,對外傳三線
+   * 卻是死鎖 —— 戰國/楚漢/隋唐借同一條曆法軸而跑不到 220 年,於是齊湣王
+   * 「南面稱帝」這種**以稱帝為主目標**的盤,機制上永遠 0。外傳線不設年檻,
+   * 由劇本的開局爵位與二十城的王爵門檻自己把關。
+   */
+  laterHanBoard?: boolean;
   rng: () => number;
 }
 
@@ -220,7 +229,8 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
      * 得有二十城的本錢、與那位皇帝勢不兩立(關係 ≤ -20),機率降到 0.15。
      * 附庸不在此列(上面已 continue)。
      */
-    if (ranknow === 'king' && ctx.date.year >= 220) {
+    const enthronementEraOk = ctx.laterHanBoard === false || ctx.date.year >= 220;
+    if (ranknow === 'king' && enthronementEraOk) {
       const otherEmperors = Object.values(forces).filter(
         (f) => f.imperialRank === 'emperor' && f.id !== force.id,
       );

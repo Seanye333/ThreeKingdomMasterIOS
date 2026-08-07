@@ -1,6 +1,7 @@
 import type { Force, Scenario, Officer } from '../types';
 import { loadMods, modScenariosForStart } from '../systems/mods';
 import { buildInitialCities } from './cities';
+import type { ForcePosture } from './cities';
 import { buildInitialOfficers, buildHistoricalOfficers, type OfficerAssignment } from './officers';
 import { fillRetinues } from './retinues';
 import type { Dynasty } from './dynasties';
@@ -8352,6 +8353,58 @@ const FORCES_WS_SEVEN: Force[] = [
   { id: 'han',  name: { en: 'Han',  zh: '韓' }, rulerOfficerId: 'hist-han-zhaohou',   capitalCityId: 'xuchang',   color: '#d4af37', imperialRank: 'king', isPlayer: false },
 ];
 
+/*
+ * 外傳三線的開局姿態 —— 這三十來張盤此前**一張都沒有**。
+ *
+ * 沒有姿態,城的數值就只剩 CITY_TEMPLATES 那一份三國地理:於是「戰國七雄」
+ * 盤上秦據關中隴蜀共三十八城,實測四輪卻一路掉到十五城,而坐擁江南四十五城
+ * 的楚穩穩收在三十六 —— 因為這張圖的南方本來就富,而耕戰之國的關西本來就窮。
+ * 秦在**每一張**戰國盤的主目標都是 0,原因在這裡,不在目標寫錯。
+ *
+ * 五個旋鈕(兵/糧/金乘數 + 城防/民忠增減)要說的是那個時代的常識:
+ * 秦耕戰而關中險、齊富而臨淄甲天下、趙有胡服騎射而糧不足、韓地小而弩利、
+ * 燕僻遠而貧、楚地大而政散、魏先霸而後衰。
+ */
+const WS_POSTURE: Record<string, ForcePosture> = {
+  qin:  { troops: 1.45, food: 1.35, gold: 1.10, defense: 10, loyalty: 8 },   // 商鞅之法:耕戰、關中之險
+  chu:  { troops: 0.85, food: 1.10, gold: 1.05, defense: -4, loyalty: -10 }, // 地大而政散,楚卒怯於戰
+  qi:   { troops: 1.05, food: 1.15, gold: 1.45, defense: 4,  loyalty: 4 },   // 臨淄之富甲於天下
+  zhao: { troops: 1.30, food: 0.85, gold: 0.90, defense: 6,  loyalty: 4 },   // 胡服騎射,而北邊乏糧
+  wei:  { troops: 1.00, food: 1.00, gold: 1.05, defense: 8,  loyalty: 0 },   // 先霸而衰,獨大梁城堅
+  han:  { troops: 0.90, food: 0.90, gold: 1.00, defense: 12, loyalty: 0 },   // 地小而勁弩利,守則有餘
+  yan:  { troops: 0.85, food: 0.80, gold: 0.75, defense: 0,  loyalty: 6 },   // 北僻苦寒,民少而樸
+};
+
+/*
+ * 楚漢:項羽兵強而失人心,劉邦兵弱而得關中父老。
+ * 「約法三章」與「蕭何轉漕關中,給食不乏」是這張盤的兩個數字。
+ */
+const CH_POSTURE: Record<string, ForcePosture> = {
+  chu:      { troops: 1.45, food: 1.00, gold: 1.00, defense: 6,  loyalty: -8 },  // 兵勢最強,而所過殘滅
+  han:      { troops: 0.85, food: 1.35, gold: 1.10, defense: 4,  loyalty: 14 },  // 約法三章,蕭何轉漕
+  yong:     { troops: 0.95, food: 0.95, gold: 0.95, defense: 8,  loyalty: -22 }, // 三秦王:秦人怨其坑降卒
+  qi:       { troops: 1.00, food: 1.10, gold: 1.15, defense: 0,  loyalty: 0 },
+  zhao:     { troops: 0.95, food: 0.95, gold: 0.95, defense: 4,  loyalty: 0 },
+  wei:      { troops: 0.85, food: 1.00, gold: 1.00, defense: 0,  loyalty: -6 },  // 首鼠兩端
+  jiujiang: { troops: 1.15, food: 0.95, gold: 0.95, defense: 0,  loyalty: -10 }, // 黥布善戰而反覆
+  qin:      { troops: 1.20, food: 1.10, gold: 1.30, defense: 12, loyalty: -25 }, // 天下苦秦久矣
+  zhangchu: { troops: 1.30, food: 0.70, gold: 0.70, defense: -18, loyalty: 10 }, // 揭竿而起:人多而無城守
+};
+
+/*
+ * 隋唐:唐據關中而開倉賑民,鄭守洛陽而糧絕,夏得河北人心,瓦崗兵盛而內裂。
+ */
+const ST_POSTURE: Record<string, ForcePosture> = {
+  tang:     { troops: 1.20, food: 1.25, gold: 1.15, defense: 8,  loyalty: 12 },  // 入關開倉,約法十二條
+  zheng:    { troops: 1.05, food: 0.75, gold: 0.95, defense: 14, loyalty: -12 }, // 洛陽城堅而人相食
+  xia:      { troops: 1.25, food: 1.10, gold: 0.90, defense: 0,  loyalty: 10 },  // 竇建德得河北之心
+  wagang:   { troops: 1.35, food: 1.30, gold: 0.85, defense: -6, loyalty: -6 },  // 據洛口倉,兵盛而內裂
+  xiqin:    { troops: 1.20, food: 0.80, gold: 0.85, defense: 0,  loyalty: -6 },  // 隴右悍騎,而地瘠
+  dingyang: { troops: 1.15, food: 0.75, gold: 0.80, defense: 0,  loyalty: -8 },  // 借突厥之力,無根本
+  wu:       { troops: 0.95, food: 1.05, gold: 1.00, defense: 0,  loyalty: 0 },
+  yan:      { troops: 1.40, food: 0.90, gold: 1.00, defense: 0,  loyalty: -18 }, // 范陽勁卒,而所至殘破
+};
+
 const CITY_OWNERSHIP_WS_SEVEN: Record<string, string> = {
   // 秦 — Guanzhong, the Long corridor, Hanzhong and the conquered Ba-Shu.
   changan: 'qin', mei: 'qin', chencang: 'qin', tongguan: 'qin', wuguan: 'qin',
@@ -8493,7 +8546,7 @@ export const SCENARIO_WS_SEVEN: Scenario = {
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_SEVEN),
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_SEVEN, WS_POSTURE),
   forces: FORCES_WS_SEVEN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_SEVEN),
 };
@@ -8550,7 +8603,9 @@ export const SCENARIO_WS_CHANGPING: Scenario = {
     { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_CHANGPING),
+  // 秦傾國而來,趙糧道已絕 —— 廉頗不出戰不是怯,是撐不起
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_CHANGPING,
+    { ...WS_POSTURE, qin: { ...WS_POSTURE.qin, troops: 1.55 }, zhao: { ...WS_POSTURE.zhao, food: 0.60 } }),
   forces: FORCES_WS_CHANGPING,
   officers: buildWarringStatesOfficers(ASSIGN_WS_CHANGPING),
 };
@@ -8616,7 +8671,9 @@ export const SCENARIO_WS_YUEYI: Scenario = {
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_YUEYI),
+  // 樂毅下齊七十餘城,只餘莒與即墨
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_YUEYI,
+    { ...WS_POSTURE, yan: { troops: 1.45, food: 1.00, gold: 0.95, defense: 6, loyalty: 10 }, qi: { troops: 0.55, food: 0.60, gold: 0.50, defense: -16, loyalty: -20 } }),
   forces: FORCES_WS_YUEYI,
   officers: buildWarringStatesOfficers(ASSIGN_WS_YUEYI),
 };
@@ -8685,7 +8742,9 @@ export const SCENARIO_WS_GUILING: Scenario = {
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_GUILING),
+  // 前 353:魏武卒尚為天下最強,商鞅之法方行三年
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_GUILING,
+    { ...WS_POSTURE, wei: { ...WS_POSTURE.wei, troops: 1.30, defense: 10 }, qi: { ...WS_POSTURE.qi, troops: 1.10 }, qin: { ...WS_POSTURE.qin, troops: 0.95, food: 1.00, defense: 4, loyalty: 0 } }),
   forces: FORCES_WS_GUILING,
   officers: buildWarringStatesOfficers(ASSIGN_WS_GUILING),
 };
@@ -8748,7 +8807,9 @@ export const SCENARIO_WS_HANDAN: Scenario = {
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_HANDAN),
+  // 長平之後秦師老而趙人同仇 —— 邯鄲圍三年不下
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_HANDAN,
+    { ...WS_POSTURE, qin: { ...WS_POSTURE.qin, troops: 1.35, food: 0.80 }, zhao: { ...WS_POSTURE.zhao, defense: 20, loyalty: 20 } }),
   forces: FORCES_WS_HANDAN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_HANDAN),
 };
@@ -8817,7 +8878,9 @@ export const SCENARIO_WS_QIN_UNIFY: Scenario = {
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_QIN_UNIFY),
+  // 前 230:六世之餘烈已成,只差最後十年
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_QIN_UNIFY,
+    { ...WS_POSTURE, qin: { troops: 1.60, food: 1.40, gold: 1.30, defense: 12, loyalty: 12 } }),
   forces: FORCES_WS_QIN_UNIFY,
   officers: buildWarringStatesOfficers(ASSIGN_WS_QIN_UNIFY, ['warring-states', 'qin']),
 };
@@ -8879,7 +8942,9 @@ export const SCENARIO_WS_SHANGYANG: Scenario = {
     { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_SHANGYANG),
+  // 變法之初的秦還是那個被魏奪了河西的弱國
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_SHANGYANG,
+    { ...WS_POSTURE, qin: { troops: 0.85, food: 0.90, gold: 0.85, defense: 6, loyalty: -6 }, wei: { ...WS_POSTURE.wei, troops: 1.30, defense: 10 } }),
   forces: FORCES_WS_SHANGYANG,
   officers: buildWarringStatesOfficers(ASSIGN_WS_SHANGYANG),
 };
@@ -8942,7 +9007,9 @@ export const SCENARIO_WS_YANYING: Scenario = {
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_YANYING),
+  // 白起拔郢,楚王東徙於陳
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_YANYING,
+    { ...WS_POSTURE, qin: { ...WS_POSTURE.qin, troops: 1.40 }, chu: { ...WS_POSTURE.chu, troops: 0.70, defense: -8, loyalty: -15 } }),
   forces: FORCES_WS_YANYING,
   officers: buildWarringStatesOfficers(ASSIGN_WS_YANYING),
 };
@@ -8993,7 +9060,9 @@ export const SCENARIO_WS_HANGU: Scenario = {
     { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_SEVEN),
+  // 五國伐秦而函谷不開 —— 那道關是這張盤的全部
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_SEVEN,
+    { ...WS_POSTURE, qin: { ...WS_POSTURE.qin, defense: 24 } }),
   forces: FORCES_WS_SEVEN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_HANGU),
 };
@@ -9048,7 +9117,9 @@ export const SCENARIO_WS_YIQUE: Scenario = {
     { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_YIQUE),
+  // 伊闕斬首二十四萬 —— 韓魏之銳自此不復
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_YIQUE,
+    { ...WS_POSTURE, qin: { ...WS_POSTURE.qin, troops: 1.40 }, han: { ...WS_POSTURE.han, troops: 0.85 }, wei: { ...WS_POSTURE.wei, troops: 0.85 } }),
   forces: FORCES_WS_SEVEN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_YIQUE),
 };
@@ -9105,7 +9176,9 @@ export const SCENARIO_WS_YUYU: Scenario = {
     { a: 'zhao', b: 'wei', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_YUYU),
+  // 閼與之戰:趙奢是那個時代唯一正面破秦的人
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_YUYU,
+    { ...WS_POSTURE, qin: { ...WS_POSTURE.qin, troops: 1.35 }, zhao: { ...WS_POSTURE.zhao, troops: 1.20, defense: 10 } }),
   forces: FORCES_WS_YUYU,
   officers: buildWarringStatesOfficers(ASSIGN_WS_YUYU),
 };
@@ -9174,7 +9247,9 @@ export const SCENARIO_WS_TIANDAN: Scenario = {
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_TIANDAN),
+  // 火牛出即墨:齊已亡而人心未亡,燕師久客而離散
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_TIANDAN,
+    { ...WS_POSTURE, qi: { troops: 0.70, food: 0.75, gold: 0.65, defense: 6, loyalty: 22 }, yan: { ...WS_POSTURE.yan, troops: 1.10, loyalty: -15 } }),
   forces: FORCES_WS_TIANDAN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_TIANDAN),
 };
@@ -9246,7 +9321,9 @@ export const SCENARIO_WS_WEIWEN: Scenario = {
     { a: 'yan', b: 'wei', score: 5, status: 'non-aggression' },
     { a: 'yan', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_WEIWEN),
+  // 前 403:魏文侯用李悝吳起,天下莫強焉
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_WEIWEN,
+    { ...WS_POSTURE, wei: { troops: 1.35, food: 1.10, gold: 1.15, defense: 10, loyalty: 8 }, qin: { troops: 0.80, food: 0.85, gold: 0.80, defense: 4, loyalty: -4 } }),
   forces: FORCES_WS_WEIWEN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_WEIWEN),
 };
@@ -9301,7 +9378,9 @@ export const SCENARIO_WS_QIMIN: Scenario = {
     { a: 'zhao', b: 'han', score: 5, status: 'non-aggression' },
     { a: 'wei', b: 'han', score: 5, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_WS_QIMIN),
+  // 齊湣王滅宋而驕,南面稱帝 —— 富強俱在,人心已去
+  cities: buildInitialCities(CITY_OWNERSHIP_WS_QIMIN,
+    { ...WS_POSTURE, qi: { troops: 1.25, food: 1.15, gold: 1.50, defense: 4, loyalty: -18 } }),
   forces: FORCES_WS_QIMIN,
   officers: buildWarringStatesOfficers(ASSIGN_WS_QIMIN),
 };
@@ -9422,7 +9501,7 @@ export const SCENARIO_CH_CHUHAN: Scenario = {
     { a: 'han', b: 'qi', score: 25, status: 'non-aggression' },
     { a: 'han', b: 'zhao', score: 10, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_CHUHAN),
+  cities: buildInitialCities(CITY_OWNERSHIP_CHUHAN, CH_POSTURE),
   forces: FORCES_CHUHAN,
   officers: buildWarringStatesOfficers(ASSIGN_CHUHAN, ['chu-han', 'qin']),
 };
@@ -9461,7 +9540,9 @@ export const SCENARIO_CH_SANQIN: Scenario = {
     { a: 'han', b: 'zhao', score: 10, status: 'non-aggression' },
     { a: 'chu', b: 'zhao', score: -25, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_CH_SANQIN),
+  // 明修棧道之時,關中父老盼漢王久矣
+  cities: buildInitialCities(CITY_OWNERSHIP_CH_SANQIN,
+    { ...CH_POSTURE, han: { ...CH_POSTURE.han, troops: 1.10, loyalty: 18 } }),
   forces: FORCES_CHUHAN,
   officers: buildWarringStatesOfficers(ASSIGN_CH_SANQIN, ['chu-han', 'qin']),
 };
@@ -9503,7 +9584,9 @@ export const SCENARIO_CH_PENGCHENG: Scenario = {
     { a: 'chu', b: 'zhao', score: -30, status: 'neutral' },
     { a: 'chu', b: 'wei', score: -40, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_CH_PENGCHENG),
+  // 三萬破五十六萬 —— 這張盤要的是那個懸殊
+  cities: buildInitialCities(CITY_OWNERSHIP_CH_PENGCHENG,
+    { ...CH_POSTURE, chu: { ...CH_POSTURE.chu, troops: 1.60 }, han: { ...CH_POSTURE.han, loyalty: -10 } }),
   forces: FORCES_CHUHAN,
   officers: buildWarringStatesOfficers(ASSIGN_CH_PENGCHENG, ['chu-han', 'qin']),
 };
@@ -9554,7 +9637,9 @@ export const SCENARIO_CH_GAIXIA: Scenario = {
   openingRelations: [
     { a: 'chu', b: 'han', score: -100, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_CH_GAIXIA),
+  // 四面楚歌:兵少食盡,是這一局的前提而非結果
+  cities: buildInitialCities(CITY_OWNERSHIP_CH_GAIXIA,
+    { ...CH_POSTURE, chu: { troops: 0.35, food: 0.25, gold: 0.60, defense: -10, loyalty: -20 }, han: { ...CH_POSTURE.han, troops: 1.50, food: 1.40 } }),
   forces: FORCES_CH_GAIXIA,
   officers: buildWarringStatesOfficers(ASSIGN_CH_GAIXIA, ['chu-han', 'qin']),
 };
@@ -9597,7 +9682,9 @@ export const SCENARIO_CH_JINGXING: Scenario = {
     { a: 'han', b: 'yong', score: -30, status: 'neutral' },
     { a: 'chu', b: 'yong', score: 30, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_CH_JINGXING),
+  // 韓信將數萬新募之卒,背水而陣
+  cities: buildInitialCities(CITY_OWNERSHIP_CH_JINGXING,
+    { ...CH_POSTURE, han: { ...CH_POSTURE.han, troops: 0.60 } }),
   forces: FORCES_CH_JINGXING,
   officers: buildWarringStatesOfficers(ASSIGN_CH_JINGXING, ['chu-han', 'qin']),
 };
@@ -9687,7 +9774,9 @@ export const SCENARIO_CH_JULU: Scenario = {
     { a: 'chu', b: 'qi', score: 30, status: 'non-aggression' },
     { a: 'zhao', b: 'wei', score: 35, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_CH_JULU),
+  // 章邯王離四十萬,楚軍破釜沉舟時只帶三日糧
+  cities: buildInitialCities(CITY_OWNERSHIP_CH_JULU,
+    { ...CH_POSTURE, qin: { ...CH_POSTURE.qin, troops: 1.35 }, chu: { ...CH_POSTURE.chu, troops: 0.80, food: 0.70 } }),
   forces: FORCES_CH_JULU,
   officers: buildWarringStatesOfficers(ASSIGN_CH_JULU, ['chu-han', 'qin']),
 };
@@ -9756,7 +9845,7 @@ export const SCENARIO_CH_DAZE: Scenario = {
     { a: 'zhangchu', b: 'qi', score: 35, status: 'non-aggression' },
     { a: 'chu', b: 'qi', score: 30, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_CH_DAZE),
+  cities: buildInitialCities(CITY_OWNERSHIP_CH_DAZE, CH_POSTURE),
   forces: FORCES_CH_DAZE,
   officers: buildWarringStatesOfficers(ASSIGN_CH_DAZE, ['chu-han', 'qin']),
 };
@@ -9814,7 +9903,7 @@ export const SCENARIO_CH_WEISHUI: Scenario = {
     { a: 'chu', b: 'qi', score: 45, status: 'allied' },
     { a: 'han', b: 'qi', score: -80, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_CH_WEISHUI),
+  cities: buildInitialCities(CITY_OWNERSHIP_CH_WEISHUI, CH_POSTURE),
   forces: FORCES_CH_WEISHUI,
   officers: buildWarringStatesOfficers(ASSIGN_CH_WEISHUI, ['chu-han', 'qin']),
 };
@@ -9915,7 +10004,7 @@ export const SCENARIO_ST_SUIEND: Scenario = {
     { a: 'wu', b: 'zheng', score: -25, status: 'neutral' },
     { a: 'wu', b: 'xia', score: -20, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_ST_SUIEND),
+  cities: buildInitialCities(CITY_OWNERSHIP_ST_SUIEND, ST_POSTURE),
   forces: FORCES_ST_SUIEND,
   officers: buildWarringStatesOfficers(ASSIGN_ST_SUIEND, ['sui', 'tang']),
 };
@@ -9954,7 +10043,9 @@ export const SCENARIO_ST_QIANSHUI: Scenario = {
     { a: 'wagang', b: 'zheng', score: -85, status: 'neutral' },
     { a: 'zheng', b: 'xia', score: 20, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_ST_QIANSHUI),
+  // 淺水原:薛舉的隴右騎兵剛在此挫過秦王
+  cities: buildInitialCities(CITY_OWNERSHIP_ST_QIANSHUI,
+    { ...ST_POSTURE, xiqin: { ...ST_POSTURE.xiqin, troops: 1.30 } }),
   forces: FORCES_ST_SUIEND,
   officers: buildWarringStatesOfficers(ASSIGN_ST_QIANSHUI, ['sui', 'tang']),
 };
@@ -9995,7 +10086,9 @@ export const SCENARIO_ST_BOBI: Scenario = {
     { a: 'wagang', b: 'zheng', score: -80, status: 'neutral' },
     { a: 'zheng', b: 'xia', score: 25, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_ST_BOBI),
+  // 宋金剛南下,河東盡失 —— 柏壁堅壁不出是被逼的
+  cities: buildInitialCities(CITY_OWNERSHIP_ST_BOBI,
+    { ...ST_POSTURE, dingyang: { ...ST_POSTURE.dingyang, troops: 1.35 }, tang: { ...ST_POSTURE.tang, troops: 0.90 } }),
   forces: FORCES_ST_SUIEND,
   officers: buildWarringStatesOfficers(ASSIGN_ST_BOBI, ['sui', 'tang']),
 };
@@ -10050,7 +10143,9 @@ export const SCENARIO_ST_HULAO: Scenario = {
     { a: 'tang', b: 'xia', score: -90, status: 'neutral' },
     { a: 'zheng', b: 'xia', score: 65, status: 'allied' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_ST_HULAO),
+  // 洛陽被圍已久,城中人相食
+  cities: buildInitialCities(CITY_OWNERSHIP_ST_HULAO,
+    { ...ST_POSTURE, zheng: { ...ST_POSTURE.zheng, food: 0.55 } }),
   forces: FORCES_ST_HULAO,
   officers: buildWarringStatesOfficers(ASSIGN_ST_HULAO, ['sui', 'tang']),
 };
@@ -10100,7 +10195,9 @@ export const SCENARIO_ST_ANSHI: Scenario = {
   openingRelations: [
     { a: 'tang', b: 'yan', score: -95, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_ST_ANSHI),
+  // 漁陽鼙鼓動地來 —— 承平百年的唐軍不是范陽勁卒的對手
+  cities: buildInitialCities(CITY_OWNERSHIP_ST_ANSHI,
+    { ...ST_POSTURE, tang: { troops: 0.80, food: 1.10, gold: 1.05, defense: 6, loyalty: 10 } }),
   forces: FORCES_ST_ANSHI,
   officers: buildWarringStatesOfficers(ASSIGN_ST_ANSHI, ['tang']),
 };
