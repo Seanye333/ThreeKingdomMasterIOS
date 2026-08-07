@@ -222,8 +222,8 @@ export const SCENARIO_184_YELLOW_TURBAN: Scenario = {
        糧壓到 0.55(倉是空的),金壓到 0.95(府庫非無,是已為西園所耗;
        三十八座城使它的絕對值仍居首,但每座城的餘裕跟別家一樣薄)。 */
     han:             { troops: 0.90, food: 0.55, gold: 0.95, defense: 4, loyalty: 4 },
-    huangfu:         { troops: 0.85, food: 1.10, gold: 1.10, defense: 10, loyalty: 8 },
-    zhujun:          { troops: 0.85, food: 1.10, gold: 1.10, defense: 10, loyalty: 8 },
+    huangfu:         { troops: 1.25, food: 1.10, gold: 1.10, defense: 10, loyalty: 8 },
+    zhujun:          { troops: 1.25, food: 1.10, gold: 1.10, defense: 10, loyalty: 8 },
     'dong-184':      { troops: 1.10, food: 1.15, gold: 0.75, defense: 6, loyalty: -4 },
   }, {
     /*

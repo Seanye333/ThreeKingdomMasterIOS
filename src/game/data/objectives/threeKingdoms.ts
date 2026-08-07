@@ -169,9 +169,20 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 這條目標的張力也對:涼州在西,而洛陽的機會在東 —— 史實上他正是在
          * 「回涼州保本」與「往東邊等機會」之間選了後者。
          */
-        description: 'Hold all of Liang province by 189 AD — Dong Zhuo lost at Guangzong and kept his troops anyway.',
-        descriptionZh: '於189年前盡有涼州之地 —— 廣宗雖敗,兵權未交。',
-        goal: { kind: 'control-province', provinceId: 'liang', byYear: 189 },
+        /*
+         * 2026-08 再改一次 —— **`control-province` 這條在資料變動後悄悄變成死目標**。
+         * 上面那段註解寫的是「開局握有六郡,天水、酒泉、敦煌三郡在野」;而後來把
+         * 三十五座孤城掛回州裡,涼州從九城變十二城,董卓開局八城、在野四城
+         * (天水、酒泉、敦煌、張掖)。體檢五輪:峰值一律 9/12 —— 他只走得到天水,
+         * 河西走廊那三座沙漠城 AI 一次都沒去過。要求 AI 走到敦煌的目標,
+         * 等於沒有目標。
+         *
+         * 改成**涼州六郡**(金城/天水/武威/安定/隴西/上邽):開局握五,天水在野一步之遙。
+         * 敘述照舊講「擁兵自重」,而判定查的是他真的做得到的那一件。
+         */
+        description: 'Hold the six commandery seats of Liang by 189 — Dong Zhuo lost at Guangzong and kept his troops anyway.',
+        descriptionZh: '於189年前盡有涼州六郡(金城、天水、武威、安定、隴西、上邽)—— 廣宗雖敗,兵權未交。',
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui', 'wuwei', 'anding', 'longxi', 'shanggui'], byYear: 189 },
       },
       secondary: [
         {
