@@ -259,11 +259,26 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 換成他真正爭的那一塊:鄴。冀州五城,開局他據其三、袁紹據其二 ——
          * 這條目標與袁紹的「盡取冀州」是同一塊地的兩面,兩家必有一戰。
          */
-        description: 'Take Ye by 196 — Gongsun Zan spent his life fighting Yuan Shao for Hebei, not for Xu province.',
-        descriptionZh: '於196年前攻取鄴 —— 磐河、東光、界橋,他一生的仗都在河北打,一次也沒去過徐州。',
-        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 196 },
+        /*
+         * 再改(2026-08,量測修好之後)。「攻取鄴」四輪 0 中 —— 鄴是袁紹的治所,
+         * 而史實上公孫瓚一次也沒打進去:界橋之後他一路退,終困死易京。
+         * 照本盤的準則(主目標寫他真正做到的事),取鄴該是次要。
+         *
+         * 換成他真正據有過的那一塊:幽州本鎮(北平、薊、漁陽、柳城 —— 逐城量到
+         * 195 年皆 4/4)再加冀北的南皮與信都。後兩座是界橋那條線上的,
+         * 袁紹的主目標指向平原、不指向它們,所以兩家可以各自成立而仍然相爭。
+         */
+        description: 'Still hold You province and the Ji-north foothold in 196 — Panhe, Donguang, Jieqiao: he never fought anywhere else.',
+        descriptionZh: '至196年仍據北平、薊、漁陽、柳城與南皮、信都 —— 磐河、東光、界橋,他一生的仗都在河北打。',
+        goal: { kind: 'hold-cities', cityIds: ['beiping', 'ji', 'yuyang', 'liucheng', 'nanpi', 'xindu'], byYear: 196 },
       },
       secondary: [
+        {
+          title: { zh: '南下爭河北', en: 'The Fight for Hebei' },
+          description: 'Take Ye by 199 — the seat he spent his life failing to reach.',
+          descriptionZh: '於199年前攻取鄴 —— 他打了一輩子河北,而這座城一次也沒進去過。',
+          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 199 },
+        },
         {
           title: { zh: '界橋雪恥', en: 'Avenge Jieqiao' },
           description: 'Destroy the Yuan Shao force.',
@@ -482,11 +497,26 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 段煨守之),而關東之兵始終沒能進洛陽 —— 進去的只有孫堅一個人,
          * 而那時城已成墟。要兩京俱在,才叫「挾天子而令天下」。
          */
-        description: "Hold both capitals — Luoyang and Chang'an — through 195.",
-        descriptionZh: '至195年仍兩京俱在手 —— 焚洛陽、遷長安,而洛陽不可棄:棄之則關東長驅。',
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 195 },
+        /*
+         * 三改(2026-08,量測修好之後)。「長安+洛陽」四輪 0 中 —— 而逐城量下來,
+         * 195 年他仍據長安 4/4、郿 4/4、武關 4/4、潼關 3/4,**只有洛陽是 2/4**。
+         * 一座城把整條目標拉成擲硬幣,而那座城正是他自己燒掉並放棄的那一座。
+         *
+         * 改成關中之固:長安、潼關、武關 —— 東出之門與南下之門都在他手裡,
+         * 這才是「挾天子而令天下」在盤面上的樣子。洛陽降為次要:
+         * 史實上他棄之,而棄之則關東長驅 —— 那是代價,不是門檻。
+         */
+        description: "Hold Chang'an with the Tong and Wu passes through 195 — the emperor is only leverage while the gates are yours.",
+        descriptionZh: '至195年仍據長安與潼關、武關 —— 挾天子者,所挾的其實是那兩扇門。',
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'wuguan'], byYear: 195 },
       },
       secondary: [
+        {
+          title: { zh: '洛陽不棄', en: 'Do Not Abandon Luoyang' },
+          description: 'Still hold Luoyang in 195 — he burned it and left, and the east came through.',
+          descriptionZh: '至195年仍據洛陽 —— 史實上他焚之而去,而關東遂長驅。',
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 195 },
+        },
         {
           title: { zh: '郿塢之積', en: 'The Stores at Mei' },
           description: 'Still hold Mei in 195 — seventy feet of wall and thirty years of grain, and he never got to use them.',
