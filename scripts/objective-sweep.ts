@@ -1,0 +1,127 @@
+/**
+ * 目標掃描 —— 跑遍每一張盤,只回答一件事:**哪一家的主目標是死的**。
+ *
+ * ## 為什麼要有它
+ *
+ * `scenario-report.ts` 一次看一張盤,而「主目標達成 0/N」這種毛病是全庫性的:
+ * 目標寫在 `objectives/` 裡、能不能達成卻由城池歸屬、開局外交、姿態三者決定,
+ * 三邊各自改過之後沒有人重跑。實際撈到的四種死法,沒有一種會讓測試變紅:
+ *
+ *  1. **要 AI 走到它不會去的地方** —— 董卓的 `control-province: liang`,涼州從
+ *     九城變十二城之後等於要求 AI 走到敦煌、張掖、酒泉;五輪峰值一律 9/12。
+ *  2. **要 AI 打互不侵犯的鄰居** —— 208 盤曹操與六家皆 non-aggression,他唯一
+ *     能打的在江南,而那條江他過不去。
+ *  3. **兩家主目標指向同一座城** —— 208 江夏,曹操與孫權都要,而它在劉備手裡:
+ *     兩家一起 0。
+ *  4. **主目標寫成他史書上沒做到的事** —— 袁紹滅曹、劉表取許昌、公孫瓚取鄴。
+ *     本專案的準則是**主目標寫他真正做到的,次要寫他沒做到的**。
+ *
+ * ## 兩個一定要記住的前提
+ *
+ *  - **用 `observeScenario`,不是 `loadScenario(…, forces[0].id)`** —— 後者會把
+ *    那張盤的主角變成一兵不出的玩家(`planAITurn` 用 `isHuman()` 跳過玩家勢力)。
+ *    208 盤舊法量到曹操 48 → 11 城,新法 48 → 42。
+ *  - **回合數要蓋過該盤所有目標期限** —— 190 盤期限在 195–198,跑到 194 就收,
+ *    十一家有七家 0/6,而那全是窗口沒到期。這支自己從目標裡算窗口。
+ *
+ * Run:
+ *   node --import tsx scripts/objective-sweep.ts [runs] [scenarioIdPrefix]
+ *   node --import tsx scripts/objective-sweep.ts 3 scn-2      # 只掃三國中後期
+ */
+
+const g = globalThis as unknown as { localStorage?: unknown };
+if (!g.localStorage) {
+  const mem = new Map<string, string>();
+  g.localStorage = {
+    getItem: (k: string) => (mem.has(k) ? mem.get(k)! : null),
+    setItem: (k: string, v: string) => void mem.set(k, String(v)),
+    removeItem: (k: string) => void mem.delete(k),
+    clear: () => mem.clear(),
+    key: (i: number) => [...mem.keys()][i] ?? null,
+    get length() { return mem.size; },
+  };
+}
+
+import { useGameStore } from '../src/game/state/store';
+import { SCENARIOS } from '../src/game/data/scenarios';
+import { SCENARIO_OBJECTIVES } from '../src/game/data/objectives';
+import { evaluateGoal } from '../src/game/systems/objectives';
+
+type Goal = Parameters<typeof evaluateGoal>[0];
+
+const RUNS = Number(process.argv[2] ?? 3);
+const PREFIX = process.argv[3] ?? '';
+/** 一年三十六旬。窗口再長也就跑到這裡 —— 再長是體檢不是掃描。 */
+const MAX_TURNS = 620;
+
+/** 這條目標最晚要在哪一年之前判完。沒有期限的(如 recruit-officer)算 0。 */
+function deadlineOf(goal: Goal): number {
+  const g = goal as { byYear?: number; year?: number };
+  return g.byYear ?? g.year ?? 0;
+}
+
+const st = useGameStore;
+const dead: Array<{ id: string; zh: string; forceId: string; title: string; goal: string }> = [];
+let boards = 0;
+
+for (const scenario of SCENARIOS) {
+  if ((scenario as { kind?: string }).kind === 'whatif') continue;
+  if (PREFIX && !scenario.id.startsWith(PREFIX)) continue;
+  const objs = (SCENARIO_OBJECTIVES as Record<string, Array<{
+    forceId: string; primary: { title: { zh: string }; goal: Goal };
+  }>>)[scenario.id] ?? [];
+  if (!objs.length) continue;
+  boards++;
+
+  const startYear = scenario.startDate?.year ?? 0;
+  const latest = Math.max(startYear, ...objs.map((o) => deadlineOf(o.primary.goal)));
+  const turns = Math.min(MAX_TURNS, Math.max(120, (latest - startYear + 1) * 36));
+
+  const met: Record<string, number> = {};
+  for (const o of objs) met[o.forceId] = 0;
+
+  for (let r = 0; r < RUNS; r++) {
+    (st.getState() as unknown as { observeScenario: (s: typeof scenario, d: 'normal') => void })
+      .observeScenario(scenario, 'normal');
+    const hit: Record<string, boolean> = {};
+    for (let t = 1; t <= turns; t++) {
+      st.getState().endSeason();
+      const s = st.getState() as unknown as {
+        pendingEvent?: { event: { choices?: Array<{ id: string }> } };
+        resolveEventChoice: (id: string) => void; dismissEvent: () => void;
+        popupQueue?: unknown[]; dismissPopup: () => void;
+        cities: Record<string, { ownerForceId?: string | null }>;
+        officers: Record<string, unknown>; date: { year: number };
+        forces: Record<string, { imperialRank?: string }>;
+      };
+      if (s.pendingEvent) s.resolveEventChoice(s.pendingEvent.event.choices?.[0]?.id ?? '');
+      if ((st.getState() as unknown as { pendingEvent?: unknown }).pendingEvent) s.dismissEvent();
+      while ((st.getState() as unknown as { popupQueue?: unknown[] }).popupQueue?.length) s.dismissPopup();
+
+      const cur = st.getState() as unknown as typeof s;
+      const live = new Set<string>();
+      for (const c of Object.values(cur.cities)) if (c.ownerForceId) live.add(c.ownerForceId);
+      for (const o of objs) {
+        if (hit[o.forceId]) continue;
+        const res = evaluateGoal(o.primary.goal, {
+          scenarioId: scenario.id, playerForceId: o.forceId,
+          cities: cur.cities as never, officers: cur.officers as never,
+          year: cur.date.year, liveForceIds: live,
+          isEmperor: cur.forces[o.forceId]?.imperialRank === 'emperor',
+        } as never);
+        if (res.status === 'success') hit[o.forceId] = true;
+      }
+    }
+    for (const o of objs) if (hit[o.forceId]) met[o.forceId]++;
+  }
+
+  const zeros = objs.filter((o) => met[o.forceId] === 0);
+  const line = objs.map((o) => `${o.forceId}:${met[o.forceId]}`).join(' ');
+  console.log(`${zeros.length ? '✗' : '·'} ${scenario.id.padEnd(24)} ${String(turns).padStart(3)}旬 到${scenario.startDate?.year ?? '?'}+  ${line}`);
+  for (const o of zeros) {
+    dead.push({ id: scenario.id, zh: scenario.name.zh, forceId: o.forceId, title: o.primary.title.zh, goal: JSON.stringify(o.primary.goal) });
+  }
+}
+
+console.log(`\n=== ${boards} 張盤,${RUNS} 輪;主目標 0 中的 ${dead.length} 條 ===`);
+for (const d of dead) console.log(`  ${d.zh}(${d.id}) / ${d.forceId} 「${d.title}」 ${d.goal}`);
