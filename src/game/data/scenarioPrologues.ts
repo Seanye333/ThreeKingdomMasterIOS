@@ -388,6 +388,18 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Cao Cao besieges Ye and turns the Zhang River onto it; more than half the people inside starve. In the eighth month Shen Pei\'s nephew opens the east gate.\n\nYuan Shao has been dead four years and his three sons have split the inheritance: Yuan Tan in Qing, Yuan Shang at Ye, Yuan Xi in You. Cao Cao does not have to beat all of them — he only has to wait for the brothers to start. Guo Jia put it plainly: press them and they close ranks; ease off and their ambitions do the work.',
     },
     forces: {
+      'zhang-lu': {
+        zh: '你是張魯。祖父張陵在鶴鳴山造符書,父親張衡傳之,到你這裡是第三代。\n\n漢中的路是你自己斷的:殺漢使,絕斜谷閣道。朝廷拿你沒辦法,就給了個鎮民中郎將,領漢寧太守 —— 承認你在這裡是合法的。\n\n治下不置長吏,以祭酒為治;置義舍,米肉懸於道,行路者量腹取足。犯法者三原而後刑。\n\n民、夷便樂之。這句話是史書寫的,不是你自己說的。',
+        en: 'You are Zhang Lu. Your grandfather Zhang Ling wrote the talismans at Heming mountain, your father Zhang Heng passed them on, and you are the third.\n\nYou cut the road to Hanzhong yourself: killed the court\'s envoys, broke the plank galleries through the Xie valley. Unable to reach you, the court made you a General of the Household and Grand Administrator of Hanning — which is to say, legal.\n\nYou appoint no magistrates; the libationers govern. You keep charity lodges with rice and meat hung by the road for travellers to take what they need. An offender is forgiven three times before he is punished.\n\n',
+      },
+      'shi-xie': {
+        zh: '你是士燮。交趾太守,兄弟四人分領合浦、九真、南海。\n\n中原大亂,而這裡沒有。士人避地來歸者以百數,你養著他們;鐘鳴磬響,胡人夾轂焚香者常有數十。\n\n出入鳴鐘磬,備具威儀,笳簫鼓吹,車騎滿道 —— 有人說這是僭越。那些人在北方,而北方在打仗。\n\n你今年六十七。你會活到九十歲。',
+        en: 'You are Shi Xie, Grand Administrator of Jiaozhi; your three brothers hold Hepu, Jiuzhen and Nanhai between them.\n\nThe central plain is in chaos and this place is not. Scholars fleeing the wars come by the hundred and you keep them. Bells and chimes sound, and there are always a few dozen foreigners walking beside your carriage burning incense.\n\nBells and chimes when you go out, full ceremonial, pipes and drums, the road filled with horsemen — some call it presumption. Those people are in the north, and the north is at war.\n\nYou are sixty-seven. You will live to ninety.',
+      },
+      'liu-zhang': {
+        zh: '你是劉璋。父親留下的益州,和父親留下的問題:東州兵與益州士族,誰也不服誰。\n\n趙韙反了,你平了。你以為那是最後一次。\n\n張魯在漢中不聽號令 —— 你殺了他母親和弟弟,而漢中還是他的。\n\n你性寬柔,無威略。這是《三國志》給你的四個字,而你自己覺得那叫寬厚。',
+        en: 'You are Liu Zhang. Your father left you Yi province and your father\'s problem with it: the Eastern Province troops and the local gentry, neither yielding to the other.\n\nZhao Wei revolted and you put him down. You assumed that was the last of it.\n\nZhang Lu in Hanzhong will not take your orders — you had his mother and brother killed, and Hanzhong is still his.\n\n\'Mild and pliant, without authority or strategy.\' That is what the histories give you, in six words. You would call it generosity.',
+      },
       cao: {
         zh: '你等了四年,等袁氏兄弟自己打起來。現在袁譚向你請降求援 —— 你答應了,還與他結為兒女親家。\n\n這是一步很髒也很有效的棋。鄴城破後,你在袁紹墓前哭祭,厚待其妻子。哭是真的,吞併也是真的。',
         en: 'You waited four years for the brothers to turn on each other. Now Yuan Tan asks for your help against his own brother — you agree, and seal it with a marriage.\n\nIt is a dirty move and it works. When Ye falls you weep at Yuan Shao\'s grave and treat his widow generously. The grief is real. So is the annexation.',
@@ -459,6 +471,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Liu Bei is quartered at Xinye. Xu Shu, leaving his service, recommends Zhuge Liang: "This man can be visited; he cannot be summoned. You should go to him yourself."\n\nThree journeys before the meeting. Then, with the room cleared: "The House of Han is falling, treacherous men have stolen the mandate, the emperor is a fugitive. Without measuring my own virtue or strength I have wanted to make right prevail in the realm, and my judgement has been so shallow that I am reduced to this. Yet the ambition has not left me. What plan would you give me?"\n\nThe answer: "Cao Cao has a million men and holds the Son of Heaven to command the lords — there is no contesting him head-on. Sun Quan holds Jiangdong through three generations — he may be made an ally, not a target. Jing province commands the Han and Mian rivers, draws profit from the southern sea, links to Wu in the east and Ba-Shu in the west: it is a land made for war. Yi province is walled by its passes, a thousand li of rich fields, the storehouse of Heaven…"',
     },
     forces: {
+      'zhang-lu': {
+        zh: '你是張魯。漢中十七年了。\n\n北面曹操剛剛平定烏桓,南面劉璋殺了你的母親而不敢再北上。你夾在兩個人中間,而兩個人都還沒空。\n\n有人在民間掘出玉印,勸你稱漢寧王。閻圃說:「漢川之民,戶出十萬,財富土沃,四面險固;上匡天子,則為桓文,次及竇融,不失富貴。今承制署置,勢足斬斷,不煩於王。」\n\n你聽了他的。稱王的人先死,這件事你比誰都清楚。',
+        en: 'You are Zhang Lu. Seventeen years in Hanzhong.\n\nNorth of you Cao Cao has just finished the Wuhuan; south of you Liu Zhang killed your mother and has not dared come up since. You are between two men, and neither has time for you yet.\n\nSomeone dug a jade seal out of a field and they want you to call yourself King of Hanning. Yan Pu said: \'The people of the Han valley are a hundred thousand households, the land rich, the passes strong on every side. Aid the Son of Heaven and you are a Duke Huan; failing that, a Dou Rong, and you keep your wealth. You already appoint whom you please and can execute whom you please. A crown adds nothing.\'\n\nYou listened. You know better than anyone that the ones who take crowns die first.',
+      },
+      'shi-xie': {
+        zh: '你是士燮。交州四十年無事。\n\n孫權在江東立了腳,遣使來通好;曹操以朝廷之名遙授你綏南中郎將。兩邊都給你名號,兩邊都不來。\n\n這是你要的。名號不值錢,不來才值錢。\n\n你送去的貢物年年不斷:明珠、大貝、流離、翡翠、玳瑁、犀、象。買的不是官,是路上的安靜。',
+        en: 'You are Shi Xie. Forty years without an alarm in Jiao province.\n\nSun Quan has his footing in the Southland and sends envoys to be friendly; Cao Cao, in the court\'s name, grants you a general\'s title from a long way off. Both sides give you names. Neither side comes.\n\nThat is the arrangement you want. The names are worth nothing. The not-coming is worth everything.\n\nThe tribute goes north every year without fail: pearls, great shells, glass, kingfisher feathers, tortoiseshell, rhinoceros horn, ivory. You are not buying office. You are buying quiet on the roads.',
+      },
       cao: {
         zh: '北方已定,烏桓已破,郭嘉死在回師的路上,年三十八。你在渤海邊上寫「東臨碣石,以觀滄海」。\n\n下一步是荊州。你在鄴城鑿玄武池練水軍 —— 北人不習水戰,你知道,可你還是要南下。',
         en: 'The north is settled, the Wuhuan broken, and Guo Jia died on the road home at thirty-eight. On the shore of the Bohai you write: "East I came to Jieshi stone, to look upon the vast blue sea."\n\nNext is Jing province. At Ye you have dug the Xuanwu lake to drill a navy — northerners cannot fight on water, and you know it, and you are going south anyway.',
@@ -546,6 +566,18 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Cao Cao sent Zhong Yao against Zhang Lu; the Guanzhong generals took it for a move against themselves, and ten companies under Ma Chao and Han Sui rose together — a hundred thousand men camped at Tong Pass.\n\nCao Cao met Han Sui alone on horseback and spoke of nothing but old acquaintances in the capital, clapping his hands and laughing. Afterwards Ma Chao asked what had been said. "Nothing," said Han Sui. They began to wonder. Later Cao Cao sent Han Sui a letter full of crossings-out and corrections, as if Han Sui himself had altered it. After that they wondered a great deal.\n\nIn the ninth month came the battle south of the Wei. Cao Cao said: "Guanzhong is wide, and if the rebels each held their own strongholds it would take a year or two to reduce them. Instead they have all gathered here. Many as they are, none submits to another; the army has no master. One stroke ends it. That is why I am pleased."',
     },
     forces: {
+      'zhang-lu': {
+        zh: '你是張魯。曹操在潼關與馬超打,而馬超若敗,下一個就是漢中。\n\n劉璋那邊在議請劉備入蜀 —— 名義上是來打你的。\n\n兩面都在動,而你這裡還是照舊:祭酒治民,義舍施米,犯法者三原。\n\n二十年了。你大概是這個天下唯一一個沒打過大仗還活著的人。',
+        en: 'You are Zhang Lu. Cao Cao is fighting Ma Chao at Tong pass, and if Ma Chao loses, Hanzhong is next.\n\nIn Chengdu they are debating whether to invite Liu Bei into Shu — nominally to come and deal with you.\n\nBoth sides are moving, and here everything is as it was: libationers governing, rice in the charity lodges, three pardons before a punishment.\n\nTwenty years. You may be the only man left under heaven who has survived this long without fighting a great battle.',
+      },
+      'shi-xie': {
+        zh: '你是士燮。步騭來了,帶著孫權的印綬,也帶著兵。\n\n你率兄弟奉承節度。有人問你為什麼不抵抗 —— 因為抵抗要打仗,而交州四十年沒有打過仗,那正是你要保住的東西。\n\n名義上你仍是交趾太守。實際上南方換了主人。\n\n有些東西只能靠交出去來保住。',
+        en: 'You are Shi Xie. Bu Zhi has arrived with Sun Quan\'s seals of office — and with soldiers.\n\nYou and your brothers accepted his authority. People ask why you did not resist. Because resisting means fighting, and Jiao province has not fought in forty years, and that is precisely the thing you are trying to keep.\n\nIn name you are still Grand Administrator of Jiaozhi. In fact the south has a new master.\n\nSome things can only be kept by handing them over.',
+      },
+      'liu-zhang': {
+        zh: '你是劉璋。劉備已經進來了,屯葭萌,厚樹恩德以收眾心。\n\n黃權諫過:「左將軍有驍名,今請到,欲以部曲遇之,則不滿其心;欲以賓客禮待,則一國不容二君。」你沒有聽。\n\n王累倒懸於城門進諫,你也沒有聽。\n\n現在他在北面替你擋張魯,而你每個月給他糧。這件事聽起來很合理,直到有一天不合理為止。',
+        en: 'You are Liu Zhang. Liu Bei is already inside, camped at Jiameng, spreading kindness and collecting men\'s hearts.\n\nHuang Quan warned you: \'The General of the Left has a name for daring. Bring him in and treat him as a subordinate, and he will not be satisfied; treat him as an honoured guest, and one state cannot hold two lords.\' You did not listen.\n\nWang Lei hung himself upside down at the city gate to remonstrate. You did not listen to that either.\n\nNow he holds the north against Zhang Lu for you, and every month you send him grain. It sounds perfectly reasonable, right up until the day it does not.',
+      },
       cao: {
         zh: '十部聯軍看著嚇人,實際上沒有主帥。你要做的只是把他們湊在一起,然後拆散。\n\n渡渭水時被馬超追上,箭如雨下,許褚左手舉馬鞍擋箭,右手撐船。你上岸後笑著說:「今日幾為小賊所困乎!」',
         en: 'The ten-company coalition looks terrifying and has no commander. Your whole task is to keep them gathered, then take them apart.\n\nCrossing the Wei, Ma Chao catches you; the arrows come down like rain, and Xu Chu holds a saddle up as a shield with his left hand and poles the boat with his right. Ashore, you laugh: "Today I was very nearly cornered by a young bandit."',
@@ -571,6 +603,14 @@ export const SCENARIO_PROLOGUES: Record<string, ScenarioPrologue> = {
       en: 'Liu Bei has broken with Liu Zhang and come south from Jiameng to besiege Luocheng.\n\nPang Tong, leading the assault, was struck by a stray arrow and died. He was thirty-six. Liu Bei grieved for him, and wept whenever he was mentioned.\n\nLuocheng held for a year. When it fell, Chengdu was in sight.',
     },
     forces: {
+      'zhang-lu': {
+        zh: '你是張魯。劉備和劉璋翻臉了 —— 在你的南面,替你打你的敵人。\n\n馬超敗於冀城,單身走漢中,來投你。你以女妻之的話說到一半,楊柏勸阻:能養其妻子而不能養其人。\n\n你留下了他。一年之後他會走 —— 去投那個正在打劉璋的人。\n\n你這裡從來留不住能打的人。這也許就是你能活二十年的原因。',
+        en: 'You are Zhang Lu. Liu Bei and Liu Zhang have fallen out — south of you, fighting your enemy for you.\n\nMa Chao, beaten at Jicheng, has come to you alone. You were halfway through offering him your daughter when Yang Bo stopped it: a man who cannot keep his own household is not one to marry into yours.\n\nYou kept him anyway. In a year he will leave — for the man who is currently fighting Liu Zhang.\n\nFighting men never stay here. That may be exactly why you have lasted twenty years.',
+      },
+      'shi-xie': {
+        zh: '你是士燮。北方在爭益州,而交州照舊。\n\n你的兒子士徽在身邊長大。他沒有見過中原,也沒有見過戰爭 —— 他只見過你四十年怎麼把這個地方守成一座沒有人願意來的城。\n\n你守得住,是因為你從不讓任何一邊覺得非來不可。\n\n而你活著的每一年,都是你兒子將來不會懂的那一課。',
+        en: 'You are Shi Xie. The north is fighting over Yi province, and Jiao province is as it was.\n\nYour son Shi Hui is growing up here. He has never seen the central plain and has never seen a war — all he has seen is forty years of you keeping this place somewhere nobody wants to come.\n\nYou have held it by never letting either side feel it must.\n\nAnd every year you go on living is a lesson your son will not have learned.',
+      },
       'liu-bei': {
         zh: '你五十三歲,第一次真的在打自己的地盤。龐統給了你上中下三策,你選了中策 —— 然後他死在雒城下。\n\n諸葛亮、張飛、趙雲從荊州溯江來援,關羽留守。這一步之後,荊州只剩關羽一個人。',
         en: 'You are fifty-three and for the first time you are fighting for ground that will be your own. Pang Tong gave you three plans; you took the middle one, and then he died under the walls of Luocheng.\n\nZhuge Liang, Zhang Fei and Zhao Yun are coming upriver from Jing to reinforce you, and Guan Yu stays behind. After this, Jing province is one man.',
