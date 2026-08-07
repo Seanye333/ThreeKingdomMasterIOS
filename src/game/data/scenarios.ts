@@ -2617,8 +2617,8 @@ export const SCENARIO_225_SOUTHERN: Scenario = {
   cities: buildInitialCities(CITY_OWNERSHIP_225,
     {
       ...TK_LATE,
-      'liu-bei': { troops: 1.05, food: 1.05, gold: 0.90, defense: 6, loyalty: 8 },
-      nanman:    { troops: 1.20, food: 0.70, gold: 0.60, defense: -14, loyalty: -10 },
+      'liu-bei': { troops: 1.15, food: 1.05, gold: 0.90, defense: 6,   loyalty: 8 },
+      nanman:    { troops: 1.20, food: 0.65, gold: 0.55, defense: -22, loyalty: -18 },
     }),
   forces: FORCES_225,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_225, DEAD_BY_225, 225),

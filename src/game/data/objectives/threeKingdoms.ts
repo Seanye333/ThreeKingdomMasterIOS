@@ -1119,27 +1119,43 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-220-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '魏之天下統一', en: 'Wei Unifies the Realm' },
-        description: 'Unify all cities under Wei.',
-        descriptionZh: "於魏旗之下統一天下諸城。",
-        goal: { kind: 'unify-realm' },
+        title: { zh: '受禪定鼎', en: 'The Abdication Received' },
+        description: "Still hold Luoyang, Xuchang, Chang'an and Ye in 226 — the dynasty is new; first it must not wobble.",
+        descriptionZh: "至226年仍據洛陽、許昌、長安、鄴 —— 新朝初立,先站得住再談一統。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'changan', 'ye'], byYear: 226 },
       },
+      secondary: [
+        {
+          title: { zh: '魏之天下統一', en: 'Wei Unifies the Realm' },
+          description: 'Unify all cities under Wei.',
+          descriptionZh: "於魏旗之下統一天下諸城。",
+          goal: { kind: 'unify-realm' },
+        },
+      ],
     },
     {
       id: 'obj-220-liu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '漢室再興', en: 'Restore the Han' },
-        description: 'Hold Luoyang and Chang\'an at the same time.',
-        descriptionZh: "同時據有洛陽與長安。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'] },
+        title: { zh: '即皇帝位', en: 'Take the Imperial Title' },
+        description: "Declare yourself emperor — with the Han abdicated, the succession has to be claimed by someone.",
+        descriptionZh: "稱帝建號 —— 漢統既絕,總得有人接;章武元年四月即位於成都武擔之南。",
+        goal: { kind: 'declare-emperor' },
       },
+      secondary: [
+        {
+          title: { zh: '漢室再興', en: 'Restore the Han' },
+          description: 'Hold Luoyang and Chang\'an at the same time.',
+          descriptionZh: "同時據有洛陽與長安。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'] },
+        },
+      ],
     },
     {
       id: 'obj-220-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '呉皇帝即位', en: 'Sun Quan as Emperor' },
+        title: { zh: '吳皇帝即位', en: 'Sun Quan as Emperor' },
         description: 'Declare yourself Emperor (via the Court edict).',
         descriptionZh: "頒朝廷詔書,自立為帝。",
         goal: { kind: 'declare-emperor' },
@@ -1313,12 +1329,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-222-wu',
       forceId: 'sun',
       primary: {
-        title: { zh: '火燒連營', en: 'Burn the Camps' },
-        description: 'Break Liu Bei — defeat the Shu invasion.',
-        descriptionZh: "以陸遜之火,擊潰劉備伐吳之師。",
-        goal: { kind: 'defeat-force', forceId: 'liu-bei' },
+        title: { zh: '火燒連營', en: 'The Camps Burn' },
+        description: "Still hold Jiangling, Yiling and Xiaoting in 226 — Lu Xun gave ground for months, then burned forty camps in a night.",
+        descriptionZh: "至226年仍據江陵、夷陵、猇亭 —— 陸遜退了七八百里,然後一夜燒了四十餘營。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'yiling', 'xiaoting'], byYear: 226 },
       },
       secondary: [
+        {
+          title: { zh: '火燒連營', en: 'Burn the Camps' },
+          description: 'Break Liu Bei — defeat the Shu invasion.',
+          descriptionZh: "以陸遜之火,擊潰劉備伐吳之師。",
+          goal: { kind: 'defeat-force', forceId: 'liu-bei' },
+        },
         {
           title: { zh: '固守荊州', en: 'Hold Jing Province' },
           description: 'Still hold Jiangling and Yiling by 224.',
@@ -2736,12 +2758,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-221-wei',
       forceId: 'cao',
       primary: {
-        title: { zh: '受禪定鼎', en: 'The Mandate Received' },
-        description: 'Bring all under Wei.',
-        descriptionZh: "混一天下 —— 受漢之禪,便當有一統之實。",
-        goal: { kind: 'unify-realm' },
+        title: { zh: '守成之君', en: 'Keep What Was Received' },
+        description: "Still hold Luoyang, Xuchang, Chang'an and Ye in 230 — Wei never unified; it also never wobbled.",
+        descriptionZh: "至230年仍據洛陽、許昌、長安、鄴 —— 魏未曾一統,而四十六年未曾動搖。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'changan', 'ye'], byYear: 230 },
       },
       secondary: [
+        {
+          title: { zh: '受禪定鼎', en: 'The Mandate Received' },
+          description: 'Bring all under Wei.',
+          descriptionZh: "混一天下 —— 受漢之禪,便當有一統之實。",
+          goal: { kind: 'unify-realm' },
+        },
         {
           title: { zh: '南取江陵', en: 'Take Jiangling' },
           description: 'Hold Jiangling by 230.',
@@ -2884,12 +2912,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-228st-wu',
       forceId: 'sun',
       primary: {
-        title: { zh: '詐降誘敵', en: 'The False Defection' },
-        description: 'Take Hefei and Shouchun by 236 — Zhou Fang cut his hair to sell the lie.',
-        descriptionZh: "於236年前取合肥、壽春 —— 周魴斷髮賺曹休。",
-        goal: { kind: 'hold-cities', cityIds: ['hefei', 'shouchun'], byYear: 236 },
+        title: { zh: '江表無虞', en: 'The Southland Untouched' },
+        description: "Still hold Wuchang, Jianye, Jiangxia and Chaisang in 236 — Zhou Fang's false surrender was to break an army, not to take a city.",
+        descriptionZh: "至236年仍據武昌、建業、江夏、柴桑 —— 周魴斷髮詐降,要的是曹休那十萬人,不是一座城。",
+        goal: { kind: 'hold-cities', cityIds: ['wuchang', 'jianye', 'jiangxia', 'chaisang'], byYear: 236 },
       },
       secondary: [
+        {
+          title: { zh: '詐降誘敵', en: 'The False Defection' },
+          description: 'Take Hefei and Shouchun by 236 — Zhou Fang cut his hair to sell the lie.',
+          descriptionZh: "於236年前取合肥、壽春 —— 周魴斷髮賺曹休。",
+          goal: { kind: 'hold-cities', cityIds: ['hefei', 'shouchun'], byYear: 236 },
+        },
         {
           title: { zh: '即皇帝位', en: 'Take the Title' },
           description: 'Declare yourself emperor.',
