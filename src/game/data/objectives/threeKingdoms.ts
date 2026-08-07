@@ -1526,11 +1526,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
-        description: 'Control You province by 199, then break Yuan Shao.',
-        descriptionZh: "於199年前盡有幽州,再圖河北。",
-        goal: { kind: 'control-province', provinceId: 'you', byYear: 199 },
+        description: "Still hold Ji, Beiping, Yuyang and Yi County in 199 — You province also runs out to Lelang and Daifang, which no one contests.",
+        descriptionZh: "至199年仍據薊、北平、漁陽、易縣 —— 幽州名下還有樂浪帶方,那是沒有人去爭的地方。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping', 'yuyang', 'yi-county'], byYear: 199 },
       },
       secondary: [
+        {
+          title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
+          description: 'Control You province by 199, then break Yuan Shao.',
+          descriptionZh: "於199年前盡有幽州,再圖河北。",
+          goal: { kind: 'control-province', provinceId: 'you', byYear: 199 },
+        },
         {
           title: { zh: '河北決勝', en: 'Break Yuan Shao' },
           description: 'Destroy the Yuan Shao force.',
@@ -1614,10 +1620,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-teng',
       primary: {
         title: { zh: '西涼鐵騎', en: 'The Iron Horse of Liang' },
-        description: 'Control Liang province by 202.',
-        descriptionZh: "於202年前盡有涼州,鐵騎出隴。",
-        goal: { kind: 'control-province', provinceId: 'liang', byYear: 202 },
+        description: "Still hold Jincheng, Wuwei, Anding and Longxi in 202 — Liang also counts Dunhuang and Jiuquan, a month's ride past anyone's interest.",
+        descriptionZh: "至202年仍據金城、武威、安定、隴西 —— 涼州名下還有敦煌酒泉,那是誰也不會去的河西盡頭。",
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding', 'longxi'], byYear: 202 },
       },
+      secondary: [
+        {
+          title: { zh: '西涼鐵騎', en: 'The Iron Horse of Liang' },
+          description: 'Control Liang province by 202.',
+          descriptionZh: "於202年前盡有涼州,鐵騎出隴。",
+          goal: { kind: 'control-province', provinceId: 'liang', byYear: 202 },
+        },
+      ],
     },
   ],
 
@@ -1924,11 +1938,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-197-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '全有揚州', en: 'All of Yang' },
-        description: 'Control Yang province by 204.',
-        descriptionZh: "於204年前盡有揚州。",
-        goal: { kind: 'control-province', provinceId: 'yang', byYear: 204 },
+        title: { zh: '江東六郡', en: 'The Six Commanderies' },
+        description: "Hold Jianye, Wu, Kuaiji and Yuzhang by 204 — the six commanderies are Wu; Hefei and Shouchun never were.",
+        descriptionZh: "於204年前據建業、吳郡、會稽、豫章 —— 江東六郡才是孫氏的本,合肥壽春從來不是。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'kuaiji', 'yuzhang'], byYear: 204 },
       },
+      secondary: [
+        {
+          title: { zh: '全有揚州', en: 'All of Yang' },
+          description: 'Control Yang province by 204.',
+          descriptionZh: "於204年前盡有揚州。",
+          goal: { kind: 'control-province', provinceId: 'yang', byYear: 204 },
+        },
+      ],
     },
     {
       id: 'obj-197-lubu',
@@ -1986,11 +2008,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-198-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '據江東以觀天下', en: 'Watch the Realm from Jiangdong' },
-        description: 'Control Yang province by 204.',
-        descriptionZh: "於204年前盡有揚州,坐觀中原之變。",
-        goal: { kind: 'control-province', provinceId: 'yang', byYear: 204 },
+        title: { zh: '據江東以觀天下', en: 'Hold the Southland and Watch' },
+        description: "Hold Jianye, Wu, Kuaiji and Yuzhang by 204 — settle the six commanderies first; the north can wait.",
+        descriptionZh: "於204年前據建業、吳郡、會稽、豫章 —— 先定六郡,北方的事可以等。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'kuaiji', 'yuzhang'], byYear: 204 },
       },
+      secondary: [
+        {
+          title: { zh: '據江東以觀天下', en: 'Watch the Realm from Jiangdong' },
+          description: 'Control Yang province by 204.',
+          descriptionZh: "於204年前盡有揚州,坐觀中原之變。",
+          goal: { kind: 'control-province', provinceId: 'yang', byYear: 204 },
+        },
+      ],
     },
     {
       id: 'obj-198-yuanshu',
@@ -2048,21 +2078,37 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-199-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '江東基業', en: 'The Jiangdong Inheritance' },
-        description: 'Control Yang province by 205.',
-        descriptionZh: "於205年前盡有揚州,守父兄之業。",
-        goal: { kind: 'control-province', provinceId: 'yang', byYear: 205 },
+        title: { zh: '江東基業', en: 'The Foundation in the Southland' },
+        description: "Hold Jianye, Wu, Kuaiji and Yuzhang by 205 — what Sun Ce won in five years, and died holding.",
+        descriptionZh: "於205年前據建業、吳郡、會稽、豫章 —— 孫策五年所得,也是他死時手裡的全部。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'kuaiji', 'yuzhang'], byYear: 205 },
       },
+      secondary: [
+        {
+          title: { zh: '江東基業', en: 'The Jiangdong Inheritance' },
+          description: 'Control Yang province by 205.',
+          descriptionZh: "於205年前盡有揚州,守父兄之業。",
+          goal: { kind: 'control-province', provinceId: 'yang', byYear: 205 },
+        },
+      ],
     },
     {
       id: 'obj-199-liubiao',
       forceId: 'liu-biao',
       primary: {
-        title: { zh: '荊襄九郡', en: 'The Nine Commanderies of Jing' },
-        description: 'Control Jing province by 206.',
-        descriptionZh: "於206年前盡有荊州九郡。",
-        goal: { kind: 'control-province', provinceId: 'jing', byYear: 206 },
+        title: { zh: '荊襄之守', en: 'The Jing Heartland' },
+        description: "Still hold Xiangyang, Jiangling, Jiangxia, Changsha and Wancheng in 206 — the nine commanderies were never all yours at once.",
+        descriptionZh: "至206年仍據襄陽、江陵、江夏、長沙、宛城 —— 荊襄九郡從來沒有同時全在你手上。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia', 'changsha', 'wancheng'], byYear: 206 },
       },
+      secondary: [
+        {
+          title: { zh: '荊襄九郡', en: 'The Nine Commanderies of Jing' },
+          description: 'Control Jing province by 206.',
+          descriptionZh: "於206年前盡有荊州九郡。",
+          goal: { kind: 'control-province', provinceId: 'jing', byYear: 206 },
+        },
+      ],
     },
   ],
 
@@ -2157,10 +2203,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'shi-xie',
       primary: {
         title: { zh: '交州王', en: 'King of Jiao' },
-        description: 'Control Jiao province by 210.',
-        descriptionZh: "於210年前盡有交州 —— 嶺南一隅,亦可自王。",
-        goal: { kind: 'control-province', provinceId: 'jiao', byYear: 210 },
+        description: "Still hold Jiaozhi, Nanhai, Hepu and Cangwu in 210 — Jiao also counts Zhuyai and Rinan, past the end of the roads.",
+        descriptionZh: "至210年仍據交趾、南海、合浦、蒼梧 —— 交州名下還有珠崖日南,那是路的盡頭之外。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai', 'hepu', 'cangwu'], byYear: 210 },
       },
+      secondary: [
+        {
+          title: { zh: '交州王', en: 'King of Jiao' },
+          description: 'Control Jiao province by 210.',
+          descriptionZh: "於210年前盡有交州 —— 嶺南一隅,亦可自王。",
+          goal: { kind: 'control-province', provinceId: 'jiao', byYear: 210 },
+        },
+      ],
     },
   ],
 
@@ -2224,11 +2278,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-207tv-liuzhang',
       forceId: 'liu-zhang',
       primary: {
-        title: { zh: '守此蜀土', en: 'Keep the Shu Basin' },
-        description: 'Control Yi province by 214 — and never invite a guest with an army.',
-        descriptionZh: "於214年前盡有益州 —— 並且,永遠不要迎一個帶兵的客人入蜀。",
-        goal: { kind: 'control-province', provinceId: 'yi', byYear: 214 },
+        title: { zh: '守此蜀土', en: 'Hold the Shu Lands' },
+        description: "Still hold Chengdu, Jiangzhou, Luocheng, Fucheng and Mianzhu in 214 — Yi also runs down to Nanzhong, which answers to no one.",
+        descriptionZh: "至214年仍據成都、江州、雒城、涪城、綿竹 —— 益州名下還有南中,那裡誰的號令也不聽。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng', 'fucheng', 'mianzhu'], byYear: 214 },
       },
+      secondary: [
+        {
+          title: { zh: '守此蜀土', en: 'Keep the Shu Basin' },
+          description: 'Control Yi province by 214 — and never invite a guest with an army.',
+          descriptionZh: "於214年前盡有益州 —— 並且,永遠不要迎一個帶兵的客人入蜀。",
+          goal: { kind: 'control-province', provinceId: 'yi', byYear: 214 },
+        },
+      ],
     },
     {
       id: 'obj-207tv-zhanglu',
@@ -2245,20 +2307,36 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-teng',
       primary: {
         title: { zh: '不入許都', en: 'Do Not Go to Xuchang' },
-        description: 'Control Liang province by 213 — in history you accepted a court post and died for it.',
-        descriptionZh: "於213年前盡有涼州 —— 史書上,你應召入朝,闔門遇害。",
-        goal: { kind: 'control-province', provinceId: 'liang', byYear: 213 },
+        description: "Still hold Wuwei, Jincheng, Anding and Longxi in 213 — stay in the west; the summons to court is a cage.",
+        descriptionZh: "至213年仍據武威、金城、安定、隴西 —— 留在西邊。徵你入朝的那道詔書是個籠子。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding', 'longxi'], byYear: 213 },
       },
+      secondary: [
+        {
+          title: { zh: '不入許都', en: 'Do Not Go to Xuchang' },
+          description: 'Control Liang province by 213 — in history you accepted a court post and died for it.',
+          descriptionZh: "於213年前盡有涼州 —— 史書上,你應召入朝,闔門遇害。",
+          goal: { kind: 'control-province', provinceId: 'liang', byYear: 213 },
+        },
+      ],
     },
     {
       id: 'obj-207tv-shixie',
       forceId: 'shi-xie',
       primary: {
         title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
-        description: 'Control Jiao province by 212.',
-        descriptionZh: "於212年前盡有交州。",
-        goal: { kind: 'control-province', provinceId: 'jiao', byYear: 212 },
+        description: "Still hold Jiaozhi, Nanhai, Hepu and Cangwu in 212 — forty years in which the south saw no war.",
+        descriptionZh: "至212年仍據交趾、南海、合浦、蒼梧 —— 兄弟並為列郡守,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai', 'hepu', 'cangwu'], byYear: 212 },
       },
+      secondary: [
+        {
+          title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+          description: 'Control Jiao province by 212.',
+          descriptionZh: "於212年前盡有交州。",
+          goal: { kind: 'control-province', provinceId: 'jiao', byYear: 212 },
+        },
+      ],
     },
   ],
 
@@ -2316,11 +2394,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-207bl-liuzhang',
       forceId: 'liu-zhang',
       primary: {
-        title: { zh: '益州自守', en: 'Hold Yi Alone' },
-        description: 'Control Yi province by 214.',
-        descriptionZh: "於214年前盡有益州。",
-        goal: { kind: 'control-province', provinceId: 'yi', byYear: 214 },
+        title: { zh: '益州自守', en: 'Yi Keeps to Itself' },
+        description: "Still hold Chengdu, Jiangzhou, Luocheng and Fucheng in 214 — while the north settles itself, shut the passes.",
+        descriptionZh: "至214年仍據成都、江州、雒城、涪城 —— 北方自去廝殺,你只要把關閉上。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng', 'fucheng'], byYear: 214 },
       },
+      secondary: [
+        {
+          title: { zh: '益州自守', en: 'Hold Yi Alone' },
+          description: 'Control Yi province by 214.',
+          descriptionZh: "於214年前盡有益州。",
+          goal: { kind: 'control-province', provinceId: 'yi', byYear: 214 },
+        },
+      ],
     },
   ],
 
@@ -2366,11 +2452,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-211-hansui',
       forceId: 'han-sui',
       primary: {
-        title: { zh: '西州自立', en: 'A Realm of My Own in the West' },
-        description: 'Control Liang province by 217 — thirty years in Guanzhong, always someone else\'s ally.',
-        descriptionZh: "於217年前盡有涼州 —— 縱橫關中三十年,總是別人的盟友。",
-        goal: { kind: 'control-province', provinceId: 'liang', byYear: 217 },
+        title: { zh: '西州自立', en: 'A Realm in the West' },
+        description: "Still hold Jincheng, Wuwei and Anding in 217 — thirty years in Liang, and never once summoned to court.",
+        descriptionZh: "至217年仍據金城、武威、安定 —— 在涼州三十年,一次也沒有應詔入朝。",
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding'], byYear: 217 },
       },
+      secondary: [
+        {
+          title: { zh: '西州自立', en: 'A Realm of My Own in the West' },
+          description: 'Control Liang province by 217 — thirty years in Guanzhong, always someone else\'s ally.',
+          descriptionZh: "於217年前盡有涼州 —— 縱橫關中三十年,總是別人的盟友。",
+          goal: { kind: 'control-province', provinceId: 'liang', byYear: 217 },
+        },
+      ],
     },
     {
       id: 'obj-211-liubei',
@@ -2498,12 +2592,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-214-liubei',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '入主西川', en: 'Master of Xichuan' },
-        description: 'Control Yi province by 218.',
-        descriptionZh: "於218年前盡有益州 —— 隆中對之半,今日始成。",
-        goal: { kind: 'control-province', provinceId: 'yi', byYear: 218 },
+        title: { zh: '入主西川', en: 'Master of the West' },
+        description: "Still hold Chengdu, Jiangzhou, Luocheng, Fucheng and Baxi in 218 — the heart of Yi; Nanzhong will need its own campaign.",
+        descriptionZh: "至218年仍據成都、江州、雒城、涪城、巴西 —— 益州之心;南中要另打一場仗。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng', 'fucheng', 'baxi'], byYear: 218 },
       },
       secondary: [
+        {
+          title: { zh: '入主西川', en: 'Master of Xichuan' },
+          description: 'Control Yi province by 218.',
+          descriptionZh: "於218年前盡有益州 —— 隆中對之半,今日始成。",
+          goal: { kind: 'control-province', provinceId: 'yi', byYear: 218 },
+        },
         {
           title: { zh: '北定漢中', en: 'Take Hanzhong' },
           description: 'Hold Hanzhong by 220.',
@@ -3776,21 +3876,35 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-biao',
       primary: {
         title: { zh: '荊州之主', en: 'Lord of Jing' },
-        description: 'Control Jing province by 210.',
-        descriptionZh: "於210年前盡有荊州。",
-        goal: { kind: 'control-province', provinceId: 'jing', byYear: 210 },
+        description: "Hold Xiangyang, Jiangling, Jiangxia and Changsha by 210.",
+        descriptionZh: "於210年前據襄陽、江陵、江夏、長沙 —— 荊襄之心,九郡是牌匾上的話。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia', 'changsha'], byYear: 210 },
       },
+      secondary: [
+        {
+          title: { zh: '荊州之主', en: 'Lord of Jing' },
+          description: 'Control Jing province by 210.',
+          descriptionZh: "於210年前盡有荊州。",
+          goal: { kind: 'control-province', provinceId: 'jing', byYear: 210 },
+        },
+      ],
     },
     {
       id: 'obj-goh-liuyan',
       forceId: 'liu-yan',
       primary: {
         title: { zh: '益州有天子氣', en: 'A Son of Heaven Rises in Yi' },
-        description: 'Control Yi province by 210, then declare yourself emperor.',
-        descriptionZh: "於210年前盡有益州 —— 望氣者言益州有天子氣,你信了。",
-        goal: { kind: 'control-province', provinceId: 'yi', byYear: 210 },
+        description: "Hold Chengdu, Jiangzhou, Mianzhu and Luocheng by 210 — the diviners said Yi has the air of a Son of Heaven, and you believed them.",
+        descriptionZh: "於210年前據成都、江州、綿竹、雒城 —— 望氣者言益州有天子氣,你信了。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'mianzhu', 'luocheng'], byYear: 210 },
       },
       secondary: [
+        {
+          title: { zh: '益州有天子氣', en: 'A Son of Heaven Rises in Yi' },
+          description: 'Control Yi province by 210, then declare yourself emperor.',
+          descriptionZh: "於210年前盡有益州 —— 望氣者言益州有天子氣,你信了。",
+          goal: { kind: 'control-province', provinceId: 'yi', byYear: 210 },
+        },
         {
           title: { zh: '乘輿車具', en: 'The Imperial Carriage' },
           description: 'Declare yourself emperor.',
@@ -3804,11 +3918,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '白馬將軍', en: 'The White Horse General' },
-        description: 'Control You province and destroy Yuan Shao.',
-        descriptionZh: "盡有幽州並擊滅袁紹 —— 界橋之敗,本非定局。",
-        goal: { kind: 'control-province', provinceId: 'you', byYear: 210 },
+        description: "Hold Ji, Beiping, Yuyang and Liucheng by 210 — the frontier is yours; Jieqiao was not the end of it.",
+        descriptionZh: "於210年前據薊、北平、漁陽、柳城 —— 邊地是你的;界橋之敗,本非定局。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping', 'yuyang', 'liucheng'], byYear: 210 },
       },
       secondary: [
+        {
+          title: { zh: '白馬將軍', en: 'The White Horse General' },
+          description: 'Control You province and destroy Yuan Shao.',
+          descriptionZh: "盡有幽州並擊滅袁紹 —— 界橋之敗,本非定局。",
+          goal: { kind: 'control-province', provinceId: 'you', byYear: 210 },
+        },
         {
           title: { zh: '河北易主', en: 'The North Changes Hands' },
           description: 'Destroy the Yuan Shao force.',

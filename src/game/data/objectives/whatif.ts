@@ -162,10 +162,18 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-zhang',
       primary: {
         title: { zh: '蜀中最後一隅', en: 'The Last Corner' },
-        description: 'Control Yi province by 218 — everyone displaced by Chibi is coming your way.',
-        descriptionZh: "於218年前盡有益州 —— 赤壁之後無家可歸的人,都往你這裡來。",
-        goal: { kind: 'control-province', provinceId: 'yi', byYear: 218 },
+        description: "Still hold Chengdu, Jiangzhou and Luocheng in 218 — with the north lost, Shu is the last room in the house.",
+        descriptionZh: "至218年仍據成都、江州、雒城 —— 天下既已底定,蜀中是最後一間屋子。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng'], byYear: 218 },
       },
+      secondary: [
+        {
+          title: { zh: '蜀中最後一隅', en: 'The Last Corner' },
+          description: 'Control Yi province by 218 — everyone displaced by Chibi is coming your way.',
+          descriptionZh: "於218年前盡有益州 —— 赤壁之後無家可歸的人,都往你這裡來。",
+          goal: { kind: 'control-province', provinceId: 'yi', byYear: 218 },
+        },
+      ],
     },
   ],
 
@@ -449,11 +457,19 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-mcgz-hansui',
       forceId: 'han-sui',
       primary: {
-        title: { zh: '關中十部', en: 'The Ten Companies of Guanzhong' },
-        description: 'Control Liang province by 218 — this time the alliance did not break.',
-        descriptionZh: "於218年前盡有涼州 —— 這一次盟約沒有裂。",
-        goal: { kind: 'control-province', provinceId: 'liang', byYear: 218 },
+        title: { zh: '關中十部', en: 'The Ten Camps of Guanzhong' },
+        description: "Still hold Jincheng, Wuwei, Anding and Longxi in 218.",
+        descriptionZh: "至218年仍據金城、武威、安定、隴西 —— 十部聯軍,而各有各的城。",
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding', 'longxi'], byYear: 218 },
       },
+      secondary: [
+        {
+          title: { zh: '關中十部', en: 'The Ten Companies of Guanzhong' },
+          description: 'Control Liang province by 218 — this time the alliance did not break.',
+          descriptionZh: "於218年前盡有涼州 —— 這一次盟約沒有裂。",
+          goal: { kind: 'control-province', provinceId: 'liang', byYear: 218 },
+        },
+      ],
     },
     {
       id: 'obj-wi-mcgz-liubei',
@@ -729,11 +745,19 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-gj-liuzhang',
       forceId: 'liu-zhang',
       primary: {
-        title: { zh: '閉關自守', en: 'Bar the Passes' },
-        description: 'Control Yi province by 216.',
-        descriptionZh: "於216年前盡有益州。",
-        goal: { kind: 'control-province', provinceId: 'yi', byYear: 216 },
+        title: { zh: '閉關自守', en: 'Shut the Passes' },
+        description: "Still hold Chengdu, Jiangzhou and Luocheng in 216.",
+        descriptionZh: "至216年仍據成都、江州、雒城 —— 把劍閣的門關上,外面的事與你無關。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng'], byYear: 216 },
       },
+      secondary: [
+        {
+          title: { zh: '閉關自守', en: 'Bar the Passes' },
+          description: 'Control Yi province by 216.',
+          descriptionZh: "於216年前盡有益州。",
+          goal: { kind: 'control-province', provinceId: 'yi', byYear: 216 },
+        },
+      ],
     },
   ],
 
