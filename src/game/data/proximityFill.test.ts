@@ -53,6 +53,16 @@ describe('鄰近補位 — 城不該落到山那一邊的人手上', () => {
     }
   });
 
+  it('西陵是吳的上游門戶,不該補位給魏', () => {
+    // 陸抗:「西陵、建平,國之藩表…若非其人,萬里長江,難以恃也。」
+    // 它要到 272 年步闡叛降才易主(那是 scn-272 的前提),在那之前一直是吳的。
+    for (const board of ['scn-252-dongxing', 'scn-263-shu-fall', 'scn-264-zhonghui', 'scn-265-jin-founded']) {
+      expect(OWNER_OF(board, 'xiling'), board).toBe('sun');
+    }
+    // 272 是例外 —— 步闡以西陵降晉正是那張盤的題眼。
+    expect(OWNER_OF('scn-272-xiling', 'xiling')).not.toBe('sun');
+  });
+
   it('張魯仍有他該有的縱深 —— 修補位不該把他修沒了', () => {
     // 朴胡、杜濩為其巴夷之帥;漢中之外還有巴西,他才守得住。
     for (const board of ['scn-207-three-visits', 'scn-208-chibi', 'scn-211-weinan']) {

@@ -3551,6 +3551,7 @@ const FORCES_263: Force[] = [
 ];
 
 const CITY_OWNERSHIP_263: Record<string, string> = {
+  xiling: 'sun',
   // Wei (under Sima clan) — the entire north and centre
   luoyang:   'cao',
   xuchang:   'cao',
@@ -6199,6 +6200,10 @@ const FORCES_252: Force[] = [
 ];
 
 const CITY_OWNERSHIP_252: Record<string, string> = {
+  // 補位陷阱:西陵(夷陵之西)離上庸新城那一帶的已列城比離江陵近,於是它落到
+  // 魏手裡 —— 而西陵是吳的上游門戶,陸抗說「西陵、建平,國之藩表…若非其人,
+  // 萬里長江,難以恃也」。它要到 272 年步闡叛降才易主(那是 scn-272 的前提)。
+  xiling: 'sun',
   // Wei
   luoyang:   'cao',
   xuchang:   'cao',
@@ -6437,6 +6442,7 @@ const FORCES_264: Force[] = [
 ];
 
 const CITY_OWNERSHIP_264: Record<string, string> = {
+  xiling: 'sun',
   // Wei loyalist (Sima Zhao) — heartland and frontiers
   luoyang:   'cao',
   xuchang:   'cao',
@@ -6679,6 +6685,7 @@ const FORCES_265: Force[] = [
 ];
 
 const CITY_OWNERSHIP_265: Record<string, string> = {
+  xiling: 'sun',
   // Jin (almost everywhere)
   luoyang:   'sima',
   xuchang:   'sima',

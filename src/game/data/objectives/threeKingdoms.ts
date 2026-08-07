@@ -1531,11 +1531,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-192-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '迎駕許都', en: 'Bring the Emperor to Xuchang' },
-        description: "Hold Xuchang and Chang'an by 198.",
-        descriptionZh: "於198年前兼據許昌與長安,迎天子而定名分。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'changan'], byYear: 198 },
+        title: { zh: '定兗州', en: 'Take Yan Province' },
+        description: "Still hold Puyang, Chenliu and Juancheng in 198 — Yan province first; the Son of Heaven comes to whoever has a base to receive him.",
+        descriptionZh: "至198年仍據濮陽、陳留、鄄城 —— 先有兗州。天子要迎,得先有個迎得起他的地方。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'chenliu', 'guandu'], byYear: 198 },
       },
+      secondary: [
+        {
+          title: { zh: '迎駕許都', en: 'Bring the Emperor to Xuchang' },
+          description: "Hold Xuchang and Chang'an by 198.",
+          descriptionZh: "於198年前兼據許昌與長安,迎天子而定名分。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang', 'changan'], byYear: 198 },
+        },
+      ],
     },
     {
       id: 'obj-192-yuanshu',
@@ -2226,11 +2234,19 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-204-zhanglu',
       forceId: 'zhang-lu',
       primary: {
-        title: { zh: '五斗米道', en: 'The Way of Five Pecks' },
-        description: 'Still hold Hanzhong in 212, and take Chengdu.',
-        descriptionZh: "至212年仍據漢中,並取成都 —— 政教合一,師君臨蜀。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'chengdu'], byYear: 212 },
+        title: { zh: '五斗米道', en: 'The Way of the Five Pecks' },
+        description: "Still hold Hanzhong, Yangping Pass and Baxi in 212 — a church that is also a state, thirty years without an army passing through.",
+        descriptionZh: "至212年仍據漢中、陽平關、巴西 —— 政教合一之地,三十年不見兵革。成都是劉璋的,不在此列。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'yangping', 'baxi'], byYear: 212 },
       },
+      secondary: [
+        {
+          title: { zh: '五斗米道', en: 'The Way of Five Pecks' },
+          description: 'Still hold Hanzhong in 212, and take Chengdu.',
+          descriptionZh: "至212年仍據漢中,並取成都 —— 政教合一,師君臨蜀。",
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'chengdu'], byYear: 212 },
+        },
+      ],
     },
     {
       id: 'obj-204-shixie',
@@ -2495,7 +2511,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '西州自立', en: 'A Realm in the West' },
         description: "Still hold Jincheng, Wuwei and Anding in 217 — thirty years in Liang, and never once summoned to court.",
         descriptionZh: "至217年仍據金城、武威、安定 —— 在涼州三十年,一次也沒有應詔入朝。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding'], byYear: 217 },
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'longxi', 'tianshui'], byYear: 217 },
       },
       secondary: [
         {
