@@ -18,6 +18,23 @@ const FORCES_184: Force[] = [
   { id: 'dong-184',    name: { en: 'Dong Zhuo',       zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'changan',  color: '#6a3d8a', isPlayer: false },
 ];
 
+/*
+ * 三國定形期的常態姿態(220 之後諸盤共用的底)——
+ * 魏大而富、蜀小而險、吳據江而守。各盤再疊自己那一年的例外。
+ *
+ * 為什麼要有它:44 張三國盤裡只有 184/190/195/200/208 五張寫過姿態,
+ * 其餘 39 張一律 `buildInitialCities(ownership)` 沒有第二個參數 ——
+ * 於是序章寫「你缺糧、你後院要反、你被圍在易京樓上」,數字上你和別人一模一樣。
+ */
+const TK_LATE: Record<string, ForcePosture> = {
+  cao:     { troops: 1.20, food: 1.20, gold: 1.20, defense: 6,  loyalty: 6 },  // 十州之地,帶甲數十萬
+  'liu-bei': { troops: 1.00, food: 0.90, gold: 0.80, defense: 12, loyalty: 12 }, // 民寡國小,而山川之險足恃
+  sun:     { troops: 1.10, food: 1.15, gold: 1.10, defense: 10, loyalty: 6 },  // 限江自保,舟師為城
+  xianbei: { troops: 1.10, food: 0.75, gold: 0.65, defense: -12, loyalty: 0 },
+  nanman:  { troops: 1.15, food: 0.70, gold: 0.60, defense: -14, loyalty: -6 },
+  'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 }, // 交趾四十年不見兵革
+};
+
 const CITY_OWNERSHIP_184: Record<string, string> = {
   luoyang:   'han',
   // Yellow Turbans control the troubled provinces.
@@ -1630,7 +1647,7 @@ export const SCENARIO_234_WUZHANG: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_234),
+  cities: buildInitialCities(CITY_OWNERSHIP_234, TK_LATE),
   forces: FORCES_234,
   // Auto-compute dead officers by year (anyone whose deathYear < 234).
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_234, [], 234),
@@ -1860,7 +1877,7 @@ export const SCENARIO_220_DECLARATION: Scenario = {
     { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
     { a: 'liu-bei', b: 'nanman', score: -30, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_220),
+  cities: buildInitialCities(CITY_OWNERSHIP_220, TK_LATE),
   forces: FORCES_220,
   // Auto-compute dead officers by year — anything dying before 220 gets marked dead.
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_220, [], 220),
@@ -2065,7 +2082,15 @@ export const SCENARIO_215_HEFEI: Scenario = {
     { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
     { a: 'liu-bei', b: 'nanman', score: -25, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_215),
+  // 孫權十萬,張遼八百 —— 兵多的那一邊要輸在別的地方
+  cities: buildInitialCities(CITY_OWNERSHIP_215,
+    {
+      cao:       { troops: 1.25, food: 1.20, gold: 1.15, defense: 8,  loyalty: 8 },
+      sun:       { troops: 1.30, food: 1.10, gold: 1.10, defense: 0,  loyalty: 6 },   // 十萬眾出濡須
+      'liu-bei': { troops: 1.05, food: 1.15, gold: 1.05, defense: 6,  loyalty: 8 },
+      'zhang-lu': { troops: 0.80, food: 1.15, gold: 1.05, defense: 16, loyalty: 8 },
+      'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
+    }),
   forces: FORCES_215,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_215, [], 215),
 };
@@ -2203,7 +2228,18 @@ export const SCENARIO_197_BOHAI: Scenario = {
     { a: 'ma-teng', b: 'cao', score: 25, status: 'non-aggression' },
     { a: 'liu-yan', b: 'liu-biao', score: 20, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_197),
+  // 袁術稱帝那年,淮南人相食;公孫瓚在易京樓上囤了三百萬斛穀
+  cities: buildInitialCities(CITY_OWNERSHIP_197,
+    {
+      cao:       { troops: 0.90, food: 1.05, gold: 0.95, defense: 0,  loyalty: 4 },   // 宛城新敗,典韋長子俱亡
+      'yuan-shao': { troops: 1.35, food: 1.25, gold: 1.20, defense: 6, loyalty: 6 },  // 四州之地,帶甲十萬
+      'yuan-shu':  { troops: 1.10, food: 0.55, gold: 0.85, defense: 0, loyalty: -25 },// 稱帝而淮南大飢
+      'lu-bu':   { troops: 1.15, food: 0.75, gold: 0.85, defense: 0,  loyalty: -12 },
+      sun:       { troops: 1.15, food: 1.05, gold: 1.00, defense: 0,  loyalty: 6 },
+      gongsun:   { troops: 0.90, food: 1.20, gold: 0.95, defense: 22, loyalty: -10 }, // 易京樓積穀三百萬斛
+      'liu-biao': { troops: 0.90, food: 1.20, gold: 1.10, defense: 4, loyalty: 8 },
+      'liu-yan':  { troops: 0.85, food: 1.20, gold: 1.05, defense: 8, loyalty: 4 },
+    }),
   forces: FORCES_197,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_197, DEAD_BY_197, 197),
 };
@@ -2322,7 +2358,13 @@ export const SCENARIO_219_HANZHONG: Scenario = {
     { a: 'liu-bei', b: 'nanman', score: -25, status: 'neutral' },
     { a: 'sun', b: 'nanman', score: 10, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_219),
+  // 威震華夏那一年,曹操在議遷都,孫權在寫那封信
+  cities: buildInitialCities(CITY_OWNERSHIP_219,
+    {
+      'liu-bei': { troops: 1.25, food: 1.10, gold: 0.85, defense: 4,  loyalty: 12 },  // 進位漢中王,勢方極盛
+      cao:       { troops: 1.15, food: 1.05, gold: 1.15, defense: 8,  loyalty: 0 },   // 漢中新失,議欲遷都
+      sun:       { troops: 1.20, food: 1.15, gold: 1.10, defense: 8,  loyalty: 8 },
+    }),
   forces: FORCES_219,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_219, DEAD_BY_219, 219),
 };
@@ -2431,7 +2473,13 @@ export const SCENARIO_222_YILING: Scenario = {
     { a: 'liu-bei', b: 'nanman', score: -40, status: 'neutral' },
     { a: 'sun', b: 'nanman', score: 15, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_222),
+  // 連營七百里,包原隰險阻而結營 —— 糧道最長的一次
+  cities: buildInitialCities(CITY_OWNERSHIP_222,
+    {
+      ...TK_LATE,
+      'liu-bei': { troops: 1.15, food: 0.80, gold: 0.85, defense: -6, loyalty: -6 },
+      sun:       { troops: 1.10, food: 1.15, gold: 1.05, defense: 12, loyalty: 10 },
+    }),
   forces: FORCES_222,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_222, DEAD_BY_222, 222),
 };
@@ -2540,7 +2588,13 @@ export const SCENARIO_225_SOUTHERN: Scenario = {
     { a: 'liu-bei', b: 'nanman', score: -75, status: 'neutral' },        // 雍闓叛,孟獲扇動諸夷
     { a: 'sun', b: 'nanman', score: 30, status: 'non-aggression' },   // 闓附吳,權遙署永昌太守
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_225),
+  // 南中之眾恃險而輕戰,攻心為上
+  cities: buildInitialCities(CITY_OWNERSHIP_225,
+    {
+      ...TK_LATE,
+      'liu-bei': { troops: 1.05, food: 1.05, gold: 0.90, defense: 6, loyalty: 8 },
+      nanman:    { troops: 1.20, food: 0.70, gold: 0.60, defense: -14, loyalty: -10 },
+    }),
   forces: FORCES_225,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_225, DEAD_BY_225, 225),
 };
@@ -2728,7 +2782,18 @@ export const SCENARIO_198_XIAPI: Scenario = {
     { a: 'ma-teng', b: 'cao', score: 25, status: 'non-aggression' },
     { a: 'liu-zhang', b: 'liu-biao', score: 20, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_198),
+  // 下邳城牆還在,糧已經沒了 —— 這張盤的兩個數字
+  cities: buildInitialCities(CITY_OWNERSHIP_198,
+    {
+      cao:       { troops: 1.20, food: 1.10, gold: 1.00, defense: 0,  loyalty: 6 },
+      lubu:      { troops: 1.15, food: 0.55, gold: 0.70, defense: 10, loyalty: -20 }, // 城堅而糧盡,將士離心
+      'yuan-shao': { troops: 1.35, food: 1.25, gold: 1.20, defense: 6, loyalty: 6 },
+      'yuan-shu':  { troops: 0.75, food: 0.35, gold: 0.60, defense: -6, loyalty: -30 },// 只想討一碗蜜水
+      sun:       { troops: 1.20, food: 1.05, gold: 1.00, defense: 0,  loyalty: 8 },
+      gongsun:   { troops: 0.85, food: 1.15, gold: 0.90, defense: 20, loyalty: -14 },
+      'liu-biao': { troops: 0.90, food: 1.20, gold: 1.10, defense: 4, loyalty: 8 },
+      'liu-zhang': { troops: 0.85, food: 1.20, gold: 1.05, defense: 8, loyalty: 4 },
+    }),
   forces: FORCES_198,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_198, DEAD_BY_198, 198),
 };
@@ -2944,7 +3009,18 @@ export const SCENARIO_207_THREE_VISITS: Scenario = {
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
     { a: 'liu-biao', b: 'liu-zhang', score: 20, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_207),
+  // 荊州最富而最不設防 —— 劉表守成之主,坐談客耳
+  cities: buildInitialCities(CITY_OWNERSHIP_207,
+    {
+      cao:       { troops: 1.30, food: 1.20, gold: 1.15, defense: 6,  loyalty: 8 },
+      'liu-biao': { troops: 0.80, food: 1.25, gold: 1.15, defense: 4, loyalty: -6 },  // 蔡蒯專權,主暮而嗣弱
+      sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
+      'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: -6 },
+      'zhang-lu': { troops: 0.90, food: 1.30, gold: 1.10, defense: 20, loyalty: 20 },
+      'ma-teng': { troops: 1.15, food: 0.85, gold: 0.85, defense: 0,  loyalty: -8 },
+      'gongsun-du': { troops: 0.90, food: 1.00, gold: 0.95, defense: 8, loyalty: 6 },
+      'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
+    }),
   forces: FORCES_207,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_207, DEAD_BY_207, 207),
 };
@@ -3166,7 +3242,18 @@ export const SCENARIO_211_WEINAN: Scenario = {
     { a: 'cao', b: 'zhang-lu', score: -20, status: 'neutral' },
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_211),
+  // 關中十部是十支軍隊,不是一支 —— 離間才用得上
+  cities: buildInitialCities(CITY_OWNERSHIP_211,
+    {
+      cao:       { troops: 1.30, food: 1.20, gold: 1.15, defense: 6,  loyalty: 8 },
+      'ma-chao': { troops: 1.35, food: 0.80, gold: 0.80, defense: -6, loyalty: -14 }, // 關中十部,貌合而已
+      'han-sui': { troops: 1.15, food: 0.80, gold: 0.85, defense: 0,  loyalty: -18 },
+      'liu-bei': { troops: 1.00, food: 1.00, gold: 0.90, defense: 0,  loyalty: 12 },
+      sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
+      'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: -8 },
+      'zhang-lu': { troops: 0.90, food: 1.30, gold: 1.10, defense: 20, loyalty: 18 },
+      'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
+    }),
   forces: FORCES_211,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_211, DEAD_BY_211, 211),
 };
@@ -3373,7 +3460,7 @@ export const SCENARIO_228_JIETING: Scenario = {
     { a: 'liu-bei', b: 'xianbei', score: 45, status: 'non-aggression' },
     { a: 'cao', b: 'xianbei', score: -40, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_228),
+  cities: buildInitialCities(CITY_OWNERSHIP_228, TK_LATE),
   forces: FORCES_228,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_228, DEAD_BY_228, 228),
 };
@@ -3574,7 +3661,13 @@ export const SCENARIO_263_SHU_FALL: Scenario = {
     { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
     { a: 'cao', b: 'sun', score: -80, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_263),
+  // 黃皓用事,姜維避禍屯沓中 —— 亡國之前先亂於內
+  cities: buildInitialCities(CITY_OWNERSHIP_263,
+    {
+      ...TK_LATE,
+      cao: { troops: 1.30, food: 1.20, gold: 1.20, defense: 6, loyalty: 6 },
+      'liu-bei': { troops: 0.85, food: 0.80, gold: 0.75, defense: 10, loyalty: -14 },
+    }),
   forces: FORCES_263,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_263, DEAD_BY_263, 263),
 };
@@ -3738,7 +3831,17 @@ export const SCENARIO_189_EUNUCHS: Scenario = {
     { a: 'han', b: 'liu-yan', score: 20, status: 'non-aggression' },
     { a: 'han', b: 'sun', score: 30, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_189),
+  // 宦官富有禁中而無一兵,董卓有兵而無寸土
+  cities: buildInitialCities(CITY_OWNERSHIP_189,
+    {
+      han:       { troops: 0.95, food: 1.10, gold: 1.25, defense: 6,  loyalty: 6 },   // 名分尚在,兵權已不在
+      eunuchs:   { troops: 0.55, food: 0.90, gold: 1.60, defense: 10, loyalty: -20 }, // 富有禁中而天下側目
+      dong:      { troops: 1.45, food: 0.85, gold: 0.90, defense: 0,  loyalty: -12 }, // 西涼兵而無根本
+      'yuan-shao': { troops: 1.05, food: 1.00, gold: 1.15, defense: 0, loyalty: 6 },  // 四世三公,門生故吏遍天下
+      sun:       { troops: 1.25, food: 0.90, gold: 0.90, defense: 0,  loyalty: 0 },
+      'liu-biao': { troops: 0.85, food: 1.15, gold: 1.10, defense: 4, loyalty: 6 },
+      'liu-yan':  { troops: 0.85, food: 1.20, gold: 1.05, defense: 8, loyalty: 6 },
+    }),
   forces: FORCES_189,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_189, DEAD_BY_189, 189),
 };
@@ -3955,7 +4058,19 @@ export const SCENARIO_194_XUZHOU: Scenario = {
     { a: 'liu-yan', b: 'liu-biao', score: 20, status: 'non-aggression' },
     { a: 'ma-teng', b: 'cao', score: 10, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_194),
+  // 曹操前腳出兵,後院就反了 —— 只剩鄄城、范、東阿三城
+  cities: buildInitialCities(CITY_OWNERSHIP_194,
+    {
+      cao:       { troops: 1.25, food: 0.80, gold: 0.90, defense: 0,  loyalty: -18 }, // 張邈陳宮迎呂布,郡縣皆應
+      tao:       { troops: 0.70, food: 1.30, gold: 1.25, defense: 6,  loyalty: 8 },   // 徐州殷實而兵不足用
+      lubu:      { troops: 1.20, food: 0.60, gold: 0.70, defense: -8, loyalty: -16 },
+      'kong-rong': { troops: 0.70, food: 1.10, gold: 1.05, defense: 0, loyalty: 12 },
+      'yuan-shao': { troops: 1.15, food: 1.10, gold: 1.15, defense: 0, loyalty: 4 },
+      'yuan-shu':  { troops: 1.05, food: 1.05, gold: 1.10, defense: 0, loyalty: -8 },
+      gongsun:   { troops: 1.15, food: 0.85, gold: 0.85, defense: 0,  loyalty: 0 },
+      'liu-biao': { troops: 0.90, food: 1.15, gold: 1.10, defense: 4, loyalty: 8 },
+      'liu-yan':  { troops: 0.85, food: 1.20, gold: 1.05, defense: 8, loyalty: 6 },
+    }),
   forces: FORCES_194,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_194, DEAD_BY_194, 194),
 };
@@ -4182,7 +4297,16 @@ export const SCENARIO_214_XICHUAN: Scenario = {
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
     { a: 'cao', b: 'shi-xie', score: 15, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_214),
+  // 入成都第一件事是開府庫 —— 錢在,人心也就在
+  cities: buildInitialCities(CITY_OWNERSHIP_214,
+    {
+      'liu-bei': { troops: 1.10, food: 1.15, gold: 1.20, defense: 0,  loyalty: 6 },   // 開府庫以賜將士
+      'liu-zhang': { troops: 0.60, food: 0.85, gold: 0.70, defense: -8, loyalty: -25 },
+      cao:       { troops: 1.30, food: 1.20, gold: 1.15, defense: 6,  loyalty: 8 },
+      sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
+      'zhang-lu': { troops: 0.85, food: 1.20, gold: 1.10, defense: 18, loyalty: 12 },
+      'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
+    }),
   forces: FORCES_214,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_214, DEAD_BY_214, 214),
 };
@@ -4392,7 +4516,13 @@ export const SCENARIO_249_GAOPINGLING: Scenario = {
     { a: 'cao', b: 'sun', score: -55, status: 'neutral' },
     { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_249),
+  // 曹爽挾帝在外而洛陽已閉城 —— 兵符不在他手上
+  cities: buildInitialCities(CITY_OWNERSHIP_249,
+    {
+      ...TK_LATE,
+      sima: { troops: 1.15, food: 1.15, gold: 1.15, defense: 8, loyalty: 6 },
+      cao:  { troops: 0.85, food: 0.80, gold: 0.85, defense: -8, loyalty: -20 },
+    }),
   forces: FORCES_249,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_249, DEAD_BY_249, 249),
 };
@@ -4592,7 +4722,12 @@ export const SCENARIO_280_JIN_UNITE: Scenario = {
   openingRelations: [
     { a: 'sima', b: 'sun', score: -95, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_280),
+  // 王濬樓船下益州,金陵王氣黯然收
+  cities: buildInitialCities(CITY_OWNERSHIP_280,
+    {
+      sima: { troops: 1.35, food: 1.30, gold: 1.25, defense: 8, loyalty: 12 },
+      sun:  { troops: 0.75, food: 0.80, gold: 0.75, defense: 0, loyalty: -28 },
+    }),
   forces: FORCES_280,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_280, DEAD_BY_280, 280),
 };
@@ -4823,7 +4958,20 @@ export const SCENARIO_192_WANGYUN: Scenario = {
     { a: 'han', b: 'yuan-shao', score: 35, status: 'non-aggression' },
     { a: 'liu-yan', b: 'liu-biao', score: 20, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_192),
+  // 王允手裡是名分不是兵,呂布手裡是兵不是地
+  cities: buildInitialCities(CITY_OWNERSHIP_192,
+    {
+      han:       { troops: 0.70, food: 0.90, gold: 1.10, defense: 4,  loyalty: -8 },  // 長安殘破,詔書出不了城
+      lubu:      { troops: 1.30, food: 0.60, gold: 0.70, defense: -6, loyalty: -14 }, // 飛將而無家
+      lijue:     { troops: 1.40, food: 0.85, gold: 0.95, defense: 0,  loyalty: -18 }, // 西涼餘部十萬,無人約束
+      cao:       { troops: 1.05, food: 1.05, gold: 0.95, defense: 0,  loyalty: 4 },   // 收青州兵三十萬
+      'yuan-shao': { troops: 1.15, food: 1.05, gold: 1.15, defense: 0, loyalty: 4 },
+      'yuan-shu':  { troops: 1.05, food: 1.10, gold: 1.15, defense: 0, loyalty: -8 },
+      gongsun:   { troops: 1.20, food: 0.85, gold: 0.85, defense: 0,  loyalty: 0 },
+      'liu-biao': { troops: 0.90, food: 1.15, gold: 1.10, defense: 4, loyalty: 8 },
+      'tao-qian': { troops: 0.85, food: 1.20, gold: 1.10, defense: 4, loyalty: 6 },
+      'liu-yan':  { troops: 0.85, food: 1.20, gold: 1.05, defense: 8, loyalty: 6 },
+    }),
   forces: FORCES_192,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_192, DEAD_BY_192, 192),
 };
@@ -5090,7 +5238,20 @@ export const SCENARIO_204_YECHENG: Scenario = {
     { a: 'gongsun', b: 'cao', score: 20, status: 'non-aggression' },
     { a: 'shi-xie', b: 'sun', score: 30, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_204),
+  // 袁氏三兄弟的城牆還很厚,厚不過他們之間那道
+  cities: buildInitialCities(CITY_OWNERSHIP_204,
+    {
+      cao:       { troops: 1.30, food: 1.15, gold: 1.10, defense: 4,  loyalty: 8 },
+      'yuan-shang': { troops: 0.90, food: 0.85, gold: 0.95, defense: 12, loyalty: -14 },
+      'yuan-tan':   { troops: 0.85, food: 0.80, gold: 0.85, defense: 0,  loyalty: -18 }, // 兄弟鬩牆,士無戰心
+      sun:       { troops: 1.05, food: 1.10, gold: 1.05, defense: 4,  loyalty: 6 },
+      'liu-biao': { troops: 0.85, food: 1.20, gold: 1.15, defense: 4, loyalty: 6 },
+      'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: 0 },
+      'ma-teng': { troops: 1.10, food: 0.85, gold: 0.85, defense: 0,  loyalty: -6 },
+      'zhang-lu': { troops: 0.85, food: 1.25, gold: 1.10, defense: 18, loyalty: 18 }, // 政教合一,漢中三十年不見兵
+      gongsun:   { troops: 0.90, food: 1.00, gold: 0.95, defense: 8,  loyalty: 4 },
+      'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
+    }),
   forces: FORCES_204,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_204, DEAD_BY_204, 204),
 };
@@ -5342,7 +5503,16 @@ export const SCENARIO_213_FENGPO: Scenario = {
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
     { a: 'cao', b: 'shi-xie', score: 15, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_213),
+  // 劉璋的糧比誰都多,人心比誰都散
+  cities: buildInitialCities(CITY_OWNERSHIP_213,
+    {
+      'liu-bei': { troops: 1.20, food: 0.75, gold: 0.85, defense: -4, loyalty: 6 },   // 客軍深入,糧在別人手裡
+      'liu-zhang': { troops: 0.90, food: 1.30, gold: 1.15, defense: 10, loyalty: -22 },// 益州殷富而人心已貳
+      cao:       { troops: 1.30, food: 1.20, gold: 1.15, defense: 6,  loyalty: 8 },
+      sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
+      'zhang-lu': { troops: 0.90, food: 1.30, gold: 1.10, defense: 20, loyalty: 18 },
+      'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
+    }),
   forces: FORCES_213,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_213, DEAD_BY_213, 213),
 };
@@ -5627,7 +5797,13 @@ export const SCENARIO_221_SHU_EMPEROR: Scenario = {
     { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
     { a: 'liu-bei', b: 'nanman', score: -35, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_221),
+  // 章武元年:蜀方舉國東征,吳兩面受敵而稱藩於魏
+  cities: buildInitialCities(CITY_OWNERSHIP_221,
+    {
+      ...TK_LATE,
+      'liu-bei': { troops: 1.20, food: 1.15, gold: 0.90, defense: 6, loyalty: 10 },
+      sun:       { troops: 1.05, food: 1.10, gold: 1.05, defense: 12, loyalty: 4 },
+    }),
   forces: FORCES_221,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_221, DEAD_BY_221, 221),
 };
@@ -5904,7 +6080,7 @@ export const SCENARIO_229_THREE_EMPERORS: Scenario = {
     { a: 'sun', b: 'gongsun', score: 35, status: 'non-aggression' },
     { a: 'liu-bei', b: 'nanman', score: 20, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_229),
+  cities: buildInitialCities(CITY_OWNERSHIP_229, TK_LATE),
   forces: FORCES_229,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_229, DEAD_BY_229, 229),
 };
@@ -6136,7 +6312,12 @@ export const SCENARIO_252_DONGXING: Scenario = {
     { a: 'cao', b: 'sun', score: -90, status: 'neutral' },
     { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_252),
+  // 諸葛恪初秉政,東關堤上築兩城
+  cities: buildInitialCities(CITY_OWNERSHIP_252,
+    {
+      ...TK_LATE,
+      sun: { troops: 1.20, food: 1.10, gold: 1.05, defense: 8, loyalty: 4 },
+    }),
   forces: FORCES_252,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_252, DEAD_BY_252, 252),
 };
@@ -6373,7 +6554,14 @@ export const SCENARIO_264_ZHONGHUI: Scenario = {
     { a: 'zhonghui', b: 'sun', score: 20, status: 'non-aggression' },
     { a: 'dengai', b: 'sun', score: -60, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_264),
+  // 鍾會據蜀而反,而他手下的兵是魏人,家在北方
+  cities: buildInitialCities(CITY_OWNERSHIP_264,
+    {
+      ...TK_LATE,
+      zhonghui: { troops: 1.20, food: 0.85, gold: 1.10, defense: 0, loyalty: -25 },
+      dengai:   { troops: 0.85, food: 0.70, gold: 0.80, defense: -6, loyalty: -12 },
+      cao:      { troops: 1.30, food: 1.25, gold: 1.25, defense: 8, loyalty: 8 },
+    }),
   forces: FORCES_264,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_264, DEAD_BY_264, 264),
 };
@@ -6610,7 +6798,12 @@ export const SCENARIO_265_JIN_FOUNDED: Scenario = {
   openingRelations: [
     { a: 'sima', b: 'sun', score: -85, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_265),
+  // 孫皓遷都、大興土木、剝人面鑿人眼 —— 城還在,人心不在
+  cities: buildInitialCities(CITY_OWNERSHIP_265,
+    {
+      sima: { troops: 1.25, food: 1.25, gold: 1.25, defense: 8,  loyalty: 10 },
+      sun:  { troops: 1.00, food: 1.00, gold: 0.95, defense: 10, loyalty: -20 },
+    }),
   forces: FORCES_265,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_265, DEAD_BY_265, 265),
 };
@@ -7681,7 +7874,7 @@ export const SCENARIO_231_LUCHENG: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_234),
+  cities: buildInitialCities(CITY_OWNERSHIP_234, TK_LATE),
   forces: FORCES_234,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_234, [], 231),
 };
@@ -7715,7 +7908,7 @@ export const SCENARIO_241_SHAOPI: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -80, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_234),
+  cities: buildInitialCities(CITY_OWNERSHIP_234, TK_LATE),
   forces: FORCES_POST_CAORUI,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_POST_CAORUI, [], 241),
 };
@@ -7735,7 +7928,13 @@ export const SCENARIO_244_XINGSHI: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_234),
+  // 曹爽伐蜀,牛馬騾驢多死於道 —— 敗在糧運不在陣前
+  cities: buildInitialCities(CITY_OWNERSHIP_234,
+    {
+      ...TK_LATE,
+      cao: { troops: 1.15, food: 0.75, gold: 1.15, defense: 6, loyalty: 4 },
+      'liu-bei': { troops: 1.00, food: 0.90, gold: 0.80, defense: 16, loyalty: 12 },
+    }),
   forces: FORCES_POST_CAORUI,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_POST_CAORUI, [], 244),
 };
@@ -7759,7 +7958,12 @@ export const SCENARIO_253_HEFEI: Scenario = {
     { a: 'cao', b: 'sun', score: -90, status: 'neutral' },
     { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_252),
+  // 二十萬眾圍新城,而暑月疫作,士卒大半病亡
+  cities: buildInitialCities(CITY_OWNERSHIP_252,
+    {
+      ...TK_LATE,
+      sun: { troops: 1.20, food: 0.85, gold: 1.00, defense: 8, loyalty: -8 },
+    }),
   forces: FORCES_252,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_252, DEAD_BY_252, 253),
 };
@@ -7789,7 +7993,12 @@ export const SCENARIO_272_XILING: Scenario = {
   openingRelations: [
     { a: 'sima', b: 'sun', score: -90, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_272),
+  // 陸抗一人撐住西陵,而建業那邊在殺人
+  cities: buildInitialCities(CITY_OWNERSHIP_272,
+    {
+      sima: { troops: 1.25, food: 1.25, gold: 1.25, defense: 8,  loyalty: 10 },
+      sun:  { troops: 1.05, food: 1.00, gold: 0.95, defense: 12, loyalty: -16 },
+    }),
   forces: FORCES_265,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_272, DEAD_BY_265, 272),
 };
@@ -7834,7 +8043,12 @@ export const SCENARIO_238_LIAODONG: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -75, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_238),
+  // 襄平城堅而糧不繼,司馬懿要的正是這個
+  cities: buildInitialCities(CITY_OWNERSHIP_238,
+    {
+      ...TK_LATE,
+      yan: { troops: 1.05, food: 0.70, gold: 0.85, defense: 14, loyalty: -14 },
+    }),
   forces: FORCES_238,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_238, [], 238),
 };
@@ -7878,7 +8092,12 @@ export const SCENARIO_255_HUAINAN2: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
     { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_255),
+  // 淮南勁卒而家眷皆在北方 —— 兵強而心不齊
+  cities: buildInitialCities(CITY_OWNERSHIP_255,
+    {
+      ...TK_LATE,
+      guanqiu: { troops: 1.30, food: 0.70, gold: 0.75, defense: 0, loyalty: -18 },
+    }),
   forces: FORCES_255,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_255, DEAD_BY_252, 255),
 };
@@ -7922,7 +8141,12 @@ export const SCENARIO_257_HUAINAN3: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
     { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_257),
+  // 諸葛誕聚十五萬眾據壽春,足支一年
+  cities: buildInitialCities(CITY_OWNERSHIP_257,
+    {
+      ...TK_LATE,
+      huainan: { troops: 1.35, food: 0.85, gold: 0.80, defense: 14, loyalty: -14 },
+    }),
   forces: FORCES_257,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_257, DEAD_BY_252, 257),
 };
@@ -7973,7 +8197,15 @@ export const SCENARIO_199_YIJING: Scenario = {
     { a: 'liu-zhang', b: 'liu-biao', score: 20, status: 'non-aggression' },
     { a: 'cao', b: 'sun', score: 25, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_199),
+  // 易京樓是全圖最高的城防,也是全圖最低的民心
+  cities: buildInitialCities(CITY_OWNERSHIP_199,
+    {
+      gongsun:   { troops: 0.80, food: 1.10, gold: 0.90, defense: 24, loyalty: -18 }, // 樓高十丈而人心已散
+      'yuan-shao': { troops: 1.40, food: 1.25, gold: 1.20, defense: 6, loyalty: 8 },
+      cao:       { troops: 1.05, food: 1.00, gold: 0.95, defense: 0,  loyalty: 4 },
+      sun:       { troops: 1.25, food: 1.05, gold: 1.00, defense: 0,  loyalty: 8 },
+      'liu-biao': { troops: 0.90, food: 1.20, gold: 1.10, defense: 4, loyalty: 8 },
+    }),
   forces: FORCES_199,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_199, DEAD_BY_198, 199),
 };
@@ -8021,7 +8253,15 @@ export const SCENARIO_207_BAILANG: Scenario = {
     { a: 'cao', b: 'shi-xie', score: 20, status: 'non-aggression' },
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_207_WUHUAN),
+  // 郭嘉勸他棄輜重輕兵疾進 —— 兵到了,糧沒到
+  cities: buildInitialCities(CITY_OWNERSHIP_207_WUHUAN,
+    {
+      cao:       { troops: 1.25, food: 0.85, gold: 1.10, defense: 4,  loyalty: 8 },   // 千里奔襲,輜重都留在後面
+      wuhuan:    { troops: 1.35, food: 0.75, gold: 0.70, defense: -10, loyalty: 0 },  // 踏頓控弦數萬而無城
+      'liu-biao': { troops: 0.80, food: 1.25, gold: 1.15, defense: 4, loyalty: -6 },
+      sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
+      'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: -6 },
+    }),
   forces: FORCES_207_WUHUAN,
   // The base 207 death-list buries Tadun and the Yuan brothers (they perish in
   // this very campaign); here they must start alive to fight it.
@@ -8063,7 +8303,13 @@ export const SCENARIO_228_SHITING: Scenario = {
     { a: 'liu-bei', b: 'xianbei', score: 45, status: 'non-aggression' },  // 亮遣使結軻比能
     { a: 'cao', b: 'xianbei', score: -40, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_228_SHITING),
+  // 周魴斷髮詐降,曹休十萬入無退之地
+  cities: buildInitialCities(CITY_OWNERSHIP_228_SHITING,
+    {
+      ...TK_LATE,
+      sun: { troops: 1.20, food: 1.15, gold: 1.10, defense: 10, loyalty: 10 },
+      cao: { troops: 1.20, food: 1.20, gold: 1.20, defense: 6, loyalty: -6 },
+    }),
   forces: FORCES_228,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_228_SHITING, DEAD_BY_228, 228),
 };
@@ -8227,7 +8473,13 @@ export const SCENARIO_218_DINGJUN: Scenario = {
     { a: 'cao', b: 'xianbei', score: -30, status: 'neutral' },
     { a: 'liu-bei', b: 'nanman', score: -25, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_218_DINGJUN),
+  // 爭漢中是傾國之戰:蜀中男子當戰、女子當運
+  cities: buildInitialCities(CITY_OWNERSHIP_218_DINGJUN,
+    {
+      cao:       { troops: 1.20, food: 1.00, gold: 1.15, defense: 6,  loyalty: 6 },
+      'liu-bei': { troops: 1.25, food: 1.20, gold: 0.90, defense: 0,  loyalty: 10 },  // 男子當戰,女子當運
+      sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
+    }),
   forces: FORCES_218_DINGJUN,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_218_DINGJUN, [], 218),
 };
