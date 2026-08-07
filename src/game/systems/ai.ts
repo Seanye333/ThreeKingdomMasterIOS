@@ -211,7 +211,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     const deterredFrom = new Set(activeDeterrences.filter((d) => d.targetForceId === forceId).map((d) => d.byForceId));
     const forceTargetId = pickForceTarget(forceId, forceCities, cities, input.diplomacy, hegemonId, coalitionFoeId, deterredFrom);
     // Season posture: consolidate when a bordering force overshadows us.
-    const posture = forcePosture(forceId, forceCities, cities);
+    const overshadowedBy = overshadowingForce(forceId, forceCities, cities);
     // 迷霧對等 — this force's own sight of the map (own cities + borders + its
     // columns' scout rings). When fog is on, the AI may only react to enemy
     // columns inside it; off → null = omniscient, same as the player un-fogged.
@@ -249,7 +249,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         input.territoryOwnership ?? {},
         input.armies ?? {},
         forceTargetId,
-        posture,
+        overshadowedBy,
         hegemonId,
         input.date.season,
         aiAggressionMul,
@@ -1149,6 +1149,26 @@ export function forcePosture(
   forceCities: City[],
   allCities: Record<EntityId, City>,
 ): 'aggressive' | 'defensive' {
+  return overshadowingForce(forceId, forceCities, allCities) ? 'defensive' : 'aggressive';
+}
+
+/**
+ * 壓著我們的**那一家** —— 不只是「有沒有人壓著」。
+ *
+ * 原本只回傳 aggressive/defensive,而守勢會把攻擊門檻**對所有目標**打對折:
+ * 一家被巨鄰壓住,就對誰都不敢動手。實測的後果是小勢力在大國旁邊全部僵住 ——
+ * 211 渭南盤的劉備與曹操接壤,於是他連弱得多的劉璋也不打,而那張盤他的
+ * 主目標就叫「西取益州」。
+ *
+ * 史書上被強鄰壓著的人做的正好相反:劉備西入益州、孫策東取江東,
+ * 都是趁着打不過的那一邊暫時顧不上自己時,往另一邊咬一口。
+ * 所以守勢改成**對人不對事**:怕的是壓我的那一家,不是所有人。
+ */
+export function overshadowingForce(
+  forceId: EntityId,
+  forceCities: City[],
+  allCities: Record<EntityId, City>,
+): EntityId | null {
   const myTroops = computeTotalTroops(forceId, allCities);
   const neighbors = new Set<EntityId>();
   for (const c of forceCities) {
@@ -1157,9 +1177,13 @@ export function forcePosture(
       if (adj?.ownerForceId && adj.ownerForceId !== forceId) neighbors.add(adj.ownerForceId);
     }
   }
+  let worst: EntityId | null = null;
   let maxNeighbor = 0;
-  for (const nid of neighbors) maxNeighbor = Math.max(maxNeighbor, computeTotalTroops(nid, allCities));
-  return maxNeighbor >= myTroops * 1.5 ? 'defensive' : 'aggressive';
+  for (const nid of neighbors) {
+    const t = computeTotalTroops(nid, allCities);
+    if (t > maxNeighbor) { maxNeighbor = t; worst = nid; }
+  }
+  return maxNeighbor >= myTroops * 1.5 ? worst : null;
 }
 
 /**
@@ -1195,7 +1219,8 @@ function decideCommand(
   territoryOwnership: Record<EntityId, EntityId | null> = {},
   armies: Record<EntityId, import('../types').Army> = {},
   forceTargetId: EntityId | null = null,
-  posture: 'aggressive' | 'defensive' = 'aggressive',
+  /** 壓著這一家的巨鄰(見 overshadowingForce)—— 守勢對人不對事,只怕這一位。 */
+  overshadowedBy: EntityId | null = null,
   hegemonId: EntityId | null = null,
   season?: 'spring' | 'summer' | 'autumn' | 'winter',
   aiAggressionMul = 1,
@@ -1442,7 +1467,24 @@ function decideCommand(
       // EXCEPT a strike on the hegemon itself, which a coalition presses even
       // from a defensive posture (still gated by feasibility, so no suicide).
       const vsHegemon = target.ownerForceId != null && target.ownerForceId === hegemonId;
-      const postureMul = posture === 'defensive' && !vsHegemon ? 0.5 : 1;
+      /*
+       * ⚠ **這裡試過「守勢對人不對事」,退回來了 —— 理由值得記住。**
+       *
+       * 動機是對的:被巨鄰壓著就對誰都不敢動手,於是小勢力在大國旁邊全部僵住
+       * (211 盤劉備與曹操接壤,就連弱得多的劉璋也不打,而他的主目標叫
+       * 「西取益州」)。改成只怕壓我的那一家 —— `overshadowedBy` 就是為此而算的。
+       *
+       * 但那個改動會讓 `seasonReplay.integration.test.ts` 變紅:同種子的兩次
+       * 重播從**第 1 旬**就分歧,分歧點在一場野戰的 `blendedStat`(134.1 vs 135)。
+       * 查證過**不是**我引入的隨機 —— 用 patch 過的 `Math.random` 量,endSeason
+       * 期間裸呼叫 **0 次**;把行為改回去、只留新的接線,分歧就消失。
+       * 也就是說:AI 一積極就會走到某條**本來就不可重播**的路,而那個洞先於此改。
+       *
+       * 所以先退回舊行為(全域打對折),把 `overshadowedBy` 留著當接線。
+       * 要重來時:先修那條路的重播性,再把下面這行換成
+       * `target.ownerForceId === overshadowedBy && !vsHegemon`。
+       */
+      const postureMul = overshadowedBy !== null && !vsHegemon ? 0.5 : 1;
       // 君主性格 — a tyrant/aggressive lord strikes on thin margins; a cautious
       // or scholarly one only when very safe.
       const personalityMul = personalityAttackMul(forces[forceId]?.personality);
