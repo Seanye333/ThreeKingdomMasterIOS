@@ -7010,6 +7010,532 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: Du Fu, in Chang\'an in the second year of Zhide, wrote Spring View: "The state is broken; its hills and rivers remain. Spring in the city, and the grass and trees grow deep. Moved by the times, the flowers scatter tears; hating the parting, the birds startle the heart. Beacon fires three months on end; a letter from home is worth ten thousand in gold." The histories record how many cities were lost. The poems record what was lost.',
     },
   },
+
+  // ── 假想諸盤 ────────────────────────────────────────────────────────────
+  //
+  // 假想盤的「論曰」有一個歷史盤沒有的支點:**史書上這件事是那樣的,而這裡不是**。
+  // 所以每一段都拿真實的結局來對照 —— 讀者知道原本會發生什麼,才知道自己改了什麼。
+  'scn-gathering-of-heroes': {
+    cao: {
+      defeat: {
+        titleZh: '群雄並起,而無一人能終',
+        titleEn: 'All the Heroes Rose, and None of Them Finished',
+        textZh:
+          '關東有義士,興兵討群凶。\n\n'
+          + '初期會盟津,乃心在咸陽。軍合力不齊,躊躇而雁行。\n\n'
+          + '勢利使人爭,嗣還自相戕。淮南弟稱號,刻璽於北方。\n\n'
+          + '鎧甲生蟣蝨,萬姓以死亡。白骨露於野,千里無雞鳴。\n\n'
+          + '生民百遺一,念之斷人腸。',
+        textEn:
+          'East of the pass there were men of principle; they raised troops to punish the wicked.\n\n'
+          + 'At first they met at Mengjin, their hearts set on Xianyang. But the armies joined without joining their strength; they hung back and edged forward like geese.\n\n'
+          + 'Advantage sets men quarrelling, and soon they were cutting each other down. The younger brother in Huainan took an imperial title; the elder cut a seal in the north.\n\n'
+          + 'Lice bred in the armour, and the ten thousand families died. White bones lie in the open fields; for a thousand li no cockcrow.\n\n'
+          + 'Of the people, one in a hundred is left. To think on it breaks a man’s heart.',
+      },
+      verdictZh:
+        '論曰:此局無史,群雄同起於一時,而勝負未分。\n'
+        + '**史書之外的難處不在敵眾,在於沒有一條寫定的路可循** ——'
+        + '你所依恃者,惟本鎮之兵、麾下之人與自己的判斷。\n'
+        + '蒿里行所記者,正是無人收拾時的天下。',
+      verdictEn:
+        'The historian says: this board has no history. Every warlord stands at his height at the same moment and nothing is settled. What makes it hard is not the number of enemies but the absence of a written road — you have your own garrison, your own officers and your own judgement, and nothing else. The Haoli Ballad records what the realm looks like when no one gathers it up.',
+      verdictLostZh:
+        '論曰:軍合力不齊,躊躇而雁行 —— 敗於聯軍者,多半不是敗於敵人。',
+      verdictLostEn:
+        'The historian says: the armies joined without joining their strength, and hung back like geese. Those who are beaten in a coalition are usually not beaten by the enemy.',
+    },
+  },
+  'scn-whatif-guanyu-jing': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '荊州未失',
+        titleEn: 'Jing Province Was Not Lost',
+        textZh:
+          '江陵在,公安在,南郡之守未易。\n\n'
+          + '君臣皆知:隆中之對所待者,正是這一日 ——'
+          + '「天下有變,則命一上將將荊州之軍以向宛、洛,'
+          + '將軍身率益州之眾出於秦川。」\n\n'
+          + '兩路皆在手中,而那個「天下有變」，遲遲不來。',
+        textEn:
+          'Jiangling stands; Gongan stands; the guard on Nan commandery has not changed hands.\n\n'
+          + 'Every man at court knew what this was for. The Longzhong plan had waited for exactly this day: "When there is a change under heaven, send one senior general with the army of Jing against Wan and Luoyang, while you yourself lead the host of Yi out through the Qin plain."\n\n'
+          + 'Both roads are in hand. The change under heaven is slow in coming.',
+      },
+      verdictZh:
+        '論曰:隆中之對兩路並出,史書上只走成了半條 ——'
+        + '建安二十四年荊州既失,自此蜀漢北伐皆出祁山一路,'
+        + '六出而無功者,道只有一條。\n'
+        + '**此局所改者,是那一條路** ——'
+        + '而兩路並出的難處也在此:荊州要守,益州要守,而兵只有那麼多。',
+      verdictEn:
+        'The historian says: the Longzhong plan called for two roads, and history only ever managed half of it. Once Jing province was lost in 219, every northern campaign Shu ever mounted went out through Qishan alone — six of them, none successful, because there was only ever one road. What this board changes is that road. And that is also where the difficulty lies: Jing must be held, Yi must be held, and there are only so many soldiers.',
+      verdictLostZh:
+        '論曰:守荊州者,前有曹操,側有孫權,而援兵在千里之外。'
+        + '關羽之敗,不敗於樊城,敗於身後那條沒有人看著的江。',
+      verdictLostEn:
+        'The historian says: whoever holds Jing has Cao Cao in front, Sun Quan at his flank, and relief a thousand li away. Guan Yu was not beaten at Fancheng. He was beaten on the river behind him that nobody was watching.',
+    },
+  },
+  'scn-whatif-zhuge-lives': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '長安既復,而丞相老矣',
+        titleEn: 'Chang’an Retaken, and the Chancellor Grown Old',
+        textZh:
+          '戊午之歲,漢軍入長安。渭水之北,魏師斂兵不出。\n\n'
+          + '丞相居於故都,年六十矣,鬢已霜白,而案牘如故。'
+          + '罰二十以上皆親覽 —— 主簿楊顒曾諫之,今無人再諫。\n\n'
+          + '出師表所言「鞠躬盡瘁,死而後已」者,'
+          + '此時已是第十二年。',
+        textEn:
+          'In the year wuwu the Han army entered Chang’an. North of the Wei river the Wei host drew in and would not come out.\n\n'
+          + 'The Chancellor sits in the old capital. He is sixty; his temples are frosted; the paperwork is what it always was. He still reads personally every punishment of twenty strokes or more — the recorder Yang Yong once remonstrated with him about it. Nobody remonstrates now.\n\n'
+          + '"To bend my body to the task and give my whole strength, and stop only at death" — it is the twelfth year of that.',
+      },
+      verdictZh:
+        '論曰:史書上丞相殞於五丈原,年五十四,'
+        + '其時所爭者不過武功水東西數十里之地。\n'
+        + '**此局給了他長安,也給了他十年** ——'
+        + '而十年之後要回答的仍是同一個問題:'
+        + '以一州之地,如何取九州之天下。',
+      verdictEn:
+        'The historian says: in the record the Chancellor died at Wuzhangyuan at fifty-four, contending over a few dozen li on either bank of the Wugong river. This board gives him Chang’an and ten more years. At the end of the ten years the question is still the same one: how does a single province take nine?',
+      verdictLostZh:
+        '論曰:漢中之北,糧道皆懸於棧閣;'
+        + '得長安易,守長安難 —— 難在那條路。',
+      verdictLostEn:
+        'The historian says: north of Hanzhong every supply road hangs on plank galleries cut into cliffs. Taking Chang’an is the easy half. Holding it is the hard half, and the difficulty is that road.',
+    },
+  },
+  'scn-whatif-cao-wins-chibi': {
+    cao: {
+      defeat: {
+        titleZh: '東風不與周郎便',
+        titleEn: 'The East Wind Did Not Come',
+        textZh:
+          '建安十三年冬,斥候先破黃蓋之詐,連環無恙。\n\n'
+          + '周瑜歿於亂軍,追至建業,斬孫權於江岸。'
+          + '江東一日而傾。\n\n'
+          + '劉備攜諸葛亮西奔,乞庇於劉璋。'
+          + '天下十三州,已得其十。',
+        textEn:
+          'In the winter of 208 the scouts saw through Huang Gai’s false surrender first, and the chained hulls took no harm.\n\n'
+          + 'Zhou Yu died in the rout. The pursuit reached Jianye and Sun Quan was cut down on the riverbank. The Southland fell in a day.\n\n'
+          + 'Liu Bei fled west with Zhuge Liang and begged shelter of Liu Zhang. Of the thirteen provinces under heaven, ten are yours.',
+      },
+      verdictZh:
+        '論曰:赤壁之敗,史書歸之於疫、於風、於北人不習水戰。\n'
+        + '**而勝了之後才顯出來的,是另一件事** ——'
+        + '十州之地,守之者誰?降者荊州水軍七八萬,'
+        + '其心未附;而益州、交州、涼州皆在版圖之外。\n'
+        + '一戰而得天下者,自古無有。',
+      verdictEn:
+        'The historian says: the defeat at Red Cliffs is put down in the record to plague, to wind, to northerners who could not fight on water. What only shows once you have won is a different problem. Ten provinces — held by whom? The seventy or eighty thousand surrendered Jing marines have not given you their hearts, and Yi, Jiao and Liang are all still outside the map. Nobody in all of history took the realm in one battle.',
+      verdictLostZh:
+        '論曰:勝於赤壁而失於後方者,古今不乏其例。'
+        + '降卒之心,不在船上,在他們的家鄉。',
+      verdictLostEn:
+        'The historian says: winning at Red Cliffs and losing in the rear is a common enough shape. The hearts of surrendered troops are not on the ships. They are back where they came from.',
+    },
+  },
+  'scn-whatif-women': {
+    'caiyan-ye': {
+      defeat: {
+        titleZh: '胡笳十八拍',
+        titleEn: 'Eighteen Songs for a Nomad Reed-Whistle',
+        textZh:
+          '鄴城下詔賦詩,本初父子俱拜其階。\n\n'
+          + '她曾在南匈奴十二年,生二子;'
+          + '曹操以金璧贖之而歸 —— 那是史書上的她。\n\n'
+          + '此世她不曾被贖,因為此世沒有人能把她帶走。',
+        textEn:
+          'At Ye she issues edicts and composes verse, and the house of Yuan bows at her steps.\n\n'
+          + 'She spent twelve years among the Southern Xiongnu and bore two sons there; Cao Cao ransomed her back with gold and jade. That is the woman in the record.\n\n'
+          + 'In this world she was never ransomed, because in this world there was no one who could carry her off.',
+      },
+      verdictZh:
+        '論曰:此局非史,乃並世之問 ——'
+        + '若持兵符者易人,則天下之事有何不同?\n'
+        + '**答案不在她們比誰強,在於史書從未給過她們這一格**。',
+      verdictEn:
+        'The historian says: this board is not history but a question put to a parallel world — if the tallies of command changed hands, what about the realm would be different? The answer is not that these women were stronger than the men. It is that the record never gave them the square to stand on.',
+      verdictLostZh: '論曰:文姬歸漢,史書只給了她一首詩的位置。',
+      verdictLostEn:
+        'The historian says: for Cai Yan’s return to Han the record spares the space of a single poem.',
+    },
+  },
+  'scn-whatif-yuan-guandu': {
+    'yuan-shao': {
+      defeat: {
+        titleZh: '納田豐之諫',
+        titleEn: 'Tian Feng Was Heeded',
+        textZh:
+          '建安六年秋。官渡之役,持重以耗,不賭一陣之勝負。\n\n'
+          + '曹操糧盡,烏巢先焚 —— 燒的是他的。\n\n'
+          + '四州之師南下,取許昌,挾天子。'
+          + '曹操走宛城,所餘三城而已。\n\n'
+          + '田豐出獄之日,眾賀之。豐曰:「若軍有利,吾必全。」'
+          + '——此番他說對了。',
+        textEn:
+          'Autumn of 201. At Guandu you kept your weight on the ground and ground him down, and refused to stake everything on one engagement.\n\n'
+          + 'Cao Cao ran out of grain. Wuchao burned first — and it was his.\n\n'
+          + 'The armies of four provinces went south, took Xuchang, and took the Son of Heaven with it. Cao Cao ran to Wancheng with three cities left.\n\n'
+          + 'On the day Tian Feng came out of prison, everyone congratulated him. Tian Feng said: "If the army had done well, I should certainly have been spared." This time he was right.',
+      },
+      verdictZh:
+        '論曰:袁紹之敗,史書歸之於「多謀少決」四字。\n'
+        + '而此局既勝,四州之地、二十九城,'
+        + '**難處遂由勝負轉為次序** ——'
+        + '譚與尚孰先?河北既定,誰守誰攻?\n'
+        + '史書上他死後兩子相攻,袁氏遂亡:那不是官渡的後果,是他自己的。',
+      verdictEn:
+        'The historian says: the record sums up Yuan Shao’s defeat in four words — much scheming, little deciding. Here he has won: four provinces, twenty-nine cities. The difficulty shifts from winning to ordering. Which son comes first, Tan or Shang? With the north settled, who holds and who marches? In the record his two sons turned on each other after his death and the house of Yuan ended. That was not a consequence of Guandu. It was his own.',
+      verdictLostZh:
+        '論曰:勝了官渡而亡於鬩牆者,敗因不在敵國。',
+      verdictLostEn:
+        'The historian says: to win Guandu and then fall to a quarrel between brothers — the cause of that defeat is not in any enemy state.',
+    },
+  },
+  'scn-whatif-lubu-xuzhou': {
+    lubu: {
+      defeat: {
+        titleZh: '泗水未潰',
+        titleEn: 'The Si River Did Not Break the Wall',
+        textZh:
+          '建安三年冬。陳宮之謀得行:堅壁不出,分兵掎角。\n\n'
+          + '曹操攻三月不下,士卒疲,糧且盡,終引軍還。\n\n'
+          + '下邳、彭城、小沛、琅琊、廣陵皆在。'
+          + '赤兔方天,天下第一,而今有地。',
+        textEn:
+          'Winter of 198. Chen Gong’s plan was followed: hold the walls, refuse battle, split the force so that each horn covers the other.\n\n'
+          + 'Cao Cao besieged for three months and could not take it. His men wore out, his grain ran short, and in the end he drew off.\n\n'
+          + 'Xiapi, Pengcheng, Xiaopei, Langya, Guangling — all still yours. Red Hare and the halberd, first under heaven, and now with ground of his own.',
+      },
+      verdictZh:
+        '論曰:呂布之亡,不亡於力,亡於信 ——'
+        + '事丁原而殺丁原,事董卓而殺董卓,'
+        + '故白門樓上求活,而無一人為之言。\n'
+        + '**此局給了他一塊地,而沒有給他別的**:'
+        + '陳宮之謀能守下邳一時,守不住那個名聲。',
+      verdictEn:
+        'The historian says: Lü Bu did not fall for want of strength but for want of credit. He served Ding Yuan and killed him, served Dong Zhuo and killed him; and so on the gate-tower at Baimen, when he begged for his life, not one man spoke for him. This board gives him ground and nothing else. Chen Gong’s plan can hold Xiapi for a season. It cannot hold that reputation.',
+      verdictLostZh:
+        '論曰:陳宮之謀,布信之則勝,疑之則敗 ——'
+        + '而他一向疑之。',
+      verdictLostEn:
+        'The historian says: Chen Gong’s counsel won when Lü Bu trusted it and lost when he doubted it. He generally doubted it.',
+    },
+  },
+  'scn-whatif-machao-guanzhong': {
+    'ma-chao': {
+      defeat: {
+        titleZh: '抹書之計不成',
+        titleEn: 'The Doctored Letter Failed',
+        textZh:
+          '建安十六年春。那封塗改過的信送到韓遂帳中,'
+          + '而馬超看過之後,笑而焚之。\n\n'
+          + '十部聯軍不疑,強攻潼關。曹操退保關東。\n\n'
+          + '長安入手,涼州為後盾。'
+          + '錦馬超年三十六,中原之路在前。',
+        textEn:
+          'Spring of 211. The letter with its passages scratched out and rewritten reached Han Sui’s tent — and Ma Chao read it, laughed, and burned it.\n\n'
+          + 'The ten camps did not fall out. They stormed Tong pass, and Cao Cao fell back east of it.\n\n'
+          + 'Chang’an is in hand and Liang province stands behind it. Ma Chao of the brocade is thirty-six, and the road to the central plain lies open.',
+      },
+      verdictZh:
+        '論曰:賈詡之計曰「離之而已」——'
+        + '關中十部本非一軍,各有其城、各有其眾,'
+        + '故一封抹書而潰。\n'
+        + '**此局所存者是那個盟,而盟仍是十家**:'
+        + '長安既得,誰居之?這才是十部真正的難處。',
+      verdictEn:
+        'The historian says: Jia Xu’s advice was two words — divide them. The ten camps of Guanzhong were never one army; each had its own city and its own men, and one doctored letter was enough to break them apart. What this board preserves is the league, and the league is still ten households. Now that Chang’an is taken — who lives in it? That is the real difficulty of the ten camps.',
+      verdictLostZh:
+        '論曰:馬超敗後,父族二百餘口皆死於許都。'
+        + '起兵之日,他已不能回頭。',
+      verdictLostEn:
+        'The historian says: after Ma Chao’s defeat, more than two hundred of his father’s household died at Xuchang. From the day he raised troops there was no way back.',
+    },
+  },
+  'scn-whatif-sunce-lives': {
+    sun: {
+      defeat: {
+        titleZh: '許貢門客之刺未中',
+        titleEn: 'The Assassins Missed',
+        textZh:
+          '建安六年春。丹徒山中,三客張弓,箭中頰而未及命。\n\n'
+          + '小霸王傷愈而起,年二十六,未嘗一敗。\n\n'
+          + '曹袁相持於官渡,而江東之師北上 ——'
+          + '襲許昌,迎天子。仲謀且待。',
+        textEn:
+          'Spring of 201. In the hills at Dantu three retainers drew their bows; the arrow took him in the cheek and missed his life.\n\n'
+          + 'The Little Conqueror healed and rose again. He is twenty-six and has never lost a battle.\n\n'
+          + 'Cao and Yuan are locked at Guandu, and the army of the Southland is marching north — to raid Xuchang and fetch the Son of Heaven. Zhongmou can wait.',
+      },
+      verdictZh:
+        '論曰:史書上孫策死時,以印綬與弟曰:'
+        + '「舉江東之眾,決機於兩陣之間,與天下爭衡,卿不如我;'
+        + '舉賢任能,各盡其心,以保江東,我不如卿。」\n'
+        + '**兄弟二人之別,正是此局之別** ——'
+        + '決機於兩陣之間者,不長於守成;'
+        + '而襲許昌之後要守的,是整個天下。',
+      verdictEn:
+        'The historian says: when Sun Ce was dying he handed his brother the seals and said: "In taking the host of the Southland and deciding the moment between two battle-lines, contending with all under heaven — you are not my equal. In raising the worthy and employing the able so that each gives his whole heart, and so keeping the Southland — I am not yours." The difference between the two brothers is exactly the difference this board turns on. A man who decides the moment between two battle-lines is not built for keeping what he takes; and after Xuchang, what has to be kept is the whole realm.',
+      verdictLostZh:
+        '論曰:策輕而無備,雖有百萬之眾,無異於獨行中原也。'
+        + '——郭嘉語,史書上應驗了。',
+      verdictLostEn:
+        'The historian says: "Sun Ce is rash and takes no precautions. Though he had a host of a million, it would be no different from walking the central plain alone." So said Guo Jia; and in the record it came true.',
+    },
+  },
+  'scn-whatif-dong-lives': {
+    dong: {
+      defeat: {
+        titleZh: '鳳儀亭之計不成',
+        titleEn: 'The Plot at the Phoenix Pavilion Failed',
+        textZh:
+          '初平三年。王允之謀事泄,飛將仍在側。\n\n'
+          + '虎牢拒關東諸侯於外,反董之軍自潰。\n\n'
+          + '郿塢積穀三十年,金玉珠玉不可勝計。'
+          + '而長安城中,人不敢言,道路以目。',
+        textEn:
+          'The third year of Chuping. Wang Yun’s plot leaked, and the Flying General still stands at his shoulder.\n\n'
+          + 'Hulao holds the eastern lords outside it and the coalition against him comes apart on its own.\n\n'
+          + 'At Mei there is grain stored for thirty years and gold and jade past counting. And in Chang’an no one dares speak; they meet each other’s eyes on the road and say nothing.',
+      },
+      verdictZh:
+        '論曰:董卓之亡,不亡於關東,亡於帳下 ——'
+        + '呂布一戟而已。\n'
+        + '**此局所改者正是那一戟**;'
+        + '而郿塢積穀三十年這件事本身,'
+        + '就是一個知道自己守不住天下的人做的準備。',
+      verdictEn:
+        'The historian says: Dong Zhuo did not fall to the east. He fell inside his own tent, to one thrust of Lü Bu’s halberd. What this board changes is that thrust. And the thirty years of grain stored at Mei is, in itself, the preparation of a man who knew he could not hold the realm.',
+      verdictLostZh:
+        '論曰:以暴取之,以暴守之,'
+        + '所畏者遂不在關東而在肘腋。',
+      verdictLostEn:
+        'The historian says: taken by violence and kept by violence — and so what he had to fear was never the east, but the man at his elbow.',
+    },
+  },
+  'scn-whatif-yuanshu-empire': {
+    'yuan-shu': {
+      defeat: {
+        titleZh: '淮南未旱',
+        titleEn: 'No Drought in Huainan',
+        textZh:
+          '建安三年。仲家之號已建,壽春、汝南、淮水之地皆在。\n\n'
+          + '這一回府庫充盈,部將未叛,'
+          + '而傳國玉璽在案上。\n\n'
+          + '四面皆漢室之臣,而他們也還沒有動。',
+        textEn:
+          'The third year of Jian’an. The Zhong dynasty has been proclaimed and Shouchun, Runan and the Huai country are all held.\n\n'
+          + 'This time the granaries are full, the generals have not deserted, and the Heirloom Seal lies on the desk.\n\n'
+          + 'On every side are servants of the house of Han. They have not moved yet either.',
+      },
+      verdictZh:
+        '論曰:袁術之亡,史書寫得極短 ——'
+        + '至江亭,問廚下,惟有麥屑三十斛;'
+        + '時盛暑,欲得蜜漿,又無蜜。'
+        + '坐床上嘆息良久,乃大吒曰:「袁術至於此乎!」'
+        + '因頓伏床下,嘔血斗餘而死。\n'
+        + '**此局把糧給了他,而沒有把人給他**:'
+        + '僭號之後四面皆敵,這一條改不掉。',
+      verdictEn:
+        'The historian says: the record disposes of Yuan Shu very briefly. He reached the river pavilion and asked the kitchen what there was: thirty hu of barley husks. It was the height of summer and he wanted honey water, and there was no honey. He sat on the couch and sighed a long while, then cried out: "Has Yuan Shu come to this!" — and pitched forward off the couch, vomited a peck of blood, and died. This board gives him the grain. It cannot give him the men. Once the title is proclaimed, every side is an enemy, and that part does not change.',
+      verdictLostZh:
+        '論曰:天下所以共擊之者,非其弱也,以其僭也。',
+      verdictLostEn:
+        'The historian says: the realm combined against him not because he was weak but because he had usurped.',
+    },
+  },
+  'scn-whatif-guojia-lives': {
+    cao: {
+      defeat: {
+        titleZh: '奉孝在',
+        titleEn: 'Fengxiao Lives',
+        textZh:
+          '建安十三年秋。北征烏桓之疾未奪其命。\n\n'
+          + '軍師祭酒郭嘉隨大軍南下,年三十九。\n\n'
+          + '荊州既下,水軍七八萬歸附,順流東指。'
+          + '——赤壁之火,尚未舉。',
+        textEn:
+          'Autumn of 208. The illness he took on the northern campaign against the Wuhuan did not kill him.\n\n'
+          + 'Guo Jia, Libationer of the Army, goes south with the host. He is thirty-nine.\n\n'
+          + 'Jing province has fallen; seventy or eighty thousand of its marines have come over; the fleet points downstream. The fire at Red Cliffs has not been lit.',
+      },
+      verdictZh:
+        '論曰:赤壁既敗,操嘆曰:「郭奉孝在,不使孤至此。」\n'
+        + '**而此局要問的是:他在,又如何?**\n'
+        + '嘉之長,在料人 —— 料孫策必死於匹夫之手,'
+        + '料袁氏兄弟必自相攻;'
+        + '而連環之計、東南之風,非料人之事。',
+      verdictEn:
+        'The historian says: after the defeat Cao Cao sighed and said, "Had Guo Fengxiao been alive, he would not have let me come to this." What this board asks is the next question: he is alive — and then what? Guo Jia’s gift was reading men. He read that Sun Ce would die at the hands of a commoner and that the Yuan brothers would turn on each other. Chained hulls and a wind out of the southeast are not questions about men.',
+      verdictLostZh:
+        '論曰:謀主一人,不能代十萬人不習水戰。',
+      verdictLostEn:
+        'The historian says: one chief strategist cannot stand in for a hundred thousand men who have never fought on water.',
+    },
+  },
+  'scn-whatif-zhouyu-lives': {
+    sun: {
+      defeat: {
+        titleZh: '公瑾未歿於巴丘',
+        titleEn: 'Zhou Yu Did Not Die at Baqiu',
+        textZh:
+          '建安十六年春。大都督病癒,還鎮江陵。\n\n'
+          + '其向孫權所請者得行:'
+          + '「乞與奮威俱進取蜀,得蜀而并張魯,'
+          + '因留奮威固守其地,好與馬超結援。'
+          + '瑜還與將軍據襄陽以蹙操,北方可圖也。」\n\n'
+          + '——二分天下之計,自此日始。',
+        textEn:
+          'Spring of 211. The Grand Commandant recovered and returned to his post at Jiangling.\n\n'
+          + 'The plan he had asked Sun Quan for was granted: "Let me and the Awe-Rousing General march together to take Shu; having Shu we absorb Zhang Lu, and I leave the Awe-Rousing General to hold it firmly and make common cause with Ma Chao. Then Yu returns and with you holds Xiangyang to press Cao Cao, and the north can be planned for."\n\n'
+          + 'The halving of the realm begins today.',
+      },
+      verdictZh:
+        '論曰:周瑜請取蜀,而孫權許之;'
+        + '未行而瑜卒於巴丘,年三十六。'
+        + '自此江東之策由二分天下轉為聯劉抗曹,'
+        + '荊州遂為兩家之爭者十年。\n'
+        + '**此局所復者是那條被病截斷的路** ——'
+        + '而路的第一站,是劉備正在走的同一條。',
+      verdictEn:
+        'The historian says: Zhou Yu asked leave to take Shu and Sun Quan granted it; before he could set out he died at Baqiu, aged thirty-six. From then on the policy of the Southland turned from halving the realm to allying with Liu against Cao, and Jing province was contested between the two of them for ten years. This board restores the road that illness cut. And the first stage of that road is the same road Liu Bei is already walking.',
+      verdictLostZh:
+        '論曰:二分天下之計,難不在取蜀,在取蜀之時背後那個盟友。',
+      verdictLostEn:
+        'The historian says: the difficulty of halving the realm is not the taking of Shu. It is the ally behind you while you take it.',
+    },
+  },
+  'scn-whatif-pangtong-lives': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '臥龍鳳雛俱在',
+        titleEn: 'Both the Sleeping Dragon and the Fledgling Phoenix',
+        textZh:
+          '建安二十年。落鳳坡之箭中其所乘之馬,而人無恙。\n\n'
+          + '龐統佐取西蜀,遂留治益州;'
+          + '諸葛亮不必西去,荊州之政仍在其手。\n\n'
+          + '水鏡之言曰:「臥龍、鳳雛,兩人得一,可安天下。」'
+          + '——此局兩人俱在。',
+        textEn:
+          'The twentieth year of Jian’an. The arrow at Fallen Phoenix Slope struck the horse he was riding, and left the man untouched.\n\n'
+          + 'Pang Tong helped take the west and stayed to govern Yi province; Zhuge Liang did not have to go west, and the administration of Jing stayed in his hands.\n\n'
+          + 'Sima Hui had said: "The Sleeping Dragon and the Fledgling Phoenix — get either one of them and the realm can be settled." Here there are both.',
+      },
+      verdictZh:
+        '論曰:蜀漢之致命處,在兩線分兵而人不足 ——'
+        + '亮西入益州,則荊州付於關羽一人;'
+        + '關羽既失,兩線俱斷。\n'
+        + '**此局補的正是那個人**;'
+        + '而兩人俱在之後才看得見:缺的從來不只是人,還有地與糧。',
+      verdictEn:
+        'The historian says: what killed Shu was two fronts and not enough men. When Zhuge Liang went west into Yi, Jing was left to Guan Yu alone; when Guan Yu was lost, both fronts went with him. This board supplies the missing man. And with both of them in place you can finally see the rest of it: what was short was never only men, but land and grain as well.',
+      verdictLostZh:
+        '論曰:得一人可安天下者,言其才,非言其能代兵。',
+      verdictLostEn:
+        'The historian says: "get either one and the realm can be settled" is a remark about talent. It is not a claim that talent can stand in for soldiers.',
+    },
+  },
+  'scn-whatif-guanyu-north': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '威震華夏',
+        titleEn: 'A Name That Shook the Realm',
+        textZh:
+          '建安二十四年秋。漢水暴溢,于禁七軍皆沒,'
+          + '龐德不降而死。\n\n'
+          + '樊城既破,襄陽開門。雲長沿漢而北,'
+          + '過新野,趨宛城,旌旗去許昌百里。\n\n'
+          + '曹操議遷天子於河北以避其鋒。\n\n'
+          + '——而江陵之後路,尚無人看著。',
+        textEn:
+          'Autumn of 219. The Han river burst its banks and drowned Yu Jin’s seven armies; Pang De refused to surrender and died.\n\n'
+          + 'Fancheng fell and Xiangyang opened its gates. Yunchang went north up the Han, past Xinye, on toward Wancheng, his banners a hundred li from Xuchang.\n\n'
+          + 'Cao Cao’s court debated moving the Son of Heaven north of the Yellow River to get out of his way.\n\n'
+          + 'And the road home behind Jiangling still has nobody watching it.',
+      },
+      verdictZh:
+        '論曰:羽威震華夏,而身死於旬月之間 ——'
+        + '**其間所差者,只是一封孫權寫給曹操的信**。\n'
+        + '此局把那一刻停住了,而信仍在路上:'
+        + '北取許昌與南守江陵,兵只有一支。',
+      verdictEn:
+        'The historian says: Guan Yu’s name shook the realm, and within a month or two he was dead. What lay between the two was a single letter from Sun Quan to Cao Cao. This board stops the clock at that moment, and the letter is still on the road. Take Xuchang in the north or hold Jiangling in the south — there is only one army.',
+      verdictLostZh:
+        '論曰:前有堅城,後有盟友,而盟友已與敵通書。'
+        + '關羽之敗,敗在他不肯信這件事。',
+      verdictLostEn:
+        'The historian says: a walled city in front, an ally behind, and the ally already corresponding with the enemy. Guan Yu was beaten because he would not believe it.',
+    },
+  },
+  'scn-whatif-gaopingling': {
+    cao: {
+      defeat: {
+        titleZh: '桓範之謀得行',
+        titleEn: 'Huan Fan Was Heeded',
+        textZh:
+          '正始十年春。大將軍不肯解印,挾天子疾走許昌,'
+          + '發關中之兵,傳檄天下,以司馬懿為叛逆。\n\n'
+          + '京畿、許昌、淮南之膏腴,皆歸於挾天子者。\n\n'
+          + '桓範曰:「事窮矣,卿今日尚欲以家為念邪!」'
+          + '——這一回,他聽了。',
+        textEn:
+          'Spring of 249. The Grand General would not give up his seals. He took the Son of Heaven and made for Xuchang at speed, raised the troops of Guanzhong, and sent word through the realm proclaiming Sima Yi a rebel.\n\n'
+          + 'The capital region, Xuchang and the rich Huainan country all belong to the man who holds the emperor.\n\n'
+          + 'Huan Fan had said: "The thing is desperate — and today of all days you are still thinking about your household?" This time he listened.',
+      },
+      verdictZh:
+        '論曰:史書上曹爽解印就縛,曰:'
+        + '「我不失作富家翁。」桓範哭曰:'
+        + '「曹子丹佳人,生汝兄弟,豚犢耳!」\n'
+        + '未幾,夷三族。\n'
+        + '**此局改的是那一句話**;'
+        + '而挾天子者所要面對的,是另一件事 ——'
+        + '司馬懿手裡有的不是兵,是四十年的人。',
+      verdictEn:
+        'The historian says: in the record Cao Shuang handed over his seals and said, "At least I shall still be a rich country gentleman." Huan Fan wept and said: "Cao Zidan was a fine man — and he fathered you two, a pair of calves!" Not long after, three generations of the family were put to death. This board changes that one sentence. What the man holding the emperor then has to face is a different matter: what Sima Yi holds is not soldiers but forty years of men.',
+      verdictLostZh:
+        '論曰:挾天子者眾,而能用之者寡。'
+        + '名分是一把刀,握不住的人先傷自己。',
+      verdictLostEn:
+        'The historian says: many have held the Son of Heaven; few have known what to do with him. Legitimacy is a blade, and whoever cannot grip it cuts himself first.',
+    },
+  },
+  'scn-whatif-luxun-lives': {
+    sun: {
+      defeat: {
+        titleZh: '伯言未憤恚而卒',
+        titleEn: 'Lu Xun Did Not Die of Grief',
+        textZh:
+          '赤烏十二年。二宮之爭既起,上書責問者數至,'
+          + '而丞相未死。\n\n'
+          + '夷陵焚連營、石亭破曹休者,今年六十七,'
+          + '猶在武昌。\n\n'
+          + '而北方,司馬與曹爽正相攻於洛陽。',
+        textEn:
+          'The twelfth year of Chiwu. The struggle between the two palaces has broken out and the reproachful letters from the throne have come more than once — and the Chancellor is not dead.\n\n'
+          + 'The man who burned the linked camps at Yiling and broke Cao Xiu at Shiting is sixty-seven this year, and still at Wuchang.\n\n'
+          + 'And in the north, Sima and Cao Shuang are at each other’s throats in Luoyang.',
+      },
+      verdictZh:
+        '論曰:二宮之爭,吳之棟梁折者數十人,'
+        + '陸遜其首也 —— 憤恚而卒,年六十三。\n'
+        + '**此局所留者是那一年的機會**:'
+        + '魏室自裂於高平陵,而江表尚有能用兵之人。\n'
+        + '機會人人看得見,難處在於他背後那座宮廷仍在爭。',
+      verdictEn:
+        'The historian says: the struggle between the two palaces broke dozens of Wu’s load-bearing men, and Lu Xun was the first of them — dead of grief and indignation at sixty-three. What this board preserves is that year’s opening: the house of Wei tearing itself apart at Gaopingling while the Southland still has a man who can handle an army. Everyone can see the opening. The difficulty is the court behind him, which is still quarrelling.',
+      verdictLostZh:
+        '論曰:國有能將而君不能用,與無將同。',
+      verdictLostEn:
+        'The historian says: a state with a capable general whose sovereign cannot use him is a state with no general.',
+    },
+  },
 };
 
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
