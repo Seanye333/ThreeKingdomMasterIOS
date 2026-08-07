@@ -1408,6 +1408,11 @@ export const SCENARIO_208_CHIBI: Scenario = {
     { a: 'cao', b: 'shi-xie', score: 20, status: 'non-aggression' },
     // ── 還沒結成的那個盟 ──
     { a: 'sun', b: 'liu-bei', score: 35, status: 'non-aggression' },  // 魯肅方至,孔明未渡江
+    /* 劉備對劉琮 —— 先前這一對沒寫,於是預設中立,而 AI 不打中立的鄰居。
+       史實上劉備正是從劉琮的荊州裡逃出來的(當陽長阪),赤壁之後南征諸郡,
+       武陵金旋、桂陽趙範、零陵劉度皆是劉琮的太守。這一格空著,
+       劉備的主目標(南征諸郡)就被外交鎖死。 */
+    { a: 'liu-bei', b: 'liu-biao', score: -45, status: 'neutral' },
     // ── 舊帳 ──
     { a: 'sun', b: 'liu-biao', score: -70, status: 'neutral' },   // 黃祖之讎,三攻江夏
     { a: 'liu-bei', b: 'liu-biao', score: 30, status: 'non-aggression' }, // 依表七年,而琮不告以降
@@ -1416,7 +1421,44 @@ export const SCENARIO_208_CHIBI: Scenario = {
     { a: 'liu-zhang', b: 'shi-xie', score: 5, status: 'non-aggression' },
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },      // 燮遣使詣權,歲奉貢
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_208),
+  /*
+   * 開局姿態(2026-08-06)—— 這張盤先前**一個旋鈕也沒有**,而它是全庫最不平的一張:
+   * 曹操四十八城對劉備三城。體檢四輪跑出來的問題不是誰太強,是**劉琮擋在中間**:
+   * 他十四城、守襄陽 4/4,於是劉備拿不到荊南四郡(0/4)。
+   * 姿態要說的就是那件事:荊州牧新喪,蔡瑁張允主降,而劉琮年少 ——
+   * 兵 ×0.55、民忠 −25、城防 −6。不是把他刪掉(「不束手」仍是可玩的假設),
+   * 是讓束手在數字上是預設而非例外。
+   *
+   * (⚠ 劉琮那一家的 force id 是 `liu-biao`,不是 `liu-cong` —— 名字換了 id 沒換。)
+   */
+  cities: buildInitialCities(CITY_OWNERSHIP_208, {
+    /* 八十萬眾號於江上,而糧在千里之外 —— 兵多糧薄,正是赤壁那一仗的形狀。 */
+    cao:         { troops: 1.20, food: 0.80, gold: 1.10, defense: 4,  loyalty: 4 },
+    /* 三城之主,所恃者人不是地。 */
+    'liu-bei':   { troops: 1.35, food: 1.05, gold: 0.85, defense: 0,  loyalty: 20 },
+    /* 水軍與江防:兵不必多,城要硬。 */
+    sun:         { troops: 1.10, food: 1.15, gold: 1.10, defense: 12, loyalty: 8 },
+    'liu-biao':  { troops: 0.55, food: 1.20, gold: 1.15, defense: -6, loyalty: -25 },
+    'liu-zhang': { troops: 0.85, food: 1.25, gold: 1.05, defense: 14, loyalty: 4 },
+    /* 陽平關之險與五斗米道之聚 —— 城硬人齊,而地小。 */
+    /* 兵 0.95 → 1.70:逐城追下來,吃掉張魯的是劉璋(漢中易主於第 50/54/198 回合),
+       而史實上劉璋數攻漢中不能下 —— 這正是他後來請劉備入蜀的理由。
+       城防調到 86/95 擋不住,因為問題不是城硬不硬,是三城對八城。
+       五斗米道「民夷便樂之,雄據巴漢垂三十年」,兵是他真正有的東西。 */
+    'zhang-lu':  { troops: 1.70, food: 1.30, gold: 1.10, defense: 16, loyalty: 16 },
+    /* 十七城而多是關隘,騰此時方受徵入朝之議 —— 地廣而心不一。 */
+    'ma-teng':   { troops: 1.05, food: 0.90, gold: 0.85, defense: -4, loyalty: -8 },
+    'shi-xie':   { troops: 0.80, food: 1.35, gold: 1.30, defense: 6,  loyalty: 18 },
+  }, {
+    /*
+     * 陽平關與漢中具名調硬 —— 張魯三城,體檢五輪覆滅四次,而他的主目標是
+     * 「至212年仍據漢中」。史實上他據漢中近三十年,劉璋數攻不能下,
+     * 直到 215 年曹操自散關入才封藏府庫而去。天險在資料上要看得見。
+     * 照 184 宛城的做法:**只調城防,不調兵**。
+     */
+    yangpingguan: { defense: 95 },
+    hanzhong:     { defense: 86 },
+  }),
   forces: FORCES_208,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_208, DEAD_BY_208),
 };

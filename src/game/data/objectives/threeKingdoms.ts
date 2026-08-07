@@ -839,7 +839,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-208-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '會獵於吳', en: 'A Hunt in Wu' },
+        title: { zh: '北方不動', en: 'The North Does Not Move' },
         /*
          * 原本是「於215年前盡取孫權所有城池」。八十萬眾南下,滅一個孫權看似
          * 理所當然 —— 而赤壁之後他終其一生沒能過江。那是他**沒做到**的事,
@@ -849,11 +849,45 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * (「晝夜兼行三百餘里」搶的就是它),後者是入江東的門。這兩座拿下了,
          * 赤壁就贏了;拿不下,八十萬眾也只是燒在江上的船。
          */
-        description: 'Hold Jiangling and Jiangxia by 212 — the arsenal, and the gate into the east.',
-        descriptionZh: '於212年前據有江陵與江夏 —— 一個是荊州的軍實所在,一個是入江東的門。',
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'jiangxia'], byYear: 212 },
+        /*
+         * 再改(2026-08-06,量測修好之後)。「江陵+江夏」四輪 0 中,而**江夏開局
+         * 在劉備手裡** —— 曹操、孫權兩家的主目標同時指向那一座,而劉備四輪都守住了。
+         * 一座城卡死兩條主目標,兩家一起 0。
+         *
+         * 只留江陵:那是荊州的軍實所在(「晝夜兼行三百餘里」搶的就是它),
+         * 也是他真的搶到過的那一座。江夏改掛在次要。
+         */
+        /*
+         * 三改(2026-08-06)。這張盤的開局外交是照史實寫的 —— 琮已遣使奉降、
+         * 騰入朝為衛尉、璋遣使致敬 —— 於是曹操與盤上六家都是互不侵犯,
+         * **他唯一能打的只有劉備與孫權,而那兩家在江南**。體檢四輪:
+         * 「取江陵江夏」0/4(江陵在互不侵犯的劉琮手裡)、
+         * 「定關中」0/4(天水安定在互不侵犯的馬騰手裡)、
+         * 連三城的劉備都吃不掉(劉備四輪都是 3 → 3)——**那條江他過不去**,
+         * 而那正是赤壁之後十二年的真實形狀。
+         *
+         * 所以主目標不寫他要拿下什麼,寫他真正做到的那一件:一敗而根本不動。
+         * 五都俱在,則北方仍是他的。想拿江陵、想定關中,都在次要。
+         */
+        /* 五都收成三都:長安與薊各在邊上,四輪裡總有一座掉,而掉一座就整條不算。
+           鄴(霸府)、許昌(天子)、洛陽(舊都)才是「根本不動」的那三座。 */
+        description: 'Still hold Ye, Xuchang and Luoyang in 216 — he lost the river and did not lose the north.',
+        descriptionZh: '至216年仍據鄴、許昌、洛陽 —— 霸府、天子、舊都;赤壁一敗而根本不動,這才是他真正做到的那一件。',
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'xuchang', 'luoyang'], byYear: 216 },
       },
       secondary: [
+        {
+          title: { zh: '定關中', en: 'Settle Guanzhong' },
+          description: 'Hold Chang\'an, Chencang, Tianshui and Anding by 214 — the road he took when the river closed.',
+          descriptionZh: '於214年前據有長安、陳倉、天水、安定 —— 南路既斷,他就往西走。',
+          goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang', 'tianshui', 'anding'], byYear: 214 },
+        },
+        {
+          title: { zh: '會獵於吳', en: 'A Hunt in Wu' },
+          description: 'Hold Jiangling and Jiangxia by 212 — the arsenal, and the gate into the east.',
+          descriptionZh: '於212年前據有江陵與江夏 —— 一個是荊州的軍實所在,一個是入江東的門。',
+          goal: { kind: 'hold-cities', cityIds: ['jiangling', 'jiangxia'], byYear: 212 },
+        },
         {
           title: { zh: '南征江東', en: 'Conquer Jiangdong' },
           description: "Destroy the Sun force by 215 — after Red Cliffs he never crossed the river again.",
@@ -878,9 +912,12 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 改成他真正守住的那條線:建業(根本)、柴桑(周瑜屯兵、議降議戰之地)、
          * 江夏(黃祖舊地,赤壁之後的門戶)。
          */
-        description: 'Still hold Jianye, Chaisang and Jiangxia in 212 — the line the fire on the river bought.',
-        descriptionZh: '至212年仍據建業、柴桑與江夏 —— 那條江防,是江上那把火換來的。',
-        goal: { kind: 'hold-cities', cityIds: ['jianye', 'chaisang', 'jiangxia'], byYear: 212 },
+        /* 再改(2026-08-06):江夏開局在劉備手裡,而曹操的主目標也指向它 ——
+           三家搶一座,孫曹一起 0/4。換成他自己那條江防線:建業、柴桑、吳郡。
+           江夏改掛次要(史實上要到 208 年殺黃祖之後才算真的到手)。 */
+        description: 'Still hold Jianye, Chaisang and Wu in 212 — the river line the fire bought.',
+        descriptionZh: '至212年仍據建業、柴桑與吳郡 —— 那條江防,是江上那把火換來的。',
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'chaisang', 'wu'], byYear: 212 },
       },
       secondary: [
         {
@@ -901,10 +938,22 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-208-liu',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '蜀地確立', en: 'Establish Shu' },
-        description: 'Take Chengdu and Hanzhong by 220 AD.',
-        descriptionZh: "於220年前同時據有成都與漢中。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 220 },
+        /*
+         * 主次對調(2026-08-06)。「於220年前同時據有成都與漢中」是他一生的完成式,
+         * 而在盤上他開局三城、對面曹操四十八城 —— 四輪 0 中,AI 終局也只長到四城。
+         * 那條留作次要(玩家扮劉備時,它仍是這張盤真正的終點)。
+         *
+         * 主目標換成赤壁之後他立刻做到的那一步:荊南四郡。
+         * 「先主表琦為荊州刺史,又南征四郡。武陵太守金旋、長沙太守韓玄、
+         *   桂陽太守趙範、零陵太守劉度皆降。」—— 那是他第一次有地。
+         */
+        title: { zh: '南征四郡', en: 'The Four Southern Commanderies' },
+        /* ⚠ 長沙開局在孫權手裡,而劉備與孫權是互不侵犯 —— 把長沙寫進去,
+           這條就被外交鎖死了(四輪 0 中)。留武陵、桂陽、零陵三郡,
+           再加公安:那是他借荊州之後的治所。 */
+        description: 'Hold Wuling, Guiyang, Lingling and Gong\'an by 213 — the first land he ever actually held.',
+        descriptionZh: '於213年前據有武陵、桂陽、零陵與公安 —— 南征諸郡,太守皆降,那是他第一次有地。',
+        goal: { kind: 'hold-cities', cityIds: ['wuling', 'guiyang', 'lingling', 'gongan'], byYear: 213 },
       },
       secondary: [
         {
@@ -976,12 +1025,28 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-208-zhanglu',
       forceId: 'zhang-lu',
       primary: {
-        title: { zh: '漢寧之治', en: 'The Rule of Hanning' },
-        description: 'Still hold Hanzhong in 216 — Cao Cao came through Sanguan in 215 and he sealed the storehouses and left.',
-        descriptionZh: '撐到216年仍據有漢中 —— 史實上215年曹操自散關入,他封藏府庫而去。',
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 216 },
+        /*
+         * 三改(2026-08-06)。期限先從 216 收到 212,仍是 0/5 —— 逐城追下來,
+         * 吃掉他的是劉璋(漢中易主於第 50/54/198 回合),而史實上劉璋數攻漢中
+         * 不能下,那正是他後來請劉備入蜀的理由。姿態那一側已經補了
+         * (兵 ×1.70,覆滅 4/5 → 1/5),但「守住漢中到 212」仍然太硬。
+         *
+         * 主目標改成他真正做到的那一件:活著。「雄據巴漢垂三十年」——
+         * 一個道門政權在兩個州牧中間活到 215 年,本身就是那張盤要講的事。
+         * 漢中不失降為次要。
+         */
+        title: { zh: '雄據巴漢', en: 'Thirty Years in Ba and Han' },
+        description: 'Survive to 215 — a Daoist theocracy between two provincial governors, and it lasted thirty years.',
+        descriptionZh: '撐到215年 —— 五斗米道據巴漢垂三十年,而215年曹操自散關入,他封藏府庫而去。',
+        goal: { kind: 'survive-until', year: 215 },
       },
       secondary: [
+        {
+          title: { zh: '漢寧之治', en: 'The Rule of Hanning' },
+          description: 'Still hold Hanzhong in 212 — Liu Zhang attacked it for years and never took it.',
+          descriptionZh: '至212年仍據有漢中 —— 劉璋數攻不能下,這才請劉備入蜀。',
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 212 },
+        },
         {
           title: { zh: '巴漢之民', en: 'The People of Ba and Han' },
           description: 'Hold Hanzhong and Baxi together — the Ba country where tens of thousands followed the Way.',
