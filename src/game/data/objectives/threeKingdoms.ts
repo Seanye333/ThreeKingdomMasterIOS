@@ -1161,6 +1161,36 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'declare-emperor' },
       },
     },
+    {
+      id: 'obj-220-declaration-shi-xie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+        description: "Still hold Jiaozhi and Nanhai in 226. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至226年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 226 },
+      },
+    },
+    {
+      id: 'obj-220-declaration-xianbei',
+      forceId: 'xianbei',
+      primary: {
+        title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+        description: "Still hold Wuhuan and Liucheng in 226. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
+        descriptionZh: "至226年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 226 },
+      },
+    },
+    {
+      id: 'obj-220-declaration-nanman',
+      forceId: 'nanman',
+      primary: {
+        title: { zh: '南中之主', en: 'Lord of Nanzhong' },
+        description: "Still hold Jianning and Nanzhong in 226. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至226年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 226 },
+      },
+    },
   ],
 
   // 234 — Wuzhang Plains
@@ -1200,6 +1230,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'defeat-force', forceId: 'liu-bei', byYear: 245 },
         },
       ],
+    },
+    {
+      id: 'obj-234-wuzhang-sun',
+      forceId: 'sun',
+      primary: {
+        title: { zh: '江東之守', en: 'The Southland' },
+        description: "Still hold Jianye and Kuaiji in 240. The river is the wall and the fleet is the garrison.",
+        descriptionZh: "至240年仍據建業、會稽。限江自保,舟師為城。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'kuaiji'], byYear: 240 },
+      },
     },
   ],
 
@@ -1267,6 +1307,36 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'survive-until', year: 218 },
       },
     },
+    {
+      id: 'obj-215-hefei-shi-xie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+        description: "Still hold Jiaozhi and Nanhai in 221. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至221年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 221 },
+      },
+    },
+    {
+      id: 'obj-215-hefei-xianbei',
+      forceId: 'xianbei',
+      primary: {
+        title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+        description: "Still hold Wuhuan and Liucheng in 221. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
+        descriptionZh: "至221年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 221 },
+      },
+    },
+    {
+      id: 'obj-215-hefei-nanman',
+      forceId: 'nanman',
+      primary: {
+        title: { zh: '南中之主', en: 'Lord of Nanzhong' },
+        description: "Still hold Jianning and Nanzhong in 221. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至221年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 221 },
+      },
+    },
   ],
 
   // 219 — Hanzhong Campaign
@@ -1307,6 +1377,26 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         description: 'Take Jiangling by 220 — Lü Meng seizes Jing province.',
         descriptionZh: "呂蒙白衣渡江,於220年前襲取江陵,奪回荊州。",
         goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 220 },
+      },
+    },
+    {
+      id: 'obj-219-hanzhong-xianbei',
+      forceId: 'xianbei',
+      primary: {
+        title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+        description: "Still hold Wuhuan and Liaodong in 225. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
+        descriptionZh: "至225年仍據烏丸、遼東。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liaodong'], byYear: 225 },
+      },
+    },
+    {
+      id: 'obj-219-hanzhong-nanman',
+      forceId: 'nanman',
+      primary: {
+        title: { zh: '南中之主', en: 'Lord of Nanzhong' },
+        description: "Still hold Jianning and Nanzhong in 225. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至225年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 225 },
       },
     },
   ],
@@ -1378,6 +1468,26 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'unify-realm' },
         },
       ],
+    },
+    {
+      id: 'obj-222-yiling-xianbei',
+      forceId: 'xianbei',
+      primary: {
+        title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+        description: "Still hold Wuhuan and Liaodong in 228. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
+        descriptionZh: "至228年仍據烏丸、遼東。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liaodong'], byYear: 228 },
+      },
+    },
+    {
+      id: 'obj-222-yiling-nanman',
+      forceId: 'nanman',
+      primary: {
+        title: { zh: '南中之主', en: 'Lord of Nanzhong' },
+        description: "Still hold Jianning and Nanzhong in 228. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至228年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 228 },
+      },
     },
   ],
 
@@ -1485,6 +1595,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 205 },
       },
     },
+    {
+      id: 'obj-189-eunuchs-liu-yan',
+      forceId: 'liu-yan',
+      primary: {
+        title: { zh: '閉關守險', en: 'Shut the Passes' },
+        description: "Still hold Chengdu and Jiangzhou in 195. The diviners said Yi province had the air of a Son of Heaven — and the first thing he did was cut the plank roads.",
+        descriptionZh: "至195年仍據成都、江州。望氣者言益州有天子氣 —— 而他先做的是斷絕棧道。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou'], byYear: 195 },
+      },
+    },
   ],
 
   // 192 — Wang Yun's chained stratagem
@@ -1587,6 +1707,46 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         },
       ],
     },
+    {
+      id: 'obj-192-wangyun-yuan-shao',
+      forceId: 'yuan-shao',
+      primary: {
+        title: { zh: '河北之基', en: 'The Northern Base' },
+        description: "Still hold Ye and Bohai in 198. Four generations at the top of the government; his family's clients are everywhere.",
+        descriptionZh: "至198年仍據鄴、渤海。四世三公,門生故吏遍於天下。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-192-wangyun-liu-biao',
+      forceId: 'liu-biao',
+      primary: {
+        title: { zh: '荊襄之守', en: 'The Jing Heartland' },
+        description: "Still hold Xiangyang and Wancheng in 198. He rode into Yicheng alone and settled the province. A man for talk, they said — and Jing province did have seventeen quiet years.",
+        descriptionZh: "至198年仍據襄陽、宛城。單騎入宜城而定荊州,坐談客耳 —— 守成之主,而荊州確實安了十七年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'wancheng'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-192-wangyun-tao-qian',
+      forceId: 'tao-qian',
+      primary: {
+        title: { zh: '徐州安堵', en: 'Xu Province at Peace' },
+        description: "Still hold Xiapi and Pengcheng in 198. Xu province is prosperous and he is old.",
+        descriptionZh: "至198年仍據下邳、彭城。徐州殷實,而他老了,守得住一年是一年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'pengcheng'], byYear: 198 },
+      },
+    },
+    {
+      id: 'obj-192-wangyun-liu-yan',
+      forceId: 'liu-yan',
+      primary: {
+        title: { zh: '閉關守險', en: 'Shut the Passes' },
+        description: "Still hold Chengdu and Jiangzhou in 198. The diviners said Yi province had the air of a Son of Heaven — and the first thing he did was cut the plank roads.",
+        descriptionZh: "至198年仍據成都、江州。望氣者言益州有天子氣 —— 而他先做的是斷絕棧道。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou'], byYear: 198 },
+      },
+    },
   ],
 
   // 194 — Governor of Xuzhou
@@ -1674,6 +1834,46 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'control-province', provinceId: 'liang', byYear: 202 },
         },
       ],
+    },
+    {
+      id: 'obj-194-xuzhou-gongsun',
+      forceId: 'gongsun',
+      primary: {
+        title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
+        description: "Still hold Beiping and Bohai in 200. Frontier troops, used to running with the steppe horse — and after Jieqiao he drew back further every year.",
+        descriptionZh: "至200年仍據北平、渤海。邊地之兵,慣與胡騎相馳 —— 而界橋之後,他愈退愈深。",
+        goal: { kind: 'hold-cities', cityIds: ['beiping', 'bohai'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-194-xuzhou-liu-biao',
+      forceId: 'liu-biao',
+      primary: {
+        title: { zh: '荊襄之守', en: 'The Jing Heartland' },
+        description: "Still hold Xiangyang and Changsha in 200. He rode into Yicheng alone and settled the province. A man for talk, they said — and Jing province did have seventeen quiet years.",
+        descriptionZh: "至200年仍據襄陽、長沙。單騎入宜城而定荊州,坐談客耳 —— 守成之主,而荊州確實安了十七年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'changsha'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-194-xuzhou-liu-yan',
+      forceId: 'liu-yan',
+      primary: {
+        title: { zh: '閉關守險', en: 'Shut the Passes' },
+        description: "Still hold Chengdu and Hanzhong in 200. The diviners said Yi province had the air of a Son of Heaven — and the first thing he did was cut the plank roads.",
+        descriptionZh: "至200年仍據成都、漢中。望氣者言益州有天子氣 —— 而他先做的是斷絕棧道。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 200 },
+      },
+    },
+    {
+      id: 'obj-194-xuzhou-kong-rong',
+      forceId: 'kong-rong',
+      primary: {
+        title: { zh: '北海之政', en: 'The Governance of Beihai' },
+        description: "Still hold Beihai and Linzi in 200. He founded schools and honoured the classics. The Turbans were outside the wall the whole time.",
+        descriptionZh: "至200年仍據北海、臨淄。立學校,表顯儒術 —— 而黃巾就在城外。",
+        goal: { kind: 'hold-cities', cityIds: ['beihai', 'linzi'], byYear: 200 },
+      },
     },
   ],
 
@@ -2004,6 +2204,46 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['xiapi', 'pengcheng'], byYear: 201 },
       },
     },
+    {
+      id: 'obj-197-bohai-yuan-shu',
+      forceId: 'yuan-shu',
+      primary: {
+        title: { zh: '淮南之主', en: 'Lord of Huainan' },
+        description: "Still hold Shouchun and Wancheng in 203. Four generations of ministers behind him, and Huainan rich enough to stand alone.",
+        descriptionZh: "至203年仍據壽春、宛城。四世三公之後,而淮南之富足以自立。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'wancheng'], byYear: 203 },
+      },
+    },
+    {
+      id: 'obj-197-bohai-liu-biao',
+      forceId: 'liu-biao',
+      primary: {
+        title: { zh: '荊襄之守', en: 'The Jing Heartland' },
+        description: "Still hold Xiangyang and Jiangling in 203. He rode into Yicheng alone and settled the province. A man for talk, they said — and Jing province did have seventeen quiet years.",
+        descriptionZh: "至203年仍據襄陽、江陵。單騎入宜城而定荊州,坐談客耳 —— 守成之主,而荊州確實安了十七年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 203 },
+      },
+    },
+    {
+      id: 'obj-197-bohai-liu-yan',
+      forceId: 'liu-yan',
+      primary: {
+        title: { zh: '閉關守險', en: 'Shut the Passes' },
+        description: "Still hold Chengdu and Jiangzhou in 203. The diviners said Yi province had the air of a Son of Heaven — and the first thing he did was cut the plank roads.",
+        descriptionZh: "至203年仍據成都、江州。望氣者言益州有天子氣 —— 而他先做的是斷絕棧道。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou'], byYear: 203 },
+      },
+    },
+    {
+      id: 'obj-197-bohai-ma-teng',
+      forceId: 'ma-teng',
+      primary: {
+        title: { zh: '西涼之安', en: 'Liang Kept Quiet' },
+        description: "Still hold Wuwei and Anding in 203. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
+        descriptionZh: "至203年仍據武威、安定。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 203 },
+      },
+    },
   ],
 
   // 198 — The siege of Xiapi
@@ -2072,6 +2312,46 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         description: 'Still hold Shouchun in 202 — history gives you until 199.',
         descriptionZh: "至202年仍據壽春 —— 史書只給了你到199年。",
         goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 202 },
+      },
+    },
+    {
+      id: 'obj-198-xiapi-liu-biao',
+      forceId: 'liu-biao',
+      primary: {
+        title: { zh: '荊襄之守', en: 'The Jing Heartland' },
+        description: "Still hold Xiangyang and Changsha in 204. He rode into Yicheng alone and settled the province. A man for talk, they said — and Jing province did have seventeen quiet years.",
+        descriptionZh: "至204年仍據襄陽、長沙。單騎入宜城而定荊州,坐談客耳 —— 守成之主,而荊州確實安了十七年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'changsha'], byYear: 204 },
+      },
+    },
+    {
+      id: 'obj-198-xiapi-liu-zhang',
+      forceId: 'liu-zhang',
+      primary: {
+        title: { zh: '守此蜀土', en: 'Hold the Shu Lands' },
+        description: "Still hold Chengdu and Jiangzhou in 204. A weak lord over a rich people: the trouble was never a shortage of means.",
+        descriptionZh: "至204年仍據成都、江州。暗弱而民殷國富 —— 難處從來不是沒有本錢。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou'], byYear: 204 },
+      },
+    },
+    {
+      id: 'obj-198-xiapi-gongsun',
+      forceId: 'gongsun',
+      primary: {
+        title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
+        description: "Still hold Beiping and Ji in 204. Frontier troops, used to running with the steppe horse — and after Jieqiao he drew back further every year.",
+        descriptionZh: "至204年仍據北平、薊。邊地之兵,慣與胡騎相馳 —— 而界橋之後,他愈退愈深。",
+        goal: { kind: 'hold-cities', cityIds: ['beiping', 'ji'], byYear: 204 },
+      },
+    },
+    {
+      id: 'obj-198-xiapi-ma-teng',
+      forceId: 'ma-teng',
+      primary: {
+        title: { zh: '西涼之安', en: 'Liang Kept Quiet' },
+        description: "Still hold Wuwei and Anding in 204. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
+        descriptionZh: "至204年仍據武威、安定。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 204 },
       },
     },
   ],
@@ -2151,6 +2431,36 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'control-province', provinceId: 'jing', byYear: 206 },
         },
       ],
+    },
+    {
+      id: 'obj-199-yijing-yuan-shu',
+      forceId: 'yuan-shu',
+      primary: {
+        title: { zh: '淮南之主', en: 'Lord of Huainan' },
+        description: "Still hold Shouchun and Hefei in 205. Four generations of ministers behind him, and Huainan rich enough to stand alone.",
+        descriptionZh: "至205年仍據壽春、合肥。四世三公之後,而淮南之富足以自立。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 205 },
+      },
+    },
+    {
+      id: 'obj-199-yijing-liu-zhang',
+      forceId: 'liu-zhang',
+      primary: {
+        title: { zh: '守此蜀土', en: 'Hold the Shu Lands' },
+        description: "Still hold Chengdu and Jiangzhou in 205. A weak lord over a rich people: the trouble was never a shortage of means.",
+        descriptionZh: "至205年仍據成都、江州。暗弱而民殷國富 —— 難處從來不是沒有本錢。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou'], byYear: 205 },
+      },
+    },
+    {
+      id: 'obj-199-yijing-ma-teng',
+      forceId: 'ma-teng',
+      primary: {
+        title: { zh: '西涼之安', en: 'Liang Kept Quiet' },
+        description: "Still hold Wuwei and Anding in 205. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
+        descriptionZh: "至205年仍據武威、安定。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 205 },
+      },
     },
   ],
 
@@ -2265,6 +2575,36 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'control-province', provinceId: 'jiao', byYear: 210 },
         },
       ],
+    },
+    {
+      id: 'obj-204-yecheng-liu-zhang',
+      forceId: 'liu-zhang',
+      primary: {
+        title: { zh: '守此蜀土', en: 'Hold the Shu Lands' },
+        description: "Still hold Chengdu and Jiangzhou in 210. A weak lord over a rich people: the trouble was never a shortage of means.",
+        descriptionZh: "至210年仍據成都、江州。暗弱而民殷國富 —— 難處從來不是沒有本錢。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou'], byYear: 210 },
+      },
+    },
+    {
+      id: 'obj-204-yecheng-ma-teng',
+      forceId: 'ma-teng',
+      primary: {
+        title: { zh: '西涼之安', en: 'Liang Kept Quiet' },
+        description: "Still hold Wuwei and Jincheng in 210. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
+        descriptionZh: "至210年仍據武威、金城。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng'], byYear: 210 },
+      },
+    },
+    {
+      id: 'obj-204-yecheng-gongsun',
+      forceId: 'gongsun',
+      primary: {
+        title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
+        description: "Still hold Liaodong and Beiping in 210. Frontier troops, used to running with the steppe horse — and after Jieqiao he drew back further every year.",
+        descriptionZh: "至210年仍據遼東、北平。邊地之兵,慣與胡騎相馳 —— 而界橋之後,他愈退愈深。",
+        goal: { kind: 'hold-cities', cityIds: ['liaodong', 'beiping'], byYear: 210 },
+      },
     },
   ],
 
@@ -2388,6 +2728,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         },
       ],
     },
+    {
+      id: 'obj-207-three-visits-gongsun-du',
+      forceId: 'gongsun-du',
+      primary: {
+        title: { zh: '遼東自守', en: 'Liaodong Keeps Itself' },
+        description: "Still hold Liaodong and Xiangping in 213. Land east of the sea, where the court's writ arrives late if at all.",
+        descriptionZh: "至213年仍據遼東、襄平。海東之地,朝廷之令不常至。",
+        goal: { kind: 'hold-cities', cityIds: ['liaodong', 'xiangping'], byYear: 213 },
+      },
+    },
   ],
 
   // 207 — White Wolf Mountain, the northern campaign
@@ -2457,6 +2807,46 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'control-province', provinceId: 'yi', byYear: 214 },
         },
       ],
+    },
+    {
+      id: 'obj-207-bailang-zhang-lu',
+      forceId: 'zhang-lu',
+      primary: {
+        title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
+        description: "Still hold Hanzhong and Baxi in 213. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
+        descriptionZh: "至213年仍據漢中、巴西。政教合一,置義舍米肉,三十年不見兵革。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 213 },
+      },
+    },
+    {
+      id: 'obj-207-bailang-ma-teng',
+      forceId: 'ma-teng',
+      primary: {
+        title: { zh: '西涼之安', en: 'Liang Kept Quiet' },
+        description: "Still hold Wuwei and Anding in 213. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
+        descriptionZh: "至213年仍據武威、安定。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 213 },
+      },
+    },
+    {
+      id: 'obj-207-bailang-gongsun-du',
+      forceId: 'gongsun-du',
+      primary: {
+        title: { zh: '遼東自守', en: 'Liaodong Keeps Itself' },
+        description: "Still hold Liaodong and Xiangping in 213. Land east of the sea, where the court's writ arrives late if at all.",
+        descriptionZh: "至213年仍據遼東、襄平。海東之地,朝廷之令不常至。",
+        goal: { kind: 'hold-cities', cityIds: ['liaodong', 'xiangping'], byYear: 213 },
+      },
+    },
+    {
+      id: 'obj-207-bailang-shi-xie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+        description: "Still hold Jiaozhi and Nanhai in 213. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至213年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 213 },
+      },
     },
   ],
 
@@ -2570,6 +2960,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 216 },
       },
     },
+    {
+      id: 'obj-211-weinan-shi-xie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+        description: "Still hold Jiaozhi and Nanhai in 217. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至217年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 217 },
+      },
+    },
   ],
 
   // 213 — Fallen Phoenix Slope
@@ -2652,6 +3052,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         description: 'Still hold Hanzhong in 217.',
         descriptionZh: "至217年仍據漢中。",
         goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 217 },
+      },
+    },
+    {
+      id: 'obj-213-fengpo-shi-xie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+        description: "Still hold Jiaozhi and Nanhai in 219. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至219年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 219 },
       },
     },
   ],
@@ -2738,6 +3148,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 218 },
       },
     },
+    {
+      id: 'obj-214-xichuan-shi-xie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+        description: "Still hold Jiaozhi and Nanhai in 220. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至220年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 220 },
+      },
+    },
   ],
 
   // 218 — Mount Dingjun, the Hanzhong campaign
@@ -2795,6 +3215,36 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'hold-cities', cityIds: ['hefei'], byYear: 224 },
         },
       ],
+    },
+    {
+      id: 'obj-218-dingjun-shi-xie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+        description: "Still hold Jiaozhi and Nanhai in 224. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至224年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 224 },
+      },
+    },
+    {
+      id: 'obj-218-dingjun-xianbei',
+      forceId: 'xianbei',
+      primary: {
+        title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+        description: "Still hold Wuhuan and Liucheng in 224. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
+        descriptionZh: "至224年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 224 },
+      },
+    },
+    {
+      id: 'obj-218-dingjun-nanman',
+      forceId: 'nanman',
+      primary: {
+        title: { zh: '南中之主', en: 'Lord of Nanzhong' },
+        description: "Still hold Jianning and Nanzhong in 224. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至224年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 224 },
+      },
     },
   ],
 
@@ -2865,6 +3315,36 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang'], byYear: 232 },
         },
       ],
+    },
+    {
+      id: 'obj-221-shu-emperor-shi-xie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+        description: "Still hold Jiaozhi and Nanhai in 227. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至227年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 227 },
+      },
+    },
+    {
+      id: 'obj-221-shu-emperor-xianbei',
+      forceId: 'xianbei',
+      primary: {
+        title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+        description: "Still hold Wuhuan and Liucheng in 227. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
+        descriptionZh: "至227年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 227 },
+      },
+    },
+    {
+      id: 'obj-221-shu-emperor-nanman',
+      forceId: 'nanman',
+      primary: {
+        title: { zh: '南中之主', en: 'Lord of Nanzhong' },
+        description: "Still hold Jianning and Yuexi in 227. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至227年仍據建寧、越巂。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yuexi'], byYear: 227 },
+      },
     },
   ],
 
@@ -2982,6 +3462,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['hefei'], byYear: 236 },
       },
     },
+    {
+      id: 'obj-228-jieting-xianbei',
+      forceId: 'xianbei',
+      primary: {
+        title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+        description: "Still hold Wuhuan and Liucheng in 234. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
+        descriptionZh: "至234年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 234 },
+      },
+    },
   ],
 
   // 228 — The battle of Shiting
@@ -3037,6 +3527,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 240 },
         },
       ],
+    },
+    {
+      id: 'obj-228-shiting-xianbei',
+      forceId: 'xianbei',
+      primary: {
+        title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+        description: "Still hold Wuhuan and Liucheng in 234. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
+        descriptionZh: "至234年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 234 },
+      },
     },
   ],
 
@@ -3131,6 +3631,26 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'hold-cities', cityIds: ['xiangping'], byYear: 245 },
         },
       ],
+    },
+    {
+      id: 'obj-229-three-emperors-xianbei',
+      forceId: 'xianbei',
+      primary: {
+        title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
+        description: "Still hold Wuhuan and Liucheng in 235. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
+        descriptionZh: "至235年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 235 },
+      },
+    },
+    {
+      id: 'obj-229-three-emperors-nanman',
+      forceId: 'nanman',
+      primary: {
+        title: { zh: '南中之主', en: 'Lord of Nanzhong' },
+        description: "Still hold Jianning and Yunnan in 235. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至235年仍據建寧、雲南。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yunnan'], byYear: 235 },
+      },
     },
   ],
 
@@ -4115,6 +4635,56 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         description: 'Hold Hanzhong and Chengdu by 212.',
         descriptionZh: "於212年前據漢中、成都 —— 以鬼道教民,雄據巴漢三十年。",
         goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'chengdu'], byYear: 212 },
+      },
+    },
+    {
+      id: 'obj-gathering-of-heroes-gongsun-du',
+      forceId: 'gongsun-du',
+      primary: {
+        title: { zh: '遼東自守', en: 'Liaodong Keeps Itself' },
+        description: "Still hold Liaodong and Xiangping in 206. Land east of the sea, where the court's writ arrives late if at all.",
+        descriptionZh: "至206年仍據遼東、襄平。海東之地,朝廷之令不常至。",
+        goal: { kind: 'hold-cities', cityIds: ['liaodong', 'xiangping'], byYear: 206 },
+      },
+    },
+    {
+      id: 'obj-gathering-of-heroes-han-sui',
+      forceId: 'han-sui',
+      primary: {
+        title: { zh: '西州自立', en: 'A Realm in the West' },
+        description: "Still hold Jincheng and Tianshui in 206. Thirty years in Liang, and never once answered a summons to court.",
+        descriptionZh: "至206年仍據金城、天水。在涼州三十年,一次也沒有應詔入朝。",
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui'], byYear: 206 },
+      },
+    },
+    {
+      id: 'obj-gathering-of-heroes-kong-rong',
+      forceId: 'kong-rong',
+      primary: {
+        title: { zh: '北海之政', en: 'The Governance of Beihai' },
+        description: "Still hold Beihai and Linzi in 206. He founded schools and honoured the classics. The Turbans were outside the wall the whole time.",
+        descriptionZh: "至206年仍據北海、臨淄。立學校,表顯儒術 —— 而黃巾就在城外。",
+        goal: { kind: 'hold-cities', cityIds: ['beihai', 'linzi'], byYear: 206 },
+      },
+    },
+    {
+      id: 'obj-gathering-of-heroes-tao',
+      forceId: 'tao',
+      primary: {
+        title: { zh: '徐州安堵', en: 'Xu Province at Peace' },
+        description: "Still hold Pengcheng and Xiaopei in 206. Xu province is prosperous and he is old: every year it holds is a year won.",
+        descriptionZh: "至206年仍據彭城、小沛。徐州殷實,而他老了,守得住一年是一年。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiaopei'], byYear: 206 },
+      },
+    },
+    {
+      id: 'obj-gathering-of-heroes-shi-xie',
+      forceId: 'shi-xie',
+      primary: {
+        title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
+        description: "Still hold Jiaozhi and Nanhai in 206. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至206年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 206 },
       },
     },
   ],

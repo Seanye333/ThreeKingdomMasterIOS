@@ -339,6 +339,26 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 184 },
       },
     },
+    {
+      id: 'obj-ch-sanqin-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '胡服騎射', en: 'Ride and Shoot' },
+        description: "Still hold Ye and Beiping in 184. He put his people in nomad coats and taught them to shoot from the saddle; the northern army is what the realm fears.",
+        descriptionZh: "至184年仍據鄴、北平。胡服騎射以教百姓 —— 北邊之師,天下所畏。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'beiping'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ch-sanqin-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '大梁之守', en: 'Daliang Holds' },
+        description: "Still hold Puyang and Luoyang in 184. Wei was first to power under heaven and threw it away; what is left is Daliang and the river bend.",
+        descriptionZh: "至184年仍據濮陽、洛陽。魏為天下先霸而自棄之 —— 如今守著大梁與河曲。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'luoyang'], byYear: 184 },
+      },
+    },
   ],
 
   // The battle of Pengcheng
@@ -417,6 +437,26 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei', 'lujiang'], byYear: 183 },
       },
     },
+    {
+      id: 'obj-ch-pengcheng-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '胡服騎射', en: 'Ride and Shoot' },
+        description: "Still hold Ye and Beiping in 184. He put his people in nomad coats and taught them to shoot from the saddle; the northern army is what the realm fears.",
+        descriptionZh: "至184年仍據鄴、北平。胡服騎射以教百姓 —— 北邊之師,天下所畏。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'beiping'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ch-pengcheng-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '大梁之守', en: 'Daliang Holds' },
+        description: "Still hold Puyang and Luoyang in 184. Wei was first to power under heaven and threw it away; what is left is Daliang and the river bend.",
+        descriptionZh: "至184年仍據濮陽、洛陽。魏為天下先霸而自棄之 —— 如今守著大梁與河曲。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'luoyang'], byYear: 184 },
+      },
+    },
   ],
 
   // The battle of Jingxing
@@ -485,6 +525,16 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
         description: "Still hold Chang'an in 183.",
         descriptionZh: "至183年仍守長安。",
         goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 183 },
+      },
+    },
+    {
+      id: 'obj-ch-jingxing-jiujiang',
+      forceId: 'jiujiang',
+      primary: {
+        title: { zh: '淮南之王', en: 'King of Jiujiang' },
+        description: "Still hold Shouchun and Hefei in 184. Ying Bu fought well and changed sides often. For the moment he is still watching.",
+        descriptionZh: "至184年仍據壽春、合肥。黥布善戰而反覆 —— 這一回他還在觀望。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 184 },
       },
     },
   ],

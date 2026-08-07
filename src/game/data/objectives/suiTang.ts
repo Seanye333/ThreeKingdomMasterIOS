@@ -195,6 +195,36 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['ye', 'pengcheng', 'linzi'], byYear: 185 },
       },
     },
+    {
+      id: 'obj-st-qianshui-wagang',
+      forceId: 'wagang',
+      primary: {
+        title: { zh: '據洛口倉', en: 'The Granary at Luokou' },
+        description: "Still hold Puyang and Xuchang in 184. He opened the granary and let the people take what they wanted; the roads filled with the old and the carried.",
+        descriptionZh: "至184年仍據濮陽、許昌。開倉恣民所取,老弱襁負,道路不絕。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'xuchang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-st-qianshui-dingyang',
+      forceId: 'dingyang',
+      primary: {
+        title: { zh: '借突厥之力', en: 'The Turkic Horse' },
+        description: "Still hold Beiping and Ji in 184. Liu Wuzhou's strength was borrowed from the Turks, and borrowed things go back.",
+        descriptionZh: "至184年仍據北平、薊。劉武周的兵是借突厥的,借來的東西要還。",
+        goal: { kind: 'hold-cities', cityIds: ['beiping', 'ji'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-st-qianshui-wu',
+      forceId: 'wu',
+      primary: {
+        title: { zh: '江淮自立', en: 'The Huai Between' },
+        description: "Still hold Shouchun and Kuaiji in 184. Du Fuwei could hold the Huai. He chose to submit; nobody took it from him.",
+        descriptionZh: "至184年仍據壽春、會稽。杜伏威守得住江淮 —— 他是自己選擇入朝的。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'kuaiji'], byYear: 184 },
+      },
+    },
   ],
 
   // Bobi
@@ -268,6 +298,36 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'hold-cities', cityIds: ['ye', 'luoyang'], byYear: 186 },
         },
       ],
+    },
+    {
+      id: 'obj-st-bobi-wagang',
+      forceId: 'wagang',
+      primary: {
+        title: { zh: '據洛口倉', en: 'The Granary at Luokou' },
+        description: "Still hold Puyang and Xuchang in 184. He opened the granary and let the people take what they wanted; the roads filled with the old and the carried.",
+        descriptionZh: "至184年仍據濮陽、許昌。開倉恣民所取,老弱襁負,道路不絕。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'xuchang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-st-bobi-xiqin',
+      forceId: 'xiqin',
+      primary: {
+        title: { zh: '隴右自立', en: 'A Realm in Longyou' },
+        description: "Still hold Tianshui and Anding in 184. The hard riders of Longyou — and Xue Ju died before he could enter the passes.",
+        descriptionZh: "至184年仍據天水、安定。隴右悍騎,而薛舉死在入關之前。",
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'anding'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-st-bobi-wu',
+      forceId: 'wu',
+      primary: {
+        title: { zh: '江淮自立', en: 'The Huai Between' },
+        description: "Still hold Shouchun and Kuaiji in 184. Du Fuwei could hold the Huai. He chose to submit; nobody took it from him.",
+        descriptionZh: "至184年仍據壽春、會稽。杜伏威守得住江淮 —— 他是自己選擇入朝的。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'kuaiji'], byYear: 184 },
+      },
     },
   ],
 

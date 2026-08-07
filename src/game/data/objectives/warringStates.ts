@@ -221,6 +221,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         },
       ],
     },
+    {
+      id: 'obj-ws-weiwen-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '臨淄之富', en: 'The Wealth of Linzi' },
+        description: "Still hold Linzi and Pengcheng in 184. In the streets of Linzi the axles knock and the shoulders rub; the Jixia academy has no equal.",
+        descriptionZh: "至184年仍據臨淄、彭城。臨淄之途,車轂擊,人肩摩 —— 稷下學宮冠絕諸侯。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-weiwen-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '北土之守', en: 'The Northern Ground' },
+        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
+        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-weiwen-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+      },
+    },
   ],
 
   // Shang Yang's reforms
@@ -301,6 +331,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng', 'xiapi'], byYear: 191 },
       },
     },
+    {
+      id: 'obj-ws-shangyang-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '北土之守', en: 'The Northern Ground' },
+        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
+        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-shangyang-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '胡服騎射', en: 'Ride and Shoot' },
+        description: "Still hold Ye and Bohai in 184. He put his people in nomad coats and taught them to shoot from the saddle; the northern army is what the realm fears.",
+        descriptionZh: "至184年仍據鄴、渤海。胡服騎射以教百姓 —— 北邊之師,天下所畏。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-shangyang-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+      },
+    },
   ],
 
   // Surround Wei to rescue Zhao
@@ -360,6 +420,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
           goal: { kind: 'hold-cities', cityIds: ['luoyang', 'tongguan'], byYear: 187 },
         },
       ],
+    },
+    {
+      id: 'obj-ws-guiling-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '地方五千里', en: 'Five Thousand Li' },
+        description: "Still hold Jiangling and Xiangyang in 184. Chu is five thousand li across with a million halberds — and a government that does not hold together.",
+        descriptionZh: "至184年仍據江陵、襄陽。楚地方五千里,持戟百萬 —— 而政散民離。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-guiling-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '北土之守', en: 'The Northern Ground' },
+        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
+        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-guiling-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+      },
     },
   ],
 
@@ -423,6 +513,26 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng', 'langya'], byYear: 185 },
       },
     },
+    {
+      id: 'obj-ws-hangu-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '北土之守', en: 'The Northern Ground' },
+        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
+        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-hangu-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+      },
+    },
   ],
 
   // The battle of Yique
@@ -473,6 +583,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         description: 'Take Shangdang and Luoyang by 186.',
         descriptionZh: "於186年前取上黨、洛陽 —— 韓魏若亡,趙即當秦鋒。",
         goal: { kind: 'hold-cities', cityIds: ['shangdang', 'luoyang'], byYear: 186 },
+      },
+    },
+    {
+      id: 'obj-ws-yique-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '地方五千里', en: 'Five Thousand Li' },
+        description: "Still hold Jiangling and Xiangyang in 184. Chu is five thousand li across with a million halberds — and a government that does not hold together.",
+        descriptionZh: "至184年仍據江陵、襄陽。楚地方五千里,持戟百萬 —— 而政散民離。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-yique-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '臨淄之富', en: 'The Wealth of Linzi' },
+        description: "Still hold Linzi and Pengcheng in 184. In the streets of Linzi the axles knock and the shoulders rub; the Jixia academy has no equal.",
+        descriptionZh: "至184年仍據臨淄、彭城。臨淄之途,車轂擊,人肩摩 —— 稷下學宮冠絕諸侯。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-yique-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '北土之守', en: 'The Northern Ground' },
+        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
+        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
       },
     },
   ],
@@ -535,6 +675,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['ye', 'taiyuan', 'shangdang'], byYear: 186 },
       },
     },
+    {
+      id: 'obj-ws-yanying-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '北土之守', en: 'The Northern Ground' },
+        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
+        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-yanying-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '大梁之守', en: 'Daliang Holds' },
+        description: "Still hold Chenliu and Puyang in 184. Wei was first to power under heaven and threw it away; what is left is Daliang and the river bend.",
+        descriptionZh: "至184年仍據陳留、濮陽。魏為天下先霸而自棄之 —— 如今守著大梁與河曲。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-yanying-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+      },
+    },
   ],
 
   // The battle of Yuyu
@@ -595,6 +765,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['shangdang'], byYear: 185 },
       },
     },
+    {
+      id: 'obj-ws-yuyu-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '地方五千里', en: 'Five Thousand Li' },
+        description: "Still hold Jiangling and Xiangyang in 184. Chu is five thousand li across with a million halberds — and a government that does not hold together.",
+        descriptionZh: "至184年仍據江陵、襄陽。楚地方五千里,持戟百萬 —— 而政散民離。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-yuyu-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '臨淄之富', en: 'The Wealth of Linzi' },
+        description: "Still hold Linzi and Pengcheng in 184. In the streets of Linzi the axles knock and the shoulders rub; the Jixia academy has no equal.",
+        descriptionZh: "至184年仍據臨淄、彭城。臨淄之途,車轂擊,人肩摩 —— 稷下學宮冠絕諸侯。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-yuyu-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '北土之守', en: 'The Northern Ground' },
+        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
+        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
+      },
+    },
   ],
 
   // King Min of Qi takes the imperial title
@@ -645,6 +845,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         description: 'Hold Shouchun and Pengcheng by 185.',
         descriptionZh: "於185年前據壽春、彭城 —— 宋地之利,楚亦欲得。",
         goal: { kind: 'hold-cities', cityIds: ['shouchun', 'pengcheng'], byYear: 185 },
+      },
+    },
+    {
+      id: 'obj-ws-qimin-zhao',
+      forceId: 'zhao',
+      primary: {
+        title: { zh: '胡服騎射', en: 'Ride and Shoot' },
+        description: "Still hold Ye and Bohai in 184. He put his people in nomad coats and taught them to shoot from the saddle; the northern army is what the realm fears.",
+        descriptionZh: "至184年仍據鄴、渤海。胡服騎射以教百姓 —— 北邊之師,天下所畏。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-qimin-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '大梁之守', en: 'Daliang Holds' },
+        description: "Still hold Chenliu and Puyang in 184. Wei was first to power under heaven and threw it away; what is left is Daliang and the river bend.",
+        descriptionZh: "至184年仍據陳留、濮陽。魏為天下先霸而自棄之 —— 如今守著大梁與河曲。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-qimin-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
       },
     },
   ],
@@ -715,6 +945,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['ye', 'shangdang', 'taiyuan'], byYear: 185 },
       },
     },
+    {
+      id: 'obj-ws-yueyi-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '地方五千里', en: 'Five Thousand Li' },
+        description: "Still hold Jiangling and Xiangyang in 184. Chu is five thousand li across with a million halberds — and a government that does not hold together.",
+        descriptionZh: "至184年仍據江陵、襄陽。楚地方五千里,持戟百萬 —— 而政散民離。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-yueyi-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '大梁之守', en: 'Daliang Holds' },
+        description: "Still hold Chenliu and Puyang in 184. Wei was first to power under heaven and threw it away; what is left is Daliang and the river bend.",
+        descriptionZh: "至184年仍據陳留、濮陽。魏為天下先霸而自棄之 —— 如今守著大梁與河曲。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-yueyi-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+      },
+    },
   ],
 
   // The battle of Changping
@@ -779,6 +1039,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         description: 'Take Xuchang and Luoyang by 185.',
         descriptionZh: "於185年前北取許昌、洛陽 —— 春申君將兵救趙,楚亦不能坐視。",
         goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 185 },
+      },
+    },
+    {
+      id: 'obj-ws-changping-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '臨淄之富', en: 'The Wealth of Linzi' },
+        description: "Still hold Linzi and Pengcheng in 184. In the streets of Linzi the axles knock and the shoulders rub; the Jixia academy has no equal.",
+        descriptionZh: "至184年仍據臨淄、彭城。臨淄之途,車轂擊,人肩摩 —— 稷下學宮冠絕諸侯。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-changping-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '北土之守', en: 'The Northern Ground' },
+        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
+        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-changping-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
       },
     },
   ],
@@ -847,6 +1137,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 186 },
       },
     },
+    {
+      id: 'obj-ws-handan-qi',
+      forceId: 'qi',
+      primary: {
+        title: { zh: '臨淄之富', en: 'The Wealth of Linzi' },
+        description: "Still hold Linzi and Pengcheng in 184. In the streets of Linzi the axles knock and the shoulders rub; the Jixia academy has no equal.",
+        descriptionZh: "至184年仍據臨淄、彭城。臨淄之途,車轂擊,人肩摩 —— 稷下學宮冠絕諸侯。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-handan-yan',
+      forceId: 'yan',
+      primary: {
+        title: { zh: '北土之守', en: 'The Northern Ground' },
+        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
+        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-handan-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+      },
+    },
   ],
 
   // Tian Dan restores Qi
@@ -905,6 +1225,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         description: 'Hold Ye, Taiyuan and Shangdang by 184.',
         descriptionZh: "於184年前據鄴城、太原、上黨。",
         goal: { kind: 'hold-cities', cityIds: ['ye', 'taiyuan', 'shangdang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-tiandan-chu',
+      forceId: 'chu',
+      primary: {
+        title: { zh: '地方五千里', en: 'Five Thousand Li' },
+        description: "Still hold Jiangling and Xiangyang in 184. Chu is five thousand li across with a million halberds — and a government that does not hold together.",
+        descriptionZh: "至184年仍據江陵、襄陽。楚地方五千里,持戟百萬 —— 而政散民離。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-tiandan-wei',
+      forceId: 'wei',
+      primary: {
+        title: { zh: '大梁之守', en: 'Daliang Holds' },
+        description: "Still hold Chenliu and Puyang in 184. Wei was first to power under heaven and threw it away; what is left is Daliang and the river bend.",
+        descriptionZh: "至184年仍據陳留、濮陽。魏為天下先霸而自棄之 —— 如今守著大梁與河曲。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang'], byYear: 184 },
+      },
+    },
+    {
+      id: 'obj-ws-tiandan-han',
+      forceId: 'han',
+      primary: {
+        title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
+        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
       },
     },
   ],
