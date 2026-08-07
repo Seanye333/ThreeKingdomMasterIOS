@@ -10,10 +10,10 @@ import type { Dynasty } from './dynasties';
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_184: Force[] = [
-  { id: 'han',         name: { en: 'Han Court',       zh: '漢室'     }, rulerOfficerId: 'lu-zhi',      capitalCityId: 'luoyang',  color: '#f0d878', isPlayer: false },
+  { id: 'han',         name: { en: 'Han Court',       zh: '漢室'     }, rulerOfficerId: 'lu-zhi',      capitalCityId: 'luoyang',  color: '#f0d878', imperialRank: 'emperor', isPlayer: false },
   { id: 'yellow-turban',name:{ en: 'Yellow Turbans',  zh: '黃巾'     }, rulerOfficerId: 'zhang-jiao',  capitalCityId: 'ye',       color: '#a88a2a', isPlayer: false },
-  { id: 'huangfu',     name: { en: 'Huangfu Song',    zh: '皇甫嵩軍' }, rulerOfficerId: 'huangfu-song',capitalCityId: 'chenliu',  color: '#3a7dd9', isPlayer: false },
-  { id: 'zhujun',      name: { en: 'Zhu Jun',         zh: '朱儁軍'   }, rulerOfficerId: 'zhu-jun',     capitalCityId: 'xinye',    color: '#2a9b8a', isPlayer: false },
+  { id: 'huangfu',     name: { en: 'Huangfu Song',    zh: '皇甫嵩軍' }, rulerOfficerId: 'huangfu-song',capitalCityId: 'chenliu',  color: '#3a7dd9', imperialRank: 'marquis', isPlayer: false },
+  { id: 'zhujun',      name: { en: 'Zhu Jun',         zh: '朱儁軍'   }, rulerOfficerId: 'zhu-jun',     capitalCityId: 'xinye',    color: '#2a9b8a', imperialRank: 'marquis', isPlayer: false },
   { id: 'dong-184',    name: { en: 'Dong Zhuo',       zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'changan',  color: '#6a3d8a', isPlayer: false },
 ];
 
@@ -281,12 +281,12 @@ const FORCES_190: Force[] = [
   { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍'   }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
   { id: 'yuan-shao', name: { en: 'Yuan Shao',   zh: '袁紹軍'   }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', isPlayer: false },
   { id: 'yuan-shu',  name: { en: 'Yuan Shu',    zh: '袁術軍'   }, rulerOfficerId: 'yuan-shu',    capitalCityId: 'shouchun', color: '#c03a6a', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Jian',    zh: '孫堅軍'   }, rulerOfficerId: 'sun-jian',    capitalCityId: 'changsha',   color: '#2f8e6f', isPlayer: false },
-  { id: 'dong',      name: { en: 'Dong Zhuo',   zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'luoyang',  color: '#6a3d8a', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Jian',    zh: '孫堅軍'   }, rulerOfficerId: 'sun-jian',    capitalCityId: 'changsha',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'dong',      name: { en: 'Dong Zhuo',   zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'luoyang',  color: '#6a3d8a', imperialRank: 'duke', isPlayer: false },
   { id: 'liu-biao',  name: { en: 'Liu Biao',    zh: '劉表軍'   }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
   { id: 'liu-yan',   name: { en: 'Liu Yan',     zh: '劉焉軍'   }, rulerOfficerId: 'liu-yan',     capitalCityId: 'chengdu',  color: '#c8692a', isPlayer: false },
-  { id: 'gongsun',   name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping',  color: '#2aa8c0', isPlayer: false },
-  { id: 'tao',       name: { en: 'Tao Qian',    zh: '陶謙軍'   }, rulerOfficerId: 'tao-qian',    capitalCityId: 'pengcheng',color: '#7a8a5a', isPlayer: false },
+  { id: 'gongsun',   name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping',  color: '#2aa8c0', imperialRank: 'marquis', isPlayer: false },
+  { id: 'tao',       name: { en: 'Tao Qian',    zh: '陶謙軍'   }, rulerOfficerId: 'tao-qian',    capitalCityId: 'pengcheng',color: '#7a8a5a', imperialRank: 'marquis', isPlayer: false },
   { id: 'kong-rong', name: { en: 'Kong Rong',   zh: '孔融軍'   }, rulerOfficerId: 'kong-rong',   capitalCityId: 'beihai',   color: '#8aaa3a', isPlayer: false },
   { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍'   }, rulerOfficerId: 'ma-teng',     capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
 ];
@@ -579,14 +579,14 @@ export const SCENARIO_190_ANTI_DONG_ZHUO: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_200: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',  capitalCityId: 'xuchang',   color: '#3a7dd9', isPlayer: false },
-  { id: 'yuan-shao', name: { en: 'Yuan Shao',   zh: '袁紹軍' }, rulerOfficerId: 'yuan-shao',capitalCityId: 'ye',        color: '#c0392b', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Ce',      zh: '孫策軍' }, rulerOfficerId: 'sun-ce',   capitalCityId: 'jianye',    color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-bei',   name: { en: 'Liu Bei',     zh: '劉備軍' }, rulerOfficerId: 'liu-bei',  capitalCityId: 'pengcheng', color: '#a85d8a', isPlayer: false },
-  { id: 'liu-biao',  name: { en: 'Liu Biao',    zh: '劉表軍' }, rulerOfficerId: 'liu-biao', capitalCityId: 'xiangyang', color: '#d4af37', isPlayer: false },
-  { id: 'liu-zhang', name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang',capitalCityId: 'chengdu',   color: '#e07b39', isPlayer: false },
-  { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',  capitalCityId: 'wuwei',     color: '#9a6b3a', isPlayer: false },
-  { id: 'wuhuan',    name: { en: 'Wuhuan',      zh: '烏丸'   }, rulerOfficerId: 'tadun',    capitalCityId: 'wuhuan',    color: '#7a6a9a', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',  capitalCityId: 'xuchang',   color: '#3a7dd9', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-shao', name: { en: 'Yuan Shao',   zh: '袁紹軍' }, rulerOfficerId: 'yuan-shao',capitalCityId: 'ye',        color: '#c0392b', imperialRank: 'marquis', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Ce',      zh: '孫策軍' }, rulerOfficerId: 'sun-ce',   capitalCityId: 'jianye',    color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-bei',   name: { en: 'Liu Bei',     zh: '劉備軍' }, rulerOfficerId: 'liu-bei',  capitalCityId: 'pengcheng', color: '#a85d8a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-biao',  name: { en: 'Liu Biao',    zh: '劉表軍' }, rulerOfficerId: 'liu-biao', capitalCityId: 'xiangyang', color: '#d4af37', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-zhang', name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang',capitalCityId: 'chengdu',   color: '#e07b39', imperialRank: 'marquis', isPlayer: false },
+  { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',  capitalCityId: 'wuwei',     color: '#9a6b3a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'wuhuan',    name: { en: 'Wuhuan',      zh: '烏丸'   }, rulerOfficerId: 'tadun',    capitalCityId: 'wuhuan',    color: '#7a6a9a', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_200: Record<string, string> = {
@@ -803,23 +803,23 @@ export const SCENARIO_200_GUANDU: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_GATHERING: Force[] = [
-  { id: 'cao',         name: { en: 'Cao Cao',     zh: '曹操軍'   }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
+  { id: 'cao',         name: { en: 'Cao Cao',     zh: '曹操軍'   }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'marquis', isPlayer: false },
   { id: 'liu-bei',     name: { en: 'Liu Bei',     zh: '劉備軍'   }, rulerOfficerId: 'liu-bei',     capitalCityId: 'pingyuan', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',         name: { en: 'Sun Ce',      zh: '孫策軍'   }, rulerOfficerId: 'sun-ce',      capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'yuan-shao',   name: { en: 'Yuan Shao',   zh: '袁紹軍'   }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', isPlayer: false },
-  { id: 'yuan-shu',    name: { en: 'Yuan Shu',    zh: '袁術軍'   }, rulerOfficerId: 'yuan-shu',    capitalCityId: 'shouchun', color: '#c03a6a', isPlayer: false },
-  { id: 'dong',        name: { en: 'Dong Zhuo',   zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'changan',  color: '#6a3d8a', isPlayer: false },
-  { id: 'lubu',        name: { en: 'Lu Bu',       zh: '呂布軍'   }, rulerOfficerId: 'lu-bu',       capitalCityId: 'xiapi',    color: '#7a2e5a', isPlayer: false },
-  { id: 'liu-biao',    name: { en: 'Liu Biao',    zh: '劉表軍'   }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
-  { id: 'liu-yan',     name: { en: 'Liu Yan',     zh: '劉焉軍'   }, rulerOfficerId: 'liu-yan',     capitalCityId: 'chengdu',  color: '#c8692a', isPlayer: false },
+  { id: 'sun',         name: { en: 'Sun Ce',      zh: '孫策軍'   }, rulerOfficerId: 'sun-ce',      capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-shao',   name: { en: 'Yuan Shao',   zh: '袁紹軍'   }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-shu',    name: { en: 'Yuan Shu',    zh: '袁術軍'   }, rulerOfficerId: 'yuan-shu',    capitalCityId: 'shouchun', color: '#c03a6a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'dong',        name: { en: 'Dong Zhuo',   zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'changan',  color: '#6a3d8a', imperialRank: 'duke', isPlayer: false },
+  { id: 'lubu',        name: { en: 'Lu Bu',       zh: '呂布軍'   }, rulerOfficerId: 'lu-bu',       capitalCityId: 'xiapi',    color: '#7a2e5a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-biao',    name: { en: 'Liu Biao',    zh: '劉表軍'   }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-yan',     name: { en: 'Liu Yan',     zh: '劉焉軍'   }, rulerOfficerId: 'liu-yan',     capitalCityId: 'chengdu',  color: '#c8692a', imperialRank: 'marquis', isPlayer: false },
   { id: 'zhang-lu',    name: { en: 'Zhang Lu',    zh: '張魯軍'   }, rulerOfficerId: 'zhang-lu',    capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
-  { id: 'gongsun',     name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping',  color: '#2aa8c0', isPlayer: false },
-  { id: 'gongsun-du',  name: { en: 'Gongsun Du',  zh: '公孫度軍' }, rulerOfficerId: 'gongsun-du',  capitalCityId: 'liaodong', color: '#1f7a9a', isPlayer: false },
-  { id: 'ma-teng',     name: { en: 'Ma Teng',     zh: '馬騰軍'   }, rulerOfficerId: 'ma-teng',     capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
+  { id: 'gongsun',     name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping',  color: '#2aa8c0', imperialRank: 'marquis', isPlayer: false },
+  { id: 'gongsun-du',  name: { en: 'Gongsun Du',  zh: '公孫度軍' }, rulerOfficerId: 'gongsun-du',  capitalCityId: 'liaodong', color: '#1f7a9a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'ma-teng',     name: { en: 'Ma Teng',     zh: '馬騰軍'   }, rulerOfficerId: 'ma-teng',     capitalCityId: 'wuwei',    color: '#9a6b3a', imperialRank: 'marquis', isPlayer: false },
   { id: 'han-sui',     name: { en: 'Han Sui',     zh: '韓遂軍'   }, rulerOfficerId: 'han-sui',     capitalCityId: 'jincheng', color: '#c8b06a', isPlayer: false },
   { id: 'kong-rong',   name: { en: 'Kong Rong',   zh: '孔融軍'   }, rulerOfficerId: 'kong-rong',   capitalCityId: 'beihai',   color: '#8aaa3a', isPlayer: false },
-  { id: 'tao',         name: { en: 'Tao Qian',    zh: '陶謙軍'   }, rulerOfficerId: 'tao-qian',    capitalCityId: 'pengcheng',color: '#7a8a5a', isPlayer: false },
-  { id: 'shi-xie',     name: { en: 'Shi Xie',     zh: '士燮軍'   }, rulerOfficerId: 'shi-xie',     capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'tao',         name: { en: 'Tao Qian',    zh: '陶謙軍'   }, rulerOfficerId: 'tao-qian',    capitalCityId: 'pengcheng',color: '#7a8a5a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'shi-xie',     name: { en: 'Shi Xie',     zh: '士燮軍'   }, rulerOfficerId: 'shi-xie',     capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_GATHERING: Record<string, string> = {
@@ -1155,16 +1155,16 @@ export const SCENARIO_GATHERING_OF_HEROES: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_208: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei',   name: { en: 'Liu Bei',     zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'jiangxia', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Quan',    zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'duke', isPlayer: false },
+  { id: 'liu-bei',   name: { en: 'Liu Bei',     zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'jiangxia', color: '#a85d8a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Quan',    zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
   // 赤壁是建安十三年冬,而劉表死於是年八月 —— 這一盤的前提正是劉琮繼位、
   // 蔡瑁蒯越勸降。勢力名寫的是「劉琮軍」,君主卻掛著劉表,是資料寫漏了。
-  { id: 'liu-biao',  name: { en: 'Liu Cong',    zh: '劉琮軍' }, rulerOfficerId: 'liu-cong',  capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
-  { id: 'liu-zhang', name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', isPlayer: false },
+  { id: 'liu-biao',  name: { en: 'Liu Cong',    zh: '劉琮軍' }, rulerOfficerId: 'liu-cong',  capitalCityId: 'xiangyang',color: '#d4af37', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-zhang', name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', imperialRank: 'marquis', isPlayer: false },
   { id: 'zhang-lu',  name: { en: 'Zhang Lu',    zh: '張魯軍' }, rulerOfficerId: 'zhang-lu',  capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
-  { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',   capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
-  { id: 'shi-xie',   name: { en: 'Shi Xie',     zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',   capitalCityId: 'wuwei',    color: '#9a6b3a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'shi-xie',   name: { en: 'Shi Xie',     zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_208: Record<string, string> = {
@@ -1471,9 +1471,9 @@ export const SCENARIO_208_CHIBI: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_234: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-rui',   capitalCityId: 'luoyang', color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-rui',   capitalCityId: 'luoyang', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_234: Record<string, string> = {
@@ -1643,11 +1643,11 @@ export const SCENARIO_234_WUZHANG: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_220: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',     zh: '魏'    }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢'  }, rulerOfficerId: 'liu-bei',  capitalCityId: 'chengdu',  color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',      zh: '吳'    }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'shi-xie', name: { en: 'Shi Xie', zh: '士燮'  }, rulerOfficerId: 'shi-xie',  capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
-  { id: 'xianbei', name: { en: 'Xianbei', zh: '鮮卑'  }, rulerOfficerId: 'kebi-neng',capitalCityId: 'wuhuan',   color: '#4a6aaa', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',     zh: '魏'    }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang',  color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢'  }, rulerOfficerId: 'liu-bei',  capitalCityId: 'chengdu',  color: '#a85d8a', imperialRank: 'king', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',      zh: '吳'    }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
+  { id: 'shi-xie', name: { en: 'Shi Xie', zh: '士燮'  }, rulerOfficerId: 'shi-xie',  capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'xianbei', name: { en: 'Xianbei', zh: '鮮卑'  }, rulerOfficerId: 'kebi-neng',capitalCityId: 'wuhuan',   color: '#4a6aaa', imperialRank: 'marquis', isPlayer: false },
   { id: 'nanman',  name: { en: 'Nanman',  zh: '南蠻'  }, rulerOfficerId: 'meng-huo', capitalCityId: 'jianning', color: '#b5651d', isPlayer: false },
 ];
 
@@ -1873,11 +1873,11 @@ export const SCENARIO_220_DECLARATION: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_215: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',    zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei',   name: { en: 'Liu Bei',    zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'chengdu',  color: '#a85d8a', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Quan',   zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',    zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'duke', isPlayer: false },
+  { id: 'liu-bei',   name: { en: 'Liu Bei',    zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'chengdu',  color: '#a85d8a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Quan',   zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
   { id: 'zhang-lu',  name: { en: 'Zhang Lu',   zh: '張魯軍' }, rulerOfficerId: 'zhang-lu',  capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
-  { id: 'shi-xie',   name: { en: 'Shi Xie',    zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'shi-xie',   name: { en: 'Shi Xie',    zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
   { id: 'xianbei',   name: { en: 'Xianbei',    zh: '鮮卑'   }, rulerOfficerId: 'kebi-neng', capitalCityId: 'wuhuan',   color: '#4a6aaa', isPlayer: false },
   { id: 'nanman',    name: { en: 'Nanman',     zh: '南蠻'   }, rulerOfficerId: 'meng-huo',  capitalCityId: 'jianning', color: '#b5651d', isPlayer: false },
 ];
@@ -2074,14 +2074,14 @@ export const SCENARIO_215_HEFEI: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_197: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍'   }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'yuan-shao', name: { en: 'Yuan Shao',   zh: '袁紹軍'   }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', isPlayer: false },
-  { id: 'yuan-shu',  name: { en: 'Yuan Shu',    zh: '袁術軍'   }, rulerOfficerId: 'yuan-shu',    capitalCityId: 'shouchun', color: '#c03a6a', isPlayer: false },
-  { id: 'lu-bu',     name: { en: 'Lü Bu',       zh: '呂布軍'   }, rulerOfficerId: 'lu-bu',       capitalCityId: 'xiapi',    color: '#7a2e5a', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Ce',      zh: '孫策軍'   }, rulerOfficerId: 'sun-ce',      capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-biao',  name: { en: 'Liu Biao',    zh: '劉表軍'   }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
-  { id: 'liu-yan',   name: { en: 'Liu Zhang',   zh: '劉璋軍'   }, rulerOfficerId: 'liu-zhang',   capitalCityId: 'chengdu',  color: '#c8692a', isPlayer: false },
-  { id: 'gongsun',   name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping',  color: '#2aa8c0', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍'   }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-shao', name: { en: 'Yuan Shao',   zh: '袁紹軍'   }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-shu',  name: { en: 'Yuan Shu',    zh: '袁術軍'   }, rulerOfficerId: 'yuan-shu',    capitalCityId: 'shouchun', color: '#c03a6a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'lu-bu',     name: { en: 'Lü Bu',       zh: '呂布軍'   }, rulerOfficerId: 'lu-bu',       capitalCityId: 'xiapi',    color: '#7a2e5a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Ce',      zh: '孫策軍'   }, rulerOfficerId: 'sun-ce',      capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-biao',  name: { en: 'Liu Biao',    zh: '劉表軍'   }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-yan',   name: { en: 'Liu Zhang',   zh: '劉璋軍'   }, rulerOfficerId: 'liu-zhang',   capitalCityId: 'chengdu',  color: '#c8692a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'gongsun',   name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping',  color: '#2aa8c0', imperialRank: 'marquis', isPlayer: false },
   { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍'   }, rulerOfficerId: 'ma-teng',     capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
 ];
 
@@ -2212,9 +2212,9 @@ export const SCENARIO_197_BOHAI: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_219: Force[] = [
-  { id: 'cao',     name: { en: 'Cao Cao',  zh: '曹操軍' }, rulerOfficerId: 'cao-cao', capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Liu Bei',  zh: '劉備軍' }, rulerOfficerId: 'liu-bei', capitalCityId: 'chengdu',  color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Sun Quan', zh: '孫權軍' }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',     name: { en: 'Cao Cao',  zh: '曹操軍' }, rulerOfficerId: 'cao-cao', capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'king', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Liu Bei',  zh: '劉備軍' }, rulerOfficerId: 'liu-bei', capitalCityId: 'chengdu',  color: '#a85d8a', imperialRank: 'king', isPlayer: false },
+  { id: 'sun',     name: { en: 'Sun Quan', zh: '孫權軍' }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
   { id: 'xianbei', name: { en: 'Xianbei',  zh: '鮮卑'   }, rulerOfficerId: 'kebi-neng', capitalCityId: 'wuhuan', color: '#4a6aaa', isPlayer: false },
   { id: 'nanman',  name: { en: 'Nanman',   zh: '南蠻'   }, rulerOfficerId: 'meng-huo', capitalCityId: 'jianning', color: '#b5651d', isPlayer: false },
 ];
@@ -2331,10 +2331,10 @@ export const SCENARIO_219_HANZHONG: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_222: Force[] = [
-  { id: 'cao',     name: { en: 'Cao Pi',   zh: '魏'    }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Liu Bei',  zh: '蜀漢'  }, rulerOfficerId: 'liu-bei',  capitalCityId: 'chengdu',  color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Sun Quan', zh: '吳'    }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'xianbei', name: { en: 'Xianbei',  zh: '鮮卑'  }, rulerOfficerId: 'kebi-neng',capitalCityId: 'wuhuan',   color: '#4a6aaa', isPlayer: false },
+  { id: 'cao',     name: { en: 'Cao Pi',   zh: '魏'    }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang',  color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Liu Bei',  zh: '蜀漢'  }, rulerOfficerId: 'liu-bei',  capitalCityId: 'chengdu',  color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Sun Quan', zh: '吳'    }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
+  { id: 'xianbei', name: { en: 'Xianbei',  zh: '鮮卑'  }, rulerOfficerId: 'kebi-neng',capitalCityId: 'wuhuan',   color: '#4a6aaa', imperialRank: 'marquis', isPlayer: false },
   { id: 'nanman',  name: { en: 'Nanman',   zh: '南蠻'  }, rulerOfficerId: 'meng-huo', capitalCityId: 'jianning', color: '#b5651d', isPlayer: false },
 ];
 
@@ -2440,9 +2440,9 @@ export const SCENARIO_222_YILING: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_225: Force[] = [
-  { id: 'liu-bei', name: { en: 'Shu',     zh: '蜀漢'  }, rulerOfficerId: 'liu-shan', capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'cao',     name: { en: 'Wei',     zh: '魏'    }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang', color: '#3a7dd9', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',      zh: '吳'    }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu',     zh: '蜀漢'  }, rulerOfficerId: 'liu-shan', capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',     zh: '魏'    }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',      zh: '吳'    }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
   { id: 'nanman',  name: { en: 'Nanman',  zh: '南蠻'  }, rulerOfficerId: 'meng-huo', capitalCityId: 'jianning',color: '#b5651d', isPlayer: false },
 ];
 
@@ -2554,14 +2554,14 @@ export const SCENARIO_225_SOUTHERN: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_198: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'lubu',      name: { en: 'Lü Bu',       zh: '呂布軍' }, rulerOfficerId: 'lu-bu',       capitalCityId: 'xiapi',    color: '#7a2e5a', isPlayer: false },
-  { id: 'yuan-shao', name: { en: 'Yuan Shao',   zh: '袁紹軍' }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', isPlayer: false },
-  { id: 'yuan-shu',  name: { en: 'Yuan Shu',    zh: '袁術軍' }, rulerOfficerId: 'yuan-shu',    capitalCityId: 'shouchun', color: '#c03a6a', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Ce',      zh: '孫策軍' }, rulerOfficerId: 'sun-ce',      capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-biao',  name: { en: 'Liu Biao',    zh: '劉表軍' }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
-  { id: 'liu-zhang', name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang',   capitalCityId: 'chengdu',  color: '#e07b39', isPlayer: false },
-  { id: 'gongsun',   name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping', color: '#2aa8c0', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'marquis', isPlayer: false },
+  { id: 'lubu',      name: { en: 'Lü Bu',       zh: '呂布軍' }, rulerOfficerId: 'lu-bu',       capitalCityId: 'xiapi',    color: '#7a2e5a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-shao', name: { en: 'Yuan Shao',   zh: '袁紹軍' }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-shu',  name: { en: 'Yuan Shu',    zh: '袁術軍' }, rulerOfficerId: 'yuan-shu',    capitalCityId: 'shouchun', color: '#c03a6a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Ce',      zh: '孫策軍' }, rulerOfficerId: 'sun-ce',      capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-biao',  name: { en: 'Liu Biao',    zh: '劉表軍' }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-zhang', name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang',   capitalCityId: 'chengdu',  color: '#e07b39', imperialRank: 'marquis', isPlayer: false },
+  { id: 'gongsun',   name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping', color: '#2aa8c0', imperialRank: 'marquis', isPlayer: false },
   { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',     capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
 ];
 
@@ -2740,14 +2740,14 @@ export const SCENARIO_198_XIAPI: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_207: Force[] = [
-  { id: 'cao',         name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'sun',         name: { en: 'Sun Quan',    zh: '孫權軍' }, rulerOfficerId: 'sun-quan',    capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-biao',    name: { en: 'Liu Biao',    zh: '劉表軍' }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
-  { id: 'liu-zhang',   name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang',   capitalCityId: 'chengdu',  color: '#e07b39', isPlayer: false },
+  { id: 'cao',         name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',     capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'duke', isPlayer: false },
+  { id: 'sun',         name: { en: 'Sun Quan',    zh: '孫權軍' }, rulerOfficerId: 'sun-quan',    capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-biao',    name: { en: 'Liu Biao',    zh: '劉表軍' }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-zhang',   name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang',   capitalCityId: 'chengdu',  color: '#e07b39', imperialRank: 'marquis', isPlayer: false },
   { id: 'zhang-lu',    name: { en: 'Zhang Lu',    zh: '張魯軍' }, rulerOfficerId: 'zhang-lu',    capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
-  { id: 'ma-teng',     name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',     capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
-  { id: 'gongsun-du',  name: { en: 'Gongsun Kang',zh: '公孫康軍'}, rulerOfficerId: 'gongsun-kang',capitalCityId: 'liaodong', color: '#1f7a9a', isPlayer: false },
-  { id: 'shi-xie',     name: { en: 'Shi Xie',     zh: '士燮軍' }, rulerOfficerId: 'shi-xie',     capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'ma-teng',     name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',     capitalCityId: 'wuwei',    color: '#9a6b3a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'gongsun-du',  name: { en: 'Gongsun Kang',zh: '公孫康軍'}, rulerOfficerId: 'gongsun-kang',capitalCityId: 'liaodong', color: '#1f7a9a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'shi-xie',     name: { en: 'Shi Xie',     zh: '士燮軍' }, rulerOfficerId: 'shi-xie',     capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_207: Record<string, string> = {
@@ -2956,14 +2956,14 @@ export const SCENARIO_207_THREE_VISITS: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_211: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',    zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'ma-chao',   name: { en: 'Ma Chao',    zh: '馬超軍' }, rulerOfficerId: 'ma-chao',   capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
-  { id: 'han-sui',   name: { en: 'Han Sui',    zh: '韓遂軍' }, rulerOfficerId: 'han-sui',   capitalCityId: 'jincheng', color: '#c8b06a', isPlayer: false },
-  { id: 'liu-bei',   name: { en: 'Liu Bei',    zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'jiangling',color: '#a85d8a', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Quan',   zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-zhang', name: { en: 'Liu Zhang',  zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',    zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'duke', isPlayer: false },
+  { id: 'ma-chao',   name: { en: 'Ma Chao',    zh: '馬超軍' }, rulerOfficerId: 'ma-chao',   capitalCityId: 'wuwei',    color: '#9a6b3a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'han-sui',   name: { en: 'Han Sui',    zh: '韓遂軍' }, rulerOfficerId: 'han-sui',   capitalCityId: 'jincheng', color: '#c8b06a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-bei',   name: { en: 'Liu Bei',    zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'jiangling',color: '#a85d8a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Quan',   zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-zhang', name: { en: 'Liu Zhang',  zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', imperialRank: 'marquis', isPlayer: false },
   { id: 'zhang-lu',  name: { en: 'Zhang Lu',   zh: '張魯軍' }, rulerOfficerId: 'zhang-lu',  capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
-  { id: 'shi-xie',   name: { en: 'Shi Xie',    zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'shi-xie',   name: { en: 'Shi Xie',    zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_211: Record<string, string> = {
@@ -3178,10 +3178,10 @@ export const SCENARIO_211_WEINAN: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_228: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',     zh: '魏'    }, rulerOfficerId: 'cao-rui',   capitalCityId: 'luoyang', color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',      zh: '吳'    }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
-  { id: 'xianbei', name: { en: 'Xianbei', zh: '鮮卑'  }, rulerOfficerId: 'kebi-neng', capitalCityId: 'wuhuan',  color: '#4a6aaa', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',     zh: '魏'    }, rulerOfficerId: 'cao-rui',   capitalCityId: 'luoyang', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',      zh: '吳'    }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
+  { id: 'xianbei', name: { en: 'Xianbei', zh: '鮮卑'  }, rulerOfficerId: 'kebi-neng', capitalCityId: 'wuhuan',  color: '#4a6aaa', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_228: Record<string, string> = {
@@ -3385,9 +3385,9 @@ export const SCENARIO_228_JIETING: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_263: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'sima-zhao', capitalCityId: 'luoyang', color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-xiu',   capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'sima-zhao', capitalCityId: 'luoyang', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-xiu',   capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_263: Record<string, string> = {
@@ -3588,12 +3588,12 @@ export const SCENARIO_263_SHU_FALL: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_189: Force[] = [
-  { id: 'han',         name: { en: 'He Jin (Regent)', zh: '何進'     }, rulerOfficerId: 'he-jin',      capitalCityId: 'luoyang',  color: '#f0d878', isPlayer: false },
+  { id: 'han',         name: { en: 'He Jin (Regent)', zh: '何進'     }, rulerOfficerId: 'he-jin',      capitalCityId: 'luoyang',  color: '#f0d878', imperialRank: 'emperor', isPlayer: false },
   { id: 'eunuchs',     name: { en: 'Ten Attendants',  zh: '十常侍'   }, rulerOfficerId: 'zhang-rang',  capitalCityId: 'hulao',    color: '#9a5a9a', isPlayer: false },
-  { id: 'dong',        name: { en: 'Dong Zhuo',       zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'changan',  color: '#6a3d8a', isPlayer: false },
+  { id: 'dong',        name: { en: 'Dong Zhuo',       zh: '董卓軍'   }, rulerOfficerId: 'dong-zhuo',   capitalCityId: 'changan',  color: '#6a3d8a', imperialRank: 'marquis', isPlayer: false },
   { id: 'cao',         name: { en: 'Cao Cao',         zh: '曹操'     }, rulerOfficerId: 'cao-cao',     capitalCityId: 'chenliu',  color: '#3a7dd9', isPlayer: false },
   { id: 'yuan-shao',   name: { en: 'Yuan Shao',       zh: '袁紹'     }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'bohai',    color: '#c0392b', isPlayer: false },
-  { id: 'sun',         name: { en: 'Sun Jian',        zh: '孫堅軍'   }, rulerOfficerId: 'sun-jian',    capitalCityId: 'changsha', color: '#2f8e6f', isPlayer: false },
+  { id: 'sun',         name: { en: 'Sun Jian',        zh: '孫堅軍'   }, rulerOfficerId: 'sun-jian',    capitalCityId: 'changsha', color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
   { id: 'liu-biao',    name: { en: 'Liu Biao',        zh: '劉表軍'   }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
   { id: 'liu-yan',     name: { en: 'Liu Yan',         zh: '劉焉軍'   }, rulerOfficerId: 'liu-yan',     capitalCityId: 'chengdu',  color: '#c8692a', isPlayer: false },
 ];
@@ -3751,14 +3751,14 @@ export const SCENARIO_189_EUNUCHS: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_194: Force[] = [
-  { id: 'cao',         name: { en: 'Cao Cao',     zh: '曹操軍'   }, rulerOfficerId: 'cao-cao',     capitalCityId: 'puyang',   color: '#3a7dd9', isPlayer: false },
-  { id: 'tao',         name: { en: 'Tao Qian',    zh: '陶謙軍'   }, rulerOfficerId: 'tao-qian',    capitalCityId: 'xiapi',    color: '#7a8a5a', isPlayer: false },
-  { id: 'lubu',        name: { en: 'Lü Bu',       zh: '呂布軍'   }, rulerOfficerId: 'lu-bu',       capitalCityId: 'puyang',   color: '#7a2e5a', isPlayer: false },
-  { id: 'yuan-shao',   name: { en: 'Yuan Shao',   zh: '袁紹軍'   }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', isPlayer: false },
+  { id: 'cao',         name: { en: 'Cao Cao',     zh: '曹操軍'   }, rulerOfficerId: 'cao-cao',     capitalCityId: 'puyang',   color: '#3a7dd9', imperialRank: 'marquis', isPlayer: false },
+  { id: 'tao',         name: { en: 'Tao Qian',    zh: '陶謙軍'   }, rulerOfficerId: 'tao-qian',    capitalCityId: 'xiapi',    color: '#7a8a5a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'lubu',        name: { en: 'Lü Bu',       zh: '呂布軍'   }, rulerOfficerId: 'lu-bu',       capitalCityId: 'puyang',   color: '#7a2e5a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-shao',   name: { en: 'Yuan Shao',   zh: '袁紹軍'   }, rulerOfficerId: 'yuan-shao',   capitalCityId: 'ye',       color: '#c0392b', imperialRank: 'marquis', isPlayer: false },
   { id: 'yuan-shu',    name: { en: 'Yuan Shu',    zh: '袁術軍'   }, rulerOfficerId: 'yuan-shu',    capitalCityId: 'shouchun', color: '#c03a6a', isPlayer: false },
-  { id: 'gongsun',     name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping',  color: '#2aa8c0', isPlayer: false },
-  { id: 'liu-biao',    name: { en: 'Liu Biao',    zh: '劉表軍'   }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
-  { id: 'liu-yan',     name: { en: 'Liu Yan',     zh: '劉焉軍'   }, rulerOfficerId: 'liu-yan',     capitalCityId: 'chengdu',  color: '#c8692a', isPlayer: false },
+  { id: 'gongsun',     name: { en: 'Gongsun Zan', zh: '公孫瓚軍' }, rulerOfficerId: 'gongsun-zan', capitalCityId: 'beiping',  color: '#2aa8c0', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-biao',    name: { en: 'Liu Biao',    zh: '劉表軍'   }, rulerOfficerId: 'liu-biao',    capitalCityId: 'xiangyang',color: '#d4af37', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-yan',     name: { en: 'Liu Yan',     zh: '劉焉軍'   }, rulerOfficerId: 'liu-yan',     capitalCityId: 'chengdu',  color: '#c8692a', imperialRank: 'marquis', isPlayer: false },
   { id: 'kong-rong',   name: { en: 'Kong Rong',   zh: '孔融軍'   }, rulerOfficerId: 'kong-rong',   capitalCityId: 'beihai',   color: '#8aaa3a', isPlayer: false },
   { id: 'ma-teng',     name: { en: 'Ma Teng',     zh: '馬騰軍'   }, rulerOfficerId: 'ma-teng',     capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
 ];
@@ -3968,12 +3968,12 @@ export const SCENARIO_194_XUZHOU: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_214: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',    zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Quan',   zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-bei',   name: { en: 'Liu Bei',    zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'jiangzhou',color: '#a85d8a', isPlayer: false },
-  { id: 'liu-zhang', name: { en: 'Liu Zhang',  zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',    zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'duke', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Quan',   zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-bei',   name: { en: 'Liu Bei',    zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'jiangzhou',color: '#a85d8a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-zhang', name: { en: 'Liu Zhang',  zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', imperialRank: 'marquis', isPlayer: false },
   { id: 'zhang-lu',  name: { en: 'Zhang Lu',   zh: '張魯軍' }, rulerOfficerId: 'zhang-lu',  capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
-  { id: 'shi-xie',   name: { en: 'Shi Xie',    zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'shi-xie',   name: { en: 'Shi Xie',    zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_214: Record<string, string> = {
@@ -4195,10 +4195,10 @@ export const SCENARIO_214_XICHUAN: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_249: Force[] = [
-  { id: 'sima',    name: { en: 'Sima Faction',  zh: '司馬黨' }, rulerOfficerId: 'sima-yi',    capitalCityId: 'luoyang', color: '#3a4d8a', isPlayer: false },
-  { id: 'cao',     name: { en: 'Cao Shuang',    zh: '曹爽軍' }, rulerOfficerId: 'cao-shuang', capitalCityId: 'changan', color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han',       zh: '蜀漢'   }, rulerOfficerId: 'liu-shan',   capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',            zh: '吳'     }, rulerOfficerId: 'sun-quan',   capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'sima',    name: { en: 'Sima Faction',  zh: '司馬黨' }, rulerOfficerId: 'sima-yi',    capitalCityId: 'luoyang', color: '#3a4d8a', imperialRank: 'duke', isPlayer: false },
+  { id: 'cao',     name: { en: 'Cao Shuang',    zh: '曹爽軍' }, rulerOfficerId: 'cao-shuang', capitalCityId: 'changan', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han',       zh: '蜀漢'   }, rulerOfficerId: 'liu-shan',   capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',            zh: '吳'     }, rulerOfficerId: 'sun-quan',   capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_249: Record<string, string> = {
@@ -4406,8 +4406,8 @@ export const SCENARIO_249_GAOPINGLING: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_280: Force[] = [
-  { id: 'sima', name: { en: 'Great Jin',    zh: '大晉' }, rulerOfficerId: 'sima-yan', capitalCityId: 'luoyang', color: '#3a4d8a', isPlayer: false },
-  { id: 'sun',  name: { en: 'Wu (Sun Hao)', zh: '吳'   }, rulerOfficerId: 'sun-hao',  capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'sima', name: { en: 'Great Jin',    zh: '大晉' }, rulerOfficerId: 'sima-yan', capitalCityId: 'luoyang', color: '#3a4d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',  name: { en: 'Wu (Sun Hao)', zh: '吳'   }, rulerOfficerId: 'sun-hao',  capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_280: Record<string, string> = {
@@ -4612,15 +4612,15 @@ export const SCENARIO_280_JIN_UNITE: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_192: Force[] = [
-  { id: 'han',         name: { en: 'Han Court',    zh: '漢室'    }, rulerOfficerId: 'wang-yun',     capitalCityId: 'changan',  color: '#f0d878', isPlayer: false },
-  { id: 'lubu',        name: { en: 'Lü Bu',        zh: '呂布軍'  }, rulerOfficerId: 'lu-bu',        capitalCityId: 'luoyang',  color: '#7a2e5a', isPlayer: false },
-  { id: 'lijue',       name: { en: 'Li Jue',       zh: '李傕軍'  }, rulerOfficerId: 'li-jue',       capitalCityId: 'mei',      color: '#6a3a2a', isPlayer: false },
+  { id: 'han',         name: { en: 'Han Court',    zh: '漢室'    }, rulerOfficerId: 'wang-yun',     capitalCityId: 'changan',  color: '#f0d878', imperialRank: 'emperor', isPlayer: false },
+  { id: 'lubu',        name: { en: 'Lü Bu',        zh: '呂布軍'  }, rulerOfficerId: 'lu-bu',        capitalCityId: 'luoyang',  color: '#7a2e5a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'lijue',       name: { en: 'Li Jue',       zh: '李傕軍'  }, rulerOfficerId: 'li-jue',       capitalCityId: 'mei',      color: '#6a3a2a', imperialRank: 'marquis', isPlayer: false },
   { id: 'yuan-shao',   name: { en: 'Yuan Shao',    zh: '袁紹軍'  }, rulerOfficerId: 'yuan-shao',    capitalCityId: 'ye',       color: '#c0392b', isPlayer: false },
   { id: 'yuan-shu',    name: { en: 'Yuan Shu',     zh: '袁術軍'  }, rulerOfficerId: 'yuan-shu',     capitalCityId: 'shouchun', color: '#c03a6a', isPlayer: false },
-  { id: 'gongsun',     name: { en: 'Gongsun Zan',  zh: '公孫瓚軍'}, rulerOfficerId: 'gongsun-zan',  capitalCityId: 'beiping',  color: '#2aa8c0', isPlayer: false },
+  { id: 'gongsun',     name: { en: 'Gongsun Zan',  zh: '公孫瓚軍'}, rulerOfficerId: 'gongsun-zan',  capitalCityId: 'beiping',  color: '#2aa8c0', imperialRank: 'marquis', isPlayer: false },
   { id: 'cao',         name: { en: 'Cao Cao',      zh: '曹操軍'  }, rulerOfficerId: 'cao-cao',      capitalCityId: 'chenliu',  color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-biao',    name: { en: 'Liu Biao',     zh: '劉表軍'  }, rulerOfficerId: 'liu-biao',     capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
-  { id: 'tao-qian',    name: { en: 'Tao Qian',     zh: '陶謙軍'  }, rulerOfficerId: 'tao-qian',     capitalCityId: 'xiapi',    color: '#7a8a5a', isPlayer: false },
+  { id: 'liu-biao',    name: { en: 'Liu Biao',     zh: '劉表軍'  }, rulerOfficerId: 'liu-biao',     capitalCityId: 'xiangyang',color: '#d4af37', imperialRank: 'marquis', isPlayer: false },
+  { id: 'tao-qian',    name: { en: 'Tao Qian',     zh: '陶謙軍'  }, rulerOfficerId: 'tao-qian',     capitalCityId: 'xiapi',    color: '#7a8a5a', imperialRank: 'marquis', isPlayer: false },
   { id: 'liu-yan',     name: { en: 'Liu Yan',      zh: '劉焉軍'  }, rulerOfficerId: 'liu-yan',      capitalCityId: 'chengdu',  color: '#c8692a', isPlayer: false },
 ];
 
@@ -4837,16 +4837,16 @@ export const SCENARIO_192_WANGYUN: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_204: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',      zh: '曹操軍'  }, rulerOfficerId: 'cao-cao',      capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'yuan-shang',name: { en: 'Yuan Shang',   zh: '袁尚軍'  }, rulerOfficerId: 'yuan-shang',   capitalCityId: 'ye',       color: '#c0392b', isPlayer: false },
-  { id: 'yuan-tan',  name: { en: 'Yuan Tan',     zh: '袁譚軍'  }, rulerOfficerId: 'yuan-tan',     capitalCityId: 'pingyuan', color: '#8a3a2a', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Quan',     zh: '孫權軍'  }, rulerOfficerId: 'sun-quan',     capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-biao',  name: { en: 'Liu Biao',     zh: '劉表軍'  }, rulerOfficerId: 'liu-biao',     capitalCityId: 'xiangyang',color: '#d4af37', isPlayer: false },
-  { id: 'liu-zhang', name: { en: 'Liu Zhang',    zh: '劉璋軍'  }, rulerOfficerId: 'liu-zhang',    capitalCityId: 'chengdu',  color: '#e07b39', isPlayer: false },
-  { id: 'ma-teng',   name: { en: 'Ma Teng',      zh: '馬騰軍'  }, rulerOfficerId: 'ma-teng',      capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',      zh: '曹操軍'  }, rulerOfficerId: 'cao-cao',      capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-shang',name: { en: 'Yuan Shang',   zh: '袁尚軍'  }, rulerOfficerId: 'yuan-shang',   capitalCityId: 'ye',       color: '#c0392b', imperialRank: 'marquis', isPlayer: false },
+  { id: 'yuan-tan',  name: { en: 'Yuan Tan',     zh: '袁譚軍'  }, rulerOfficerId: 'yuan-tan',     capitalCityId: 'pingyuan', color: '#8a3a2a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Quan',     zh: '孫權軍'  }, rulerOfficerId: 'sun-quan',     capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-biao',  name: { en: 'Liu Biao',     zh: '劉表軍'  }, rulerOfficerId: 'liu-biao',     capitalCityId: 'xiangyang',color: '#d4af37', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-zhang', name: { en: 'Liu Zhang',    zh: '劉璋軍'  }, rulerOfficerId: 'liu-zhang',    capitalCityId: 'chengdu',  color: '#e07b39', imperialRank: 'marquis', isPlayer: false },
+  { id: 'ma-teng',   name: { en: 'Ma Teng',      zh: '馬騰軍'  }, rulerOfficerId: 'ma-teng',      capitalCityId: 'wuwei',    color: '#9a6b3a', imperialRank: 'marquis', isPlayer: false },
   { id: 'zhang-lu',  name: { en: 'Zhang Lu',     zh: '張魯軍'  }, rulerOfficerId: 'zhang-lu',     capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
-  { id: 'gongsun',   name: { en: 'Gongsun Kang', zh: '公孫康軍'}, rulerOfficerId: 'gongsun-kang', capitalCityId: 'liaodong', color: '#2aa8c0', isPlayer: false },
-  { id: 'shi-xie',   name: { en: 'Shi Xie',      zh: '士燮軍'  }, rulerOfficerId: 'shi-xie',      capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'gongsun',   name: { en: 'Gongsun Kang', zh: '公孫康軍'}, rulerOfficerId: 'gongsun-kang', capitalCityId: 'liaodong', color: '#2aa8c0', imperialRank: 'marquis', isPlayer: false },
+  { id: 'shi-xie',   name: { en: 'Shi Xie',      zh: '士燮軍'  }, rulerOfficerId: 'shi-xie',      capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_204: Record<string, string> = {
@@ -5104,12 +5104,12 @@ export const SCENARIO_204_YECHENG: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_213: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',    zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'sun',       name: { en: 'Sun Quan',   zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-bei',   name: { en: 'Liu Bei',    zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'jiangling',color: '#a85d8a', isPlayer: false },
-  { id: 'liu-zhang', name: { en: 'Liu Zhang',  zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',    zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'duke', isPlayer: false },
+  { id: 'sun',       name: { en: 'Sun Quan',   zh: '孫權軍' }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-bei',   name: { en: 'Liu Bei',    zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'jiangling',color: '#a85d8a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-zhang', name: { en: 'Liu Zhang',  zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', imperialRank: 'marquis', isPlayer: false },
   { id: 'zhang-lu',  name: { en: 'Zhang Lu',   zh: '張魯軍' }, rulerOfficerId: 'zhang-lu',  capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
-  { id: 'shi-xie',   name: { en: 'Shi Xie',    zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'shi-xie',   name: { en: 'Shi Xie',    zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_213: Record<string, string> = {
@@ -5356,11 +5356,11 @@ export const SCENARIO_213_FENGPO: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_221: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',          zh: '魏'      }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang', color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Han (Shu)',    zh: '漢(蜀)'  }, rulerOfficerId: 'liu-bei',  capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',           zh: '吳'      }, rulerOfficerId: 'sun-quan', capitalCityId: 'wuchang', color: '#2f8e6f', isPlayer: false },
-  { id: 'shi-xie', name: { en: 'Shi Xie',      zh: '士燮'    }, rulerOfficerId: 'shi-xie',  capitalCityId: 'jiaozhi', color: '#5a8a3a', isPlayer: false },
-  { id: 'xianbei', name: { en: 'Xianbei',      zh: '鮮卑'    }, rulerOfficerId: 'kebi-neng',capitalCityId: 'wuhuan',  color: '#4a6aaa', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',          zh: '魏'      }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Han (Shu)',    zh: '漢(蜀)'  }, rulerOfficerId: 'liu-bei',  capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',           zh: '吳'      }, rulerOfficerId: 'sun-quan', capitalCityId: 'wuchang', color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
+  { id: 'shi-xie', name: { en: 'Shi Xie',      zh: '士燮'    }, rulerOfficerId: 'shi-xie',  capitalCityId: 'jiaozhi', color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'xianbei', name: { en: 'Xianbei',      zh: '鮮卑'    }, rulerOfficerId: 'kebi-neng',capitalCityId: 'wuhuan',  color: '#4a6aaa', imperialRank: 'marquis', isPlayer: false },
   { id: 'nanman',  name: { en: 'Nanman',       zh: '南蠻'    }, rulerOfficerId: 'meng-huo', capitalCityId: 'jianning',color: '#b5651d', isPlayer: false },
 ];
 
@@ -5641,11 +5641,11 @@ export const SCENARIO_221_SHU_EMPEROR: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_229: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',       zh: '魏'    }, rulerOfficerId: 'cao-rui',   capitalCityId: 'luoyang', color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han',   zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',        zh: '吳'    }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
-  { id: 'xianbei', name: { en: 'Xianbei',   zh: '鮮卑'  }, rulerOfficerId: 'kebi-neng', capitalCityId: 'wuhuan',  color: '#4a6aaa', isPlayer: false },
-  { id: 'gongsun', name: { en: 'Gongsun',   zh: '公孫'  }, rulerOfficerId: 'gongsun-yuan',capitalCityId: 'liaodong',color: '#2aa8c0', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',       zh: '魏'    }, rulerOfficerId: 'cao-rui',   capitalCityId: 'luoyang', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han',   zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',        zh: '吳'    }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
+  { id: 'xianbei', name: { en: 'Xianbei',   zh: '鮮卑'  }, rulerOfficerId: 'kebi-neng', capitalCityId: 'wuhuan',  color: '#4a6aaa', imperialRank: 'marquis', isPlayer: false },
+  { id: 'gongsun', name: { en: 'Gongsun',   zh: '公孫'  }, rulerOfficerId: 'gongsun-yuan',capitalCityId: 'liaodong',color: '#2aa8c0', imperialRank: 'marquis', isPlayer: false },
   { id: 'nanman',  name: { en: 'Nanman',    zh: '南蠻'  }, rulerOfficerId: 'meng-huo',  capitalCityId: 'jianning',color: '#b5651d', isPlayer: false },
 ];
 
@@ -5918,9 +5918,9 @@ export const SCENARIO_229_THREE_EMPERORS: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_252: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',      zh: '魏'    }, rulerOfficerId: 'cao-fang',  capitalCityId: 'luoyang', color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han',  zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',       zh: '吳'    }, rulerOfficerId: 'sun-liang', capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',      zh: '魏'    }, rulerOfficerId: 'cao-fang',  capitalCityId: 'luoyang', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han',  zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',       zh: '吳'    }, rulerOfficerId: 'sun-liang', capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_252: Record<string, string> = {
@@ -6150,10 +6150,10 @@ export const SCENARIO_252_DONGXING: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_264: Force[] = [
-  { id: 'cao',       name: { en: 'Wei (Sima)', zh: '魏(司馬)'}, rulerOfficerId: 'sima-zhao',  capitalCityId: 'luoyang', color: '#3a4d8a', isPlayer: false },
-  { id: 'zhonghui',  name: { en: 'Zhong Hui',  zh: '鍾會軍'  }, rulerOfficerId: 'zhong-hui',  capitalCityId: 'chengdu', color: '#c03a6a', isPlayer: false },
-  { id: 'dengai',    name: { en: 'Deng Ai',    zh: '鄧艾軍'  }, rulerOfficerId: 'deng-ai',    capitalCityId: 'jiangzhou',color: '#2aa8c0', isPlayer: false },
-  { id: 'sun',       name: { en: 'Wu',         zh: '吳'      }, rulerOfficerId: 'sun-hao',    capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',       name: { en: 'Wei (Sima)', zh: '魏(司馬)'}, rulerOfficerId: 'sima-zhao',  capitalCityId: 'luoyang', color: '#3a4d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'zhonghui',  name: { en: 'Zhong Hui',  zh: '鍾會軍'  }, rulerOfficerId: 'zhong-hui',  capitalCityId: 'chengdu', color: '#c03a6a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'dengai',    name: { en: 'Deng Ai',    zh: '鄧艾軍'  }, rulerOfficerId: 'deng-ai',    capitalCityId: 'jiangzhou',color: '#2aa8c0', imperialRank: 'marquis', isPlayer: false },
+  { id: 'sun',       name: { en: 'Wu',         zh: '吳'      }, rulerOfficerId: 'sun-hao',    capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_264: Record<string, string> = {
@@ -6387,8 +6387,8 @@ export const SCENARIO_264_ZHONGHUI: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_265: Force[] = [
-  { id: 'sima',    name: { en: 'Jin',       zh: '晉'    }, rulerOfficerId: 'sima-yan',  capitalCityId: 'luoyang', color: '#3a4d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',        zh: '吳'    }, rulerOfficerId: 'sun-hao',   capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'sima',    name: { en: 'Jin',       zh: '晉'    }, rulerOfficerId: 'sima-yan',  capitalCityId: 'luoyang', color: '#3a4d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',        zh: '吳'    }, rulerOfficerId: 'sun-hao',   capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_265: Record<string, string> = {
@@ -6624,10 +6624,10 @@ export const SCENARIO_265_JIN_FOUNDED: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_GUANYU_JING: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-bei',  capitalCityId: 'chengdu',  color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
-  { id: 'shi-xie', name: { en: 'Shi Xie', zh: '士燮' }, rulerOfficerId: 'shi-xie',  capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-pi',   capitalCityId: 'luoyang',  color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-bei',  capitalCityId: 'chengdu',  color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan', capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
+  { id: 'shi-xie', name: { en: 'Shi Xie', zh: '士燮' }, rulerOfficerId: 'shi-xie',  capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
   { id: 'nanman',  name: { en: 'Nanman',  zh: '南蠻' }, rulerOfficerId: 'meng-huo', capitalCityId: 'jianning', color: '#b5651d', isPlayer: false },
   { id: 'xianbei', name: { en: 'Xianbei', zh: '鮮卑' }, rulerOfficerId: 'kebi-neng',capitalCityId: 'wuhuan',   color: '#4a6aaa', isPlayer: false },
 ];
@@ -6855,9 +6855,9 @@ export const SCENARIO_WHATIF_GUANYU_JING: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_ZHUGE_LIVES: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-rui',   capitalCityId: 'ye',      color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-rui',   capitalCityId: 'ye',      color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_ZHUGE_LIVES: Record<string, string> = {
@@ -7022,13 +7022,13 @@ export const SCENARIO_WHATIF_ZHUGE_LIVES: Scenario = {
 // ──────────────────────────────────────────────────────────────────────
 
 const FORCES_CHIBI_WIN: Force[] = [
-  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei',   name: { en: 'Liu Bei',     zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'xinye',    color: '#a85d8a', isPlayer: false },
-  { id: 'sun',       name: { en: 'Wu Remnant',  zh: '吳殘部' }, rulerOfficerId: 'sun-yi',    capitalCityId: 'kuaiji',   color: '#2f8e6f', isPlayer: false },
-  { id: 'liu-zhang', name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', isPlayer: false },
+  { id: 'cao',       name: { en: 'Cao Cao',     zh: '曹操軍' }, rulerOfficerId: 'cao-cao',   capitalCityId: 'xuchang',  color: '#3a7dd9', imperialRank: 'duke', isPlayer: false },
+  { id: 'liu-bei',   name: { en: 'Liu Bei',     zh: '劉備軍' }, rulerOfficerId: 'liu-bei',   capitalCityId: 'xinye',    color: '#a85d8a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'sun',       name: { en: 'Wu Remnant',  zh: '吳殘部' }, rulerOfficerId: 'sun-yi',    capitalCityId: 'kuaiji',   color: '#2f8e6f', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-zhang', name: { en: 'Liu Zhang',   zh: '劉璋軍' }, rulerOfficerId: 'liu-zhang', capitalCityId: 'chengdu',  color: '#e07b39', imperialRank: 'marquis', isPlayer: false },
   { id: 'zhang-lu',  name: { en: 'Zhang Lu',    zh: '張魯軍' }, rulerOfficerId: 'zhang-lu',  capitalCityId: 'hanzhong', color: '#6a9a8a', isPlayer: false },
-  { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',   capitalCityId: 'wuwei',    color: '#9a6b3a', isPlayer: false },
-  { id: 'shi-xie',   name: { en: 'Shi Xie',     zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', isPlayer: false },
+  { id: 'ma-teng',   name: { en: 'Ma Teng',     zh: '馬騰軍' }, rulerOfficerId: 'ma-teng',   capitalCityId: 'wuwei',    color: '#9a6b3a', imperialRank: 'marquis', isPlayer: false },
+  { id: 'shi-xie',   name: { en: 'Shi Xie',     zh: '士燮軍' }, rulerOfficerId: 'shi-xie',   capitalCityId: 'jiaozhi',  color: '#5a8a3a', imperialRank: 'marquis', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_CHIBI_WIN: Record<string, string> = {
@@ -7690,9 +7690,9 @@ export const SCENARIO_231_LUCHENG: Scenario = {
 //    boy-emperor Cao Fang holds the Wei throne under his regents Cao Shuang
 //    and Sima Yi. Both reuse the 234 map with Wei's crown passed to Cao Fang. ──
 const FORCES_POST_CAORUI: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-fang',  capitalCityId: 'luoyang', color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-fang',  capitalCityId: 'luoyang', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',  capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan',  capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 const OFFICER_ASSIGNMENTS_POST_CAORUI = {
   ...OFFICER_ASSIGNMENTS_234,
@@ -7805,10 +7805,10 @@ const CITY_OWNERSHIP_238: Record<string, string> = {
   daifang: 'yan',
 };
 const FORCES_238: Force[] = [
-  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-rui',      capitalCityId: 'luoyang',   color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',     capitalCityId: 'chengdu',   color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan',     capitalCityId: 'jianye',    color: '#2f8e6f', isPlayer: false },
-  { id: 'yan',     name: { en: 'Yan',     zh: '燕'   }, rulerOfficerId: 'gongsun-yuan', capitalCityId: 'xiangping', color: '#b87a3a', isPlayer: false },
+  { id: 'cao',     name: { en: 'Wei',     zh: '魏'   }, rulerOfficerId: 'cao-rui',      capitalCityId: 'luoyang',   color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han', zh: '蜀漢' }, rulerOfficerId: 'liu-shan',     capitalCityId: 'chengdu',   color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',      zh: '吳'   }, rulerOfficerId: 'sun-quan',     capitalCityId: 'jianye',    color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
+  { id: 'yan',     name: { en: 'Yan',     zh: '燕'   }, rulerOfficerId: 'gongsun-yuan', capitalCityId: 'xiangping', color: '#b87a3a', imperialRank: 'king', isPlayer: false },
 ];
 const OFFICER_ASSIGNMENTS_238 = {
   ...OFFICER_ASSIGNMENTS_234,
@@ -7848,10 +7848,10 @@ const CITY_OWNERSHIP_255: Record<string, string> = {
   lujiang: 'guanqiu',
 };
 const FORCES_255: Force[] = [
-  { id: 'cao',     name: { en: 'Sima Shi',     zh: '司馬師' }, rulerOfficerId: 'sima-shi',     capitalCityId: 'luoyang',  color: '#3a4d8a', isPlayer: false },
-  { id: 'guanqiu', name: { en: 'Guanqiu Jian', zh: '毌丘儉' }, rulerOfficerId: 'guanqiu-jian', capitalCityId: 'shouchun', color: '#c0392b', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han',      zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',     capitalCityId: 'chengdu',  color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',           zh: '吳'    }, rulerOfficerId: 'sun-liang',    capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',     name: { en: 'Sima Shi',     zh: '司馬師' }, rulerOfficerId: 'sima-shi',     capitalCityId: 'luoyang',  color: '#3a4d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'guanqiu', name: { en: 'Guanqiu Jian', zh: '毌丘儉' }, rulerOfficerId: 'guanqiu-jian', capitalCityId: 'shouchun', color: '#c0392b', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han',      zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',     capitalCityId: 'chengdu',  color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',           zh: '吳'    }, rulerOfficerId: 'sun-liang',    capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 const OFFICER_ASSIGNMENTS_255 = {
   ...OFFICER_ASSIGNMENTS_252,
@@ -7892,10 +7892,10 @@ const CITY_OWNERSHIP_257: Record<string, string> = {
   lujiang: 'huainan',
 };
 const FORCES_257: Force[] = [
-  { id: 'cao',     name: { en: 'Sima Zhao', zh: '司馬昭' }, rulerOfficerId: 'sima-zhao',  capitalCityId: 'luoyang',  color: '#3a4d8a', isPlayer: false },
-  { id: 'huainan', name: { en: 'Zhuge Dan', zh: '諸葛誕' }, rulerOfficerId: 'zhuge-dan',  capitalCityId: 'shouchun', color: '#c0392b', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han',   zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',   capitalCityId: 'chengdu',  color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',        zh: '吳'    }, rulerOfficerId: 'sun-liang',  capitalCityId: 'jianye',   color: '#2f8e6f', isPlayer: false },
+  { id: 'cao',     name: { en: 'Sima Zhao', zh: '司馬昭' }, rulerOfficerId: 'sima-zhao',  capitalCityId: 'luoyang',  color: '#3a4d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'huainan', name: { en: 'Zhuge Dan', zh: '諸葛誕' }, rulerOfficerId: 'zhuge-dan',  capitalCityId: 'shouchun', color: '#c0392b', imperialRank: 'marquis', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han',   zh: '蜀漢'  }, rulerOfficerId: 'liu-shan',   capitalCityId: 'chengdu',  color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',        zh: '吳'    }, rulerOfficerId: 'sun-liang',  capitalCityId: 'jianye',   color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 const OFFICER_ASSIGNMENTS_257 = {
   ...OFFICER_ASSIGNMENTS_252,
@@ -7988,7 +7988,7 @@ const CITY_OWNERSHIP_207_WUHUAN: Record<string, string> = {
 };
 const FORCES_207_WUHUAN: Force[] = [
   ...FORCES_207,
-  { id: 'wuhuan', name: { en: 'Wuhuan', zh: '烏桓' }, rulerOfficerId: 'tadun', capitalCityId: 'liucheng', color: '#7a6a9a', isPlayer: false },
+  { id: 'wuhuan', name: { en: 'Wuhuan', zh: '烏桓' }, rulerOfficerId: 'tadun', capitalCityId: 'liucheng', color: '#7a6a9a', imperialRank: 'marquis', isPlayer: false },
 ];
 const OFFICER_ASSIGNMENTS_207_WUHUAN = {
   ...OFFICER_ASSIGNMENTS_207,
@@ -8188,7 +8188,10 @@ const CITY_OWNERSHIP_218_DINGJUN: Record<string, string> = {
   wudu: 'cao',
   yangping: 'cao', // the Yangping passes — the gate Liu Bei must force
 };
-const FORCES_218_DINGJUN: Force[] = FORCES_215.filter((f) => f.id !== 'zhang-lu');
+const FORCES_218_DINGJUN: Force[] = FORCES_215
+  .filter((f) => f.id !== 'zhang-lu')
+  // 216 年進魏王 —— 母表(215)那時還只是魏公。
+  .map((f) => (f.id === 'cao' ? { ...f, imperialRank: 'king' as const } : f));
 const OFFICER_ASSIGNMENTS_218_DINGJUN = {
   ...OFFICER_ASSIGNMENTS_215,
   // Hanzhong's defence under Xiahou Yuan; Zhang Lu's men gone over to Cao (Zhang
@@ -8275,10 +8278,10 @@ const CITY_OWNERSHIP_WHATIF_GAOPINGLING: Record<string, string> = {
   hefei: 'cao',
 };
 const FORCES_WHATIF_GAOPINGLING: Force[] = [
-  { id: 'sima',    name: { en: 'Sima Faction', zh: '司馬黨' }, rulerOfficerId: 'sima-yi',    capitalCityId: 'ye',      color: '#3a4d8a', isPlayer: false },
-  { id: 'cao',     name: { en: 'Cao Shuang',   zh: '曹爽軍' }, rulerOfficerId: 'cao-shuang', capitalCityId: 'luoyang', color: '#3a7dd9', isPlayer: false },
-  { id: 'liu-bei', name: { en: 'Shu Han',      zh: '蜀漢'   }, rulerOfficerId: 'liu-shan',   capitalCityId: 'chengdu', color: '#a85d8a', isPlayer: false },
-  { id: 'sun',     name: { en: 'Wu',           zh: '吳'     }, rulerOfficerId: 'sun-quan',   capitalCityId: 'jianye',  color: '#2f8e6f', isPlayer: false },
+  { id: 'sima',    name: { en: 'Sima Faction', zh: '司馬黨' }, rulerOfficerId: 'sima-yi',    capitalCityId: 'ye',      color: '#3a4d8a', imperialRank: 'duke', isPlayer: false },
+  { id: 'cao',     name: { en: 'Cao Shuang',   zh: '曹爽軍' }, rulerOfficerId: 'cao-shuang', capitalCityId: 'luoyang', color: '#3a7dd9', imperialRank: 'emperor', isPlayer: false },
+  { id: 'liu-bei', name: { en: 'Shu Han',      zh: '蜀漢'   }, rulerOfficerId: 'liu-shan',   capitalCityId: 'chengdu', color: '#a85d8a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'sun',     name: { en: 'Wu',           zh: '吳'     }, rulerOfficerId: 'sun-quan',   capitalCityId: 'jianye',  color: '#2f8e6f', imperialRank: 'emperor', isPlayer: false },
 ];
 export const SCENARIO_WHATIF_GAOPINGLING: Scenario = {
   id: 'scn-whatif-gaopingling',
@@ -8337,14 +8340,16 @@ function buildWarringStatesOfficers(
   });
 }
 
+// 前 403–前 344 這三張盤在「相王」之前 —— 七國此時名分上還是侯,不是王。
+const WS_PRE_KINGSHIP = (f: Force): Force => ({ ...f, imperialRank: 'marquis' as const });
 const FORCES_WS_SEVEN: Force[] = [
-  { id: 'qin',  name: { en: 'Qin',  zh: '秦' }, rulerOfficerId: 'hist-qin-zhaoxiang', capitalCityId: 'changan',   color: '#4a4a6a', isPlayer: false },
-  { id: 'chu',  name: { en: 'Chu',  zh: '楚' }, rulerOfficerId: 'hist-chu-huaiwang',  capitalCityId: 'jiangling', color: '#c0392b', isPlayer: false },
-  { id: 'qi',   name: { en: 'Qi',   zh: '齊' }, rulerOfficerId: 'hist-qi-xuanwang',   capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
-  { id: 'yan',  name: { en: 'Yan',  zh: '燕' }, rulerOfficerId: 'hist-yan-zhaowang',  capitalCityId: 'ji',        color: '#5a7a8a', isPlayer: false },
-  { id: 'zhao', name: { en: 'Zhao', zh: '趙' }, rulerOfficerId: 'hist-zhao-wuling',   capitalCityId: 'ye',        color: '#e07b39', isPlayer: false },
-  { id: 'wei',  name: { en: 'Wei',  zh: '魏' }, rulerOfficerId: 'hist-wei-huiwang',   capitalCityId: 'chenliu',   color: '#2f8e6f', isPlayer: false },
-  { id: 'han',  name: { en: 'Han',  zh: '韓' }, rulerOfficerId: 'hist-han-zhaohou',   capitalCityId: 'xuchang',   color: '#d4af37', isPlayer: false },
+  { id: 'qin',  name: { en: 'Qin',  zh: '秦' }, rulerOfficerId: 'hist-qin-zhaoxiang', capitalCityId: 'changan',   color: '#4a4a6a', imperialRank: 'king', isPlayer: false },
+  { id: 'chu',  name: { en: 'Chu',  zh: '楚' }, rulerOfficerId: 'hist-chu-huaiwang',  capitalCityId: 'jiangling', color: '#c0392b', imperialRank: 'king', isPlayer: false },
+  { id: 'qi',   name: { en: 'Qi',   zh: '齊' }, rulerOfficerId: 'hist-qi-xuanwang',   capitalCityId: 'linzi',     color: '#2aa8c0', imperialRank: 'king', isPlayer: false },
+  { id: 'yan',  name: { en: 'Yan',  zh: '燕' }, rulerOfficerId: 'hist-yan-zhaowang',  capitalCityId: 'ji',        color: '#5a7a8a', imperialRank: 'king', isPlayer: false },
+  { id: 'zhao', name: { en: 'Zhao', zh: '趙' }, rulerOfficerId: 'hist-zhao-wuling',   capitalCityId: 'ye',        color: '#e07b39', imperialRank: 'king', isPlayer: false },
+  { id: 'wei',  name: { en: 'Wei',  zh: '魏' }, rulerOfficerId: 'hist-wei-huiwang',   capitalCityId: 'chenliu',   color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
+  { id: 'han',  name: { en: 'Han',  zh: '韓' }, rulerOfficerId: 'hist-han-zhaohou',   capitalCityId: 'xuchang',   color: '#d4af37', imperialRank: 'king', isPlayer: false },
 ];
 
 const CITY_OWNERSHIP_WS_SEVEN: Record<string, string> = {
@@ -8619,7 +8624,7 @@ export const SCENARIO_WS_YUEYI: Scenario = {
 // ── 圍魏救趙·桂陵馬陵 (Warring States). Wei is at its zenith — Pang Juan has
 //    stormed Handan and Zhao reels back to Jinyang; but Sun Bin sits in Qi's
 //    war-chariot, and the road to Daliang lies open behind the Wei host. ──
-const FORCES_WS_GUILING: Force[] = FORCES_WS_SEVEN.map((f) => {
+const FORCES_WS_GUILING: Force[] = FORCES_WS_SEVEN.map(WS_PRE_KINGSHIP).map((f) => {
   if (f.id === 'qi') return { ...f, rulerOfficerId: 'hist-qi-weiwang' };
   if (f.id === 'zhao') return { ...f, capitalCityId: 'taiyuan' }; // Handan fallen, court at Jinyang
   return f;
@@ -8827,7 +8832,7 @@ const WS_SHANGYANG_NEUTRAL = new Set([
   'yunnan', 'yongchang', 'yuexi', 'hanzhong', 'yangping', 'xincheng', 'shangyong',
   'wudu', 'shanggui', 'jincheng', 'wuwei', 'jiuquan', 'dunhuang', 'jieting',
 ]);
-const FORCES_WS_SHANGYANG: Force[] = FORCES_WS_SEVEN.map((f) =>
+const FORCES_WS_SHANGYANG: Force[] = FORCES_WS_SEVEN.map(WS_PRE_KINGSHIP).map((f) =>
   f.id === 'qin' ? { ...f, rulerOfficerId: 'hist-qin-xiaogong' } : f,
 );
 const CITY_OWNERSHIP_WS_SHANGYANG: Record<string, string> = Object.fromEntries(
@@ -9177,7 +9182,7 @@ export const SCENARIO_WS_TIANDAN: Scenario = {
 // ── 魏文侯·戰國首霸 (Warring States). The dawn of the age: Jin freshly carved in
 //    three, and Wei rises first under the model lord Marquis Wen — Li Kui's law,
 //    Wu Qi's armoured foot, Ximen Bao taming Ye, Yue Yang swallowing Zhongshan. ──
-const FORCES_WS_WEIWEN: Force[] = FORCES_WS_SEVEN.map((f) => {
+const FORCES_WS_WEIWEN: Force[] = FORCES_WS_SEVEN.map(WS_PRE_KINGSHIP).map((f) => {
   if (f.id === 'wei') return { ...f, rulerOfficerId: 'hist-wei-wenhou' };
   if (f.id === 'zhao') return { ...f, rulerOfficerId: 'hist-zhao-liehou', capitalCityId: 'taiyuan' };
   if (f.id === 'qin') return { ...f, rulerOfficerId: 'hist-qin-xiaogong' }; // a weak, pre-reform Qin
@@ -9309,13 +9314,13 @@ export const SCENARIO_WS_QIMIN: Scenario = {
 // the restored eastern kingdoms (Qi, Zhao, Wei, Jiujiang) between them.
 // ════════════════════════════════════════════════════════════════════════
 const FORCES_CHUHAN: Force[] = [
-  { id: 'chu',      name: { en: 'Western Chu', zh: '西楚'   }, rulerOfficerId: 'hist-xiang-yu',  capitalCityId: 'pengcheng', color: '#c0392b', isPlayer: false },
-  { id: 'han',      name: { en: 'Han',         zh: '漢'     }, rulerOfficerId: 'hist-liu-bang',  capitalCityId: 'hanzhong',  color: '#3a7dd9', isPlayer: false },
-  { id: 'yong',     name: { en: 'Three Qin',   zh: '三秦'   }, rulerOfficerId: 'hist-zhang-han', capitalCityId: 'changan',   color: '#8a6d3b', isPlayer: false },
-  { id: 'qi',       name: { en: 'Qi',          zh: '齊'     }, rulerOfficerId: 'hist-tian-rong', capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
-  { id: 'zhao',     name: { en: 'Zhao',        zh: '趙'     }, rulerOfficerId: 'hist-chen-yu',   capitalCityId: 'ye',        color: '#e07b39', isPlayer: false },
-  { id: 'wei',      name: { en: 'Wei',         zh: '魏'     }, rulerOfficerId: 'hist-wei-bao',   capitalCityId: 'puyang',    color: '#2f8e6f', isPlayer: false },
-  { id: 'jiujiang', name: { en: 'Jiujiang',    zh: '九江'   }, rulerOfficerId: 'hist-ying-bu',   capitalCityId: 'shouchun',  color: '#9a5a9a', isPlayer: false },
+  { id: 'chu',      name: { en: 'Western Chu', zh: '西楚'   }, rulerOfficerId: 'hist-xiang-yu',  capitalCityId: 'pengcheng', color: '#c0392b', imperialRank: 'king', isPlayer: false },
+  { id: 'han',      name: { en: 'Han',         zh: '漢'     }, rulerOfficerId: 'hist-liu-bang',  capitalCityId: 'hanzhong',  color: '#3a7dd9', imperialRank: 'king', isPlayer: false },
+  { id: 'yong',     name: { en: 'Three Qin',   zh: '三秦'   }, rulerOfficerId: 'hist-zhang-han', capitalCityId: 'changan',   color: '#8a6d3b', imperialRank: 'king', isPlayer: false },
+  { id: 'qi',       name: { en: 'Qi',          zh: '齊'     }, rulerOfficerId: 'hist-tian-rong', capitalCityId: 'linzi',     color: '#2aa8c0', imperialRank: 'king', isPlayer: false },
+  { id: 'zhao',     name: { en: 'Zhao',        zh: '趙'     }, rulerOfficerId: 'hist-chen-yu',   capitalCityId: 'ye',        color: '#e07b39', imperialRank: 'king', isPlayer: false },
+  { id: 'wei',      name: { en: 'Wei',         zh: '魏'     }, rulerOfficerId: 'hist-wei-bao',   capitalCityId: 'puyang',    color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
+  { id: 'jiujiang', name: { en: 'Jiujiang',    zh: '九江'   }, rulerOfficerId: 'hist-ying-bu',   capitalCityId: 'shouchun',  color: '#9a5a9a', imperialRank: 'king', isPlayer: false },
 ];
 const CITY_OWNERSHIP_CHUHAN: Record<string, string> = {
   // 漢 — Liu Bang, banished to Hanzhong and the Ba-Shu basin
@@ -9621,11 +9626,11 @@ const CITY_OWNERSHIP_CH_JULU: Record<string, string> = Object.fromEntries(
   }),
 );
 const FORCES_CH_JULU: Force[] = [
-  { id: 'qin',  name: { en: 'Qin Empire', zh: '秦' }, rulerOfficerId: 'hist-zhang-han',     capitalCityId: 'changan',   color: '#3a3a4a', isPlayer: false },
-  { id: 'chu',  name: { en: 'Chu',        zh: '楚' }, rulerOfficerId: 'hist-xiang-yu',      capitalCityId: 'pengcheng', color: '#c0392b', isPlayer: false },
-  { id: 'zhao', name: { en: 'Zhao',       zh: '趙' }, rulerOfficerId: 'hist-zhao-xie',      capitalCityId: 'ye',        color: '#e07b39', isPlayer: false },
-  { id: 'qi',   name: { en: 'Qi',         zh: '齊' }, rulerOfficerId: 'hist-tian-dan-chu',  capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
-  { id: 'wei',  name: { en: 'Wei',        zh: '魏' }, rulerOfficerId: 'hist-wei-bao',       capitalCityId: 'puyang',    color: '#2f8e6f', isPlayer: false },
+  { id: 'qin',  name: { en: 'Qin Empire', zh: '秦' }, rulerOfficerId: 'hist-zhang-han',     capitalCityId: 'changan',   color: '#3a3a4a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'chu',  name: { en: 'Chu',        zh: '楚' }, rulerOfficerId: 'hist-xiang-yu',      capitalCityId: 'pengcheng', color: '#c0392b', imperialRank: 'king', isPlayer: false },
+  { id: 'zhao', name: { en: 'Zhao',       zh: '趙' }, rulerOfficerId: 'hist-zhao-xie',      capitalCityId: 'ye',        color: '#e07b39', imperialRank: 'king', isPlayer: false },
+  { id: 'qi',   name: { en: 'Qi',         zh: '齊' }, rulerOfficerId: 'hist-tian-dan-chu',  capitalCityId: 'linzi',     color: '#2aa8c0', imperialRank: 'king', isPlayer: false },
+  { id: 'wei',  name: { en: 'Wei',        zh: '魏' }, rulerOfficerId: 'hist-wei-bao',       capitalCityId: 'puyang',    color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
 ];
 const ASSIGN_CH_JULU: Record<string, OfficerAssignment> = {
   // 秦 — the boy-emperor in Xianyang and the empire's two great armies
@@ -9703,10 +9708,10 @@ const CITY_OWNERSHIP_CH_DAZE: Record<string, string> = Object.fromEntries(
   }),
 );
 const FORCES_CH_DAZE: Force[] = [
-  { id: 'qin',      name: { en: 'Qin Empire', zh: '秦'   }, rulerOfficerId: 'hist-qin-ershi',    capitalCityId: 'changan',   color: '#3a3a4a', isPlayer: false },
-  { id: 'zhangchu', name: { en: 'Zhang Chu',  zh: '張楚' }, rulerOfficerId: 'hist-chen-sheng',   capitalCityId: 'runan',     color: '#c0392b', isPlayer: false },
+  { id: 'qin',      name: { en: 'Qin Empire', zh: '秦'   }, rulerOfficerId: 'hist-qin-ershi',    capitalCityId: 'changan',   color: '#3a3a4a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'zhangchu', name: { en: 'Zhang Chu',  zh: '張楚' }, rulerOfficerId: 'hist-chen-sheng',   capitalCityId: 'runan',     color: '#c0392b', imperialRank: 'king', isPlayer: false },
   { id: 'chu',      name: { en: 'Chu (Xiang)', zh: '楚' }, rulerOfficerId: 'hist-xiang-liang',  capitalCityId: 'jianye',    color: '#e07b39', isPlayer: false },
-  { id: 'qi',       name: { en: 'Qi',         zh: '齊'   }, rulerOfficerId: 'hist-tian-dan-chu', capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
+  { id: 'qi',       name: { en: 'Qi',         zh: '齊'   }, rulerOfficerId: 'hist-tian-dan-chu', capitalCityId: 'linzi',     color: '#2aa8c0', imperialRank: 'king', isPlayer: false },
 ];
 const ASSIGN_CH_DAZE: Record<string, OfficerAssignment> = {
   // 秦 — the empire, vast but rotting under Er Shi and Zhao Gao
@@ -9765,9 +9770,9 @@ const CITY_OWNERSHIP_CH_WEISHUI: Record<string, string> = Object.fromEntries(
   ),
 );
 const FORCES_CH_WEISHUI: Force[] = [
-  { id: 'chu', name: { en: 'Chu', zh: '楚' }, rulerOfficerId: 'hist-xiang-yu',   capitalCityId: 'pengcheng', color: '#c0392b', isPlayer: false },
-  { id: 'han', name: { en: 'Han', zh: '漢' }, rulerOfficerId: 'hist-liu-bang',   capitalCityId: 'changan',   color: '#3a7dd9', isPlayer: false },
-  { id: 'qi',  name: { en: 'Qi',  zh: '齊' }, rulerOfficerId: 'hist-tian-guang', capitalCityId: 'linzi',     color: '#2aa8c0', isPlayer: false },
+  { id: 'chu', name: { en: 'Chu', zh: '楚' }, rulerOfficerId: 'hist-xiang-yu',   capitalCityId: 'pengcheng', color: '#c0392b', imperialRank: 'king', isPlayer: false },
+  { id: 'han', name: { en: 'Han', zh: '漢' }, rulerOfficerId: 'hist-liu-bang',   capitalCityId: 'changan',   color: '#3a7dd9', imperialRank: 'king', isPlayer: false },
+  { id: 'qi',  name: { en: 'Qi',  zh: '齊' }, rulerOfficerId: 'hist-tian-guang', capitalCityId: 'linzi',     color: '#2aa8c0', imperialRank: 'king', isPlayer: false },
 ];
 const ASSIGN_CH_WEISHUI: Record<string, OfficerAssignment> = {
   ...ASSIGN_CHUHAN,
@@ -9821,13 +9826,13 @@ export const SCENARIO_CH_WEISHUI: Scenario = {
 // captains who will found the Tang are scattered among the rebels to be won.
 // ════════════════════════════════════════════════════════════════════════
 const FORCES_ST_SUIEND: Force[] = [
-  { id: 'tang',     name: { en: 'Tang',      zh: '唐'   }, rulerOfficerId: 'hist-li-yuan',      capitalCityId: 'changan',  color: '#d4af37', isPlayer: false },
-  { id: 'wagang',   name: { en: 'Wagang',    zh: '瓦崗' }, rulerOfficerId: 'hist-li-mi-sui',    capitalCityId: 'puyang',   color: '#c0392b', isPlayer: false },
-  { id: 'zheng',    name: { en: 'Zheng',     zh: '鄭'   }, rulerOfficerId: 'hist-wang-shichong',capitalCityId: 'luoyang',  color: '#9a5a9a', isPlayer: false },
-  { id: 'xia',      name: { en: 'Xia',       zh: '夏'   }, rulerOfficerId: 'hist-dou-jiande',   capitalCityId: 'ye',       color: '#2aa8c0', isPlayer: false },
-  { id: 'xiqin',    name: { en: 'Western Qin', zh: '西秦' }, rulerOfficerId: 'hist-xue-ju',     capitalCityId: 'tianshui', color: '#8a6d3b', isPlayer: false },
-  { id: 'dingyang', name: { en: 'Dingyang',  zh: '定楊' }, rulerOfficerId: 'hist-liu-wuzhou',   capitalCityId: 'beiping',  color: '#5a7a8a', isPlayer: false },
-  { id: 'wu',       name: { en: 'Wu (Du)',   zh: '杜伏威' }, rulerOfficerId: 'hist-du-fuwei',   capitalCityId: 'shouchun', color: '#2f8e6f', isPlayer: false },
+  { id: 'tang',     name: { en: 'Tang',      zh: '唐'   }, rulerOfficerId: 'hist-li-yuan',      capitalCityId: 'changan',  color: '#d4af37', imperialRank: 'emperor', isPlayer: false },
+  { id: 'wagang',   name: { en: 'Wagang',    zh: '瓦崗' }, rulerOfficerId: 'hist-li-mi-sui',    capitalCityId: 'puyang',   color: '#c0392b', imperialRank: 'duke', isPlayer: false },
+  { id: 'zheng',    name: { en: 'Zheng',     zh: '鄭'   }, rulerOfficerId: 'hist-wang-shichong',capitalCityId: 'luoyang',  color: '#9a5a9a', imperialRank: 'king', isPlayer: false },
+  { id: 'xia',      name: { en: 'Xia',       zh: '夏'   }, rulerOfficerId: 'hist-dou-jiande',   capitalCityId: 'ye',       color: '#2aa8c0', imperialRank: 'king', isPlayer: false },
+  { id: 'xiqin',    name: { en: 'Western Qin', zh: '西秦' }, rulerOfficerId: 'hist-xue-ju',     capitalCityId: 'tianshui', color: '#8a6d3b', imperialRank: 'emperor', isPlayer: false },
+  { id: 'dingyang', name: { en: 'Dingyang',  zh: '定楊' }, rulerOfficerId: 'hist-liu-wuzhou',   capitalCityId: 'beiping',  color: '#5a7a8a', imperialRank: 'king', isPlayer: false },
+  { id: 'wu',       name: { en: 'Wu (Du)',   zh: '杜伏威' }, rulerOfficerId: 'hist-du-fuwei',   capitalCityId: 'shouchun', color: '#2f8e6f', imperialRank: 'king', isPlayer: false },
 ];
 const CITY_OWNERSHIP_ST_SUIEND: Record<string, string> = {
   // 唐 — the Tang, risen from Taiyuan and holding Guanzhong
@@ -9999,9 +10004,9 @@ export const SCENARIO_ST_BOBI: Scenario = {
 //    western rivals and their captains now ride for Tang; he pens Wang Shichong
 //    in Luoyang, seizes the Hulao pass, and breaks Dou Jiande's relief host. ──
 const FORCES_ST_HULAO: Force[] = [
-  { id: 'tang',  name: { en: 'Tang', zh: '唐' }, rulerOfficerId: 'hist-li-yuan',       capitalCityId: 'changan', color: '#d4af37', isPlayer: false },
-  { id: 'zheng', name: { en: 'Zheng', zh: '鄭' }, rulerOfficerId: 'hist-wang-shichong', capitalCityId: 'luoyang', color: '#9a5a9a', isPlayer: false },
-  { id: 'xia',   name: { en: 'Xia',  zh: '夏' }, rulerOfficerId: 'hist-dou-jiande',    capitalCityId: 'ye',      color: '#2aa8c0', isPlayer: false },
+  { id: 'tang',  name: { en: 'Tang', zh: '唐' }, rulerOfficerId: 'hist-li-yuan',       capitalCityId: 'changan', color: '#d4af37', imperialRank: 'emperor', isPlayer: false },
+  { id: 'zheng', name: { en: 'Zheng', zh: '鄭' }, rulerOfficerId: 'hist-wang-shichong', capitalCityId: 'luoyang', color: '#9a5a9a', imperialRank: 'emperor', isPlayer: false },
+  { id: 'xia',   name: { en: 'Xia',  zh: '夏' }, rulerOfficerId: 'hist-dou-jiande',    capitalCityId: 'ye',      color: '#2aa8c0', imperialRank: 'king', isPlayer: false },
 ];
 const CITY_OWNERSHIP_ST_HULAO: Record<string, string> = Object.fromEntries(
   Object.entries(CITY_OWNERSHIP_ST_SUIEND).map(([c, f]) => {
@@ -10062,8 +10067,8 @@ const CITY_OWNERSHIP_ST_ANSHI: Record<string, string> = Object.fromEntries(
   Object.keys(CITY_OWNERSHIP_CHUHAN).map((c) => [c, ANSHI_YAN.includes(c) ? 'yan' : 'tang']),
 );
 const FORCES_ST_ANSHI: Force[] = [
-  { id: 'tang', name: { en: 'Tang',     zh: '唐'   }, rulerOfficerId: 'hist-li-longji', capitalCityId: 'changan', color: '#d4af37', isPlayer: false },
-  { id: 'yan',  name: { en: 'Great Yan', zh: '大燕' }, rulerOfficerId: 'hist-an-lushan', capitalCityId: 'beiping', color: '#8b2e2e', isPlayer: false },
+  { id: 'tang', name: { en: 'Tang',     zh: '唐'   }, rulerOfficerId: 'hist-li-longji', capitalCityId: 'changan', color: '#d4af37', imperialRank: 'emperor', isPlayer: false },
+  { id: 'yan',  name: { en: 'Great Yan', zh: '大燕' }, rulerOfficerId: 'hist-an-lushan', capitalCityId: 'beiping', color: '#8b2e2e', imperialRank: 'emperor', isPlayer: false },
 ];
 const ASSIGN_ST_ANSHI: Record<string, OfficerAssignment> = {
   // 唐 — the dozing emperor, and the loyal commanders who must save the dynasty
