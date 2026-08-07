@@ -77,6 +77,9 @@ function deadlineOf(goal: Goal): number {
  * 公孫瓚自焚於易京樓、袁術嘔血於江亭、袁尚失鄴而走遼東。他們的主目標寫的是
  * 「守住」,AI 自走時當然守不住 —— 那不是資料錯,是題目。
  *
+ * **判準**:這一家在**這張盤所涵蓋的那幾年裡**,史書上的下場就是覆滅或失地。
+ * 不是「他最後輸了」—— 是「在這個窗口內他就輸了」。
+ *
  * 列在這裡,是為了讓掃描的頭條數字表示**沒有解釋的**死目標。
  * 沿用 `scenario-audit.ts` 的體例:要進來就得寫理由。
  */
@@ -86,6 +89,13 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
   { scenario: 'scn-198-xiapi',     force: 'yuan-shu',   why: '「仲氏不亡」—— 他 199 年嘔血死於江亭,問廚下惟有麥屑三十斛。' },
   { scenario: 'scn-204-yecheng',   force: 'yuan-shang', why: '「鄴城固守」—— 鄴城陷落是這張盤的名字。' },
   { scenario: 'scn-199-yijing',    force: 'gongsun',    why: '同 195:易京之戰的結局就是樓焚。' },
+  // 楚漢:項羽在這幾年裡先後打垮了齊與九江,那正是「楚漢相爭」的內容。
+  { scenario: 'scn-ch-chuhan',    force: 'jiujiang',   why: '「黥布反楚」—— 叛楚之後龍且擊破九江,英布單身走漢。' },
+  { scenario: 'scn-ch-sanqin',    force: 'jiujiang',   why: '同上:按兵不動的下場是被楚順手收拾。' },
+  { scenario: 'scn-ch-pengcheng', force: 'jiujiang',   why: '同上。' },
+  { scenario: 'scn-ch-chuhan',    force: 'qi',         why: '田榮 205 年為項羽所破而死,齊地再叛再破 —— 這張盤的前半就是它。' },
+  { scenario: 'scn-ch-sanqin',    force: 'qi',         why: '同上:牽制項羽的代價就是被項羽先打。' },
+  { scenario: 'scn-ch-jingxing',  force: 'qi',         why: '同上;而井陘之後韓信東下,齊亡於灌嬰之手。' },
 ];
 const byDesign = (sid: string, fid: string) => BY_DESIGN.some((e) => e.scenario === sid && e.force === fid);
 
