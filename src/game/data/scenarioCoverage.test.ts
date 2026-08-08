@@ -37,28 +37,22 @@ function findHoles(): Hole[] {
 }
 
 /**
- * 目前的空洞數。**只准往下改。**
+ * **棘輪已經收完,現在是硬性歸零。**
  *
- *  2026-08-01  黃巾之亂 271 → 反董卓聯軍 263 → 孫策定江東 247 → 官渡之戰 237 → 赤壁之戰 227(56 個盤還有洞)
+ *  2026-08-01  271 → 263 → 247 → 237 → 227(赤壁,56 個盤還有洞)
+ *  2026-08-07  補完 147 家缺目標、80 家缺序章 → 0
+ *  2026-08-08  預算拆掉:540 家全覆蓋,新加的盤沒寫齊會立刻紅
  *
- * 最大的幾個:孫策定江東 16、徐州牧 10、官渡之戰 10、白狼山 10、赤壁之戰 10。
- * 形狀很一致 —— 缺的都是**周邊勢力**(劉表、劉焉/劉璋、馬騰、公孫、孔融、
- * 士燮、烏桓),也就是「地圖上存在、但沒人替它寫過一句話」的那些家。
+ * 收掉預算是有代價的 —— 加一張新盤就得同時寫齊每一家的序章與目標,
+ * 而那正是這條測試的用途:一個新戰役要跟已有的 86 個一樣完整,才進得來。
  */
-const HOLE_BUDGET = 227;
-
 describe('戰役覆蓋率(序章 / 目標)', () => {
-  it('never grows the number of uncovered forces', () => {
+  it('每一家都有自己的序章與目標', () => {
     const holes = findHoles();
-    const byScenario = new Map<string, number>();
-    for (const h of holes) byScenario.set(h.scenario, (byScenario.get(h.scenario) ?? 0) + 1);
-    const worst = [...byScenario.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
     expect(
-      holes.length,
-      `空洞 ${holes.length} 個(預算 ${HOLE_BUDGET})。補了就把 HOLE_BUDGET 調低;`
-      + `新增的話這裡會告訴你是誰:\n`
-      + worst.map(([id, n]) => `  ${id}: ${n}`).join('\n'),
-    ).toBeLessThanOrEqual(HOLE_BUDGET);
+      holes.map((h) => `${h.scenario} / ${h.force} 缺${h.kind === 'prologue' ? '序章' : '目標'}`),
+      '選了這幾家開局會掉進空洞:沒有開場白,或目標卡是空的。',
+    ).toEqual([]);
   });
 
   /** 已經補齊的盤不可以再退回去 —— 逐盤鎖定,補一個加一個。 */
