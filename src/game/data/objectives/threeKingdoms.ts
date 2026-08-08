@@ -2134,17 +2134,23 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-197-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '北破袁紹', en: 'Break Yuan Shao' },
-        description: 'Destroy the Yuan Shao force by 207.',
-        descriptionZh: "於207年前擊滅袁紹 —— 以弱擊強,勝負在人不在眾。",
-        goal: { kind: 'defeat-force', forceId: 'yuan-shao', byYear: 207 },
+        title: { zh: '取鄴定冀', en: 'Take Ye, Settle Ji Province' },
+        description: 'Take Ye by 208 — the seat of the four provinces; with it, the north.',
+        descriptionZh: "於208年前攻下鄴城 —— 建安九年八月,審配之侄開東門,操入城,自領冀州牧,河北遂定。",
+        /*
+         * 原本是 `defeat-force yuan-shao byYear 207`,三輪 0/3 —— 又是收尾。
+         * 而史書上曹操也**沒有**把袁氏在 207 年之前掃乾淨:官渡 200 年勝,
+         * 袁紹 202 年病死,鄴 204 年才下,袁尚袁熙 207 年逃到遼東才被公孫康
+         * 斬首送來(那還是別人動的手)。他這十年真正做到的是**取鄴定冀**。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 208 },
       },
       secondary: [
         {
-          title: { zh: '取鄴定冀', en: 'Take Ye' },
-          description: 'Hold Ye by 208.',
-          descriptionZh: "於208年前攻下鄴城,河北遂定。",
-          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 208 },
+          title: { zh: '北破袁紹', en: 'Break the House of Yuan' },
+          description: 'Destroy the Yuan Shao force by 207 — more than the histories gave you.',
+          descriptionZh: "於207年前擊滅袁紹 —— 以弱擊強,勝負在人不在眾。史書上這件事你做了十年,而且最後一刀是公孫康替你動的。",
+          goal: { kind: 'defeat-force', forceId: 'yuan-shao', byYear: 207 },
         },
       ],
     },
@@ -2152,17 +2158,24 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-197-yuanshao',
       forceId: 'yuan-shao',
       primary: {
-        title: { zh: '飲馬黃河', en: 'Water the Horses at the Yellow River' },
-        description: 'Take Xuchang by 203.',
-        descriptionZh: "於203年前攻取許昌 —— 十萬之眾,不當渡不得一河。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 203 },
+        title: { zh: '易京樓下', en: 'Beneath the Tower at Yijing' },
+        description: 'Take Yijing and Ji by 201 — the tower burned, and the four provinces were one man\'s.',
+        descriptionZh: "於201年前取易京、薊 —— 建安四年,瓚見圍塹將及,自燒樓而死。四州之地,自此皆本初所有。",
+        /*
+         * 原本是「於203年前攻取許昌」,三輪 0/3 —— 而**袁紹史書上沒有打下許昌**:
+         * 官渡一戰他輸了,兩年後病死。這一條犯的正是全庫那把尺的反面。
+         * 他 197–201 這幾年真正做到的是滅公孫瓚、盡有幽冀青并 —— 那才是主目標,
+         * 飲馬黃河降為次要。用取城而不用 `defeat-force`:史書上公孫瓚是自焚的,
+         * 不是被逐城掃平的。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['yi-county', 'ji'], byYear: 201 },
       },
       secondary: [
         {
-          title: { zh: '併吞公孫', en: 'Swallow Gongsun Zan' },
-          description: 'Destroy the Gongsun Zan force by 201.',
-          descriptionZh: "於201年前滅公孫瓚,盡有幽冀。",
-          goal: { kind: 'defeat-force', forceId: 'gongsun', byYear: 201 },
+          title: { zh: '飲馬黃河', en: 'Water the Horses at the Yellow River' },
+          description: 'Take Xuchang by 203 — the thing the histories did not give you.',
+          descriptionZh: "於203年前攻取許昌 —— 十萬之眾,不當渡不得一河。史書上他沒過去。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 203 },
         },
       ],
     },
