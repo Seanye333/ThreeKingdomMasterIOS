@@ -26,12 +26,21 @@ const mkOfficer = (): Officer => ({
   equipment: [] as unknown as Officer['equipment'], skills: [], rank: 'soldier',
 } as Officer);
 
-/** 一座邑(人口小 → 上限低),而三項數值都被推到上限之上。 */
+/*
+ * 一座**城**(人口 8.5 萬 → statCap 100 / econCap 190),而三項都在上限之上。
+ *
+ * ⚠ 人口必須夠大。「大」字指令有 `minSize: 'city'` 的門檻 —— 第一版我拿劍閣
+ * (邑,兩萬五)當樣本,於是指令在算 gain 之前就被門檻擋掉,測試永遠是綠的:
+ * 把修正拿掉也照樣過。**寫完要反向驗一次:拿掉修正,它必須紅。**
+ *
+ * 這樣的城在盤上到得了:洛陽民三十二萬(京)打到剩十九萬(都)時,
+ * 它的農業還停在 288,而都的上限是 250。
+ */
 const overCapCity = (): City => ({
-  id: 'c', name: { zh: '劍閣', en: 'Jianmen' }, ownerForceId: 'f', adjacentCityIds: [],
-  population: 25_000,          // 邑:statCap 60 / econCap 90
-  troops: 5000, food: 20_000, gold: 5000,
-  loyalty: 70, defense: 95, agriculture: 120, commerce: 110, order: 70,
+  id: 'c', name: { zh: '殘破的都', en: 'A Battered Capital' }, ownerForceId: 'f', adjacentCityIds: [],
+  population: 85_000,          // 城:statCap 100 / econCap 190
+  troops: 9000, food: 40_000, gold: 8000,
+  loyalty: 70, defense: 130, agriculture: 250, commerce: 240, order: 70,
 } as unknown as City);
 
 describe('內政指令不會把超過上限的數值做低', () => {
@@ -43,15 +52,22 @@ describe('內政指令不會把超過上限的數值做低', () => {
     it(`${type} 對超額的城至多不動,絕不倒扣`, () => {
       const city = overCapCity();
       const before = city[field] as number;
-      let sawNegative = false;
-      for (let i = 0; i < 40; i++) {
-        const r = resolveInternalAffairs(type as never, mkOfficer(), city, () => (i % 7) / 7);
+      /*
+       * ⚠ 這裡本來寫 `if (r?.success && d < 0)` —— 而倒扣的那一路 `success`
+       * 正好是 false(`success: gain > 0`),於是條件永遠不成立,測試怎麼改
+       * 都是綠的。反向驗(拿掉修正)才看得出來:它一次也沒有紅過。
+       *
+       * delta 是**不論成敗都會套用**的(resolution 直接加 delta.defense),
+       * 所以要驗的是 delta 本身。rng 取高值以避開 civicMishap ——
+       * 失手扣分是設計,不在此列。
+       */
+      let worst = 0;
+      for (let i = 0; i < 20; i++) {
+        const r = resolveInternalAffairs(type as never, mkOfficer(), city, () => 0.9);
         const d = (r?.delta as Record<string, number> | undefined)?.[field] ?? 0;
-        // 失手(civicMishap)本來就會扣 —— 那是設計,不在此列;
-        // 這裡釘的是**成功**的那一路不該倒扣。
-        if (r?.success && d < 0) sawNegative = true;
+        if (d < worst) worst = d;
       }
-      expect(sawNegative, `${type} 成功時倒扣了 ${field}(開局 ${before})`).toBe(false);
+      expect(worst, `${type} 把 ${field} 倒扣了(開局 ${before})`).toBe(0);
     });
 
     it(`${type} 的預覽對超額的城顯示 0`, () => {
