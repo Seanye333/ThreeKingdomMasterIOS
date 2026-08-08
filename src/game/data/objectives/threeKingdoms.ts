@@ -1904,11 +1904,32 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-194-yuanshu',
       forceId: 'yuan-shu',
       primary: {
-        title: { zh: '仲氏之業', en: 'The House of Zhong' },
-        description: 'Declare yourself emperor.',
-        descriptionZh: "稱帝建號,國號仲氏。",
-        goal: { kind: 'declare-emperor' },
+        title: { zh: '淮南之主', en: 'Lord of Huainan' },
+        description: "Still hold Shouchun and Runan in 198 — the seal was in his sleeve and the granaries were not.",
+        descriptionZh: "至198年仍據壽春、汝南 —— 玉璽在袖,而倉廩不在。稱帝是明年的事,而明年之後就沒有後年了。",
+        /*
+         * 原本是 `declare-emperor`,而 **AI 袁術永遠稱不了帝**:`aiCourt` 的
+         * 即位規則要 `ranknow === 'king'`(20 城 + 215 年後)且
+         * `laterHanBoard === false || year >= 220` —— 這張盤 194 年、他九座城,
+         * 兩道門檻各差得很遠。而史書上他 197 年就僭號了,憑的是傳國玉璽與
+         * 「代漢者當塗高」那句讖,不是實力。
+         *
+         * ⚠ 順帶查到:`imperial-seal-found` 這個旗標**全庫只寫不讀** ——
+         * 孫堅得玉璽是名場面,而玉璽在遊戲裡不起任何作用。要讓「僭號」這條路
+         * 走得通,得先做玉璽的流轉(堅 → 策 → 術),那是一個小系統,不是一行。
+         * 記在 docs/CAMPAIGN-CHECKS.md 的待辦裡。
+         * 主目標先寫他真正握著的那一塊,稱帝降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'runan'], byYear: 198 },
       },
+      secondary: [
+        {
+          title: { zh: '仲氏之業', en: 'The House of Zhong' },
+          description: 'Declare yourself emperor — as he did in 197, and it killed him.',
+          descriptionZh: "僭號稱帝 —— 建安二年他真的做了,而那件事要了他的命。",
+          goal: { kind: 'declare-emperor' },
+        },
+      ],
     },
     {
       id: 'obj-194-mateng',
