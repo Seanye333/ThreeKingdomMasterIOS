@@ -2501,9 +2501,12 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
        */
       const defBoost = Math.max(2, Math.floor(officer.stats.leadership / 20));
       const defCap = cityStatCap(city);
+      // 同 commands.ts 的大築城:關隘的開局城防高過等級上限(劍閣 95 / 上限 60),
+      // 直接 `Math.min(cap, …)` 會把自家的關一鎮守就拆矮。只往上長,不往下砍。
+      const defAfter = Math.max(city.defense, Math.min(defCap, city.defense + defBoost));
       cities[city.id] = {
         ...city,
-        defense: Math.min(defCap, city.defense + defBoost),
+        defense: defAfter,
       };
       entries.push({
         cityId: city.id,

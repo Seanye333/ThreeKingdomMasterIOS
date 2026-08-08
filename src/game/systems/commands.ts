@@ -756,7 +756,17 @@ export function resolveInternalAffairs(
           messageZh: `${officer.name.zh}大築城遇坍塌失火,城防 ${setback}。`,
         };
       }
-      const gain = Math.min(cap - city.defense, applyDevelopment(city.defense, statValue, rng, cap) * 3);
+      /*
+       * ⚠ `Math.max(0, …)` 不能省 —— **關隘的開局城防高過它的等級上限**。
+       *
+       * `cityStatCap` 是按人口分級的(邑 60 / 鎮 80 / 城 100 …),而關的人口
+       * 本來就少:劍閣民二萬五而城防 95、函谷關民一萬二而城防 88。全圖有
+       * 十三座這樣的城,全是關。於是 `cap - city.defense` 是**負數**,
+       * 而 `applyDevelopment` 已經對超額回 0 —— `Math.min(負, 0)` 取到負,
+       * 大築城反而把自家的關拆矮了。(同一行的預覽字串有 `Math.max(0, …)`,
+       * 所以介面顯示 +0 而實際扣分。)
+       */
+      const gain = Math.max(0, Math.min(cap - city.defense, applyDevelopment(city.defense, statValue, rng, cap) * 3));
       return {
         success: gain > 0,
         delta: { defense: gain },
