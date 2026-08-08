@@ -4376,10 +4376,10 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-272-wu',
       forceId: 'sun',
       primary: {
-        title: { zh: '西陵之守', en: 'The Defence of Xiling' },
-        description: 'Still hold Xiling and Jiangling in 278 — Lu Kang built a wall against his own rebel general.',
-        descriptionZh: "至278年仍保西陵、江陵 —— 陸抗築嚴圍以待步闡,不攻而先自固。",
-        goal: { kind: 'hold-cities', cityIds: ['xiling', 'jiangling'], byYear: 278 },
+        title: { zh: '西陵之復', en: 'Xiling Retaken' },
+        description: 'Retake Xiling and hold Jiangling to 276 — the ring went up in the autumn and the city fell before the year turned.',
+        descriptionZh: "復西陵、保江陵至276年 —— 圍成於秋,城下於冬,步氏夷三族。這是吳國兵法的最後一件傑作,也是它多活的那十年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiling', 'jiangling'], byYear: 276 },
       },
       secondary: [
         {
@@ -4393,13 +4393,33 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-272-jin',
       forceId: 'sima',
+      /*
+       * 主目標原本與吳寫成同一組城(西陵+江陵,同一個 278)—— 掃描早就把
+       * 「兩家主目標指向同一座城」列為四種死法之一,而這裡更麻煩:**晉在
+       * 史書上沒有保住西陵**。272 年冬陸抗就把它拿回去了,晉真正動手是 280 年。
+       *
+       * 羊祜這六年做的是另一件事:鎮襄陽、開屯田、以德懷吳,積到「軍有十年
+       * 之積」才上平吳之疏(而他 278 年就卒了,沒等到)。主目標寫他真正做到的,
+       * 取西陵降為次要。
+       */
       primary: {
-        title: { zh: '取西陵', en: 'Take Xiling' },
-        description: 'Take Xiling and Jiangling by 278 — Bu Chan has opened the door.',
-        descriptionZh: "於278年前取西陵、江陵 —— 步闡已獻城,上游一開,吳不能守。",
-        goal: { kind: 'hold-cities', cityIds: ['xiling', 'jiangling'], byYear: 278 },
+        title: { zh: '羊祜之政', en: "Yang Hu's Long Preparation" },
+        description: 'Still hold Xiangyang and Wancheng in 278 — Yang Hu farmed the border for ten years of grain before he ever asked to march.',
+        descriptionZh: "至278年仍鎮襄陽、夷陵 —— 祜在軍,常輕裘緩帶,身不被甲;墾田八百餘頃,軍有十年之積。平吳之疏未及行而卒,而滅吳用的正是他留下的糧與船。",
+        /*
+         * 查的是襄陽**與夷陵**,不是襄陽與宛城 —— 宛城是腹地,守成目標查腹地
+         * 就是白送(12 輪 12/12)。夷陵在西陵下游,吳軍要復西陵得先過這裡,
+         * 是這張盤上晉真的會丟的那一座。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'yiling'], byYear: 278 },
       },
       secondary: [
+        {
+          title: { zh: '取西陵', en: 'Take Xiling' },
+          description: 'Take Xiling — Bu Chan has opened the door.',
+          descriptionZh: "取西陵 —— 步闡已獻城,上游一開,吳不能守。史書上這扇門當年冬天就被陸抗關上了。",
+          goal: { kind: 'hold-cities', cityIds: ['xiling'], byYear: 280 },
+        },
         {
           title: { zh: '混一宇內', en: 'Unify the Realm' },
           description: 'Bring all under one banner.',

@@ -8509,8 +8509,34 @@ export const SCENARIO_272_XILING: Scenario = {
   // 陸抗一人撐住西陵,而建業那邊在殺人
   cities: buildInitialCities(CITY_OWNERSHIP_272,
     {
-      sima: { troops: 1.25, food: 1.25, gold: 1.25, defense: 8,  loyalty: 10 },
-      sun:  { troops: 1.05, food: 1.00, gold: 0.95, defense: 12, loyalty: -16 },
+      /*
+       * 姿態改於 2026-08-08 —— 體檢跑出來的是一面倒:晉 91 城 → 95,吳 26 → 7,
+       * 吳的主目標 0/5。而 272 年這一仗吳是**贏的**,而且贏完之後這個王朝
+       * 又活了八年;晉真正動手是 280 年杜預王濬那一次。
+       *
+       * 病在兩頭都推到極端:晉已經有 91 座城,姿態還 ×1.25 全開;吳 26 座城
+       * 而兵糧金一律 ×1.0 上下。盤上於是沒有任何東西表達「此刻這條江他過不去」。
+       *
+       * 晉:泰始八年,代魏方七年,涼州禿髮樹機能之亂未平,而羊祜在襄陽做的是
+       *     屯田積穀、以德懷吳 —— 那是**準備**的姿態,不是壓境的姿態。
+       * 吳:孫皓之世,民忠低是對的(暴虐苛政),但陸抗手上那支荊州軍是吳國
+       *     最後的精銳,而長江是它真正的城牆。
+       */
+      sima: { troops: 1.10, food: 1.15, gold: 1.15, defense: 8,  loyalty: 10 },
+      sun:  { troops: 1.15, food: 1.10, gold: 0.95, defense: 22, loyalty: -16 },
+    }, {
+      /*
+       * 江關具名調硬 —— 照 208 盤陽平關的做法:**只調城防,不調兵**。
+       * 陸抗上疏說的「西陵、建平,國之藩表」講的就是這一條線:自巴丘、
+       * 武昌到建業,晉軍要一座一座啃下來才過得了江。
+       */
+      jiangling: { defense: 92 },
+      gongan:    { defense: 84 },
+      jiangxia:  { defense: 88 },
+      wuchang:   { defense: 86 },
+      jianye:    { defense: 90 },
+      baqiu:     { defense: 80 },
+      chaisang:  { defense: 80 },
     }),
   forces: FORCES_265,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_272, DEAD_BY_265, 272),

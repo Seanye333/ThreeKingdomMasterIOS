@@ -4644,8 +4644,16 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       {
         id: 'wall',
         label: { zh: '築嚴圍 —— 內以圍闡,外以禦寇', en: 'Build the ring: inward against Bu Chan, outward against Jin' },
+        /*
+         * ⚠ 這裡原本寫的是 `city-defense: xiling +20` —— 而西陵在這張盤上是
+         * **步闡獻給晉的城**。也就是說吳玩家選「築嚴圍」,系統反手把敵人的城
+         * 修硬了 20 點。陸抗築的是圍城的牆(自赤谿至故市),內以圍闡、外以禦寇,
+         * 它該讓那座孤城守不下去,不是讓它更好守。
+         */
         effects: [
-          { kind: 'city-defense', cityId: 'xiling', delta: 20 },
+          { kind: 'city-troops-multiplier', cityId: 'xiling', multiplier: 0.72 },
+          { kind: 'city-food', cityId: 'xiling', delta: -22000 },
+          { kind: 'city-loyalty', cityId: 'xiling', delta: -20 },
           { kind: 'officer-loyalty', officerId: 'lu-kang', delta: 8 },
           { kind: 'flag', key: 'xiling-decided' },
           { kind: 'flag', key: 'xiling-walled' },
@@ -4708,6 +4716,11 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     requires: [
       { kind: 'flag-set', key: 'chain-xiling' },
       { kind: 'officer-alive', officerId: 'lu-kang' },
+      /*
+       * 西陵得先回到吳手上這一疏才說得通 —— 「西陵國之西門」是陸抗**收復之後**
+       * 上的疏,而效果是替它增兵加防。城還在晉手裡就演,等於替敵人加固。
+       */
+      { kind: 'city-owner-ruler', cityId: 'xiling', rulerOfficerId: 'sun-hao' },
       { kind: 'flag-unset', key: 'xiling-memorial' },
     ],
     description:
@@ -4718,6 +4731,44 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'city-troops-multiplier', cityId: 'xiling', multiplier: 1.2 },
       { kind: 'flag', key: 'xiling-memorial' },
     ],
+  },
+
+  {
+    /*
+     * 這條鏈原本缺的是**這一仗本身**:築圍 → 羊陸之交 → 上疏,而「圍了一個月
+     * 之後怎麼了」沒有人交代。史書上這裡是三路晉援被逐一擊破、西陵城破、
+     * 步闡與同謀者數十家夷三族 —— 吳國兵法的最後一件傑作,替這個王朝又
+     * 續了十年。
+     *
+     * 事件不能直接把城judge給誰(EventEffect 沒有轉移歸屬那一種,那是刻意的:
+     * 城要靠打)。所以這一節做的是**讓那座孤城守不住**:圍了一冬,城中糧盡、
+     * 兵疲、人心已離,剩下的交給盤上的軍隊。
+     */
+    id: 'evt-xiling-4',
+    name: { en: 'Xiling Falls; the Bu Clan Ends', zh: '破西陵・誅步氏' },
+    yearMin: 272,
+    yearMax: 276,
+    requires: [
+      { kind: 'flag-set', key: 'chain-xiling' },
+      { kind: 'flag-set', key: 'xiling-walled' },
+      { kind: 'officer-alive', officerId: 'lu-kang' },
+      { kind: 'officer-alive', officerId: 'bu-chan' },
+      { kind: 'flag-unset', key: 'xiling-fallen' },
+    ],
+    description:
+      'The ring holds. Yang Hu drives at Jiangling and is turned; Yang Zhao comes up to the wall and is beaten off in the dark; Xu Yin never gets past the gorge. Then the ring turns inward. Bu Chan and the dozens of families who went over with him are put to death to the third degree of kin — and Lu Kang, having taken the city, pardons everyone else.',
+    descriptionZh: '圍既成,羊祜攻江陵不克,楊肇夜遁,徐胤不得過峽。三道之援既卻,抗乃還攻西陵。城中糧盡,守者離心,遂拔之。闡及其同計者數十家,皆夷三族;自餘所請,一無所問。吳人謂之「國之藩表」既固,而晉之圖吳,自此又待八年。',
+    effects: [
+      { kind: 'city-troops-multiplier', cityId: 'xiling', multiplier: 0.45 },
+      { kind: 'city-defense', cityId: 'xiling', delta: -25 },
+      { kind: 'city-loyalty', cityId: 'xiling', delta: -25 },
+      { kind: 'officer-status', officerId: 'bu-chan', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'lu-kang', delta: 12 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: 8 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sima-yan', delta: -5 },
+      { kind: 'flag', key: 'xiling-fallen' },
+    ],
+    mood: 'martial',
   },
 
   // ---- 晉滅吳 -----------------------------------------------------------
