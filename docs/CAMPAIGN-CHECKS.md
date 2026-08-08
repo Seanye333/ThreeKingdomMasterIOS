@@ -24,6 +24,7 @@
 | 5 | 目標期限是否活過君主 | `node --import tsx scripts/objective-lifespan-audit.ts` | `objectiveLifespan.test.ts` | **0 條**(硬性) |
 | 6 | 目標是否真的達得到(自走) | `node --import tsx scripts/objective-sweep.ts 3` | — | 見 §3(診斷,約一小時) |
 | 7 | 鄰近補位有沒有送錯城 | `node --import tsx scripts/fill-audit.ts` | `proximityFill.test.ts` | 224 可疑(診斷) |
+| 7b | 取得型目標 AI 構不構得著 | `node --import tsx scripts/reachability-audit.ts` | — | 38 條壓力 0 / 114 條低於門檻(診斷,一秒) |
 | 8 | 單盤 AI 自走體檢 | `node --import tsx scripts/scenario-report.ts <id> 180 12` | — | 逐盤(診斷) |
 | 9 | 全 AI 觀察一整局 | `node --import tsx scripts/ai-watch.ts` | — | 診斷 |
 | 10 | 時代不外漏(外傳三線) | — | `eraLeaks.test.ts` / `altEraEventChains.test.ts` | **硬性** |
@@ -118,6 +119,35 @@ node --import tsx scripts/objective-sweep.ts 3 scn-2      # 只掃三國中後�
    襄平 5、五丈原 6、興勢 6、鍾會之亂 6、鹵城 7、安史之亂 7、彭城 7。
 6. **`fill-audit` 的 224 座可疑補位城**。判準是「這一家在那個州一座明列的城
    都沒有」,邊界城本來就會跨州,所以不追求 0 —— 但值得逐州翻一遍。
+
+---
+
+## 3b. 一秒鐘就能算出來的那一類死目標(`reachability-audit.ts`)
+
+第 6 條掃描要跑一個鐘頭,而其中**有一整類是靜態就算得出來的**。
+`pickForceTarget`(`systems/ai.ts`)只把下面這個值 ≥ 1.05 的城列進候選:
+
+```
+壓力      = Σ(相鄰己方城 troops × 0.6)
+effDef    = 目標城 troops × (1 + defense / 200)
+feasibility = 壓力 / effDef
+```
+
+低於門檻的城 **AI 一輩子不會去打** —— 不是難,是不在名單裡。189 盤一次撞到三條:
+十常侍要洛陽(0.42)、孫堅要襄陽(**壓力 0,兩座城都不相鄰**)、曹操要許昌(0.54)。
+三條都要跑滿 12 輪才在報告上顯示 0/12,而這支腳本一秒鐘就指出來。
+
+全庫現況:149 條取得型主目標裡,**38 條開局壓力 0**(完全不相鄰)、
+另 76 條在門檻之下。那 38 條與第 6 條掃描的「從未達成」清單高度重合
+(208 劉備南征四郡、211 劉備西取益州、194 曹操報父之讎、195 孫策江東六郡、
+207 劉表北伐許都,兩邊都在)。
+
+⚠ **這是診斷,不是判決。** 開局算不到不代表永遠算不到 —— AI 打下中間那座城
+之後壓力就變了。實例:西陵盤吳的「西陵之復」開局 0.97,而實測 6–9/12 達成。
+判準是:**壓力 0 幾乎一定是死的**(除非中間那幾座城會先易主),
+`0 < f < 1.05` 要看那一家會不會長大,小國多半不會。
+玩家目標另當別論 —— **玩家可以集中兵力,AI 不會**;把「你做得到而 AI 做不到」
+的事寫成次要目標是刻意的,寫成主目標不是。
 
 ---
 
