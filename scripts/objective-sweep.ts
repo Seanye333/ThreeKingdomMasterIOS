@@ -118,6 +118,8 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
    */
   { scenario: 'scn-264-zhonghui',  force: 'zhonghui',   why: '「據蜀自王」—— 正月十八日亂兵鼓噪而入,會與姜維皆見殺,死者數百人。' },
   { scenario: 'scn-280-jin-unite', force: 'sun',        why: '「守此殘江」—— 這張盤的名字就是晉滅吳;三月壬寅,皓面縛輿櫬詣軍門降。' },
+  { scenario: 'scn-211-weinan',    force: 'ma-chao',    why: '渭南之戰就是他敗的那一仗:公用賈詡計,離之,一戰而關中平。此後他再沒有回到關中。' },
+  { scenario: 'scn-211-weinan',    force: 'han-sui',    why: '同上;而韓遂 215 年為其將麴演等所殺,傳首許都,年七十餘。' },
 ];
 const byDesign = (sid: string, fid: string) => BY_DESIGN.some((e) => e.scenario === sid && e.force === fid);
 

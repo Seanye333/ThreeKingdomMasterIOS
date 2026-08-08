@@ -2869,17 +2869,23 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-211-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '離間關中', en: 'Sow Discord in Guanzhong' },
-        description: 'Destroy the Ma Chao force by 215.',
-        descriptionZh: "於215年前擊滅馬超 —— 抹書間韓遂,關中十部自潰。",
-        goal: { kind: 'defeat-force', forceId: 'ma-chao', byYear: 215 },
+        title: { zh: '據潼關而守之', en: 'Hold the Tong Pass' },
+        description: "Still hold Chang'an and the Tong Pass in 215 — you crossed at Puban, walled the river road in a night of frost, and let the ten camps come to you.",
+        descriptionZh: "至215年仍據長安、潼關 —— 公自潼關北渡,夜渡蒲阪,以沙為城,水灌之,一夜而成。十部連兵而東,而關中終不易主。",
+        /*
+         * 原本是 `defeat-force ma-chao byYear 215`,而**曹操沒有滅掉馬超**:
+         * 渭南破其軍而已,超走涼州,212 年還殺韋康據冀城,214 年才被逐而投張魯。
+         * 這一戰他真正做到的是**守住關中** —— 抹書間韓遂是手段,不是戰果。
+         * 離間降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan'], byYear: 215 },
       },
       secondary: [
         {
-          title: { zh: '固守長安', en: "Hold Chang'an" },
-          description: "Still hold Chang'an in 215.",
-          descriptionZh: "至215年仍據長安。",
-          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 215 },
+          title: { zh: '離間關中', en: 'Sow Discord in Guanzhong' },
+          description: 'Destroy the Ma Chao force by 215 — more than the letter with the smudges achieved.',
+          descriptionZh: "於215年前擊滅馬超 —— 抹書間韓遂,關中十部自潰。而史書上他只是走了,並沒有滅。",
+          goal: { kind: 'defeat-force', forceId: 'ma-chao', byYear: 215 },
         },
       ],
     },
@@ -2887,10 +2893,20 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-211-machao',
       forceId: 'ma-chao',
       primary: {
-        title: { zh: '關中十部之盟', en: 'The Ten Camps in League' },
-        description: "Still hold Chencang, Anding and Wuwei in 215 — ten armies came east together; Chang'an was never yours to keep.",
-        descriptionZh: "至215年仍據陳倉、安定、武威 —— 十部連兵東下,而長安從來沒有真正在你手上。",
-        goal: { kind: 'hold-cities', cityIds: ['chencang', 'anding', 'wuwei'], byYear: 215 },
+        title: { zh: '涼州猶在', en: 'Liang Province Still Stands' },
+        description: 'Still hold Wuwei and Anding in 213 — beaten at Wei-nan, he went back west and was still a power there two years on.',
+        descriptionZh: "至213年仍據武威、安定 —— 渭南既敗,超走涼州;明年復攻冀城,圍之八月而下。關中丟了,而隴右諸郡還聽他的。",
+        /*
+         * 三改而成,兩次都被工具擋下,記在這裡:
+         *  ① 原本是「至215年仍據陳倉、安定、武威」—— 渭南之戰他**輸了**,
+         *     守關中三城到 215 年是寫他沒做到的事。
+         *  ② 第二版寫成「取天水」(他 212 年圍冀城八月而下,冀城即天水郡治)
+         *     —— 被 `objectiveDiplomacy.test.ts` 當場擋下:**天水是韓遂的,
+         *     而渭南之戰時馬韓兩家是盟軍**(開局 allied),這條從第 0 旬就是死的。
+         *  ③ 改成守武威、安定到 213:那是他敗退之後真正還握著的地方,
+         *     而且不指向盟友的城。原條(守到 215)降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 213 },
       },
       secondary: [
         {
@@ -2947,11 +2963,24 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-211-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '北取合肥', en: 'Take Hefei' },
-        description: 'Take Hefei by 217 — the wall Sun Quan never got over.',
-        descriptionZh: "於217年前攻取合肥 —— 孫權一生沒有翻過的那堵牆。",
-        goal: { kind: 'hold-cities', cityIds: ['hefei'], byYear: 217 },
+        title: { zh: '濡須之守', en: 'The Ruxu Boom' },
+        description: 'Take and hold Ruxu by 217 — Lü Meng said build the fort before you need it; the year after, Cao Cao came and could not pass.',
+        descriptionZh: "於217年前據濡須 —— 呂蒙勸權夾水口立塢,諸將皆曰「上岸擊賊,洗足入船,何用塢為」,蒙曰:「兵有利鈍,戰無百勝。」明年操果來攻,相拒月餘,望其舟船器仗軍伍整肅,喟然嘆曰:「生子當如孫仲謀。」",
+        /*
+         * 原本是「於217年前攻取合肥」—— 而這條目標自己的英文描述就寫著
+         * 「the wall Sun Quan never got over」。全庫那把尺:主目標寫他真正
+         * 做到的。他這幾年真正做到的是築濡須塢,並且擋住了曹操。合肥降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ruxu'], byYear: 217 },
       },
+      secondary: [
+        {
+          title: { zh: '北取合肥', en: 'Take Hefei' },
+          description: 'Take Hefei by 217 — the wall Sun Quan never got over.',
+          descriptionZh: "於217年前攻取合肥 —— 孫權一生沒有翻過的那堵牆。",
+          goal: { kind: 'hold-cities', cityIds: ['hefei'], byYear: 217 },
+        },
+      ],
     },
     {
       id: 'obj-211-liuzhang',
