@@ -305,12 +305,25 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   {
     id: 'evt-baiyi',
     name: { en: 'White-Robed Crossing', zh: '白衣渡江' },
-    yearMin: 212,
+    /*
+     * 窗口 212 → 218(2026-08-08)。原本從 212 年開就開,而**史書上這是
+     * 建安二十四年(219)冬的事**,前提是關羽北伐襄樊、盡起江陵之兵而後方空虛
+     * ——「羽果信之,稍撤兵以赴樊」。
+     *
+     * 量得出來的後果:213 落鳳坡盤 12 輪**每一輪第 1 回合就演**,關羽當場身死,
+     * 劉備 18 城掉到 10。214、215 兩張盤同型。也就是說荊州易主在這幾張盤上
+     * 不是一場戰役,是開局的一則公告。
+     *
+     * 另加一條守衛:江陵得在關羽(劉備)手裡 —— 白衣渡江渡的是那座城,
+     * 城不在他手上這一幕沒有對象。
+     */
+    yearMin: 218,
     yearMax: 225,
     requires: [
       { kind: 'officer-active', officerId: 'lu-meng' },
       { kind: 'officer-alive', officerId: 'guan-yu' },
       { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'city-owner-ruler', cityId: 'jiangling', rulerOfficerId: 'liu-bei' },
       { kind: 'flag-unset', key: 'baiyi-deferred' },
     ],
     description:
