@@ -3946,7 +3946,13 @@ export const SCENARIO_189_EUNUCHS: Scenario = {
       sun:       { troops: 1.25, food: 0.90, gold: 0.90, defense: 0,  loyalty: 0 },
       'liu-biao': { troops: 0.85, food: 1.15, gold: 1.10, defense: 4, loyalty: 6 },
       'liu-yan':  { troops: 0.85, food: 1.20, gold: 1.05, defense: 8, loyalty: 6 },
-    }),
+    }, {
+    // 中平六年八月:何進已死於宮中,宦官挾帝出走,西園八校尉之眾潰散。
+    // 董卓帶三千人進洛陽,靠的是夜出晨入的疑兵,不是打下來的 ——
+    // 而城的樣板兵力是二萬五,乘上姿態仍有一萬八,誰也攻不進去。
+    // 掃描裡「缺 luoyang@han」的取得型死目標有六條,源頭在這個數字。
+    luoyang: { troops: 9000, defense: 60 },
+  }),
   forces: FORCES_189,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_189, DEAD_BY_189, 189),
 };
@@ -5085,7 +5091,11 @@ export const SCENARIO_192_WANGYUN: Scenario = {
       'liu-biao': { troops: 0.90, food: 1.15, gold: 1.10, defense: 4, loyalty: 8 },
       'tao-qian': { troops: 0.85, food: 1.20, gold: 1.10, defense: 4, loyalty: 6 },
       'liu-yan':  { troops: 0.85, food: 1.20, gold: 1.05, defense: 8, loyalty: 6 },
-    }),
+    }, {
+    // 初平三年:王允誅董之後,長安城中無主;李傕郭汜以西涼餘部十萬圍之,
+    // 八日而破,呂布率數百騎出武關。守軍的樣板值撐不起這段史事。
+    changan: { troops: 8000, defense: 55 },
+  }),
   forces: FORCES_192,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_192, DEAD_BY_192, 192),
 };
