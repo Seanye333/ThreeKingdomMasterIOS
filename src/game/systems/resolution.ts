@@ -74,7 +74,7 @@ import { addSeasons } from './diplomacy';
 const WET_SIEGE_GROUND = new Set(['river', 'lake', 'sea', 'marsh']);
 import { clanOf } from '../data/clans';
 import { shrineEffects } from './culturalWorks';
-import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS } from './citySize';
+import { citySize, citySizeRank, CAPITAL_LOYALTY_BONUS, cityStatCap } from './citySize';
 import { corruptionAccrualMultiplier } from './traitEffects';
 import { rollCivicEvents } from './civicEvents';
 import { settleRefugees, REFUGEE_SHED_FRAC, refugeePolicyEffects, aiRefugeePolicy } from './refugees';
@@ -2485,10 +2485,25 @@ export function resolveSeason(input: ResolutionInput): ResolutionOutput {
           reclaimed++;
         }
       }
+      /*
+       * 鎮守加城防要吃**城的等級上限**,不是那個 200 的安全網。
+       *
+       * 這一行原本是 `Math.min(200, …)` —— 而 200 是 resolution 尾端的
+       * 保險絲(見那裡的註解:「Per-command logic already clamps to the
+       * city-tier cap … These are just safety buffers」)。每一條加城防的
+       * 指令都該自己夾到 `cityStatCap`,而鎮守漏了。
+       *
+       * 後果不是小數目:京(人口 ≥28 萬)的上限是 160,而洛陽實測跑到 **172**。
+       * 一座城防 172 的都城,AI 的攻擊門檻算下來永遠不划算 —— 於是
+       * 「提兵入洛」「奉天子以令不臣」「還都長安」這一類目標全部是死的
+       * (掃描裡缺 `luoyang@han` 的就有六條)。反覆鎮守就能把任何都城
+       * 推成打不下來的東西,這對玩家那一側同樣成立。
+       */
       const defBoost = Math.max(2, Math.floor(officer.stats.leadership / 20));
+      const defCap = cityStatCap(city);
       cities[city.id] = {
         ...city,
-        defense: Math.min(200, city.defense + defBoost),
+        defense: Math.min(defCap, city.defense + defBoost),
       };
       entries.push({
         cityId: city.id,

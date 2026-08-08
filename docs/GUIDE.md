@@ -3563,6 +3563,23 @@ AI 出兵不再只算兵力比 —— `decideCommand` 用**同一個** `siegeFac
 
 修法是 `endSeason` 開頭**每旬對齊一次**(八個賦值)。`itemRegistrySync.test.ts` 釘的是「鏡像會殘留」這件事本身 —— 那是修法存在的理由。
 
+### 鎮守把城防推過了城的等級上限(2026-08-07 修)
+
+`resolution.ts` 尾端有一句註解說得很清楚:「Per-command logic already clamps to
+the city-tier cap … These are just safety buffers above the highest tier cap」——
+每一條加城防的指令都該自己夾到 `cityStatCap`,那個 200 只是保險絲。
+
+**而「鎮守」漏了**,它直接寫 `Math.min(200, city.defense + defBoost)`。
+
+後果不是小數目:京(人口 ≥28 萬)的上限是 160,而 189 盤的洛陽實測跑到 **172**。
+一座城防 172 的都城,AI 的攻擊門檻算下來永遠不划算 —— 於是「提兵入洛」
+「奉天子以令不臣」「還都長安」這一類目標全是死的(掃描裡缺 `luoyang@han` 的
+就有六條,佔取得型死目標的近兩成)。反覆鎮守就能把任何都城推成打不下來的
+東西,這對玩家那一側同樣成立。
+
+修法一行:夾到 `cityStatCap(city)`。修後同一張盤的洛陽在 60 旬時是 70,
+不再一路爬。
+
 ## 第十一章 核心流程・勝敗・培訓・其他模式
 
 ### 10.z 引擎算了就要說:軍師兩條新告警 + 君主性格上畫面(2026-07-27)
