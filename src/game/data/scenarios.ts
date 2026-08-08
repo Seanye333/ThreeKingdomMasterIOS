@@ -1178,7 +1178,43 @@ export const SCENARIO_GATHERING_OF_HEROES: Scenario = {
     'Time is unmoored; every officer who ever drew breath now serves a banner. The realm awaits a single conqueror.',
   descriptionZh: "群雄並起之夢幻時局。十七路諸侯同立於天下——曹操據許昌，孫策橫江東，董卓守長安，呂布踞下邳，張魯擁漢中，劉焉領益州，韓遂雄涼地，公孫度割遼東，士燮鎮交趾。歲月錯亂，凡曾在世之將相皆執旗列陣。天下蒼茫，唯待一人問鼎。",
   startDate: { year: 200, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_GATHERING),
+  cities: buildInitialCities(CITY_OWNERSHIP_GATHERING, {
+    /*
+     * 十七路諸侯,十七種本錢 —— 這張盤原本一個姿態都沒有,於是「歲月錯亂,
+     * 凡曾在世之將相皆執旗列陣」在數字上只是十七家一模一樣的城。
+     * 一城的袁術與十六城的劉表,除了城數之外沒有任何分別。
+     */
+    cao:          { troops: 1.15, food: 1.05, gold: 1.10, defense: 4,   loyalty: 4 },
+    /* 仁德而無本 —— 六城之主,所恃者人。 */
+    'liu-bei':    { troops: 1.10, food: 0.90, gold: 0.75, defense: 0,   loyalty: 18 },
+    /* 小霸王橫江,兵銳而江東士民未附。 */
+    sun:          { troops: 1.20, food: 1.05, gold: 1.00, defense: 6,   loyalty: -8 },
+    'yuan-shao':  { troops: 1.20, food: 1.15, gold: 1.15, defense: 6,   loyalty: 2 },
+    /* 一城之僭帝:玉璽在手,而府庫與人心都不在。 */
+    'yuan-shu':   { troops: 0.85, food: 0.55, gold: 0.80, defense: 4,   loyalty: -22 },
+    /* 西涼銳卒挾天子 —— 兵最厚,民最不附。 */
+    dong:         { troops: 1.30, food: 1.00, gold: 1.20, defense: 8,   loyalty: -25 },
+    /* 二城之飛將:天下第一猛將,而無糧無治。 */
+    lubu:         { troops: 1.30, food: 0.70, gold: 0.60, defense: -4,  loyalty: -12 },
+    /* 帶甲十萬而坐談 —— 富、守得住、不出兵。 */
+    'liu-biao':   { troops: 0.80, food: 1.20, gold: 1.15, defense: 10,  loyalty: 6 },
+    /* 蜀道之險,自守之資。 */
+    'liu-yan':    { troops: 0.85, food: 1.20, gold: 1.05, defense: 14,  loyalty: 6 },
+    /* 五斗米道:民夷便樂之,雄據巴漢。 */
+    'zhang-lu':   { troops: 0.90, food: 1.20, gold: 1.05, defense: 16,  loyalty: 18 },
+    /* 白馬義從 —— 騎銳而糧不繼。 */
+    gongsun:      { troops: 1.20, food: 0.80, gold: 0.85, defense: 4,   loyalty: -4 },
+    /* 遼東自守,海外之國。 */
+    'gongsun-du': { troops: 0.90, food: 1.10, gold: 1.00, defense: 10,  loyalty: 10 },
+    'ma-teng':    { troops: 1.20, food: 0.80, gold: 0.75, defense: -6,  loyalty: -6 },
+    'han-sui':    { troops: 1.15, food: 0.80, gold: 0.75, defense: -6,  loyalty: -10 },
+    /* 名士守城:兵最弱而民最附(北海孔融,一郡之望)。 */
+    'kong-rong':  { troops: 0.60, food: 1.10, gold: 1.00, defense: 6,   loyalty: 20 },
+    /* 徐州殷實而兵弱 —— 這正是他三讓的理由。 */
+    tao:          { troops: 0.65, food: 1.25, gold: 1.20, defense: 4,   loyalty: 8 },
+    /* 交趾四十年不見兵革。 */
+    'shi-xie':    { troops: 0.75, food: 1.35, gold: 1.30, defense: 6,   loyalty: 20 },
+  }),
   forces: FORCES_GATHERING,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_GATHERING),
 };
@@ -7216,7 +7252,13 @@ export const SCENARIO_WHATIF_GUANYU_JING: Scenario = {
     'at a vengeful Liu Bei whose Han now stretches unbroken from Hanzhong to the Yangtze.',
   descriptionZh: "公元220年秋——白衣渡江功敗垂成之世。關羽識破呂蒙詭計，固守江陵，盡保荊襄。曹丕受漢獻帝禪讓，方建魏室。呂蒙憂憤成疾，病歿於建業。孫權西望，而劉備之漢自漢中綿延至大江，雲長坐鎮荊州，磨刀以待。",
   startDate: { year: 220, season: 'autumn' },
-  cities: buildInitialCities(CITY_OWNERSHIP_GUANYU_JING),
+  cities: buildInitialCities(CITY_OWNERSHIP_GUANYU_JING, {
+      ...TK_LATE,
+      /* 荊襄盡保 —— 蜀比史實多一個荊州的兵源與糧道。 */
+      'liu-bei': { troops: 1.15, food: 1.05, gold: 0.90, defense: 10, loyalty: 14 },
+      /* 白衣渡江功敗垂成:呂蒙憂憤而歿,十一城的吳失了那一整片江北之利。 */
+      sun:       { troops: 0.85, food: 1.05, gold: 0.95, defense: 10, loyalty: -10 },
+    }),
   forces: FORCES_GUANYU_JING,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_GUANYU_JING, DEAD_BY_GUANYU_JING, 220),
 };
@@ -7390,7 +7432,13 @@ export const SCENARIO_WHATIF_ZHUGE_LIVES: Scenario = {
     'the Prime Minister of Han stands at age sixty, weary, ink-stained, and victorious.',
   descriptionZh: "公元240年春。諸葛丞相未殞於五丈原——病癒後再啟六出之師，於戊午（238）光復長安。魏失關中，曹叡退守鄴城，司馬懿勉力護洛。姜維鎮天水，丞相身居長安，年屆耳順之歲，鬢染霜華，案牘勞形，而漢室西半，終復其舊。",
   startDate: { year: 240, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_ZHUGE_LIVES),
+  cities: buildInitialCities(CITY_OWNERSHIP_ZHUGE_LIVES, {
+      ...TK_LATE,
+      /* 丞相身居長安 —— 復關中之後,蜀第一次有了關中的糧與人。 */
+      'liu-bei': { troops: 1.15, food: 1.10, gold: 1.00, defense: 12, loyalty: 18 },
+      /* 魏失關中,曹叡退守鄴 —— 大而失其屏障。 */
+      cao:       { troops: 1.10, food: 1.10, gold: 1.10, defense: 2,  loyalty: -8 },
+    }),
   forces: FORCES_ZHUGE_LIVES,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_ZHUGE_LIVES, DEAD_BY_ZHUGE_LIVES, 240),
 };
@@ -7640,7 +7688,18 @@ export const SCENARIO_WHATIF_CAO_WINS_CHIBI: Scenario = {
     'shadow of Liu Zhang. The Han\'s last hope sleeps in a refugee\'s cradle.',
   descriptionZh: "公元208年冬。東南風終是不至。曹軍斥候早窺破黃蓋詐降之計，連環鐵索安然無恙，周郎殞於亂軍之中。曹公追擊至建業，斬孫權於江岸，東吳一日而傾。劉備攜諸葛孔明西奔，乞庇於劉璋羽翼之下。漢家最後一線生機，眠於襁褓之中——時阿斗方二歲耳。",
   startDate: { year: 208, season: 'winter' },
-  cities: buildInitialCities(CITY_OWNERSHIP_CHIBI_WIN),
+  cities: buildInitialCities(CITY_OWNERSHIP_CHIBI_WIN, {
+    /* 七十六城之主 —— 赤壁不敗,舟師與府庫都在。 */
+    cao:         { troops: 1.25, food: 1.20, gold: 1.20, defense: 8,   loyalty: 6 },
+    /* 一城流亡,乞庇於劉璋羽翼之下。 */
+    'liu-bei':   { troops: 0.85, food: 0.70, gold: 0.60, defense: 0,   loyalty: 16 },
+    /* 孫權斬於江岸,東吳一日而傾 —— 三城殘部。 */
+    sun:         { troops: 0.55, food: 0.50, gold: 0.55, defense: 6,   loyalty: -25 },
+    'liu-zhang': { troops: 0.85, food: 1.25, gold: 1.05, defense: 14,  loyalty: 4 },
+    'zhang-lu':  { troops: 1.20, food: 1.25, gold: 1.05, defense: 16,  loyalty: 16 },
+    'ma-teng':   { troops: 1.05, food: 0.90, gold: 0.85, defense: -4,  loyalty: -8 },
+    'shi-xie':   { troops: 0.80, food: 1.35, gold: 1.30, defense: 6,   loyalty: 18 },
+  }),
   forces: FORCES_CHIBI_WIN,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_CHIBI_WIN, DEAD_BY_CHIBI_WIN, 208),
 };
@@ -7873,7 +7932,23 @@ export const SCENARIO_WHATIF_WOMEN: Scenario = {
     're-cast in jade and rouge.',
   descriptionZh: "公元200年春——平行之世。三國女傑撥開帷簾，親執兵符。貂蟬居長安，呂奉先為其劍鋒；孫尚香坐建業，伯符仲謀皆其驍將；黃月英治荊州，機巧造化為其權柄；祝融自南中興兵，益州亦入其轂；蔡琰於鄴城下詔賦詩，本初父子俱拜其階；二喬同領宛城，公瑾為之奔走；卞夫人馳騁涼隴，西涼健兒盡入其麾。青史易脂粉而新撰矣。",
   startDate: { year: 200, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_WOMEN),
+  cities: buildInitialCities(CITY_OWNERSHIP_WOMEN, {
+    /* 七家女傑,各自的本錢就是她們史書裡的那一樣東西。 */
+    /* 貂蟬居長安,呂奉先為其劍鋒 —— 兵最銳,而長安是董卓燒過的長安。 */
+    'diaochan-han': { troops: 1.25, food: 0.85, gold: 1.00, defense: 6,  loyalty: -10 },
+    /* 尚香坐建業,伯符仲謀皆其驍將。 */
+    'lady-sun':     { troops: 1.15, food: 1.10, gold: 1.05, defense: 10, loyalty: 4 },
+    /* 黃月英治荊州,機巧造化為其權柄 —— 城最硬。 */
+    yueying:        { troops: 0.85, food: 1.15, gold: 1.15, defense: 18, loyalty: 10 },
+    /* 祝融自南中興兵:兵悍而糧薄。 */
+    'zhurong-nan':  { troops: 1.25, food: 0.70, gold: 0.70, defense: -8, loyalty: -6 },
+    /* 蔡琰於鄴城下詔賦詩,本初父子俱拜其階 —— 河北之富。 */
+    'caiyan-ye':    { troops: 0.95, food: 1.20, gold: 1.25, defense: 6,  loyalty: 14 },
+    /* 二喬同領宛城,公瑾為之奔走。 */
+    qiao:           { troops: 1.05, food: 1.05, gold: 1.15, defense: 6,  loyalty: 8 },
+    /* 卞夫人馳騁涼隴,西涼健兒盡入其麾。 */
+    'bian-liang':   { troops: 1.20, food: 0.80, gold: 0.85, defense: -4, loyalty: -4 },
+  }),
   forces: FORCES_WOMEN,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_WOMEN, DEAD_BY_WOMEN, 200),
 };
@@ -7926,7 +8001,19 @@ export const SCENARIO_WHATIF_YUAN_GUANDU: Scenario = {
     'Autumn 201. At Guandu, Yuan Shao heeded Tian Feng and ground Cao Cao down by attrition rather than gambling on a single battle. Cao\'s granaries burned, his lines broke, and the lord of the four northern provinces poured south to seize Xuchang and the Emperor. Cao Cao clings to a southern remnant around Wancheng — can he claw his way back, or will the Yuan house unify the realm?',
   descriptionZh: "建安六年秋。官渡之役，袁紹納田豐之諫，持重以耗，不賭一陣之勝負。曹操糧盡，烏巢先焚，戰線終潰。河北四州之主揮軍南下，取許昌、挾天子。曹操僅餘宛城一隅殘部——是絕地反撲，抑或袁氏一統天下？",
   startDate: { year: 201, season: 'autumn' },
-  cities: buildInitialCities(CITY_OWNERSHIP_YUAN_GUANDU),
+  cities: buildInitialCities(CITY_OWNERSHIP_YUAN_GUANDU, {
+    /* 河北四州之主南下,取許昌、挾天子 —— 二十九城,糧與府庫都是贏家的。 */
+    'yuan-shao': { troops: 1.25, food: 1.20, gold: 1.20, defense: 6,   loyalty: 8 },
+    /* 僅餘宛城一隅殘部:兵敗糧盡,而困獸猶鬥(城防不減)。 */
+    cao:         { troops: 0.75, food: 0.60, gold: 0.60, defense: 8,   loyalty: -12 },
+    sun:         { troops: 1.15, food: 1.10, gold: 1.05, defense: 8,   loyalty: -6 },
+    'liu-bei':   { troops: 1.00, food: 0.85, gold: 0.75, defense: 0,   loyalty: 16 },
+    'liu-biao':  { troops: 0.80, food: 1.20, gold: 1.15, defense: 10,  loyalty: 6 },
+    'liu-zhang': { troops: 0.85, food: 1.25, gold: 1.05, defense: 14,  loyalty: 4 },
+    'ma-teng':   { troops: 1.15, food: 0.85, gold: 0.80, defense: -4,  loyalty: -8 },
+    /* 蹋頓受袁氏之恩 —— 騎射之眾,而無城。 */
+    wuhuan:      { troops: 1.25, food: 0.70, gold: 0.60, defense: -14, loyalty: -8 },
+  }),
   forces: FORCES_YUAN_GUANDU,
   officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_200, CITY_OWNERSHIP_YUAN_GUANDU, FORCES_YUAN_GUANDU), DEAD_BY_200, 201),
 };
@@ -7956,7 +8043,19 @@ export const SCENARIO_WHATIF_LUBU_XUZHOU: Scenario = {
     'Winter 198. The flood-waters never broke Xiapi\'s walls; Chen Gong\'s counsel held, the gates stayed shut, and Cao Cao\'s exhausted host withdrew. The Flying General now commands all of Xuzhou — Xiapi, Pengcheng, Xiaopei, Langya, Guangling — Red Hare and the Sky-Piercer poised between Cao Cao and the sea. The mightiest warrior alive has a base at last. What will he do with it?',
   descriptionZh: "建安三年冬。泗水未潰下邳之牆；陳宮之謀得行，城門緊閉，曹操疲師終退。飛將軍據有全徐州——下邳、彭城、小沛、琅琊、廣陵——赤兔方天，雄踞曹操與東海之間。天下第一猛將，終得一方基業。猛虎得地，將何為哉？",
   startDate: { year: 198, season: 'winter' },
-  cities: buildInitialCities(CITY_OWNERSHIP_LUBU_XUZHOU),
+  cities: buildInitialCities(CITY_OWNERSHIP_LUBU_XUZHOU, {
+    /* 飛將軍終得一方基業:兵最銳,而徐州連年兵災,糧與治都不在他手上。 */
+    lubu:        { troops: 1.30, food: 0.75, gold: 0.70, defense: 4,   loyalty: -12 },
+    /* 疲師而退 —— 下邳沒打下來的那一版曹操。 */
+    cao:         { troops: 0.95, food: 0.85, gold: 0.95, defense: 4,   loyalty: 2 },
+    'yuan-shao': { troops: 1.20, food: 1.15, gold: 1.15, defense: 6,   loyalty: 4 },
+    'yuan-shu':  { troops: 0.85, food: 0.60, gold: 0.80, defense: 2,   loyalty: -20 },
+    sun:         { troops: 1.20, food: 1.05, gold: 1.00, defense: 6,   loyalty: -8 },
+    'liu-biao':  { troops: 0.80, food: 1.20, gold: 1.15, defense: 10,  loyalty: 6 },
+    'liu-zhang': { troops: 0.85, food: 1.25, gold: 1.05, defense: 14,  loyalty: 4 },
+    gongsun:     { troops: 1.10, food: 0.75, gold: 0.85, defense: 10,  loyalty: -6 },
+    'ma-teng':   { troops: 1.15, food: 0.85, gold: 0.80, defense: -4,  loyalty: -8 },
+  }),
   forces: FORCES_198,
   officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_198, CITY_OWNERSHIP_LUBU_XUZHOU, FORCES_198), DEAD_BY_198, 198),
 };
@@ -7991,7 +8090,16 @@ export const SCENARIO_WHATIF_MACHAO_GUANZHONG: Scenario = {
     'Spring 211. The forged-letter ruse failed; Ma Chao and Han Sui kept their alliance, stormed Tongguan, and drove Cao Cao back across the passes. The Splendid Ma Chao now holds Chang\'an and all the Guanzhong, the warlords of Liang at his back and the road to the central plains open before him. The lance of Xiliang is loosed upon the empire.',
   descriptionZh: "建安十六年春。離間之計未成，馬超與韓遂盟好不疑，強攻潼關，逼退曹操於關隘之東。錦馬超盡得長安與關中之地，涼州群雄為其後盾，中原之路豁然在前。西涼之槍，自此縱橫天下。",
   startDate: { year: 211, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_MACHAO_GUANZHONG),
+  cities: buildInitialCities(CITY_OWNERSHIP_MACHAO_GUANZHONG, {
+      ...TK_LATE,
+      /* 錦馬超盡得長安與關中:西涼騎最銳,而關中新破,糧在灰裡。 */
+      'ma-chao':   { troops: 1.30, food: 0.80, gold: 0.90, defense: 4,  loyalty: -6 },
+      'han-sui':   { troops: 1.15, food: 0.80, gold: 0.80, defense: -4, loyalty: -8 },
+      /* 逼退於關隘之東 —— 大而少了關中那一塊。 */
+      cao:         { troops: 1.15, food: 1.15, gold: 1.15, defense: 4,  loyalty: -4 },
+      'liu-zhang': { troops: 0.85, food: 1.25, gold: 1.05, defense: 14, loyalty: 4 },
+      'zhang-lu':  { troops: 1.20, food: 1.25, gold: 1.05, defense: 16, loyalty: 16 },
+    }),
   forces: FORCES_MACHAO_GUANZHONG,
   officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_211, CITY_OWNERSHIP_MACHAO_GUANZHONG, FORCES_MACHAO_GUANZHONG), DEAD_BY_211, 211),
 };
@@ -8021,7 +8129,18 @@ export const SCENARIO_WHATIF_SUNCE_LIVES: Scenario = {
     'Spring 201. The assassins of Xu Gong\'s retainers missed; the Little Conqueror healed and lived. While Cao Cao and Yuan Shao bled each other white at Guandu, Sun Ce did what he had always planned — march north on Xuchang to seize the Emperor. The tiger of Jiangdong, age twenty-six and unbeaten, holds the southeast and eyes the throne. Sun Quan must wait; this is his brother\'s war.',
   descriptionZh: "建安六年春。許貢門客之刺未中，小霸王傷愈而生。當曹操與袁紹於官渡相持血戰之際，孫策行其夙志——揮師北上，襲許昌以迎天子。江東之虎，年方二十六而未嘗一敗，據東南而窺神器。仲謀且待，此乃其兄之天下。",
   startDate: { year: 201, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_SUNCE_LIVES),
+  cities: buildInitialCities(CITY_OWNERSHIP_SUNCE_LIVES, {
+    /* 年二十六而未嘗一敗:兵最銳,而江東新定、士民未附(這正是許貢門客的來由)。 */
+    sun:         { troops: 1.25, food: 1.10, gold: 1.05, defense: 6,   loyalty: -12 },
+    /* 官渡相持:兵不多而糧最緊 —— 這張盤的曹操正被兩面夾。 */
+    cao:         { troops: 1.00, food: 0.70, gold: 0.85, defense: 6,   loyalty: 2 },
+    'yuan-shao': { troops: 1.20, food: 1.15, gold: 1.15, defense: 6,   loyalty: 4 },
+    'liu-bei':   { troops: 1.00, food: 0.85, gold: 0.75, defense: 0,   loyalty: 16 },
+    'liu-biao':  { troops: 0.80, food: 1.20, gold: 1.15, defense: 10,  loyalty: 6 },
+    'liu-zhang': { troops: 0.85, food: 1.25, gold: 1.05, defense: 14,  loyalty: 4 },
+    'ma-teng':   { troops: 1.15, food: 0.85, gold: 0.80, defense: -4,  loyalty: -8 },
+    wuhuan:      { troops: 1.25, food: 0.70, gold: 0.60, defense: -14, loyalty: -8 },
+  }),
   forces: FORCES_200,
   officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_200, CITY_OWNERSHIP_SUNCE_LIVES, FORCES_200), DEAD_BY_200, 201),
 };
@@ -8056,7 +8175,22 @@ export const SCENARIO_WHATIF_DONG_LIVES: Scenario = {
     'Year 192. Diaochan\'s ploy never turned Lü Bu; Wang Yun\'s plot was uncovered and crushed. With the Flying General still at his side and Hulao held against the eastern lords, Dong Zhuo broke the anti-Dong coalition and rules the Han court by terror from Luoyang to Chang\'an. The tyrant\'s grip tightens — and every warlord east of the passes must decide whether to bow or burn.',
   descriptionZh: "初平三年。連環美人之計未能離間呂布，王允之謀事泄而敗。飛將軍仍在側，虎牢拒東諸侯於關外，董卓遂破反董聯軍，自洛陽至長安，以暴威挾持漢室。暴君之手愈收愈緊——關東群雄，俯首抑或焚身，各自抉擇。",
   startDate: { year: 192, season: 'summer' },
-  cities: buildInitialCities(CITY_OWNERSHIP_DONG_LIVES),
+  cities: buildInitialCities(CITY_OWNERSHIP_DONG_LIVES, {
+    /* 暴君之手愈收愈緊:兵與府庫都在,而民忠是全盤最低 —— 那是他真正的破綻。 */
+    dong:        { troops: 1.30, food: 1.05, gold: 1.25, defense: 10,  loyalty: -30 },
+    /* 反董聯軍既破,關東群雄各自殘破。 */
+    cao:         { troops: 1.05, food: 0.80, gold: 0.80, defense: 0,   loyalty: 2 },
+    'yuan-shao': { troops: 1.15, food: 1.00, gold: 1.05, defense: 4,   loyalty: 0 },
+    'yuan-shu':  { troops: 1.00, food: 0.85, gold: 0.95, defense: 2,   loyalty: -12 },
+    /* 江東猛虎尚在 —— 三城而兵最能戰。 */
+    sun:         { troops: 1.25, food: 0.85, gold: 0.85, defense: 0,   loyalty: -4 },
+    'liu-biao':  { troops: 0.80, food: 1.20, gold: 1.15, defense: 10,  loyalty: 6 },
+    'liu-yan':   { troops: 0.85, food: 1.20, gold: 1.05, defense: 14,  loyalty: 6 },
+    gongsun:     { troops: 1.20, food: 0.80, gold: 0.85, defense: 4,   loyalty: -4 },
+    tao:         { troops: 0.65, food: 1.25, gold: 1.20, defense: 4,   loyalty: 8 },
+    'kong-rong': { troops: 0.60, food: 1.10, gold: 1.00, defense: 6,   loyalty: 20 },
+    'ma-teng':   { troops: 1.20, food: 0.80, gold: 0.75, defense: -6,  loyalty: -6 },
+  }),
   forces: FORCES_190,
   officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_190, CITY_OWNERSHIP_DONG_LIVES, FORCES_190), [], 192),
 };
@@ -8087,7 +8221,19 @@ export const SCENARIO_WHATIF_YUANSHU_EMPIRE: Scenario = {
     'Year 198. Holding the Imperial Seal, Yuan Shu proclaimed the Zhongjia dynasty — and this time the harvest did not fail, the generals did not desert, and the Huainan granaries stayed full. The self-made emperor holds Shouchun, Runan and the Huai with a real army at his back, the southeast in his grip and the Han pretenders surrounding him. A false throne, defended at last.',
   descriptionZh: "建安三年。袁術手握傳國玉璽，僭號仲家——而這一回，淮南未逢大旱，部將未叛，府庫充盈如舊。自立之帝據壽春、汝南、淮水之地，麾下實有強兵，雄踞東南，四面皆漢室之臣。一座僭越之龍座，終得守全。",
   startDate: { year: 198, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_YUANSHU_EMPIRE),
+  cities: buildInitialCities(CITY_OWNERSHIP_YUANSHU_EMPIRE, {
+    /* 淮南未逢大旱,部將未叛,府庫充盈如舊 —— 這張盤的前提要在數字上看得見:
+       糧與金是全盤最厚的,而「僭號」該付的代價仍在民忠上。 */
+    'yuan-shu':  { troops: 1.15, food: 1.30, gold: 1.30, defense: 8,   loyalty: -15 },
+    cao:         { troops: 1.10, food: 0.95, gold: 1.00, defense: 4,   loyalty: 4 },
+    lubu:        { troops: 1.25, food: 0.70, gold: 0.65, defense: -4,  loyalty: -12 },
+    'yuan-shao': { troops: 1.20, food: 1.15, gold: 1.15, defense: 6,   loyalty: 4 },
+    sun:         { troops: 1.20, food: 1.05, gold: 1.00, defense: 6,   loyalty: -8 },
+    'liu-biao':  { troops: 0.80, food: 1.20, gold: 1.15, defense: 10,  loyalty: 6 },
+    'liu-zhang': { troops: 0.85, food: 1.25, gold: 1.05, defense: 14,  loyalty: 4 },
+    gongsun:     { troops: 1.10, food: 0.75, gold: 0.85, defense: 10,  loyalty: -6 },
+    'ma-teng':   { troops: 1.15, food: 0.85, gold: 0.80, defense: -4,  loyalty: -8 },
+  }),
   forces: FORCES_198,
   officers: buildInitialOfficers(whatIfOfficers(OFFICER_ASSIGNMENTS_198, CITY_OWNERSHIP_YUANSHU_EMPIRE, FORCES_198), DEAD_BY_198, 198),
 };
@@ -8114,7 +8260,19 @@ export const SCENARIO_WHATIF_GUOJIA_LIVES: Scenario = {
     'Autumn 208. The fever of the northern campaign never took Guo Jia; Cao Cao\'s finest strategist rides south with the great host toward the Yangtze. "Had Fengxiao lived," Cao Cao would later sigh at Red Cliffs — but here he lives, and the fire-ships and chained fleets are still to come. With the Ghost Master at his side, will Cao Cao still walk into the flames?',
   descriptionZh: "建安十三年秋。北征之疾未奪郭嘉之命；曹操麾下第一謀主，隨大軍南下，直指長江。日後赤壁火起，曹操長嘆「若奉孝在，不使孤至此」——而此世奉孝尚在，連環火攻猶未發。鬼才在側，曹孟德可仍會自投火海？",
   startDate: { year: 208, season: 'autumn' },
-  cities: buildInitialCities(CITY_OWNERSHIP_208),
+  cities: buildInitialCities(CITY_OWNERSHIP_208, {
+    /* 鬼才在側 —— 差別不在兵多,在他不會把八十萬眾押在一條鐵索上:
+       糧比 208 那張盤厚(北征之後的補給是郭嘉替他算的),兵略減。 */
+    cao:         { troops: 1.15, food: 1.05, gold: 1.15, defense: 6,   loyalty: 6 },
+    'liu-bei':   { troops: 1.30, food: 1.00, gold: 0.85, defense: 0,   loyalty: 20 },
+    sun:         { troops: 1.10, food: 1.15, gold: 1.10, defense: 12,  loyalty: 8 },
+    /* 劉琮 —— 名字換了 id 沒換(force id 仍是 liu-biao)。 */
+    'liu-biao':  { troops: 0.55, food: 1.20, gold: 1.15, defense: -6,  loyalty: -25 },
+    'liu-zhang': { troops: 0.85, food: 1.25, gold: 1.05, defense: 14,  loyalty: 4 },
+    'zhang-lu':  { troops: 1.70, food: 1.30, gold: 1.10, defense: 16,  loyalty: 16 },
+    'ma-teng':   { troops: 1.05, food: 0.90, gold: 0.85, defense: -4,  loyalty: -8 },
+    'shi-xie':   { troops: 0.80, food: 1.35, gold: 1.30, defense: 6,   loyalty: 18 },
+  }),
   forces: FORCES_208,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_208, DEAD_BY_208, 208),
 };
@@ -8141,7 +8299,15 @@ export const SCENARIO_WHATIF_ZHOUYU_LIVES: Scenario = {
     'Spring 211. Zhou Yu did not sicken and die at Baqiu; the Grand Marshal lives to press the plan he begged of Sun Quan — march west, take Yi province before Liu Bei can, and split the realm in two against Cao Cao. With Gongjin alive, the alliance that won Red Cliffs need not curdle into the rivalry over Jing, and Wu eyes the conquest of Shu itself.',
   descriptionZh: "建安十六年春。周瑜未病歿於巴丘；大都督尚在，得行其向孫權力請之策——西取益州，搶在劉備之前，與曹操二分天下。公瑾既在，赤壁之盟不必為荊州之爭所裂，江東之志，直指全蜀。",
   startDate: { year: 211, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_211),
+  cities: buildInitialCities(CITY_OWNERSHIP_211, {
+      ...TK_LATE,
+      /* 大都督尚在,得行西取益州之策 —— 舟師與糧道都比史實的吳厚一層。 */
+      sun:         { troops: 1.20, food: 1.20, gold: 1.10, defense: 12, loyalty: 10 },
+      'ma-chao':   { troops: 1.25, food: 0.80, gold: 0.85, defense: -4, loyalty: -6 },
+      'han-sui':   { troops: 1.15, food: 0.80, gold: 0.80, defense: -4, loyalty: -8 },
+      'liu-zhang': { troops: 0.85, food: 1.25, gold: 1.05, defense: 14, loyalty: 4 },
+      'zhang-lu':  { troops: 1.20, food: 1.25, gold: 1.05, defense: 16, loyalty: 16 },
+    }),
   forces: FORCES_211,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_211, DEAD_BY_211, 211),
 };
@@ -8166,7 +8332,13 @@ export const SCENARIO_WHATIF_PANGTONG_LIVES: Scenario = {
     'Year 215. The arrows of Luofeng Slope found another rider; Pang Tong lived to finish the conquest of Shu at Liu Bei\'s side. With the Fledgling Phoenix to govern Yi province, Zhuge Liang never had to leave Jingzhou — and the fatal split of Shu\'s strength between two fronts is undone. Both Dragon and Phoenix serve a single lord, exactly as the prophecy promised. The realm trembles.',
   descriptionZh: "建安二十年。落鳳坡之箭射中他騎；龐統得生，佐劉備竟取西蜀之功。鳳雛既在以治益州，諸葛亮便無須西去入川——蜀漢兩線分兵之致命隱患，自此化解。臥龍鳳雛同事一主，正如水鏡之讖。天下為之震動。",
   startDate: { year: 215, season: 'autumn' },
-  cities: buildInitialCities(CITY_OWNERSHIP_215),
+  cities: buildInitialCities(CITY_OWNERSHIP_215, {
+      ...TK_LATE,
+      /* 鳳雛治益州,臥龍不必西去 —— 兩線分兵那個致命隱患解掉了:
+         蜀的內政(糧、金)第一次不比魏差,而兵仍然少。 */
+      'liu-bei':   { troops: 1.10, food: 1.10, gold: 1.00, defense: 12, loyalty: 16 },
+      'zhang-lu':  { troops: 1.20, food: 1.25, gold: 1.05, defense: 16, loyalty: 16 },
+    }),
   forces: FORCES_215,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_215, [], 215),
 };
@@ -8837,7 +9009,14 @@ export const SCENARIO_WHATIF_GUANYU_NORTH: Scenario = {
     'Autumn 219. The autumn rains came, the Han burst its banks, and Guan Yu drowned Yu Jin\'s seven armies — but this time the Marquis of Hanshou did not stop. Fan fell, Xiangyang opened its gates, and the Lord of Changsheng drove north up the river road through Xinye to Wancheng, until his banners were a hundred li from Xuchang. Cao Cao, his court in uproar, debates moving the Emperor beyond the Yellow River. Whether Jiangling holds at his back is another question — but for now, all China trembles at the name of Guan Yunchang.',
   descriptionZh: "建安二十四年秋。秋雨大至，漢水暴溢，關羽水淹于禁七軍——然此番漢壽亭侯不止於此。樊城既破，襄陽開門，雲長沿漢北上，經新野直趨宛城，旌旗距許昌不過百里。曹操朝野震動，竟議遷天子於河北以避其鋒。江陵之後路能否守得，尚在未定之天——然此刻舉華夏皆為關雲長之名而戰栗。",
   startDate: { year: 219, season: 'autumn' },
-  cities: buildInitialCities(CITY_OWNERSHIP_WHATIF_GUANYU_NORTH),
+  cities: buildInitialCities(CITY_OWNERSHIP_WHATIF_GUANYU_NORTH, {
+      ...TK_LATE,
+      /* 水淹七軍,旌旗距許昌不過百里 —— 兵威最盛,而江陵的後路懸著。 */
+      'liu-bei': { troops: 1.25, food: 1.00, gold: 0.90, defense: 8,  loyalty: 14 },
+      /* 曹操朝野震動,竟議遷天子於河北以避其鋒。 */
+      cao:       { troops: 1.15, food: 1.15, gold: 1.20, defense: 4,  loyalty: -12 },
+      sun:       { troops: 1.10, food: 1.15, gold: 1.10, defense: 12, loyalty: 4 },
+    }),
   forces: FORCES_219,
   officers: buildInitialOfficers(
     whatIfOfficers(
@@ -8889,7 +9068,13 @@ export const SCENARIO_WHATIF_GAOPINGLING: Scenario = {
     'Spring 249. As Sima Yi seizes the gates of Luoyang behind his back, the regent Cao Shuang — escorting the young Emperor home from the Gaoping Tombs — does not falter. Huan Fan\'s counsel wins out: rather than lay down his seals, Cao Shuang gallops the Emperor to safety, raises the Guanzhong armies, and proclaims the Simas rebels. The capital, Xuchang, and the rich Huai frontier rally to the man who holds the Son of Heaven; Sima Yi, his lightning coup turned to open war, falls back on the family\'s old strength in Hebei. Wei is cloven in two, and the empire holds its breath.',
   descriptionZh: "正始十年春。司馬懿閉洛陽城門於其後，而大將軍曹爽——方自高平陵奉幼帝還京——竟不自亂。桓範之謀得行：曹爽不肯解印就縛，反挾天子疾走，發關中之兵，傳檄討司馬為叛逆。京畿、許昌、淮南膏腴之地，皆歸於挾天子者；司馬懿閃電之變化為明火戰爭，退保河北司馬氏之舊基。魏室自此一分為二，天下屏息。",
   startDate: { year: 249, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_WHATIF_GAOPINGLING),
+  cities: buildInitialCities(CITY_OWNERSHIP_WHATIF_GAOPINGLING, {
+      ...TK_LATE,
+      /* 曹爽挾天子疾走,發關中之兵,傳檄討司馬 —— 名分與府庫在他這邊。 */
+      cao:  { troops: 1.15, food: 1.15, gold: 1.25, defense: 6,  loyalty: 8 },
+      /* 退保河北司馬氏舊基:兵最精而地最窄,閃電之變化為明火戰爭。 */
+      sima: { troops: 1.25, food: 1.00, gold: 0.90, defense: 12, loyalty: -8 },
+    }),
   forces: FORCES_WHATIF_GAOPINGLING,
   officers: buildInitialOfficers(
     whatIfOfficers(
@@ -8922,7 +9107,13 @@ export const SCENARIO_WHATIF_LUXUN_LIVES: Scenario = {
     'Year 249. The Two-Palaces feud — Sun Quan\'s ruinous quarrel between crown prince and rival son — broke many great men of Wu with grief and disgrace; chief among them Lu Xun, the burner of Liu Bei\'s camps at Xiaoting and the breaker of Cao Xiu at Shiting, hounded into his grave by royal reproaches in 245. Here he weathered the storm. As Wei tears itself apart at the Gaoping Tombs and Shu drills for new northern campaigns, the aged Grand Marshal still stands at the head of Wu\'s armies on the Great River — the last of the founding generation, and worth a province to Sun Quan\'s failing house.',
   descriptionZh: "赤烏十二年。二宮之爭——孫權於太子與魯王之間釀成的毀滅性內鬩——以憂憤與屈辱折損吳國無數棟梁；其首者，便是夷陵焚劉備連營、石亭破曹休的陸遜，竟於赤烏八年為君上詰責，憤恚而亡。此世他撐過了這場風暴。當魏室於高平陵自相撕裂、蜀漢整軍再圖北伐之際，這位老邁的上大將軍，仍立於大江之上、吳軍之首——開國一代之碩果僅存者，於孫權衰朽之家，一人可抵一州。",
   startDate: { year: 249, season: 'spring' },
-  cities: buildInitialCities(CITY_OWNERSHIP_249),
+  cities: buildInitialCities(CITY_OWNERSHIP_249, {
+      ...TK_LATE,
+      /* 上大將軍仍立於大江之上、吳軍之首 —— 二宮之爭沒有折損那一代人。 */
+      sun:  { troops: 1.20, food: 1.20, gold: 1.10, defense: 14, loyalty: 12 },
+      sima: { troops: 1.20, food: 1.20, gold: 1.20, defense: 6,  loyalty: 4 },
+      cao:  { troops: 1.05, food: 1.05, gold: 1.05, defense: 6,  loyalty: -6 },
+    }),
   forces: FORCES_249,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_249, DEAD_BY_249, 249),
 };
