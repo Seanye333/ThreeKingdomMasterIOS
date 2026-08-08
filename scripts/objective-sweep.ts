@@ -96,6 +96,22 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
   { scenario: 'scn-ch-chuhan',    force: 'qi',         why: '田榮 205 年為項羽所破而死,齊地再叛再破 —— 這張盤的前半就是它。' },
   { scenario: 'scn-ch-sanqin',    force: 'qi',         why: '同上:牽制項羽的代價就是被項羽先打。' },
   { scenario: 'scn-ch-jingxing',  force: 'qi',         why: '同上;而井陘之後韓信東下,齊亡於灌嬰之手。' },
+  /*
+   * 文案自己寫著「史書只給了你到 X 年」的那一批 —— 那句話就是題目:
+   * 主目標要求的正是**改寫他的下場**。這幾條 0 不是資料錯,是難度。
+   */
+  { scenario: 'scn-199-yijing',    force: 'liu-biao',   why: '「至210年仍保襄陽江陵」—— 而劉表 208 年病死,荊州舉州而降。' },
+  { scenario: 'scn-211-weinan',    force: 'zhang-lu',   why: '「至216年仍據漢中」—— 215 年曹操出散關,他走巴中而後降。' },
+  { scenario: 'scn-213-fengpo',    force: 'zhang-lu',   why: '同上:漢中之守只到 215 年。' },
+  { scenario: 'scn-238-liaodong',  force: 'yan',        why: '「至245年仍據襄平」—— 而襄平 238 年秋城破,公孫淵父子斬於梁水。' },
+  { scenario: 'scn-255-huainan2',  force: 'guanqiu',    why: '「淮南舉義」—— 毌丘儉敗走慎縣,為平民張屬所射殺。' },
+  { scenario: 'scn-257-huainan3',  force: 'huainan',    why: '「淮南舉義」的下一場:諸葛誕 258 年二月城破,見殺於胡奮。' },
+  { scenario: 'scn-198-xiapi',     force: 'lubu',       why: '「下邳不陷」—— 白門樓是這張盤的結局,不是它的意外。' },
+  { scenario: 'scn-197-bohai',     force: 'gongsun',    why: '同 195/199:易京樓不焚是要玩家改寫的事。' },
+  { scenario: 'scn-198-xiapi',     force: 'gongsun',    why: '同上。' },
+  { scenario: 'scn-194-xuzhou',    force: 'gongsun',    why: '同上。' },
+  { scenario: 'scn-197-bohai',     force: 'yuan-shu',   why: '「淮南之主」—— 199 年他就沒了。' },
+  { scenario: 'scn-199-yijing',    force: 'yuan-shu',   why: '同上。' },
 ];
 const byDesign = (sid: string, fid: string) => BY_DESIGN.some((e) => e.scenario === sid && e.force === fid);
 
