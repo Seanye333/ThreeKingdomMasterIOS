@@ -477,30 +477,57 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wshg-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '叩關而攻', en: 'Beat on the Gate' },
-        description: "Take Hanguguan and Chang'an by 185.",
-        descriptionZh: "於185年前破函谷關、入長安 —— 合縱之師,唯一一次真正打到關下。",
-        goal: { kind: 'hold-cities', cityIds: ['hanguguan', 'changan'], byYear: 185 },
+        title: { zh: '地方五千里', en: 'Five Thousand Li' },
+        description: 'Still hold Jiangling and Shouchun in 185 — the coalition marched west and came home; what Chu kept was the Yangtze and the Huai.',
+        descriptionZh: "至185年仍據江陵、壽春 —— 合縱之師西指而還,楚所守者,仍是江淮之間那片地方五千里。",
+        /*
+         * 五國攻秦在這張地圖上**演不出來**,而原因是結構性的:
+         * 函谷關只與洛陽、潼關相鄰,而**洛陽是韓的** —— 也就是說通往秦的路
+         * 要穿過盟友。攻擊模型只看鄰接,不支援借道,於是
+         *   楚 → 洛陽 0.18、魏 → 洛陽 0.50、趙 → 洛陽 0.95,
+         * 三家對函谷關/潼關一律 **0.00**(`reachability-audit`)。
+         * 主目標改成各自守得住的那一塊,叩關降為次要 —— 玩家可以先取洛陽
+         * 再西向,AI 不會。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'shouchun'], byYear: 185 },
       },
     },
     {
       id: 'obj-wshg-zhao',
       forceId: 'zhao',
       primary: {
-        title: { zh: '趙師西向', en: 'Zhao Marches West' },
-        description: "Take Tongguan and Chang'an by 187.",
-        descriptionZh: "於187年前取潼關、長安。",
-        goal: { kind: 'hold-cities', cityIds: ['tongguan', 'changan'], byYear: 187 },
+        title: { zh: '上黨之守', en: 'Hold Shangdang' },
+        description: 'Still hold Shangdang and Taiyuan in 187 — the high country between Zhao and Qin, and the reason for everything that came after.',
+        descriptionZh: "至187年仍據上黨、晉陽 —— 趙與秦之間隔著這片高地,而後來的長平之戰,爭的正是它。",
+        /*
+         * 五國攻秦在這張地圖上**演不出來**,而原因是結構性的:
+         * 函谷關只與洛陽、潼關相鄰,而**洛陽是韓的** —— 也就是說通往秦的路
+         * 要穿過盟友。攻擊模型只看鄰接,不支援借道,於是
+         *   楚 → 洛陽 0.18、魏 → 洛陽 0.50、趙 → 洛陽 0.95,
+         * 三家對函谷關/潼關一律 **0.00**(`reachability-audit`)。
+         * 主目標改成各自守得住的那一塊,叩關降為次要 —— 玩家可以先取洛陽
+         * 再西向,AI 不會。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'taiyuan'], byYear: 187 },
       },
     },
     {
       id: 'obj-wshg-wei',
       forceId: 'wei',
       primary: {
-        title: { zh: '五國之一', en: 'One of the Five' },
-        description: "Hold Chenliu and take Tongguan by 185 — the coalition marched on the pass, not on Han, who marched beside you.",
-        descriptionZh: "於185年前守大梁而取潼關 —— 五國之師西指關門,而韓與你同行,不在所攻之列。",
-        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'tongguan'], byYear: 185 },
+        title: { zh: '大梁之守', en: 'Hold Daliang' },
+        description: 'Still hold Chenliu and Hulao in 185 — the coalition marched on the pass and came home; Wei still had to hold its own gate.',
+        descriptionZh: "至185年仍據大梁、虎牢 —— 五國之師西指關門而還,而魏自己的門,還是得自己守。",
+        /*
+         * 五國攻秦在這張地圖上**演不出來**,而原因是結構性的:
+         * 函谷關只與洛陽、潼關相鄰,而**洛陽是韓的** —— 也就是說通往秦的路
+         * 要穿過盟友。攻擊模型只看鄰接,不支援借道,於是
+         *   楚 → 洛陽 0.18、魏 → 洛陽 0.50、趙 → 洛陽 0.95,
+         * 三家對函谷關/潼關一律 **0.00**(`reachability-audit`)。
+         * 主目標改成各自守得住的那一塊,叩關降為次要 —— 玩家可以先取洛陽
+         * 再西向,AI 不會。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'hulao'], byYear: 185 },
       },
     },
     {
