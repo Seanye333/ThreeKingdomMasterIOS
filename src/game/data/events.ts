@@ -4291,6 +4291,239 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 滅蜀之役(263)---------------------------------------------------
+   * 這張盤原本只有四條事件在窗口內,而蜀漢亡國那一年最該演的三幕
+   * ——綿竹、譙周之議、輿櫬出降——一幕都沒有。
+   */
+  {
+    id: 'evt-shufall-mianzhu',
+    name: { en: 'Father and Son at Mianzhu', zh: '綿竹·諸葛瞻父子' },
+    yearMin: 263,
+    yearMax: 266,
+    requires: [
+      { kind: 'flag-set', key: 'chain-shufall' },
+      { kind: 'officer-alive', officerId: 'deng-ai' },
+      /*
+       * ⚠ 這裡原本要求 `officer-alive: zhuge-zhan` —— 而諸葛瞻在盤上**第 1 旬
+       * 就戰死**(綿竹之戰是這張盤的開局戰),於是這一節永遠等不到他。
+       * 改問「綿竹還在蜀手裡沒有」:那才是這一幕的前提。
+       * 同型的坑見 §7.4「長社之火」—— 皇甫嵩第 9 回合陣亡,事件連骰都沒擲。
+       */
+      { kind: 'city-owner-ruler', cityId: 'mianzhu', rulerOfficerId: 'liu-shan' },
+    ],
+    description:
+      'Deng Ai wrote offering him the princedom of Langye if he came over. Zhuge Zhan beheaded the messenger and drew up outside Mianzhu. "I could not remove Huang Hao within, could not check Jiang Wei without, and could not hold the land — I have three crimes, and no face to go back." His son Zhuge Shang, nineteen, rode into the line and did not come out.',
+    descriptionZh: '鄧艾遣書誘瞻曰:「若降者,必表為琅邪王。」瞻怒,斬艾使,列陣待之。瞻曰:「吾內不除黃皓,外不制姜維,進不守江油,吾有三罪,何面而反!」乃進兵大戰,敗,臨陣死。子尚年十九,歎曰:「父子荷國重恩,不早斬黃皓,以致傾敗,用生何為!」乃馳赴魏軍而死。',
+    effects: [
+      { kind: 'officer-status', officerId: 'zhuge-zhan', status: 'dead' },
+      { kind: 'officer-status', officerId: 'zhuge-shang', status: 'dead' },
+      { kind: 'city-defense', cityId: 'mianzhu', delta: -25 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: -12 },
+      { kind: 'flag', key: 'shufall-mianzhu' },
+    ],
+  },
+  {
+    id: 'evt-shufall-qiaozhou',
+    name: { en: 'Qiao Zhou Argues for Surrender', zh: '譙周之議' },
+    yearMin: 263,
+    yearMax: 267,
+    requires: [
+      { kind: 'flag-set', key: 'chain-shufall' },
+      { kind: 'flag-set', key: 'shufall-mianzhu' },
+      { kind: 'officer-alive', officerId: 'liu-shan' },
+    ],
+    description:
+      'The court is split three ways: run south to Nanzhong, run east to Wu, or open the gates. Qiao Zhou says a small state that submits to a great one is only doing what small states do; but a state that flees to Wu will one day have to submit twice, and it is better to be humiliated once than twice.',
+    descriptionZh: '或謂宜南入七郡,或謂東奔孫吳。譙周曰:「自古以來,無寄他國為天子者。今若入吳,固當臣服 —— 且魏能并吳,吳不能并魏明矣。等為稱臣,為小孰與為大?再辱之恥,何與一辱?」',
+    effects: [],
+    chooserRulerId: 'liu-shan',
+    choices: [
+      {
+        id: 'surrender',
+        label: { zh: '面縛輿櫬,出降於軍門', en: 'Bind the hands, bear the coffin, go out to the camp gate' },
+        effects: [
+          { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'liu-shan', fraction: 0.6 },
+          { kind: 'flag', key: 'shufall-surrendered' },
+        ],
+      },
+      {
+        id: 'nanzhong',
+        label: { zh: '南入七郡,依南中以圖後舉', en: 'South into the seven commanderies and gather again' },
+        effects: [
+          { kind: 'city-troops-multiplier', cityId: 'nanzhong', multiplier: 1.6 },
+          { kind: 'city-loyalty', cityId: 'chengdu', delta: -20 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: -6 },
+          { kind: 'flag', key: 'shufall-south' },
+        ],
+      },
+      {
+        id: 'fight',
+        label: { zh: '嬰城固守,以待姜維之還', en: 'Shut the gates and wait for Jiang Wei' },
+        effects: [
+          { kind: 'city-defense', cityId: 'chengdu', delta: 20 },
+          { kind: 'officer-loyalty', officerId: 'jiang-wei', delta: 10 },
+          { kind: 'flag', key: 'shufall-hold' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-shufall-jiange',
+    name: { en: 'Jiang Wei Holds Jiange', zh: '姜維守劍閣' },
+    yearMin: 263,
+    yearMax: 266,
+    requires: [
+      { kind: 'flag-set', key: 'chain-shufall' },
+      { kind: 'officer-alive', officerId: 'jiang-wei' },
+      { kind: 'officer-alive', officerId: 'zhong-hui' },
+      { kind: 'flag-unset', key: 'shufall-mianzhu' },
+    ],
+    description:
+      'Jiang Wei pulled back from Tazhong, slipped past the columns closing on him, and got to Jiange first. Zhong Hui came up with a hundred thousand and could not pass; his supply line ran back over the mountains and he began to talk about withdrawing. Then a rider came from Deng Ai, who had gone another way.',
+    descriptionZh: '維列營守險,會攻之不能克,糧道險遠,議欲還歸。而鄧艾自陰平道行無人之地七百餘里 —— 會之不能拔劍閣,正是艾之所以得偷渡也。',
+    effects: [
+      { kind: 'city-defense', cityId: 'jianmen', delta: 25 },
+      { kind: 'officer-loyalty', officerId: 'jiang-wei', delta: 8 },
+      { kind: 'flag', key: 'shufall-jiange' },
+    ],
+  },
+
+  /* ---- 鍾會之亂(264)-------------------------------------------------- */
+  {
+    id: 'evt-zhonghui-jiangwei',
+    name: { en: 'Jiang Wei Bends the Rebel', zh: '姜維說鍾會' },
+    yearMin: 264,
+    yearMax: 267,
+    requires: [
+      { kind: 'flag-set', key: 'chain-zhonghui' },
+      { kind: 'officer-alive', officerId: 'jiang-wei' },
+      { kind: 'officer-alive', officerId: 'zhong-hui' },
+    ],
+    description:
+      'Jiang Wei surrendered to Zhong Hui and then went to work on him: the merit is already too great to take home; Han Xin was killed for less. Zhong Hui listened, and Jiang Wei wrote secretly to his own emperor — "endure a few more days of humiliation; the altars are in danger and I mean to set them up again."',
+    descriptionZh: '維知會有異志,因說之曰:「聞君自淮南以來,算無遺策,今復定蜀,威德振世,民高其功,主畏其謀 —— 何不法陶朱公泛舟絕跡?」會亦欲以維為助。維密書與後主曰:「願陛下忍數日之辱,臣欲使社稷危而復安,日月幽而復明。」',
+    effects: [],
+    chooserRulerId: 'zhong-hui',
+    choices: [
+      {
+        id: 'rebel',
+        label: { zh: '據蜀自立,以維為前驅', en: 'Hold Shu and rise, with Jiang Wei in front' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhong-hui', multiplier: 1.2 },
+          { kind: 'officer-loyalty', officerId: 'jiang-wei', delta: -25 },
+          { kind: 'flag', key: 'zhonghui-risen' },
+        ],
+      },
+      {
+        id: 'submit',
+        label: { zh: '交兵權,還洛陽', en: 'Give up the army and go back to Luoyang' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'zhong-hui', multiplier: 0.6 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'sima-zhao', multiplier: 1.2 },
+          { kind: 'flag', key: 'zhonghui-submitted' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-zhonghui-weiguan',
+    name: { en: 'Wei Guan Sends Tian Xu', zh: '衛瓘遣田續' },
+    yearMin: 264,
+    yearMax: 267,
+    requires: [
+      { kind: 'flag-set', key: 'chain-zhonghui' },
+      { kind: 'officer-alive', officerId: 'deng-ai' },
+      { kind: 'officer-alive', officerId: 'wei-guan' },
+    ],
+    description:
+      'Deng Ai was already in a cage-cart on the road east when the mutiny broke and his own officers went to fetch him back. Wei Guan, who had signed the arrest warrant and had most to fear if Deng Ai returned, sent Tian Xu after him at a gallop. They caught him west of Mianzhu.',
+    descriptionZh: '會既死,艾本營將士追出檻車,欲迎還艾。衛瓘自以與會共陷艾,懼為艾所殺,乃遣田續等討艾,遇於綿竹西,斬之。艾子忠與艾俱死。',
+    effects: [
+      { kind: 'officer-status', officerId: 'deng-ai', status: 'dead' },
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'deng-ai', fraction: 0.5 },
+      { kind: 'officer-loyalty', officerId: 'wei-guan', delta: -10 },
+      { kind: 'flag', key: 'zhonghui-dengai-dead' },
+    ],
+  },
+  {
+    id: 'evt-zhonghui-mutiny',
+    name: { en: 'The Soldiers Come Over the Wall', zh: '亂兵殺會與維' },
+    yearMin: 264,
+    yearMax: 268,
+    requires: [
+      { kind: 'flag-set', key: 'chain-zhonghui' },
+      { kind: 'flag-set', key: 'zhonghui-risen' },
+      { kind: 'officer-alive', officerId: 'zhong-hui' },
+      { kind: 'officer-alive', officerId: 'hu-lie' },
+    ],
+    description:
+      'He shut the Wei generals in the government offices and could not decide whether to kill them. Hu Lie\'s son got word over the wall; the camps came in at noon with ladders and fire. Zhong Hui and Jiang Wei fought with their own hands and were cut down; Jiang Wei\'s heart, they said afterwards, was the size of a peck measure.',
+    descriptionZh: '會欲盡殺魏將,猶豫未決。胡烈子淵得其父書,宣告諸軍。眾將謀曰:「不如盡殺牙門騎督以上。」正月十八日,諸軍鼓噪而入,會與姜維率左右格鬥,皆見殺。時人云:維死時見剖,膽大如斗。',
+    effects: [
+      { kind: 'officer-status', officerId: 'zhong-hui', status: 'dead' },
+      { kind: 'officer-status', officerId: 'jiang-wei', status: 'dead' },
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhong-hui', fraction: 0.7 },
+      { kind: 'flag', key: 'zhonghui-ended' },
+    ],
+  },
+
+  /* ---- 遼東·襄平之戰(238)-------------------------------------------- */
+  {
+    id: 'evt-xiangping-rain',
+    name: { en: 'The Rain at Xiangping', zh: '襄平大雨·不移營' },
+    yearMin: 238,
+    yearMax: 241,
+    requires: [
+      { kind: 'flag-set', key: 'chain-xiangping' },
+      { kind: 'officer-alive', officerId: 'sima-yi' },
+      { kind: 'officer-alive', officerId: 'gongsun-yuan' },
+    ],
+    description:
+      'It rained for a month; the Liao rose and boats came up to the walls of the camp. The officers asked to move to higher ground. Sima Yi had the next man who asked beheaded, and the camp stayed where it was. When the water went down he closed the ring.',
+    descriptionZh: '會霖雨三十餘日,遼水暴長,運船自遼口徑至城下。雨甚,平地水數尺,三軍恐,欲移營。宣王令軍中敢有言徙者斬 —— 都督令史張靜犯令,斬之,軍中乃定。',
+    effects: [
+      { kind: 'city-defense', cityId: 'xiangping', delta: -15 },
+      { kind: 'officer-loyalty', officerId: 'sima-yi', delta: 8 },
+      { kind: 'flag', key: 'xiangping-ring' },
+    ],
+  },
+  {
+    id: 'evt-xiangping-envoy',
+    name: { en: 'Gongsun Yuan Sends for Terms', zh: '公孫淵乞降' },
+    yearMin: 238,
+    yearMax: 242,
+    requires: [
+      { kind: 'flag-set', key: 'chain-xiangping' },
+      { kind: 'flag-set', key: 'xiangping-ring' },
+      { kind: 'officer-alive', officerId: 'gongsun-yuan' },
+    ],
+    description:
+      'Inside the walls they were eating each other. Yuan sent his chancellor and his censor to ask for terms; Sima Yi killed them both. He sent a lesser officer to say he would send a hostage. "War has five ways: fight, hold, run, surrender, die. You will not bind yourself and come — that is choosing to die. There is no need for a hostage."',
+    descriptionZh: '城中糧盡,人相食,死者甚多,將軍楊祚等降。淵遣相國王建、御史大夫柳甫乞降,請解圍面縛。宣王皆斬之。淵復遣侍中衛演乞剋日送任。宣王曰:「軍事大要有五:能戰當戰,不能戰當守,不能守當走,餘二事惟有降與死耳。汝不肯面縛,此為決就死也,不須送任。」',
+    effects: [],
+    chooserRulerId: 'gongsun-yuan',
+    choices: [
+      {
+        id: 'breakout',
+        label: { zh: '將數百騎突圍東南', en: 'Break out southeast with a few hundred horse' },
+        effects: [
+          { kind: 'officer-status', officerId: 'gongsun-yuan', status: 'dead' },
+          { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'gongsun-yuan', fraction: 0.6 },
+          { kind: 'flag', key: 'xiangping-ended' },
+        ],
+      },
+      {
+        id: 'hold',
+        label: { zh: '嬰城死守,待其糧盡而還', en: 'Hold the walls; his supply comes further than mine' },
+        effects: [
+          { kind: 'city-defense', cityId: 'xiangping', delta: 20 },
+          { kind: 'city-food', cityId: 'xiangping', delta: -3000 },
+          { kind: 'flag', key: 'xiangping-ended' },
+        ],
+      },
+    ],
+  },
+
   // ---- 隋唐·虎牢之戰 ----------------------------------------------------
   {
     id: 'evt-hulao-1',

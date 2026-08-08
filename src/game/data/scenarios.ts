@@ -3757,6 +3757,7 @@ export const SCENARIO_263_SHU_FALL: Scenario = {
     'Wu under Sun Xiu watches from afar, knowing its own hour is near.',
   descriptionZh: "公元263年秋。司馬昭實為晉公，挾魏帝以伐蜀。鍾會率主力出斜谷直指漢中；鄧艾偷渡陰平小道；諸葛緒牽制姜維於沓中。成都之內，後主劉禪沉湎黃皓之言。吳主孫休隔江坐觀，深知唇亡齒寒之理。",
   startDate: { year: 263, season: 'autumn' },
+  eventFlags: ['chain-shufall'],
   /*
    * 開局外交 —— 滅蜀之役:鍾會出斜谷,鄧艾出陰平 ——
      蜀之亡,不亡於劍閣,亡於一條沒有人設防的小路。
@@ -4623,6 +4624,7 @@ export const SCENARIO_249_GAOPINGLING: Scenario = {
     'clan. From this day, the Cao emperor reigns but the Sima clan rules.',
   descriptionZh: "公元249年春。司馬仲達詐病兩年，大將軍曹爽驕橫日盛。是日曹爽奉幼帝曹芳謁高平陵，司馬懿病榻一躍而起，部勒禁軍，閉洛陽諸門，盡奪武庫。曹爽信郭太后詔書出降，旋與三族並誅於市。自此曹氏雖坐龍床，天下實歸司馬。",
   startDate: { year: 249, season: 'spring' },
+  eventFlags: ['chain-shufall', 'chain-xiangping'],
   /*
    * 開局外交 —— 高平陵。司馬懿以太后詔閉城門,勒兵據武庫 ——
      曹爽出屯許昌則猶可為,而他選擇了「不失作富家翁」。
@@ -6706,6 +6708,7 @@ export const SCENARIO_264_ZHONGHUI: Scenario = {
     "and Deng Ai will all lie dead. Wu under Sun Hao watches in dread.",
   descriptionZh: "公元264年春。蜀漢已亡——昨冬譙周勸降，後主出城受縛。鍾士季坐成都，握平蜀大軍；姜伯約佯降而懷異志，密勸鍾會稱益州王，曰：「事成則漢家可興」。鄧士載入綿竹之奇，繫於檻車。司馬子上於洛陽復遣衛伯玉提兵入蜀。是春兵變於成都，鍾、姜、鄧三人皆殞於亂軍。江東孫皓初即位，聞之大震。",
   startDate: { year: 264, season: 'spring' },
+  eventFlags: ['chain-zhonghui'],
   /*
    * 開局外交 —— 鍾會之亂:會與姜維謀據蜀自王,而鄧艾已先下成都 ——
      三人之間,誰也不信誰,而司馬昭在長安看著。
@@ -8322,6 +8325,7 @@ export const SCENARIO_238_LIAODONG: Scenario = {
     'Spring 238. Far in the northeast, Gongsun Yuan — third of his line to rule Liaodong as a private kingdom — has thrown off Wei, taken the title King of Yan, and even courted Wu for an alliance. The Emperor Cao Rui sends his deadliest weapon: Sima Yi, with forty thousand, marches four thousand li to the walls of Xiangping. The autumn rains will flood the siege lines, the city will fall, and the house of Gongsun will be wiped from the earth.',
   descriptionZh: "景初二年春。極北之地，公孫淵——割據遼東、世代自立者三世——叛魏自王，僭號燕王，更遣使通吳以為奧援。魏帝曹叡乃遣其最鋒利之兵刃：司馬懿提四萬之眾，行四千里而臨襄平城下。秋雨將漲其圍塹，孤城終破，公孫一族，自此族滅於天壤之間。",
   startDate: { year: 238, season: 'spring' },
+  eventFlags: ['chain-xiangping'],
   /*
    * 開局外交 —— 司馬懿征遼東,四月而克襄平 —— 公孫淵先通吳而後斬其使,
      兩面皆絕,遂無所歸。
@@ -8420,6 +8424,7 @@ export const SCENARIO_257_HUAINAN3: Scenario = {
     'Summer 257. The greatest and last of the three Huai revolts. Zhuge Dan — kinsman to Zhuge Liang and Zhuge Ke, and the last of the loyalist generals — seizes Shouchun, kills Sima Zhao\'s inspector, sends his own son hostage to Wu, and defies the regent who now openly reaches for the throne. Wu pours in relief under Wen Qin, Tang Zi and Quan Yi; Sima Zhao marches the boy-emperor and a quarter-million men east to ring the city in siege walls. Within those walls, the alliance of rebels and Wu will curdle into mutual slaughter before the year is out.',
   descriptionZh: "甘露二年夏。淮南三叛之最大者，亦其終局。諸葛誕——諸葛亮、諸葛恪之族親，忠魏諸將之碩果——據壽春，斬司馬昭之刺史，遣子質於吳，公然抗拒這位已露篡心的權臣。吳發大軍，以文欽、唐咨、全懌入援；司馬昭挾幼帝、提二十六萬之眾東出，築壘環城而圍之。然城中叛軍與吳援，未及歲終，便將在猜忌中自相屠戮。",
   startDate: { year: 257, season: 'summer' },
+  eventFlags: ['chain-shufall'],
   /*
    * 開局外交 —— 淮南三叛:諸葛誕殺樂綝,據壽春,遣子為質於吳 ——
      司馬昭挾天子與太后親征,二十六萬眾圍之。
