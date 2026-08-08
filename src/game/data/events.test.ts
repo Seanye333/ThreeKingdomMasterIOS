@@ -1,9 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { HISTORICAL_EVENTS } from './events';
 import { OFFICER_IDS, TALENT_POOL_IDS } from './index';
+import { HISTORICAL_OFFICER_TEMPLATES } from './historicalOfficers';
 
 describe('historical event catalog integrity', () => {
-  const known = new Set([...OFFICER_IDS, ...TALENT_POOL_IDS]);
+  /*
+   * 外傳三線(戰國/楚漢/隋唐)的人不在三國名冊裡 —— 他們在
+   * `historicalOfficers.ts`。垓下、大澤鄉、虎牢那幾條事件鏈引用的是那一批。
+   */
+  const known = new Set([
+    ...OFFICER_IDS, ...TALENT_POOL_IDS,
+    ...HISTORICAL_OFFICER_TEMPLATES.map((t) => t.id),
+  ]);
 
   it('event ids are unique', () => {
     const ids = HISTORICAL_EVENTS.map((e) => e.id);
@@ -25,7 +33,12 @@ describe('historical event catalog integrity', () => {
   it('year windows are sane', () => {
     for (const e of HISTORICAL_EVENTS) {
       expect(e.yearMin, e.id).toBeLessThanOrEqual(e.yearMax);
-      expect(e.yearMin, e.id).toBeGreaterThanOrEqual(180);
+      /*
+       * 下限是 178 而不是 184 —— **外傳三線借三國的曆法軸**(`startDate.year`
+       * 都是 178),於是垓下、大澤鄉、虎牢那幾條鏈的窗口從 178 起算。
+       * 它們不靠年份鎖住自己,靠的是「只有那條線才有的人」當守衛。
+       */
+      expect(e.yearMin, e.id).toBeGreaterThanOrEqual(178);
       expect(e.yearMax, e.id).toBeLessThanOrEqual(290);
     }
   });

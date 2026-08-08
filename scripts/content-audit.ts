@@ -78,6 +78,12 @@ async function main() {
     for (const f of e.effects ?? []) if (f.kind === 'flag' && f.key) setKeys.add(f.key);
     for (const c of e.choices ?? []) for (const f of c.effects ?? []) if (f.kind === 'flag' && f.key) setKeys.add(f.key);
   }
+  /*
+   * 旗標的第二個來源:**盤自己種的**(`Scenario.eventFlags`)。
+   * 戰役專屬事件鏈用它決定「這張盤演哪幾條」—— 沒有這一段,整批新鏈會被
+   * 這條規則誤判成「永遠不會演」,而它們其實是開局就種好的。
+   */
+  for (const sc of SCENARIOS) for (const k of sc.eventFlags ?? []) setKeys.add(k);
   for (const e of evts) {
     for (const r of e.requires ?? []) {
       if (r.kind === 'flag-set' && r.key && !setKeys.has(r.key)) {

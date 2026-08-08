@@ -4835,6 +4835,7 @@ export const SCENARIO_280_JIN_UNITE: Scenario = {
     'In four months, three centuries of division will end, and the realm be one.',
   descriptionZh: "公元280年春。晉武帝司馬炎下詔大舉伐吳，六路齊發。杜元凱由襄陽南下；王渾自橫江渡江；王濬樓船下益州，沿江而東，焚鐵索、燒鐵錐，浩浩無敵。建業之內，吳主孫晧猶歌舞為樂。不過四月，三百年分裂之局將終，天下歸於一統。",
   startDate: { year: 280, season: 'spring' },
+  eventFlags: ['chain-jinunite'],
   /*
    * 開局外交 —— 晉滅吳:王濬樓船下益州,金陵王氣黯然收 ——
      千尋鐵鎖沉江底,一片降幡出石頭。
@@ -6955,6 +6956,7 @@ export const SCENARIO_265_JIN_FOUNDED: Scenario = {
     'keels of the great river-fleet at Yizhou. Fifteen years of waiting begin.',
   descriptionZh: "公元265年冬。司馬子上薨於秋；其子司馬炎承父志，是年十二月乙卯，逼魏元帝曹奐禪位，定國號曰晉，都洛陽。曹孟德所創之魏，立國四十五年而終。江左孫皓暴戾日甚，群臣震慄，言讖緯者眾。晉之南陲，羊叔子、杜元凱緩兵蓄銳，撫荊襄民心；王士治於益州造船伐木，密謀順流之師。十五年之等待，自此始。",
   startDate: { year: 265, season: 'winter' },
+  eventFlags: ['chain-xiling', 'chain-jinunite'],
   /*
    * 開局外交 —— 司馬炎受禪,國號晉 —— 天下只剩兩家,
      而其中一家已經沒有人相信它還能贏。
@@ -8271,6 +8273,7 @@ export const SCENARIO_272_XILING: Scenario = {
     'Autumn 272. Bu Chan, commander of Xiling, throws open the gorge that guards Wu\'s western door and surrenders it to Jin. Lu Kang — son of Lu Xun, and the last great general the dynasty will produce — rushes upriver and does the unthinkable: he walls in the traitor\'s fortress without storming it, smashes the three Jin relief columns of Yang Hu, Yang Zhao and Xu Yin one by one, then takes Xiling and puts the Bu clan to the sword. It is the final masterpiece of Wu\'s art of war, and it buys the doomed kingdom one last decade.',
   descriptionZh: "鳳凰元年秋。西陵督步闡盡獻扼守吳國西門之峽口，叛降於晉。鎮軍大將軍陸抗——陸遜之子、吳國所能孕育的最後一員名將——溯江疾進，行常人所不敢為：圍叛城而不急攻，先逐一擊破羊祜、楊肇、徐胤三路晉援，再下西陵，盡誅步氏。此乃吳國兵法之最後傑作，為這氣數將盡的王朝，再續十年之命。",
   startDate: { year: 272, season: 'autumn' },
+  eventFlags: ['chain-xiling'],
   /*
    * 開局外交 —— 西陵之戰:步闡以城降晉,陸抗圍之而不救外圍 ——
      羊祜、楊肇皆退。吳之最後一次大捷,抗死之後,再無此人。
@@ -10058,6 +10061,7 @@ export const SCENARIO_CH_CHUHAN: Scenario = {
     'The empire of Qin is ash, and Xiang Yu — Hegemon-King of Western Chu, the strongest man of the age — has carved all under heaven into eighteen fiefs to suit himself. He has banished his rival Liu Bang to the dead end of Hanzhong behind the Three Qin, the surrendered Qin generals set to wall him in. But Liu Bang has the three greatest talents of the era — Han Xin to command, Zhang Liang to plan, Xiao He to supply — and means to burn his retreat-galleries as a lie, march out of the west, and contend for it all. Qi already rebels in the east, the restored kingdoms eye each other, and Fan Zeng warns a Hegemon who will not listen. The four years that decide a dynasty begin now.',
   descriptionZh: "秦之帝國已成灰燼，而項羽——西楚霸王、當世第一之人——已按己意裂天下為十八國。他將勁敵劉邦逐於漢中之絕地，以三秦降將圍堵之。然劉邦握有當世三傑——韓信將兵、張良運籌、蕭何足食——意欲明燒棧道以為餌，暗度而出，爭奪天下。齊已叛於東，諸復國者彼此相窺，而范增之諫，霸王不聽。決定一代王朝的四年，自此刻始。",
   startDate: { year: 178, season: 'spring' },
+  eventFlags: ['chain-chuhan-era', 'chain-daze'],
   /*
    * 開局外交 —— 楚漢爭霸:鴻門之後,漢王之國於巴蜀,
      而三秦扼其出路 —— 天下之爭,自此二人而已。
@@ -10202,6 +10206,7 @@ export const SCENARIO_CH_GAIXIA: Scenario = {
     'Four sides of Chu songs. The four years are almost run. Han Xin has conquered the whole north and east for Han — Wei, Zhao, Qi all fallen — and Peng Yue has bled Chu\'s supply lines white; now the Hegemon, his army starving, is ringed at Gaixia by a host many times his size. In the night the Han camps raise the songs of Chu on every side, and Xiang Yu, believing his homeland wholly lost, rises to drink and sing his last with Lady Yu: the strength to uproot mountains, and an age that would not go his way. From a hundred thousand he will cut his way to twenty-eight riders at the Wu River — and there, refusing the ferry home, make his end.',
   descriptionZh: "四面楚歌。四年之期將盡。韓信已為漢盡取北方與東土——魏、趙、齊皆下——彭越又斷楚糧道殆盡；今霸王之軍饑餒，為數倍於己之眾圍於垓下。是夜，漢營四面皆起楚歌，項羽以為江東盡失，乃起飲，與虞姬作其最後之歌：力拔山兮氣蓋世，時不利兮騅不逝。自十萬之眾，他將殺至烏江僅餘二十八騎——而於彼處，辭舟不渡，了此一生。",
   startDate: { year: 178, season: 'winter' },
+  eventFlags: ['chain-gaixia'],
   /*
    * 開局外交 —— 垓下:四面楚歌,力拔山兮氣蓋世 ——
      而虞兮虞兮奈若何。
@@ -10405,6 +10410,7 @@ export const SCENARIO_CH_DAZE: Scenario = {
     'Where there is no seed of kings. In the seventh month of rain, nine hundred conscripts bound for the northern garrisons are halted by floods at Dazexiang — and Qin law says a man late to his post dies. So Chen Sheng and Wu Guang reason it out: death for desertion, death for revolt, the same death — better to die for a kingdom. They kill the escort officers, raise the cry "Are kings and nobles born to their blood?", and the first fire of rebellion against Qin catches and roars across the realm. Within weeks the old six kingdoms stir — Xiang Liang in the south, the Tian clan in Qi — while the empire of the First Emperor, still vast and terrible under the fool Er Shi and the eunuch Zhao Gao, gathers its armies to stamp out the spark.',
   descriptionZh: "王侯將相，寧有種乎。七月霖雨，九百戍卒赴漁陽，為大水阻於大澤鄉——而秦法，失期當斬。陳勝吳廣乃謀：亡亦死，舉大計亦死，等死，死國可乎？遂殺尉，舉「王侯將相寧有種乎」之號，反秦之第一把火，燃而怒捲天下。旬月之間，六國舊地皆動——項梁起於江東，田氏王於齊——而始皇之帝國，在愚主二世與閹宦趙高之下，雖暴虐猶廣且強，正集其兵以撲滅此星火。",
   startDate: { year: 178, season: 'summer' },
+  eventFlags: ['chain-daze'],
   /*
    * 開局外交 —— 大澤鄉:「王侯將相寧有種乎」—— 陳勝吳廣舉大澤,
      而六國之後並起。
@@ -10466,6 +10472,7 @@ export const SCENARIO_CH_WEISHUI: Scenario = {
     'The water-trick that ended a kingdom. Han Xin, having swept Wei, Dai, Zhao and Yan into Liu Bang\'s hand, turns on Qi — and storms Linzi in a rush before the persuader Li Yiji\'s peace can take hold. Xiang Yu, alarmed at last, sends his finest general Long Ju with two hundred thousand to save it. Long Ju scorns his enemy and will not wait. So in the night Han Xin dams the Wei river upstream with ten thousand sandbags, lures Long Ju half across the dry bed, then breaks the dam — and the flood takes half the Chu host as it struggles in the water. Long Ju dies on the far bank, Qi falls, and the balance of the whole war tips toward Han.',
   descriptionZh: "水淹一國之計。韓信既掃魏、代、趙、燕入於劉邦之手，遂轉兵向齊——趁說客酈食其之和未定，急襲破臨淄。項羽至此始驚，遣其第一名將龍且，提二十萬以救之。龍且輕敵，不肯持重。韓信乃夜以萬囊壅濰水上流，誘龍且半渡涸床，決囊放水——洪流挾去半數楚師於水中掙紮之際。龍且死於彼岸，齊遂平，而舉世戰局之勢，自此傾於漢矣。",
   startDate: { year: 178, season: 'autumn' },
+  eventFlags: ['chain-weishui'],
   /*
    * 開局外交 —— 濰水之戰:韓信囊沙壅水,半渡而擊 ——
      龍且死,而齊地盡入於漢。
@@ -10558,6 +10565,7 @@ export const SCENARIO_ST_SUIEND: Scenario = {
     'The Sui have burned themselves out. Emperor Yang lies dead at Jiangdu, the canal-digging and the Korean wars have broken the realm, and rebellion blazes from every province. In the heartland Li Mi\'s Wagang army is the mightiest force in the land, gorged on the granaries of Luokou; Wang Shichong holds Luoyang with a puppet Sui prince, Dou Jiande the Hebei plain, Xue Ju the Long passes, Liu Wuzhou the north under Turkic patronage, Du Fuwei the Huai. And in Guanzhong, the Duke of Tang Li Yuan and his second son — a youth of nineteen named Li Shimin who has not yet shown the world what he is — hold Chang\'an. The greatest captains of the age are scattered among the rebels: Qin Qiong and Cheng Yaojin under Li Mi, Yuchi Gong under Liu Wuzhou. Whoever gathers them gathers the empire.',
   descriptionZh: "隋室已自焚殆盡。煬帝橫死江都，鑿河與征遼之役耗盡天下，叛火燃於每一州郡。中原之地，李密之瓦崗軍為當世最強，飽掠洛口之倉；王世充挾隋室幼主據洛陽，竇建德有河北之野，薛舉扼隴關，劉武周恃突厥而王於北，杜伏威據淮。而於關中，唐國公李淵與其次子——年方十九、尚未向世人顯露其為何物的李世民——已據長安。當世名將散於群雄之間：秦瓊、程咬金在李密麾下，尉遲恭在劉武周帳中。能聚之者，即聚天下。",
   startDate: { year: 178, season: 'spring' },
+  eventFlags: ['chain-hulao'],
   /*
    * 開局外交 —— 隋末群雄:煬帝崩於江都,而天下十八路反王並起 ——
      瓦崗最盛,而李密不能成;唐起於太原,而後一一收之。
@@ -10706,6 +10714,7 @@ export const SCENARIO_ST_HULAO: Scenario = {
     'One battle, two kings. Li Shimin has run the table — Xue Ju\'s Qin, Liu Wuzhou\'s north and Li Mi\'s Wagang all broken, their captains (Qin Qiong, Cheng Yaojin, Yuchi Gong) now riding under Tang banners. He has Wang Shichong\'s Zheng penned starving inside Luoyang. Then Dou Jiande marches his whole Hebei host — a hundred thousand — to save his rival, knowing that if Luoyang falls he is next. Li Shimin does the audacious thing: he leaves a screen to hold the siege and races a small picked force to seize the Hulao pass, the one gate Dou Jiande must force. Hold the pass and shatter the relief, and the two greatest rivals of the age fall on a single day.',
   descriptionZh: "一戰擒兩王。李世民已席捲群雄——薛舉之秦、劉武周之北、李密之瓦崗皆破，其將(秦瓊、程咬金、尉遲恭)今皆隸唐旗之下。他已將王世充之鄭困於洛陽，城中食盡。於是竇建德盡發河北之眾——十萬——以救其敵，蓋知洛陽若破，己為下一個。李世民乃行險著：留偏師續圍，自將精銳疾趨虎牢，扼竇建德必爭之關。守關而破援，則當世兩大勁敵，一日俱擒。",
   startDate: { year: 178, season: 'spring' },
+  eventFlags: ['chain-hulao'],
   /*
    * 開局外交 —— 虎牢之戰:一戰而擒兩王 —— 世民圍王世充於洛陽,
      竇建德以十萬眾來救,而唐軍三千五百人守虎牢。

@@ -3969,6 +3969,13 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           eventFlags: state.eventFlags,
           firedEventIds: state.firedEventIds,
           romanceMode: state.romanceMode,
+          /*
+           * 歷史事件那 60% 的擲骰原本走的是裸 `Math.random`(`findFiringEventIn`
+           * 的 `ctx.rng ?? Math.random`)—— 同種子重播因此不保證同一個世界。
+           * 它一直沒被抓到,是因為只有**條件全部成立**的事件才會走到那一擲:
+           * 補了外傳三線的事件鏈之後,重播測試立刻紅。
+           */
+          rng,
         };
         // Historical events first; player-authored custom events fill the
         // season if none scripted fired, and fire deterministically.

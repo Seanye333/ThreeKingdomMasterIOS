@@ -3878,6 +3878,710 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     effects: [],
   },
+  /* ========================================================================
+   * 外傳三線與末期四盤的事件鏈(2026-08-08)
+   *
+   * 起因是一次覆蓋率量測:**五張盤在自己的年代裡一條事件都不會演** ——
+   * 大澤鄉、濰水、垓下、虎牢、西陵。垓下之戰沒有四面楚歌,虎牢之戰沒有
+   * 一戰擒兩王,而那正是那兩張盤存在的理由。
+   *
+   * ⚠ 外傳三線借三國曆法軸(`startDate.year = 178`),所以年份鎖不住它們 ——
+   * 每一條都以**只有那條線才有的人**當守衛(`officer-alive: hist-xiang-yu`
+   * 之類)。三國盤上沒有那個人,`officer-alive` 直接回 false,事件於是不會外漏。
+   * 這與 §7.4 的 `isLaterHanBoard` 是同一個問題的兩種解法。
+   * ====================================================================== */
+
+  // ---- 楚漢·大澤鄉起義 --------------------------------------------------
+  {
+    id: 'evt-daze-1',
+    name: { en: 'The Fish and the Fox', zh: '魚腹丹書·篝火狐鳴' },
+    yearMin: 178,
+    yearMax: 181,
+    requires: [
+      { kind: 'flag-set', key: 'chain-daze' },
+      { kind: 'officer-alive', officerId: 'hist-chen-sheng' },
+      { kind: 'officer-alive', officerId: 'hist-wu-guang' },
+      { kind: 'flag-unset', key: 'daze-risen' },
+    ],
+    description:
+      'The rain has washed the road out and the levy is late; the law says late means death. Wu Guang has put a strip of silk in a fish\'s belly and Chen Sheng has been howling like a fox in the shrine at night: "The Great Chu rises. Chen Sheng shall be king."',
+    descriptionZh: '會天大雨,道不通,度已失期 —— 失期,法皆斬。吳廣乃丹書帛曰「陳勝王」,置人所罾魚腹中;又夜篝火狐鳴呼曰:「大楚興,陳勝王。」卒皆夜驚恐。',
+    effects: [],
+    chooserRulerId: 'hist-chen-sheng',
+    choices: [
+      {
+        id: 'rise',
+        label: { zh: '王侯將相寧有種乎 —— 斬木為兵,揭竿為旗', en: 'Are kings and nobles born to it? Cut staves for spears.' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-chen-sheng', multiplier: 1.35 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-chen-sheng', delta: 12 },
+          { kind: 'flag', key: 'daze-risen' },
+        ],
+      },
+      {
+        id: 'flee',
+        label: { zh: '亡亦死,不如逃入澤中', en: 'Desert into the marshes' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-chen-sheng', multiplier: 0.75 },
+          { kind: 'flag', key: 'daze-risen' },
+          { kind: 'flag', key: 'daze-fled' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-daze-2',
+    name: { en: 'Zhou Wen Reaches the Pass', zh: '周文西入戲下' },
+    yearMin: 178,
+    yearMax: 182,
+    season: 'autumn',
+    requires: [
+      { kind: 'flag-set', key: 'chain-daze' },
+      { kind: 'flag-set', key: 'daze-risen' },
+      { kind: 'flag-unset', key: 'daze-fled' },
+      { kind: 'officer-alive', officerId: 'hist-zhou-wen' },
+      { kind: 'officer-alive', officerId: 'hist-zhang-han' },
+    ],
+    description:
+      'Zhou Wen went west gathering men as he walked and arrived at Xi with a thousand chariots and a hundred thousand foot — a day\'s march from the capital. Zhang Han asks the court for the convicts building the First Emperor\'s tomb: pardon them, arm them, and send them out today.',
+    descriptionZh: '周文行收兵至關,車千乘,卒數十萬,至戲而軍 —— 去咸陽一日之程。少府章邯言:「盜已至,眾強,今發近縣不及矣。驪山徒多,請赦之,授兵以擊。」',
+    effects: [],
+    chooserRulerId: 'hist-qin-ershi',
+    choices: [
+      {
+        id: 'pardon',
+        label: { zh: '赦驪山徒,授兵擊之', en: 'Pardon the tomb-builders and arm them' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-qin-ershi', multiplier: 1.5 },
+          { kind: 'officer-loyalty', officerId: 'hist-zhang-han', delta: 10 },
+          { kind: 'flag', key: 'daze-lishan' },
+        ],
+      },
+      {
+        id: 'deny',
+        label: { zh: '天下安寧,何盜之有 —— 下吏治言者', en: 'The realm is at peace. Arrest whoever says otherwise.' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-qin-ershi', delta: -15 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-chen-sheng', multiplier: 1.2 },
+          { kind: 'flag', key: 'daze-lishan' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-daze-3',
+    name: { en: 'Wu Guang Killed by His Own', zh: '吳廣為其部將所殺' },
+    yearMin: 179,
+    yearMax: 184,
+    season: 'winter',
+    requires: [
+      { kind: 'flag-set', key: 'chain-daze' },
+      { kind: 'flag-set', key: 'daze-risen' },
+      { kind: 'officer-alive', officerId: 'hist-wu-guang' },
+      { kind: 'officer-alive', officerId: 'hist-chen-sheng' },
+    ],
+    description:
+      'Wu Guang sat outside Xingyang for months and could not take it. His lieutenant Tian Zang forged an order from the king, killed him, and sent the head back — and Chen Sheng, who could not afford another quarrel, sent the seal of chancellor after it.',
+    descriptionZh: '吳廣圍滎陽,久不下。其將田臧與諸將謀曰:「假王驕,不知兵權,不可與計。」乃矯王令殺吳廣,獻其首於陳王 —— 陳王使賜田臧楚令尹印,使為上將。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-wu-guang', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-chen-sheng', delta: -6 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-chen-sheng', delta: -8 },
+      { kind: 'flag', key: 'daze-wuguang-dead' },
+    ],
+  },
+
+  // ---- 楚漢·濰水之戰 ----------------------------------------------------
+  {
+    id: 'evt-weishui-1',
+    name: { en: 'Li Yiji Talks Qi Over', zh: '酈生說齊' },
+    yearMin: 178,
+    yearMax: 181,
+    requires: [
+      { kind: 'flag-set', key: 'chain-weishui' },
+      { kind: 'officer-alive', officerId: 'hist-liyiji' },
+      { kind: 'officer-alive', officerId: 'hist-han-xin' },
+      { kind: 'officer-alive', officerId: 'hist-tian-guang' },
+      { kind: 'flag-unset', key: 'weishui-qi-decided' },
+    ],
+    description:
+      'Li Yiji rode east alone and talked Qi into coming over — seventy walled towns, without an arrow. The letter reaches Han Xin\'s camp on the same day his army is drawn up to cross. Kuai Tong leans in: "You were ordered to attack Qi. Was the order recalled?"',
+    descriptionZh: '酈食其東說齊王,下齊七十餘城,兵不血刃。書至韓信軍中,而信方引兵臨河。蒯通說信曰:「將軍受詔擊齊,漢獨發間使下齊,寧有詔止將軍乎?」',
+    effects: [],
+    chooserRulerId: 'hist-liu-bang',
+    choices: [
+      {
+        id: 'strike',
+        label: { zh: '乘其無備而擊之 —— 齊已撤守', en: 'Strike: Qi has stood its garrisons down' },
+        effects: [
+          { kind: 'officer-status', officerId: 'hist-liyiji', status: 'dead' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-tian-guang', multiplier: 0.6 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: -8 },
+          { kind: 'flag', key: 'weishui-qi-decided' },
+          { kind: 'flag', key: 'weishui-betrayed-qi' },
+        ],
+      },
+      {
+        id: 'honour',
+        label: { zh: '止兵,受齊之降', en: 'Halt. Accept the surrender.' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'hist-liyiji', delta: 12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: 10 },
+          { kind: 'flag', key: 'weishui-qi-decided' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-weishui-2',
+    name: { en: 'Sandbags in the Wei', zh: '囊沙壅水' },
+    yearMin: 179,
+    yearMax: 183,
+    requires: [
+      { kind: 'flag-set', key: 'chain-weishui' },
+      { kind: 'flag-set', key: 'weishui-betrayed-qi' },
+      { kind: 'officer-alive', officerId: 'hist-han-xin' },
+      { kind: 'officer-alive', officerId: 'hist-long-qu' },
+    ],
+    description:
+      'In the night Han Xin sent ten thousand sandbags upstream and dammed the Wei. At dawn he crossed, struck, and ran. Long Qu said what he had been waiting to say — "I always knew Han Xin was a coward" — and followed him across. Then the bags came out.',
+    descriptionZh: '信乃夜令人為萬餘囊,滿盛沙,壅水上流。引軍半渡,擊龍且,佯不勝,還走。龍且果喜曰:「固知信怯也。」遂追渡水。信使人決壅囊,水大至 —— 龍且軍太半不得渡。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-long-qu', status: 'dead' },
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-xiang-yu', multiplier: 0.72 },
+      { kind: 'officer-loyalty', officerId: 'hist-han-xin', delta: 6 },
+      { kind: 'flag', key: 'weishui-longqu-dead' },
+    ],
+  },
+  {
+    id: 'evt-weishui-3',
+    name: { en: 'Kuai Tong Offers a Third of the World', zh: '蒯通說信三分' },
+    yearMin: 180,
+    yearMax: 184,
+    season: 'summer',
+    requires: [
+      { kind: 'flag-set', key: 'chain-weishui' },
+      { kind: 'flag-set', key: 'weishui-longqu-dead' },
+      { kind: 'officer-alive', officerId: 'hist-han-xin' },
+      { kind: 'officer-alive', officerId: 'hist-kuai-tong' },
+    ],
+    description:
+      'Kuai Tong reads Han Xin\'s face and says the realm now turns on where he stands: side with Han and Chu falls, side with Chu and Han falls, or stand still and take a third. "Heaven gives and the man who will not take is blamed for it."',
+    descriptionZh: '蒯通曰:「當今兩主之命懸於足下。足下右投則漢王勝,左投則項王勝。莫若兩利而俱存之,參分天下,鼎足而居。天與弗取,反受其咎。」',
+    effects: [],
+    chooserRulerId: 'hist-liu-bang',
+    choices: [
+      {
+        id: 'loyal',
+        label: { zh: '漢王遇我甚厚 —— 吾不忍背之', en: 'The King of Han has been good to me' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'hist-han-xin', delta: 15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: 6 },
+          { kind: 'flag', key: 'weishui-hanxin-loyal' },
+        ],
+      },
+      {
+        id: 'third',
+        label: { zh: '參分天下,鼎足而居', en: 'Take the third part and stand on it' },
+        effects: [
+          { kind: 'spawn-rebel-force', cityId: 'linzi', troops: 30000, label: { zh: '齊', en: 'Qi' } },
+          { kind: 'officer-loyalty', officerId: 'hist-han-xin', delta: -30 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: -12 },
+          { kind: 'flag', key: 'weishui-hanxin-third' },
+        ],
+      },
+    ],
+  },
+
+  // ---- 楚漢·垓下之戰 ----------------------------------------------------
+  {
+    id: 'evt-gaixia-1',
+    name: { en: 'The Ten Ambushes', zh: '十面埋伏' },
+    yearMin: 178,
+    yearMax: 181,
+    requires: [
+      { kind: 'flag-set', key: 'chain-gaixia' },
+      { kind: 'officer-alive', officerId: 'hist-han-xin' },
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'flag-unset', key: 'gaixia-set' },
+    ],
+    description:
+      'Han Xin took command of the whole line at Gaixia — three hundred thousand, his own column in the centre, Kong and Fei on the wings. He went in first, gave ground, and let the wings close.',
+    descriptionZh: '淮陰侯將三十萬自當之,孔將軍居左,費將軍居右,皇帝在後,絳侯、柴將軍在皇帝後。淮陰侯先合,不利,卻 —— 孔將軍、費將軍縱,楚兵不利。',
+    effects: [],
+    chooserRulerId: 'hist-liu-bang',
+    choices: [
+      {
+        id: 'encircle',
+        label: { zh: '以信為將,十面設伏', en: 'Give Han Xin the whole line' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-xiang-yu', multiplier: 0.8 },
+          { kind: 'flag', key: 'gaixia-set' },
+          { kind: 'flag', key: 'gaixia-encircled' },
+        ],
+      },
+      {
+        id: 'press',
+        label: { zh: '自將中軍,正面壓上', en: 'Take the centre yourself and push' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-liu-bang', multiplier: 0.85 },
+          { kind: 'flag', key: 'gaixia-set' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-gaixia-2',
+    name: { en: 'Songs of Chu on Every Side', zh: '四面楚歌' },
+    yearMin: 178,
+    yearMax: 182,
+    season: 'winter',
+    requires: [
+      { kind: 'flag-set', key: 'chain-gaixia' },
+      { kind: 'flag-set', key: 'gaixia-encircled' },
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'flag-unset', key: 'gaixia-sang' },
+    ],
+    description:
+      'The wall of camps around Gaixia sang, at night, in Chu. The king woke and said: has Han taken all of Chu already? How many Chu men do they have over there? Then he rose and drank in his tent, and made a song of his own.',
+    descriptionZh: '項王軍壁垓下,兵少食盡,漢軍及諸侯兵圍之數重。夜聞漢軍四面皆楚歌,項王乃大驚曰:「漢皆已得楚乎?是何楚人之多也!」項王則夜起,飲帳中。',
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-xiang-yu', multiplier: 0.7 },
+      { kind: 'flag', key: 'gaixia-sang' },
+    ],
+  },
+  {
+    id: 'evt-gaixia-3',
+    name: { en: 'The King Parts from His Lady', zh: '霸王別姬' },
+    yearMin: 178,
+    yearMax: 183,
+    requires: [
+      { kind: 'flag-set', key: 'chain-gaixia' },
+      { kind: 'flag-set', key: 'gaixia-sang' },
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'officer-alive', officerId: 'hist-yu-ji' },
+    ],
+    description:
+      '"My strength uprooted mountains, my spirit covered the age — the times are against me and my horse will not run. My horse will not run, and what am I to do. Yu, my Yu, what am I to do." He sang it several times through. She answered him, and the men around could not lift their heads.',
+    descriptionZh: '「力拔山兮氣蓋世,時不利兮騅不逝。騅不逝兮可奈何,虞兮虞兮奈若何!」歌數闋,美人和之。項王泣數行下,左右皆泣,莫能仰視。',
+    effects: [],
+    chooserRulerId: 'hist-xiang-yu',
+    choices: [
+      {
+        id: 'ride',
+        label: { zh: '麾下壯士八百餘騎,直夜潰圍南出', en: 'Eight hundred riders. Break south in the dark.' },
+        effects: [
+          { kind: 'officer-status', officerId: 'hist-yu-ji', status: 'dead' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-xiang-yu', multiplier: 0.5 },
+          { kind: 'flag', key: 'gaixia-yuji' },
+          { kind: 'flag', key: 'gaixia-broke-out' },
+        ],
+      },
+      {
+        id: 'stand',
+        label: { zh: '不走了 —— 明日決戰於壁下', en: 'No. We fight at the wall tomorrow.' },
+        effects: [
+          { kind: 'officer-status', officerId: 'hist-yu-ji', status: 'dead' },
+          { kind: 'officer-loyalty', officerId: 'hist-zhongli-mei', delta: 10 },
+          { kind: 'flag', key: 'gaixia-yuji' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-gaixia-4',
+    name: { en: 'The Wu River', zh: '烏江自刎' },
+    yearMin: 179,
+    yearMax: 184,
+    requires: [
+      { kind: 'flag-set', key: 'chain-gaixia' },
+      { kind: 'flag-set', key: 'gaixia-broke-out' },
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+    ],
+    description:
+      'The village head of Wu had a boat waiting on the bank. "East of the river is small, but it is a thousand li and a hundred thousand households — enough to be king on." The king laughed: I took eight thousand sons of the east across this river and not one is going back. What face have I to meet their fathers?',
+    descriptionZh: '於是項王乃欲東渡烏江。烏江亭長檥船待,曰:「江東雖小,地方千里,眾數十萬人,亦足王也。願大王急渡。」項王笑曰:「天之亡我,我何渡為!且籍與江東子弟八千人渡江而西,今無一人還,縱江東父兄憐而王我,我何面目見之?」',
+    effects: [],
+    chooserRulerId: 'hist-xiang-yu',
+    choices: [
+      {
+        id: 'refuse',
+        label: { zh: '無顏見江東父老 —— 以劍自刎', en: 'I cannot face them. The sword, then.' },
+        effects: [
+          { kind: 'officer-status', officerId: 'hist-xiang-yu', status: 'dead' },
+          { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'hist-xiang-yu', fraction: 0.5 },
+          { kind: 'flag', key: 'gaixia-ended' },
+        ],
+      },
+      {
+        id: 'cross',
+        label: { zh: '渡江東,卷土重來未可知', en: 'Cross. The east may yet be gathered again.' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-xiang-yu', multiplier: 1.6 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-xiang-yu', delta: -10 },
+          { kind: 'flag', key: 'gaixia-ended' },
+          { kind: 'flag', key: 'gaixia-crossed' },
+        ],
+      },
+    ],
+  },
+
+  /*
+   * 兩條**橋接** —— 只有「楚漢爭霸」那張整條線的盤會種 `chain-chuhan-era`,
+   * 於是三段鏈在它上面是接力的:大澤鄉 → 濰水 → 垓下,順序照史書。
+   * 單一戰役的三張盤各自只種自己那一條,開局就演,不必等前一段。
+   *
+   * 為什麼不用年份錯開:垓下那條鏈要在垓下盤上**早早**演、在整線盤上**很晚**
+   * 演,同一個窗口做不到兩件事。
+   */
+  {
+    id: 'evt-chuhan-bridge-1',
+    name: { en: 'Zhang Han Breaks Chen, and Xiang Liang Rises', zh: '章邯破陳·項梁起江東' },
+    yearMin: 179,
+    yearMax: 183,
+    requires: [
+      { kind: 'flag-set', key: 'chain-chuhan-era' },
+      { kind: 'flag-set', key: 'daze-wuguang-dead' },
+      { kind: 'flag-unset', key: 'chain-weishui' },
+    ],
+    description:
+      "Chen Sheng was six months a king and then his own driver killed him on the road at Chengfu. The rising did not stop; it changed hands. Xiang Liang came over the river with eight thousand sons of the east and put a shepherd boy — grandson of the old king of Chu — on the throne, and kept the name Huai.",
+    descriptionZh: '陳勝王凡六月,為其御莊賈所殺,葬於碭,諡曰隱王。而事不因此而止,只是易手 —— 項梁將江東子弟八千人渡江而西,求楚懷王孫心於民間,為人牧羊,立以為楚懷王,從民望也。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-chen-sheng', status: 'dead' },
+      { kind: 'flag', key: 'chain-weishui' },
+    ],
+  },
+  {
+    id: 'evt-chuhan-bridge-2',
+    name: { en: 'The Treaty at Hong Canal', zh: '鴻溝之約' },
+    yearMin: 180,
+    yearMax: 185,
+    season: 'autumn',
+    requires: [
+      { kind: 'flag-set', key: 'chain-chuhan-era' },
+      { kind: 'flag-set', key: 'weishui-longqu-dead' },
+      { kind: 'flag-unset', key: 'chain-gaixia' },
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+    ],
+    description:
+      'They cut the world in half at the canal — west of it Han, east of it Chu — and Chu sent the old man and the wife home. Chu turned east. Zhang Liang and Chen Ping took the king by the sleeve: he is out of food and out of men, this is heaven handing him over, and to let him walk now is to feed a tiger and be eaten later.',
+    descriptionZh: '項王乃與漢約,中分天下,割鴻溝以西者為漢,以東者為楚,歸漢王父母妻子。項王引兵解而東歸。張良、陳平說曰:「漢有天下太半,而諸侯皆附之。楚兵罷食盡,此天亡楚之時也。今釋弗擊,此所謂養虎自遺患也。」',
+    effects: [],
+    chooserRulerId: 'hist-liu-bang',
+    choices: [
+      {
+        id: 'pursue',
+        label: { zh: '養虎自遺患 —— 背約東追', en: 'To let him go is to feed a tiger. Follow him east.' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: -6 },
+          { kind: 'flag', key: 'chain-gaixia' },
+        ],
+      },
+      {
+        id: 'honour',
+        label: { zh: '守約,罷兵西歸', en: 'Keep the treaty and go west' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: 10 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-xiang-yu', multiplier: 1.25 },
+          { kind: 'flag', key: 'chain-gaixia' },
+          { kind: 'flag', key: 'chuhan-treaty-kept' },
+        ],
+      },
+    ],
+  },
+
+  // ---- 隋唐·虎牢之戰 ----------------------------------------------------
+  {
+    id: 'evt-hulao-1',
+    name: { en: 'Besiege Luoyang, Fight the Relief', zh: '圍洛打援' },
+    yearMin: 178,
+    yearMax: 181,
+    requires: [
+      { kind: 'flag-set', key: 'chain-hulao' },
+      { kind: 'officer-alive', officerId: 'hist-tang-taizong' },
+      { kind: 'officer-alive', officerId: 'hist-dou-jiande' },
+      { kind: 'flag-unset', key: 'hulao-set' },
+    ],
+    description:
+      'Luoyang has held for eight months and the army wants to go home; now Dou Jiande is coming down from Hebei with a hundred thousand to raise the siege. Every general says withdraw. Li Shimin says: keep the siege, and take three thousand five hundred to Hulao to hold the gate.',
+    descriptionZh: '圍洛八月不下,將士思歸,而竇建德將兵十餘萬西救王世充。諸將皆請還師,秦王曰:「世充糧盡,內外離心,不煩力攻,可以坐克。建德新破海公,將驕卒惰,吾據武牢,扼其咽喉。」',
+    effects: [],
+    chooserRulerId: 'hist-li-yuan',
+    choices: [
+      {
+        id: 'hold',
+        label: { zh: '圍洛不解,自將三千五百騎據武牢', en: 'Hold the siege. Take 3,500 to Hulao.' },
+        effects: [
+          { kind: 'flag', key: 'hulao-set' },
+          { kind: 'flag', key: 'hulao-held' },
+          { kind: 'officer-loyalty', officerId: 'hist-tang-taizong', delta: 8 },
+        ],
+      },
+      {
+        id: 'withdraw',
+        label: { zh: '解圍還師,避其鋒銳', en: 'Lift the siege and go home' },
+        effects: [
+          { kind: 'flag', key: 'hulao-set' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-wang-shichong', multiplier: 1.3 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-dou-jiande', multiplier: 1.2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-hulao-2',
+    name: { en: 'Ling Jing Advises Taking Taiyuan', zh: '凌敬勸取晉陽' },
+    yearMin: 178,
+    yearMax: 182,
+    season: 'summer',
+    requires: [
+      { kind: 'flag-set', key: 'chain-hulao' },
+      { kind: 'flag-set', key: 'hulao-held' },
+      { kind: 'officer-alive', officerId: 'hist-dou-jiande' },
+      { kind: 'flag-unset', key: 'hulao-decided' },
+    ],
+    description:
+      'His counsellor says: do not force Hulao. Cross the river, take Huaizhou and Heyang, climb over Taihang and go into Shangdang — Tang must come back to save its own country, and Luoyang lifts itself. Wang Shichong\'s envoys have been buying the generals all week, and the generals say: fight here.',
+    descriptionZh: '凌敬曰:「宜悉兵濟河,攻取懷州、河陽,踰太行,入上黨 —— 唐必還師自救,鄭圍自解。」而王世充遣使告急相繼,諸將皆受世充金,爭言:「凌敬書生,豈可與言戰事!」',
+    effects: [],
+    chooserRulerId: 'hist-dou-jiande',
+    choices: [
+      {
+        id: 'north',
+        label: { zh: '用凌敬之策 —— 踰太行,入上黨', en: "Take Ling Jing's road: over Taihang into Shangdang" },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-dou-jiande', multiplier: 1.15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-dou-jiande', delta: 8 },
+          { kind: 'flag', key: 'hulao-decided' },
+          { kind: 'flag', key: 'hulao-north' },
+        ],
+      },
+      {
+        id: 'fight',
+        label: { zh: '決戰武牢 —— 諸將所願', en: 'Fight at Hulao, as the generals want' },
+        effects: [
+          { kind: 'flag', key: 'hulao-decided' },
+          { kind: 'flag', key: 'hulao-battle' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-hulao-3',
+    name: { en: 'Two Kings in One Day', zh: '一戰擒兩王' },
+    yearMin: 178,
+    yearMax: 183,
+    requires: [
+      { kind: 'flag-set', key: 'chain-hulao' },
+      { kind: 'flag-set', key: 'hulao-battle' },
+      { kind: 'officer-alive', officerId: 'hist-tang-taizong' },
+      { kind: 'officer-alive', officerId: 'hist-dou-jiande' },
+    ],
+    description:
+      'Xia stood in line from dawn to noon; the men sat down and began fighting over water. Then the horse came out of the Fan river valley behind them. Dou Jiande was speared off his mount and taken alive; the head of Xia went to Luoyang under the walls, and Wang Shichong came out with his hands bound.',
+    descriptionZh: '建德列陣,自辰至午,士卒饑倦,皆坐列,又爭飲水。秦王曰:「可擊矣!」親率輕騎出汜水東,直薄其陣。建德為長矛所中,竄於牛口渚,車騎將軍白士讓生擒之。王世充見建德檻車至城下,乃率其群臣面縛出降。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-dou-jiande', status: 'imprisoned' },
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'hist-dou-jiande', fraction: 0.5 },
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'hist-wang-shichong', fraction: 0.5 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-yuan', delta: 15 },
+      { kind: 'flag', key: 'hulao-won' },
+    ],
+  },
+
+  // ---- 西陵之戰 ---------------------------------------------------------
+  {
+    id: 'evt-xiling-1',
+    name: { en: 'Lu Kang Builds a Wall Instead', zh: '陸抗築圍' },
+    yearMin: 272,
+    yearMax: 275,
+    requires: [
+      { kind: 'flag-set', key: 'chain-xiling' },
+      { kind: 'officer-alive', officerId: 'lu-kang' },
+      { kind: 'officer-alive', officerId: 'bu-chan' },
+      { kind: 'flag-unset', key: 'xiling-decided' },
+    ],
+    description:
+      'Bu Chan has given Xiling to Jin and Jin is marching to hold it. The army wants to storm the city before the relief arrives. Lu Kang makes them build a ring of wall and ditch around it instead — outward as well as inward — and the men dig for a month and complain the whole time.',
+    descriptionZh: '步闡據西陵降晉,晉遣羊祜等三道來援。諸將咸欲急攻闡,抗曰:「此城處勢既固,糧穀又足,且所繕修備禦之具,皆抗所宿規。今反攻之,不可猝拔。」乃令築嚴圍,自赤谿至故市,內以圍闡,外以禦寇,晝夜催切,眾甚苦之。',
+    effects: [],
+    chooserRulerId: 'sun-hao',
+    choices: [
+      {
+        id: 'wall',
+        label: { zh: '築嚴圍 —— 內以圍闡,外以禦寇', en: 'Build the ring: inward against Bu Chan, outward against Jin' },
+        effects: [
+          { kind: 'city-defense', cityId: 'xiling', delta: 20 },
+          { kind: 'officer-loyalty', officerId: 'lu-kang', delta: 8 },
+          { kind: 'flag', key: 'xiling-decided' },
+          { kind: 'flag', key: 'xiling-walled' },
+        ],
+      },
+      {
+        id: 'storm',
+        label: { zh: '諸將所請 —— 急攻之', en: 'Storm it now, as the generals ask' },
+        effects: [
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'sun-hao', multiplier: 0.85 },
+          { kind: 'flag', key: 'xiling-decided' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-xiling-2',
+    name: { en: "Yang Hu's Wine and Lu Kang's Medicine", zh: '羊陸之交' },
+    yearMin: 273,
+    yearMax: 278,
+    season: 'spring',
+    requires: [
+      { kind: 'flag-set', key: 'chain-xiling' },
+      { kind: 'officer-alive', officerId: 'lu-kang' },
+      { kind: 'officer-alive', officerId: 'yang-hu' },
+      { kind: 'flag-unset', key: 'xiling-friendship' },
+    ],
+    description:
+      'Lu Kang was ill and asked across the line for medicine; Yang Hu sent it, ready-made. His staff said do not drink it. He drank it. When Yang Hu wanted wine, Lu Kang sent a jar and said drink it, it is mine. "If he behaves like this," Lu Kang told his officers, "and we answer with raids, we shall be conquered without a battle."',
+    descriptionZh: '抗嘗病,祜饋之藥。抗服之無疑心,人多諫抗,抗曰:「羊祜豈鴆人者!」祜嘗欲酒,抗酒與之,祜飲不疑。抗告其邊戍曰:「彼專為德,我專為暴,是不戰而自服也。各保分界而已,無求細利。」',
+    effects: [],
+    chooserRulerId: 'sun-hao',
+    choices: [
+      {
+        id: 'keep',
+        label: { zh: '各保分界,無求細利', en: 'Each keeps his line. No raiding for scraps.' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'lu-kang', delta: 10 },
+          { kind: 'city-loyalty', cityId: 'xiling', delta: 10 },
+          { kind: 'flag', key: 'xiling-friendship' },
+        ],
+      },
+      {
+        id: 'accuse',
+        label: { zh: '通敵之嫌 —— 詔問陸抗', en: 'Summon Lu Kang to explain himself' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'lu-kang', delta: -20 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: -10 },
+          { kind: 'flag', key: 'xiling-friendship' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-xiling-3',
+    name: { en: 'The Screen of the State', zh: '國之藩表' },
+    yearMin: 274,
+    yearMax: 279,
+    season: 'autumn',
+    requires: [
+      { kind: 'flag-set', key: 'chain-xiling' },
+      { kind: 'officer-alive', officerId: 'lu-kang' },
+      { kind: 'flag-unset', key: 'xiling-memorial' },
+    ],
+    description:
+      'Lu Kang memorialises: Xiling and Jianping are the screen of the state, and they stand outside everything else — if an enemy comes down the river in force, no help from the interior arrives in time. Give me thirty thousand more men there. The court is busy with other things.',
+    descriptionZh: '抗上疏曰:「西陵、建平,國之蕃表,既處下流,受敵二境。若敵泛舟順流,舳艫千里,星奔電邁,俄然行至,非可恃援他部以救倒縣也。此乃社稷安危之機,非徒封疆侵陵小害也。臣父遜昔在西垂陳言,以為西陵國之西門,雖云易守,亦復易失。」',
+    effects: [
+      { kind: 'city-defense', cityId: 'xiling', delta: 15 },
+      { kind: 'city-troops-multiplier', cityId: 'xiling', multiplier: 1.2 },
+      { kind: 'flag', key: 'xiling-memorial' },
+    ],
+  },
+
+  // ---- 晉滅吳 -----------------------------------------------------------
+  {
+    id: 'evt-jinunite-1',
+    name: { en: 'The Chains Across the River', zh: '鐵鎖橫江' },
+    yearMin: 280,
+    yearMax: 284,
+    requires: [
+      { kind: 'flag-set', key: 'chain-jinunite' },
+      { kind: 'officer-alive', officerId: 'wang-jun' },
+      { kind: 'officer-alive', officerId: 'sun-hao' },
+      { kind: 'flag-unset', key: 'jinunite-chains' },
+    ],
+    description:
+      'Wu strung iron chains across the narrows and set iron spikes in the shallows. Wang Jun built rafts the size of fields, put straw men on them with armour and spears, and floated them down first: the spikes came away in the rafts. Then torches of hemp soaked in sesame oil, ten zhang long, and the chains melted and let go.',
+    descriptionZh: '吳人於江險磧要害處,以鐵鎖橫截之,又作鐵錐長丈餘,暗置江中。濬乃作大筏數十,方百餘步,縛草為人,被甲持杖,令善水者以筏先行,錐著筏去。又作火炬,長十餘丈,大數十圍,灌以麻油,遇鎖然炬燒之,須臾融液斷絕。',
+    effects: [
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'sun-hao', multiplier: 0.85 },
+      { kind: 'officer-loyalty', officerId: 'wang-jun', delta: 8 },
+      { kind: 'flag', key: 'jinunite-chains' },
+    ],
+  },
+  {
+    id: 'evt-jinunite-2',
+    name: { en: 'Zhang Ti Will Not Run', zh: '張悌不走' },
+    yearMin: 280,
+    yearMax: 285,
+    requires: [
+      { kind: 'flag-set', key: 'chain-jinunite' },
+      { kind: 'flag-set', key: 'jinunite-chains' },
+      { kind: 'officer-alive', officerId: 'zhang-ti' },
+      { kind: 'officer-alive', officerId: 'sun-hao' },
+    ],
+    description:
+      'The line broke at Banqiao. His officers pulled at him to come away. "Today is the day I die. As a boy I was picked out by the house of Sun; I always feared I should not die well and shame those who knew me. If the state ends today, what is there to run to?" He would not move, and they left him.',
+    descriptionZh: '晉軍至,吳軍大敗。諸葛靚引騎數百,遣人牽悌走。悌曰:「仲思,今日是我死日也。且我為兒童時,便為卿家丞相所識拔,常恐不得其死,負名賢知顧。今以身徇社稷,復何遁邪?」靚流涕放去,行百餘步,已見為晉軍所殺。',
+    effects: [],
+    chooserRulerId: 'sun-hao',
+    choices: [
+      {
+        id: 'die',
+        label: { zh: '以身徇社稷 —— 不走', en: 'He stands, and dies for the state' },
+        effects: [
+          { kind: 'officer-status', officerId: 'zhang-ti', status: 'dead' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: 8 },
+          { kind: 'flag', key: 'jinunite-zhangti' },
+        ],
+      },
+      {
+        id: 'retreat',
+        label: { zh: '牽之而走,收餘眾守建業', en: 'Drag him away; hold Jianye with what is left' },
+        effects: [
+          { kind: 'city-troops-multiplier', cityId: 'jianye', multiplier: 1.25 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: -6 },
+          { kind: 'flag', key: 'jinunite-zhangti' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'evt-jinunite-3',
+    name: { en: 'One White Banner Out of Shitou', zh: '一片降旛出石頭' },
+    yearMin: 280,
+    yearMax: 286,
+    requires: [
+      { kind: 'flag-set', key: 'chain-jinunite' },
+      { kind: 'flag-set', key: 'jinunite-zhangti' },
+      { kind: 'officer-alive', officerId: 'sun-hao' },
+      { kind: 'officer-alive', officerId: 'wang-jun' },
+    ],
+    description:
+      'Wang Jun\'s towered ships came down out of Yizhou; the king\'s ghost-fire at Jinling went out. A thousand xun of iron chain sank to the bottom of the river, and one white banner came out of Shitou.',
+    descriptionZh: '王濬樓船下益州,金陵王氣黯然收。千尋鐵鎖沉江底,一片降旛出石頭。\n\n皓乃備亡國之禮,素車白馬,肉袒面縛,銜璧牽羊,大夫衰服,士輿櫬,造於壘門。',
+    effects: [],
+    chooserRulerId: 'sun-hao',
+    choices: [
+      {
+        id: 'surrender',
+        label: { zh: '肉袒面縛,銜璧牽羊', en: 'Bare the shoulder, bind the hands, lead the sheep' },
+        effects: [
+          { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'sun-hao', fraction: 0.6 },
+          { kind: 'flag', key: 'jinunite-ended' },
+        ],
+      },
+      {
+        id: 'burn',
+        label: { zh: '焚宮室,死守石頭', en: 'Burn the palaces and hold Shitou' },
+        effects: [
+          { kind: 'city-defense', cityId: 'jianye', delta: 25 },
+          { kind: 'city-troops-multiplier', cityId: 'jianye', multiplier: 1.3 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: -8 },
+          { kind: 'flag', key: 'jinunite-ended' },
+        ],
+      },
+    ],
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(

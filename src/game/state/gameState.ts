@@ -1418,7 +1418,8 @@ export function loadScenario(
   casusBelliMarks: [],
   deterrences: [],
   recruitBonusSeasons: {},
-    eventFlags: {},
+    // 戰役專屬事件鏈的開關 —— 見 Scenario.eventFlags 的註解。
+    eventFlags: Object.fromEntries((scenario.eventFlags ?? []).map((k) => [k, true])),
     firedEventIds: [],
     // Authored events carry across scenarios (firedEventIds resets, so they
     // can fire again in the new game).
