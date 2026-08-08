@@ -1604,7 +1604,19 @@ const CITY_OWNERSHIP_234: Record<string, string> = {
   jianye:    'sun',
   wu:        'sun',
   wuxi:      'sun',
-  hefei:     'sun', // Wu held Hefei briefly — for game purposes
+  /*
+   * 合肥 —— 這裡原本寫 `'sun'`,註解自己寫著「Wu held Hefei briefly —
+   * for game purposes」。而**吳從來沒有據有過合肥**:208 年張遼在,215 年
+   * 逍遙津八百破十萬,233 年滿寵築合肥新城,234 年孫權攻新城不克而還
+   * (正是這張表所代表的那一年),253 年諸葛恪圍新城三月不下而軍疫。
+   * 五次北伐,五次沒拿下。
+   *
+   * 這一格錯得很貴,因為 231/234/238/241/244 五張盤共用這張表:
+   *  - 238 遼東盤,吳的主目標「取合肥」跑出 8/8 —— 因為它開局就是吳的。
+   *  - 241 芍陂盤,魏的主目標「守合肥壽春」只有 1/8 —— 魏得先去打下來,
+   *    而芍陂之戰的史實正是**魏守住了**(賴王凌、孫禮拒守而得全)。
+   */
+  hefei:     'cao',
   yuzhang:   'sun',
   changsha:  'sun',
   jiangling: 'sun',
@@ -8420,7 +8432,26 @@ export const SCENARIO_241_SHAOPI: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -80, status: 'neutral' },
   ],
-  cities: buildInitialCities(CITY_OWNERSHIP_234, TK_LATE),
+  cities: buildInitialCities(CITY_OWNERSHIP_234, {
+    ...TK_LATE,
+    /*
+     * 正始二年的魏是三國國力最盛的一家:曹叡雖崩,而九州之地、屯田之積、
+     * 中軍之眾都在。TK_LATE 那份通用底(220 之後諸盤共用)給的是 ×1.20,
+     * 而這一年他同時擋住了吳的四路與蜀的窺伺,還有餘力在淮南屯田 ——
+     * 體檢八輪魏卻從 66 城掉到 55,兵比只有二十五城的蜀還少。
+     */
+    cao: { troops: 1.32, food: 1.28, gold: 1.25, defense: 10, loyalty: 8 },
+  }, {
+    /*
+     * 淮南兩城具名調硬 —— 芍陂之戰的史實是**魏守住了**(全琮進逼芍陂,
+     * 賴王凌、孫禮拒守而得全),而體檢八輪魏的「淮南屯田」只有 1/8。
+     * 合肥新城是滿寵 233 年移築的,離水三十里,吳船到不了城下;壽春是
+     * 淮南屯田的中心,鄧艾《濟河論》所謂「資食有儲而無水害」。
+     * 照 208 盤陽平關的做法:**只調城防,不調兵**。
+     */
+    hefei:    { defense: 96 },
+    shouchun: { defense: 104 },
+  }),
   forces: FORCES_POST_CAORUI,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_POST_CAORUI, [], 241),
 };

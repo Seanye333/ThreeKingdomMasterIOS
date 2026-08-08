@@ -2114,6 +2114,76 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 238 遼東·襄平之戰 ────────────────────────────────────────── */
   'scn-238-liaodong': {
+    /*
+     * 這張盤四家而只有魏、燕有落幕文本 —— 蜀吳兩家的玩家亡國時讀通用輓歌。
+     * 238 年的蜀是蔣琬執政的蜀(丞相歿後第四年),吳是孫權晚年的吳。
+     */
+    'liu-bei': {
+      defeat: {
+        titleZh: '丞相歿後第四年',
+        titleEn: 'The Fourth Year After the Chancellor',
+        textZh:
+          '五丈原之後,漢家不再北伐 —— 蔣公琰承其任,而不承其志:'
+          + '「吾實不如前人多矣。」\n\n'
+          + '及城破之日,人尚言丞相在時,'
+          + '田疇辟,倉廩實,器械利,蓄積饒;'
+          + '而此刻劍閣之北,已無一兵可調。\n\n'
+          + '——出師一表真名世,千載誰堪伯仲間。'
+          + '而表中所謂「今南方已定,兵甲已足」者,至此皆成空文。',
+        textEn:
+          'After Wuzhang Plains the house of Han marched north no more. Jiang Wan took up the office but not the vow: "In truth I fall far short of the man before me."\n\n'
+          + 'On the day the walls break, men still speak of how it was while the Chancellor lived — fields opened, granaries full, weapons keen, stores deep. Now, north of Jiange, there is not one soldier left to send.\n\n'
+          + 'One memorial on taking the field made his name for a thousand years. The line in it — "the south is pacified, the armour is sufficient" — is from today an empty sentence.',
+      },
+      verdictZh:
+        '論曰:漢之亡,不亡於一戰,亡於**代不如代** ——\n'
+        + '丞相之後有蔣琬,蔣琬之後有費禕,'
+        + '費禕之後,則姜維以一人之力支之。\n'
+        + '維非不忠,而九伐中原,兵疲民困;'
+        + '朝中黃皓用事,譙周作《仇國論》。\n'
+        + '國小而地險,守則有餘,攻則不足 ——'
+        + '此諸葛孔明所深知,而後人不能守其意者也。',
+      verdictEn:
+        'The historian says: Han did not fall in a battle; it fell because each generation was less than the one before. After the Chancellor came Jiang Wan; after Jiang Wan, Fei Yi; after Fei Yi, Jiang Wei held it up alone. Wei was not disloyal, but nine campaigns into the middle plains left the army spent and the people worn, while Huang Hao ran the court and Qiao Zhou wrote his essay on the smaller state. A small realm behind hard passes has enough to defend with and not enough to attack with — which Zhuge Kongming understood to the bone, and those after him could not keep to.',
+      verdictLostZh:
+        '論曰:守成之難,不在敵強,在於**先人做得太好** ——\n'
+        + '後人一舉一動,皆在其影中。',
+      verdictLostEn:
+        'The historian says: the difficulty of holding what one inherits is not that the enemy is strong, but that the man before you did it too well. Every move you make is made inside his shadow.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '萬里浮海,而使者不返',
+        titleEn: 'Ten Thousand Li by Sea, and No Envoy Returned',
+        textZh:
+          '權遣張彌、許晏浮海至遼東,金寶珍貨,九錫備物,封公孫淵為燕王。'
+          + '張昭諫曰:「淵背魏懼討,遠來求援,非本志也。」'
+          + '權不聽,昭遂稱疾不朝;權土塞其門,昭於內以土封之。\n\n'
+          + '——淵果斬彌、晏,送首於魏。權大慚,曰:'
+          + '「孤年六十,世事難易,靡所不嘗,'
+          + '近為鼠子所前卻,令人氣踊如山。」\n\n'
+          + '及國破之日,那條萬里的海路,'
+          + '仍是這個王朝走過最遠的一步。',
+        textEn:
+          'Sun Quan sent Zhang Mi and Xu Yan by sea to Liaodong with gold, jewels and the full nine bestowals, to invest Gongsun Yuan as King of Yan. Zhang Zhao objected: "Yuan has turned on Wei and fears punishment; he comes to us for help, not out of loyalty." Quan would not hear it, and Zhao stayed home pleading illness; Quan had his gate walled up with earth, and Zhao walled it from the inside.\n\n'
+          + 'Yuan beheaded Mi and Yan and sent the heads to Wei. Quan, deeply shamed: "I am sixty. I have tasted every ease and difficulty this world offers, and now to be played with by a rat — it makes the breath rise in me like a mountain."\n\n'
+          + 'On the day the state falls, that sea road remains the furthest step this dynasty ever took.',
+      },
+      verdictZh:
+        '論曰:權之為君,能屈身忍辱,任才尚計,'
+        + '有勾踐之奇,英人之傑矣 ——\n'
+        + '故能自擅江表,成鼎峙之業。\n'
+        + '然性多嫌忌,果於殺戮,暨臻末年,彌以滋甚;'
+        + '至於讒說殄行,胤嗣廢斃,'
+        + '豈所謂賢明之君乎?',
+      verdictEn:
+        'The historian says: as a ruler Sun Quan could bend, could swallow humiliation, could use talent and prize calculation — he had something of King Goujian in him, and was a man among men; and so he made the river country his own and stood as one of three. But he was by nature full of suspicion and quick to kill, and in his last years this grew worse and worse, until slander undid the good and his own heirs were destroyed. Is that what one calls an enlightened lord?',
+      verdictLostZh:
+        '論曰:江東之守,恃者三事:江、船、人和。'
+        + '三者去其一,則守不成矣。',
+      verdictLostEn:
+        'The historian says: the defence of the southeast rests on three things — the river, the ships, and men in accord. Lose any one of them and there is no defence.',
+    },
     yan: {
       defeat: {
         titleZh: '燕王之號,兩年而已',
@@ -3427,6 +3497,38 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 241 芍陂之戰 ─────────────────────────────────────────────── */
   'scn-241-shaopi': {
+    /* 這張盤三家,蜀漢原本沒有落幕文本。241 年執政的是費禕。 */
+    'liu-bei': {
+      defeat: {
+        titleZh: '守成而已',
+        titleEn: 'Only to Hold',
+        textZh:
+          '費文偉秉政,姜維每欲興軍大舉,禕常裁制不從,'
+          + '與其兵不過萬人,曰:\n\n'
+          + '「吾等不如丞相亦已遠矣;丞相猶不能定中夏,'
+          + '況吾等乎!且不如保國治民,敬守社稷,'
+          + '如其功業,以俟能者,無為希冀徼倖而決成敗於一舉。'
+          + '若不如志,悔之無及。」\n\n'
+          + '——而城破之日,連這「保國治民」四字,也守不住了。',
+        textEn:
+          'Fei Yi held the government. Whenever Jiang Wei wanted to raise a great army, Yi cut him back and never gave him more than ten thousand men, saying:\n\n'
+          + '"We fall far short of the Chancellor — and even he could not settle the middle plains; how much less we? Better to hold the state and govern the people, to keep the altars with reverence, and leave that achievement to some abler man in time. Do not gamble on luck and stake the whole issue on one throw; if it goes wrong, regret comes too late."\n\n'
+          + 'And on the day the walls break, even those four words — hold the state, govern the people — could not be kept.',
+      },
+      verdictZh:
+        '論曰:禕之持重,論者或譏其無進取之志 ——\n'
+        + '然自建興以來,漢兵屢出而國不加大,'
+        + '民疲於運,士老於行。\n'
+        + '禕死之後,維果連年出兵,而蜀以亡。\n'
+        + '故知守成非怯,乃國小者之常道;'
+        + '惜乎守之者不得其終。',
+      verdictEn:
+        "The historian says: some have mocked Fei Yi's caution as a lack of ambition. But since the Jianxing years the armies of Han had gone out again and again without the realm growing an inch, while the people wore out hauling grain and the soldiers grew old on the road. After Yi died, Jiang Wei did campaign year on year — and Shu fell. Holding what one has is not cowardice; it is the ordinary road for a small state. The pity is that the man who held it did not get to finish.",
+      verdictLostZh:
+        '論曰:小國之君,能守其境而終其身者,已為賢矣。',
+      verdictLostEn:
+        'The historian says: for the lord of a small state, to hold his borders and die in his bed is already to have done well.',
+    },
     cao: {
       defeat: {
         titleZh: '力戰連日',

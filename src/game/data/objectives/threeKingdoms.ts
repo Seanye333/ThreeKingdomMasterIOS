@@ -3762,11 +3762,25 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-238-wu',
       forceId: 'sun',
       primary: {
-        title: { zh: '遼東通使', en: 'The Liaodong Embassy' },
-        description: 'Take Hefei by 248 — you sent a fleet to Liaodong and lost the envoys; take the wall instead.',
-        descriptionZh: "於248年前攻取合肥 —— 浮海通遼東,使者為公孫淵所斬,不如踏實取合肥。",
-        goal: { kind: 'hold-cities', cityIds: ['hefei'], byYear: 248 },
+        title: { zh: '守此江表', en: 'Hold the River Country' },
+        description: 'Still hold Jianye and Wuchang in 248 — the fleet you sent ten thousand li to Liaodong came back without its envoys; what you actually keep is the river.',
+        descriptionZh: "至248年仍保建業、武昌 —— 萬里浮海以通遼東,而淵斬其使,送首於魏。張昭杖擊其門而諫者,正是此事。真正守得住的,還是這條江。",
+        /*
+         * 原本是「於248年前攻取合肥」,而**合肥在這張表上原本就是吳的**
+         * (CITY_OWNERSHIP_234 那一格寫錯了,已改回魏)—— 於是這條守成型
+         * 目標跑出 8/8 的白送。改回歸屬之後它變成「取得」,而吳史書上五次
+         * 攻合肥一次也沒成。主目標寫他真正做到的,取合肥降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wuchang'], byYear: 248 },
       },
+      secondary: [
+        {
+          title: { zh: '踏實取合肥', en: 'Take Hefei Instead' },
+          description: 'Take Hefei by 248 — the wall that turned back five invasions.',
+          descriptionZh: "於248年前攻取合肥 —— 浮海通遼東既無所得,不如踏實取合肥。而那道牆擋回去過五次北伐。",
+          goal: { kind: 'hold-cities', cityIds: ['hefei'], byYear: 248 },
+        },
+      ],
     },
   ],
 
@@ -3776,12 +3790,24 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-241-wu',
       forceId: 'sun',
       primary: {
-        title: { zh: '四路伐魏', en: 'Four Armies North' },
-        description: 'Take Hefei and Shouchun by 250 — Quan Cong at Shaopi, Zhuge Ke at Liu\'an.',
-        descriptionZh: "於250年前取合肥、壽春 —— 全琮攻芍陂,諸葛恪向六安,四路並舉。",
-        goal: { kind: 'hold-cities', cityIds: ['hefei', 'shouchun'], byYear: 250 },
+        title: { zh: '江東晏然', en: 'The Southeast Undisturbed' },
+        description: "Still hold Jianye and Wuchang in 252 — the last great northern effort came back with nothing, and the old king held what he had until he died.",
+        descriptionZh: "至252年仍保建業、武昌 —— 赤烏四年四路並舉,而全琮阻於芍陂、朱然頓於樊城、諸葛瑾無功於柤中。這是開國者最後一次大舉,此後他再未親征,而江表晏然至其崩。",
+        /*
+         * 原本是「於250年前取合肥、壽春」,體檢八輪 5/8 —— 而芍陂之戰吳一座城
+         * 也沒拿到,魏賴王凌、孫禮拒守而得全。合肥更是吳打了五次都沒下的地方
+         * (208 張遼、215 逍遙津、233 滿寵築新城、234 攻新城不克、253 諸葛恪
+         * 圍三月而軍疫)。主目標寫他真正做到的:守住,並且守到他死。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wuchang'], byYear: 252 },
       },
       secondary: [
+        {
+          title: { zh: '四路伐魏', en: 'Four Armies North' },
+          description: "Take Hefei and Shouchun by 250 — Quan Cong at Shaopi, Zhuge Ke at Liu'an.",
+          descriptionZh: "於250年前取合肥、壽春 —— 全琮攻芍陂,諸葛恪向六安,四路並舉。史書上這四路一路也沒成。",
+          goal: { kind: 'hold-cities', cityIds: ['hefei', 'shouchun'], byYear: 250 },
+        },
         {
           title: { zh: '取襄陽', en: 'Take Xiangyang' },
           description: 'Hold Xiangyang by 252 — Zhu Ran\'s road into Jing.',
@@ -4337,9 +4363,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'sima',
       primary: {
         title: { zh: '樓船下益州', en: 'The Tower Ships Sail' },
-        description: 'Destroy the Wu force by 285 — sixty years of division end when the last of them does.',
-        descriptionZh: "於285年前滅吳 —— 王濬樓船下益州,金陵王氣黯然收。六十年分裂,終於此。",
-        goal: { kind: 'defeat-force', forceId: 'sun', byYear: 285 },
+        description: 'Take Jianye by 285 — the tower ships came down from Yi province and the royal aura of Jinling went out.',
+        descriptionZh: "於285年前取建業 —— 王濬樓船下益州,金陵王氣黯然收。六十年分裂,終於此。",
+        /*
+         * 原本是 `defeat-force sun`,跑滿 760 回合(到 286 年)仍然 0/6 —— 而這次
+         * 不是窗口沒到:吳終局中位還有 9 城,晉就是收不完。`defeat-force` 要對方
+         * 在盤上全滅,而史書上的「滅吳」是**王濬入石頭城、孫皓面縛出降**那一天,
+         * 交州廣州那幾郡是傳檄而定的。查建業。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jianye'], byYear: 285 },
       },
       secondary: [
         {
