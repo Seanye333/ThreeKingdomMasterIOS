@@ -415,9 +415,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'tao',
       primary: {
         title: { zh: '徐州安堵', en: 'Keep Xuzhou Quiet' },
-        description: 'Still hold Pengcheng and Xiapi in 197.',
-        descriptionZh: "至197年仍保彭城、下邳 —— 亂世之中,無事便是大功。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 197 },
+        description: 'Still hold Pengcheng and Xiapi in 194.',
+        descriptionZh: "至194年仍保彭城、下邳 —— 亂世之中,無事便是大功。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 194 },
       },
       secondary: [
         {
@@ -459,9 +459,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 征荊州擊劉表,那是他最後一戰,也是他唯一與非盟友接壤的方向。
          * 掃除宗廟留作次要 —— 名場面該是獎賞,不是入場券。
          */
-        description: 'Take Xiangyang by 195 — Yuan Shu sent him against Liu Biao, and that road ended at Xian mountain.',
-        descriptionZh: '於195年前攻取襄陽 —— 袁術遣堅征荊州擊劉表,而這條路的盡頭是峴山。',
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 195 },
+        description: 'Take Xiangyang by 191 — Yuan Shu sent him against Liu Biao, and that road ended at Xian mountain.',
+        descriptionZh: '於191年前攻取襄陽 —— 袁術遣堅征荊州擊劉表,而這條路的盡頭是峴山。',
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 191 },
       },
       secondary: [
         /*
@@ -812,9 +812,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'wuhuan',
       primary: {
         title: { zh: '白狼山之前', en: 'Before White Wolf Mountain' },
-        description: 'Still hold Liucheng in 208 — Cao Cao came over the wall in 207 and the line never formed.',
-        descriptionZh: '撐到208年仍據有柳城 —— 史實上207年曹操出塞,那天陣都沒列完。',
-        goal: { kind: 'hold-cities', cityIds: ['liucheng'], byYear: 208 },
+        description: "Still hold Liucheng in 207 — that is the year he came over the wall, and the line never formed.",
+        descriptionZh: '撐到207年仍據有柳城 —— 曹操就是那年出的塞,而那天陣都沒列完。',
+        goal: { kind: 'hold-cities', cityIds: ['liucheng'], byYear: 207 },
       },
       secondary: [
         {
@@ -1302,9 +1302,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '五斗自守', en: 'Hold the Faith' },
-        description: 'Survive as lord of Hanzhong until 218.',
-        descriptionZh: "憑五斗米道之眾,守漢中政教至218年。",
-        goal: { kind: 'survive-until', year: 218 },
+        description: 'Survive as lord of Hanzhong until 216.',
+        descriptionZh: "憑五斗米道之眾,守漢中政教至216年。",
+        goal: { kind: 'survive-until', year: 216 },
       },
     },
     {
@@ -1572,9 +1572,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '江東猛虎', en: 'The Tiger of Jiangdong' },
-        description: 'Take Xiangyang by 196 — the wall that killed you in history.',
-        descriptionZh: "於196年前攻取襄陽 —— 峴山之下,史書曾載你的死。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 196 },
+        description: 'Take Xiangyang by 191 — the wall that killed you in history.',
+        descriptionZh: "於191年前攻取襄陽 —— 峴山之下,史書曾載你的死。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 191 },
       },
       secondary: [
         {
@@ -1732,9 +1732,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'tao-qian',
       primary: {
         title: { zh: '徐州安堵', en: 'Xu Province at Peace' },
-        description: "Still hold Xiapi and Pengcheng in 198. Xu province is prosperous and he is old.",
-        descriptionZh: "至198年仍據下邳、彭城。徐州殷實,而他老了,守得住一年是一年。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'pengcheng'], byYear: 198 },
+        description: "Still hold Xiapi and Pengcheng in 194. Xu province is prosperous and he is old.",
+        descriptionZh: "至194年仍據下邳、彭城。徐州殷實,而他老了,守得住一年是一年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'pengcheng'], byYear: 194 },
       },
     },
     {
@@ -1784,9 +1784,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'lubu',
       primary: {
         title: { zh: '奪兗取徐', en: 'Yan First, Then Xu' },
-        description: 'Hold Puyang and Xiapi by 199.',
-        descriptionZh: "於199年前兼據濮陽、下邳,自濮陽起,終於下邳。",
-        goal: { kind: 'hold-cities', cityIds: ['puyang', 'xiapi'], byYear: 199 },
+        description: 'Hold Puyang and Xiapi by 198.',
+        descriptionZh: "於198年前兼據濮陽、下邳,自濮陽起,終於下邳。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'xiapi'], byYear: 198 },
       },
     },
     {
@@ -1902,9 +1902,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-yao',
       primary: {
         title: { zh: '守曲阿', en: 'Hold the Line at Qu\'e' },
-        description: 'Still hold Jianye in 199 — the little tyrant is coming.',
-        descriptionZh: "至199年仍據建業 —— 小霸王已渡江而來。",
-        goal: { kind: 'hold-cities', cityIds: ['jianye'], byYear: 199 },
+        description: 'Still hold Jianye in 198 — the little tyrant is coming.',
+        descriptionZh: "至198年仍據建業 —— 小霸王已渡江而來。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye'], byYear: 198 },
       },
     },
     {
@@ -1962,9 +1962,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'lu-bu',
       primary: {
         title: { zh: '白門樓之前', en: 'Before the White Gate' },
-        description: 'Still hold Xiapi in 200 AD — in history the tower fell in 199.',
-        descriptionZh: '撐到200年仍據有下邳 —— 史實上白門樓是199年的事。',
-        goal: { kind: 'hold-cities', cityIds: ['xiapi'], byYear: 200 },
+        description: "Still hold Xiapi in 198 — the tower gate is the winter of that same year.",
+        descriptionZh: '撐到198年仍據有下邳 —— 白門樓正是那年冬天的事。',
+        goal: { kind: 'hold-cities', cityIds: ['xiapi'], byYear: 198 },
       },
       secondary: [
         {
@@ -2038,9 +2038,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '易京不焚', en: 'Yijing Does Not Burn' },
-        description: 'Still hold Yi county in 200 AD — in history he burned himself in it in 199.',
-        descriptionZh: '撐到200年仍據有易縣 —— 史實上他199年在城中自焚。',
-        goal: { kind: 'hold-cities', cityIds: ['yi-county'], byYear: 200 },
+        description: "Still hold Yi county in 199 — the year the tower burned with him inside it.",
+        descriptionZh: '撐到199年仍據有易縣 —— 那正是他樓中自焚的那一年。',
+        goal: { kind: 'hold-cities', cityIds: ['yi-county'], byYear: 199 },
       },
       secondary: [
         {
@@ -2088,9 +2088,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yan-baihu',
       primary: {
         title: { zh: '劃江而治', en: 'A River Between Us' },
-        description: 'Hold Wu commandery and Wuxi through 199 — the terms your brother went to ask for.',
-        descriptionZh: '守住吳郡與無錫至199年 —— 你弟弟去談的正是這個。',
-        goal: { kind: 'hold-cities', cityIds: ['wu', 'wuxi'], byYear: 199 },
+        description: 'Hold Wu commandery and Wuxi through 196 — the terms your brother went to ask for.',
+        descriptionZh: '守住吳郡與無錫至196年 —— 你弟弟去談的正是這個。',
+        goal: { kind: 'hold-cities', cityIds: ['wu', 'wuxi'], byYear: 196 },
       },
       secondary: [
         {
@@ -2171,9 +2171,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '易京樓不焚', en: 'The Tower Shall Not Burn' },
-        description: 'Still hold Yi County in 202 — history gives you until 199.',
-        descriptionZh: "至202年仍守易縣 —— 史書只給了你到199年。",
-        goal: { kind: 'hold-cities', cityIds: ['yi-county'], byYear: 202 },
+        description: "Still hold Yi County in 199 — that is the last year history gives you.",
+        descriptionZh: "至199年仍守易縣 —— 那正是史書給你的最後一年。",
+        goal: { kind: 'hold-cities', cityIds: ['yi-county'], byYear: 199 },
       },
     },
     {
@@ -2199,9 +2199,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'lu-bu',
       primary: {
         title: { zh: '徐州為家', en: 'Xuzhou for a Home' },
-        description: 'Hold Xiapi and Pengcheng by 201.',
-        descriptionZh: "於201年前兼據下邳、彭城,終得一塊自己的地。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'pengcheng'], byYear: 201 },
+        description: 'Hold Xiapi and Pengcheng by 198.',
+        descriptionZh: "於198年前兼據下邳、彭城,終得一塊自己的地。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'pengcheng'], byYear: 198 },
       },
     },
     {
@@ -2211,7 +2211,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         title: { zh: '淮南之主', en: 'Lord of Huainan' },
         description: "Still hold Shouchun and Wancheng in 203. Four generations of ministers behind him, and Huainan rich enough to stand alone.",
         descriptionZh: "至203年仍據壽春、宛城。四世三公之後,而淮南之富足以自立。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'wancheng'], byYear: 203 },
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'wancheng'], byYear: 199 },
       },
     },
     {
@@ -2309,9 +2309,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shu',
       primary: {
         title: { zh: '仲氏不亡', en: 'Zhong Shall Not Fall' },
-        description: 'Still hold Shouchun in 202 — history gives you until 199.',
-        descriptionZh: "至202年仍據壽春 —— 史書只給了你到199年。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 202 },
+        description: "Still hold Shouchun in 199 — that is the last year history gives you.",
+        descriptionZh: "至199年仍據壽春 —— 那正是史書給你的最後一年。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 199 },
       },
     },
     {
@@ -2489,9 +2489,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shang',
       primary: {
         title: { zh: '鄴城固守', en: 'Hold Ye' },
-        description: 'Still hold Ye in 208.',
-        descriptionZh: "至208年仍據鄴城 —— 父之基業,不可失於我手。",
-        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 208 },
+        description: 'Still hold Ye in 207.',
+        descriptionZh: "至207年仍據鄴城 —— 父之基業,不可失於我手。",
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 207 },
       },
       secondary: [
         {
@@ -2697,9 +2697,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-teng',
       primary: {
         title: { zh: '不入許都', en: 'Do Not Go to Xuchang' },
-        description: "Still hold Wuwei, Jincheng, Anding and Longxi in 213 — stay in the west; the summons to court is a cage.",
-        descriptionZh: "至213年仍據武威、金城、安定、隴西 —— 留在西邊。徵你入朝的那道詔書是個籠子。",
-        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 213 },
+        description: "Still hold Wuwei, Jincheng, Anding and Longxi in 212 — stay in the west; the summons to court is a cage.",
+        descriptionZh: "至212年仍據武威、金城、安定、隴西 —— 留在西邊。徵你入朝的那道詔書是個籠子。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 212 },
       },
       secondary: [
         {
@@ -2823,9 +2823,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-teng',
       primary: {
         title: { zh: '西涼之安', en: 'Liang Kept Quiet' },
-        description: "Still hold Wuwei and Anding in 213. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
-        descriptionZh: "至213年仍據武威、安定。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
-        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 213 },
+        description: "Still hold Wuwei and Anding in 212. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
+        descriptionZh: "至212年仍據武威、安定。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 212 },
       },
     },
     {
@@ -2899,9 +2899,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'han-sui',
       primary: {
         title: { zh: '西州自立', en: 'A Realm in the West' },
-        description: "Still hold Jincheng, Wuwei and Anding in 217 — thirty years in Liang, and never once summoned to court.",
-        descriptionZh: "至217年仍據金城、武威、安定 —— 在涼州三十年,一次也沒有應詔入朝。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'longxi', 'tianshui'], byYear: 217 },
+        description: "Still hold Jincheng, Wuwei and Anding in 215 — thirty years in Liang, and never once summoned to court.",
+        descriptionZh: "至215年仍據金城、武威、安定 —— 在涼州三十年,一次也沒有應詔入朝。",
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'longxi', 'tianshui'], byYear: 215 },
       },
       secondary: [
         {
@@ -3049,9 +3049,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '據險自保', en: 'Hold the Passes' },
-        description: 'Still hold Hanzhong in 217.',
-        descriptionZh: "至217年仍據漢中。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 217 },
+        description: 'Still hold Hanzhong in 216.',
+        descriptionZh: "至216年仍據漢中。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 216 },
       },
     },
     {
@@ -3143,9 +3143,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '漢中猶在', en: 'Hanzhong Endures' },
-        description: 'Still hold Hanzhong in 218.',
-        descriptionZh: "至218年仍據漢中。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 218 },
+        description: 'Still hold Hanzhong in 216.',
+        descriptionZh: "至216年仍據漢中。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 216 },
       },
     },
     {
@@ -3321,9 +3321,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'shi-xie',
       primary: {
         title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
-        description: "Still hold Jiaozhi and Nanhai in 227. The brothers held the commanderies between them; for over forty years the south saw no war.",
-        descriptionZh: "至227年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
-        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 227 },
+        description: "Still hold Jiaozhi and Nanhai in 226. The brothers held the commanderies between them; for over forty years the south saw no war.",
+        descriptionZh: "至226年仍據交趾、南海。兄弟並為列郡守,雄長一州,四十餘年疆場無事。",
+        goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai'], byYear: 226 },
       },
     },
     {
@@ -4141,9 +4141,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'huainan',
       primary: {
         title: { zh: '壽春不下', en: 'Shouchun Shall Not Fall' },
-        description: 'Still hold Shouchun in 262 — history gives you until 258.',
-        descriptionZh: "至262年仍據壽春 —— 史書只給了你到258年二月。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 262 },
+        description: "Still hold Shouchun in 258 — history gives you until the second month of that year.",
+        descriptionZh: "至258年仍據壽春 —— 史書給你的最後一天是那年二月。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 258 },
       },
       secondary: [
         {
@@ -4642,9 +4642,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun-du',
       primary: {
         title: { zh: '遼東自守', en: 'Liaodong Keeps Itself' },
-        description: "Still hold Liaodong and Xiangping in 206. Land east of the sea, where the court's writ arrives late if at all.",
-        descriptionZh: "至206年仍據遼東、襄平。海東之地,朝廷之令不常至。",
-        goal: { kind: 'hold-cities', cityIds: ['liaodong', 'xiangping'], byYear: 206 },
+        description: "Still hold Liaodong and Xiangping in 204. Land east of the sea, where the court's writ arrives late if at all.",
+        descriptionZh: "至204年仍據遼東、襄平。海東之地,朝廷之令不常至。",
+        goal: { kind: 'hold-cities', cityIds: ['liaodong', 'xiangping'], byYear: 204 },
       },
     },
     {

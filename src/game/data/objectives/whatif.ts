@@ -588,9 +588,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'han-sui',
       primary: {
         title: { zh: '關中十部', en: 'The Ten Camps of Guanzhong' },
-        description: "Still hold Jincheng, Wuwei, Anding and Longxi in 218.",
-        descriptionZh: "至218年仍據金城、武威、安定、隴西 —— 十部聯軍,而各有各的城。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding', 'longxi'], byYear: 218 },
+        description: "Still hold Jincheng, Wuwei, Anding and Longxi in 215.",
+        descriptionZh: "至215年仍據金城、武威、安定、隴西 —— 十部聯軍,而各有各的城。",
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding', 'longxi'], byYear: 215 },
       },
       secondary: [
         {
@@ -636,9 +636,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: "Still hold Hanzhong and Baxi in 217. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
-        descriptionZh: "至217年仍據漢中、巴西。政教合一,置義舍米肉,三十年不見兵革。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 217 },
+        description: "Still hold Hanzhong and Baxi in 216. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
+        descriptionZh: "至216年仍據漢中、巴西。政教合一,置義舍米肉,三十年不見兵革。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 216 },
       },
     },
     {
@@ -856,9 +856,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'tao',
       primary: {
         title: { zh: '徐州安堵', en: 'Xu Province at Peace' },
-        description: "Still hold Pengcheng and Xiapi in 198. Xu province is prosperous and he is old: every year it holds is a year won.",
-        descriptionZh: "至198年仍據彭城、下邳。徐州殷實,而他老了,守得住一年是一年。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 198 },
+        description: "Still hold Pengcheng and Xiapi in 194. Xu province is prosperous and he is old: every year it holds is a year won.",
+        descriptionZh: "至194年仍據彭城、下邳。徐州殷實,而他老了,守得住一年是一年。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 194 },
       },
     },
     {
@@ -890,9 +890,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shu',
       primary: {
         title: { zh: '仲氏之世', en: 'The Reign of Zhong' },
-        description: 'Still hold Shouchun and Hefei in 208 — the title stuck this time.',
-        descriptionZh: "至208年仍據壽春、合肥 —— 這一次,帝號沒有變成笑話。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 208 },
+        description: 'Still hold Shouchun and Hefei in 199 — the title stuck this time.',
+        descriptionZh: "至199年仍據壽春、合肥 —— 這一次,帝號沒有變成笑話。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 199 },
       },
       secondary: [
         {
@@ -1164,9 +1164,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'han-sui',
       primary: {
         title: { zh: '西州自立', en: 'A Realm in the West' },
-        description: "Still hold Jincheng and Tianshui in 217. Thirty years in Liang, and never once answered a summons to court.",
-        descriptionZh: "至217年仍據金城、天水。在涼州三十年,一次也沒有應詔入朝。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui'], byYear: 217 },
+        description: "Still hold Jincheng and Tianshui in 215. Thirty years in Liang, and never once answered a summons to court.",
+        descriptionZh: "至215年仍據金城、天水。在涼州三十年,一次也沒有應詔入朝。",
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui'], byYear: 215 },
       },
     },
     {
@@ -1184,9 +1184,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: "Still hold Hanzhong and Baxi in 217. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
-        descriptionZh: "至217年仍據漢中、巴西。政教合一,置義舍米肉,三十年不見兵革。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 217 },
+        description: "Still hold Hanzhong and Baxi in 216. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
+        descriptionZh: "至216年仍據漢中、巴西。政教合一,置義舍米肉,三十年不見兵革。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 216 },
       },
     },
     {
@@ -1262,9 +1262,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: "Still hold Hanzhong and Wudu in 221. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
-        descriptionZh: "至221年仍據漢中、武都。政教合一,置義舍米肉,三十年不見兵革。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'wudu'], byYear: 221 },
+        description: "Still hold Hanzhong and Wudu in 216. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
+        descriptionZh: "至216年仍據漢中、武都。政教合一,置義舍米肉,三十年不見兵革。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'wudu'], byYear: 216 },
       },
     },
     {
