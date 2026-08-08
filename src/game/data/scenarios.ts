@@ -3067,6 +3067,7 @@ export const SCENARIO_207_THREE_VISITS: Scenario = {
      張魯與劉璋有殺母之恨 —— 曹操此時尚未南下,天下最後一段安靜。
    */
   openingRelations: [
+    { a: 'liu-biao', b: 'zhang-lu', score: 10, status: 'non-aggression' },  // 荊州與漢中之間隔著秦嶺與東三郡;劉表一生沒有向漢中用過兵
     { a: 'cao', b: 'zhang-lu', score: 15, status: 'non-aggression' },  // 受漢廷鎮民中郎將之號,曹操西征在 215 年
     { a: 'cao', b: 'sun', score: -40, status: 'neutral' },
     { a: 'cao', b: 'liu-biao', score: -35, status: 'neutral' },
@@ -3085,11 +3086,19 @@ export const SCENARIO_207_THREE_VISITS: Scenario = {
       'liu-biao': { troops: 0.80, food: 1.25, gold: 1.15, defense: 4, loyalty: -6 },  // 蔡蒯專權,主暮而嗣弱
       sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
       'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: -6 },
-      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
+      'zhang-lu': { troops: 2.00, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
       'ma-teng': { troops: 1.15, food: 0.85, gold: 0.85, defense: 0,  loyalty: -8 },
       'gongsun-du': { troops: 0.90, food: 1.00, gold: 0.95, defense: 8, loyalty: 6 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
-    }),
+    }, {
+    // 劉璋伐張魯二十年不能克 —— 靠的是地,也靠張衛。
+    // ⚠ 陽平關的人口只有五萬五,守軍基數因此小,姿態乘數乘在小基數上還是小 ——
+    // 追這條時我一直盯著漢中,而丟掉的一直是陽平關(城數沒變,因為他同時
+    // 從馬騰那裡拿了安定,「四城」看起來一切正常)。張衛橫山築城十餘里,
+    // 那不是一支守關的小隊,所以直接給守軍。
+    yangping: { defense: 100, troops: 14000 },
+    hanzhong: { defense: 95 },
+  }),
   forces: FORCES_207,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_207, DEAD_BY_207, 207),
 };
@@ -3333,9 +3342,17 @@ export const SCENARIO_211_WEINAN: Scenario = {
       'liu-bei': { troops: 1.00, food: 1.00, gold: 0.90, defense: 0,  loyalty: 12 },
       sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
       'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: -8 },
-      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
+      'zhang-lu': { troops: 2.00, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
-    }),
+    }, {
+    // 劉璋伐張魯二十年不能克 —— 靠的是地,也靠張衛。
+    // ⚠ 陽平關的人口只有五萬五,守軍基數因此小,姿態乘數乘在小基數上還是小 ——
+    // 追這條時我一直盯著漢中,而丟掉的一直是陽平關(城數沒變,因為他同時
+    // 從馬騰那裡拿了安定,「四城」看起來一切正常)。張衛橫山築城十餘里,
+    // 那不是一支守關的小隊,所以直接給守軍。
+    yangping: { defense: 100, troops: 14000 },
+    hanzhong: { defense: 95 },
+  }),
   forces: FORCES_211,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_211, DEAD_BY_211, 211),
 };
@@ -4401,7 +4418,7 @@ export const SCENARIO_214_XICHUAN: Scenario = {
       'liu-zhang': { troops: 0.60, food: 0.85, gold: 0.70, defense: -8, loyalty: -25 },
       cao:       { troops: 1.30, food: 1.20, gold: 1.15, defense: 6,  loyalty: 8 },
       sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
-      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
+      'zhang-lu': { troops: 2.00, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
     }),
   forces: FORCES_214,
@@ -5332,6 +5349,7 @@ export const SCENARIO_204_YECHENG: Scenario = {
      郭嘉曰:「急之則相持,緩之而後爭心生。」
    */
   openingRelations: [
+    { a: 'liu-biao', b: 'zhang-lu', score: 10, status: 'non-aggression' },  // 荊州與漢中之間隔著秦嶺與東三郡;劉表一生沒有向漢中用過兵
     { a: 'cao', b: 'zhang-lu', score: 15, status: 'non-aggression' },  // 同上;此時曹操方與袁氏相持於河北
     { a: 'cao', b: 'yuan-shang', score: -95, status: 'neutral' },
     { a: 'yuan-shang', b: 'yuan-tan', score: -85, status: 'neutral' },
@@ -5354,10 +5372,18 @@ export const SCENARIO_204_YECHENG: Scenario = {
       'liu-biao': { troops: 0.85, food: 1.20, gold: 1.15, defense: 4, loyalty: 6 },
       'liu-zhang': { troops: 0.80, food: 1.25, gold: 1.05, defense: 12, loyalty: 0 },
       'ma-teng': { troops: 1.10, food: 0.85, gold: 0.85, defense: 0,  loyalty: -6 },
-      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 }, // 政教合一,漢中三十年不見兵
+      'zhang-lu': { troops: 2.00, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 }, // 政教合一,漢中三十年不見兵
       gongsun:   { troops: 0.90, food: 1.00, gold: 0.95, defense: 8,  loyalty: 4 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
-    }),
+    }, {
+    // 劉璋伐張魯二十年不能克 —— 靠的是地,也靠張衛。
+    // ⚠ 陽平關的人口只有五萬五,守軍基數因此小,姿態乘數乘在小基數上還是小 ——
+    // 追這條時我一直盯著漢中,而丟掉的一直是陽平關(城數沒變,因為他同時
+    // 從馬騰那裡拿了安定,「四城」看起來一切正常)。張衛橫山築城十餘里,
+    // 那不是一支守關的小隊,所以直接給守軍。
+    yangping: { defense: 100, troops: 14000 },
+    hanzhong: { defense: 95 },
+  }),
   forces: FORCES_204,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_204, DEAD_BY_204, 204),
 };
@@ -5624,9 +5650,17 @@ export const SCENARIO_213_FENGPO: Scenario = {
       'liu-zhang': { troops: 0.90, food: 1.30, gold: 1.15, defense: 10, loyalty: -22 },// 益州殷富而人心已貳
       cao:       { troops: 1.30, food: 1.20, gold: 1.15, defense: 6,  loyalty: 8 },
       sun:       { troops: 1.15, food: 1.10, gold: 1.10, defense: 8,  loyalty: 8 },
-      'zhang-lu': { troops: 1.30, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
+      'zhang-lu': { troops: 2.00, food: 1.35, gold: 1.10, defense: 26, loyalty: 24 },
       'shi-xie': { troops: 0.75, food: 1.30, gold: 1.30, defense: 4, loyalty: 18 },
-    }),
+    }, {
+    // 劉璋伐張魯二十年不能克 —— 靠的是地,也靠張衛。
+    // ⚠ 陽平關的人口只有五萬五,守軍基數因此小,姿態乘數乘在小基數上還是小 ——
+    // 追這條時我一直盯著漢中,而丟掉的一直是陽平關(城數沒變,因為他同時
+    // 從馬騰那裡拿了安定,「四城」看起來一切正常)。張衛橫山築城十餘里,
+    // 那不是一支守關的小隊,所以直接給守軍。
+    yangping: { defense: 100, troops: 14000 },
+    hanzhong: { defense: 95 },
+  }),
   forces: FORCES_213,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_213, DEAD_BY_213, 213),
 };
@@ -8485,6 +8519,8 @@ export const SCENARIO_207_BAILANG: Scenario = {
      而後斬二袁之首以獻。
    */
   openingRelations: [
+    { a: 'liu-biao', b: 'zhang-lu', score: 10, status: 'non-aggression' },  // 荊州與漢中之間隔著秦嶺與東三郡;劉表一生沒有向漢中用過兵
+    { a: 'cao', b: 'zhang-lu', score: 15, status: 'non-aggression' },  // 同 207:受漢廷鎮民中郎將之號,曹操西征在 215 年
     { a: 'cao', b: 'wuhuan', score: -85, status: 'neutral' },
     { a: 'wuhuan', b: 'gongsun-du', score: 20, status: 'non-aggression' },
     { a: 'cao', b: 'gongsun-du', score: 15, status: 'non-aggression' },

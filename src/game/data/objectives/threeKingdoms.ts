@@ -1176,9 +1176,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'xianbei',
       primary: {
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
-        description: "Still hold Wuhuan and Liucheng in 226. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
-        descriptionZh: "至226年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 226 },
+        description: "Survive to 226. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
+        descriptionZh: "存續至226年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
+        goal: { kind: 'survive-until', year: 226 },
       },
     },
     {
@@ -1322,9 +1322,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'xianbei',
       primary: {
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
-        description: "Still hold Wuhuan and Liucheng in 221. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
-        descriptionZh: "至221年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 221 },
+        description: "Survive to 221. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
+        descriptionZh: "存續至221年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
+        goal: { kind: 'survive-until', year: 221 },
       },
     },
     {
@@ -1384,9 +1384,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'xianbei',
       primary: {
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
-        description: "Still hold Wuhuan and Liaodong in 225. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
-        descriptionZh: "至225年仍據烏丸、遼東。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liaodong'], byYear: 225 },
+        description: "Survive to 225. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
+        descriptionZh: "存續至225年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
+        goal: { kind: 'survive-until', year: 225 },
       },
     },
     {
@@ -1474,9 +1474,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'xianbei',
       primary: {
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
-        description: "Still hold Wuhuan and Liaodong in 228. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
-        descriptionZh: "至228年仍據烏丸、遼東。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liaodong'], byYear: 228 },
+        description: "Survive to 228. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
+        descriptionZh: "存續至228年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
+        goal: { kind: 'survive-until', year: 228 },
       },
     },
     {
@@ -2545,9 +2545,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '五斗米道', en: 'The Way of the Five Pecks' },
-        description: "Still hold Hanzhong, Yangping Pass and Baxi in 212 — a church that is also a state, thirty years without an army passing through.",
-        descriptionZh: "至212年仍據漢中、陽平關、巴西 —— 政教合一之地,三十年不見兵革。成都是劉璋的,不在此列。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'yangping', 'baxi'], byYear: 212 },
+        description: "Still hold Hanzhong and Yangping Pass in 212 — a church that is also a state, thirty years without an army passing through.",
+        descriptionZh: "至212年仍據漢中、陽平關 —— 政教合一之地,三十年不見兵革。成都是劉璋的,不在此列。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'yangping'], byYear: 212 },
       },
       secondary: [
         {
@@ -3231,9 +3231,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'xianbei',
       primary: {
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
-        description: "Still hold Wuhuan and Liucheng in 224. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
-        descriptionZh: "至224年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 224 },
+        description: "Survive to 224. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
+        descriptionZh: "存續至224年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
+        goal: { kind: 'survive-until', year: 224 },
       },
     },
     {
@@ -3331,9 +3331,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'xianbei',
       primary: {
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
-        description: "Still hold Wuhuan and Liucheng in 227. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
-        descriptionZh: "至227年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 227 },
+        description: "Survive to 227. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
+        descriptionZh: "存續至227年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
+        goal: { kind: 'survive-until', year: 227 },
       },
     },
     {
@@ -3467,9 +3467,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'xianbei',
       primary: {
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
-        description: "Still hold Wuhuan and Liucheng in 234. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
-        descriptionZh: "至234年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 234 },
+        description: "Survive to 234. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
+        descriptionZh: "存續至234年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
+        goal: { kind: 'survive-until', year: 234 },
       },
     },
   ],
@@ -3533,9 +3533,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'xianbei',
       primary: {
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
-        description: "Still hold Wuhuan and Liucheng in 234. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
-        descriptionZh: "至234年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 234 },
+        description: "Survive to 234. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
+        descriptionZh: "存續至234年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
+        goal: { kind: 'survive-until', year: 234 },
       },
     },
   ],
@@ -3637,9 +3637,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'xianbei',
       primary: {
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
-        description: "Still hold Wuhuan and Liucheng in 235. The land divided into three parts under three chieftains: they come like birds and leave like a cut string.",
-        descriptionZh: "至235年仍據烏丸、柳城。分其地為三部,各置大人;來如飛鳥,去如絕弦。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 235 },
+        description: "Survive to 235. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
+        descriptionZh: "存續至235年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
+        goal: { kind: 'survive-until', year: 235 },
       },
     },
     {
