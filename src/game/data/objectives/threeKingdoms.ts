@@ -1825,10 +1825,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-194-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '報父之讎', en: 'Avenge Your Father' },
-        description: 'Take Pengcheng and Xiapi by 198.',
-        descriptionZh: "於198年前攻取彭城、下邳 —— 父讎在徐州。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 198 },
+        title: { zh: '復兗州', en: 'Take Yan Province Back' },
+        description: 'Take Puyang and hold Chenliu by 197 — while he was avenging his father in Xu, Lü Bu took his home province out from under him.',
+        descriptionZh: "於197年前取濮陽、保陳留 —— 興平元年,呂布、陳宮乘虛襲兗州,郡縣皆應,唯鄄城、范、東阿三城為荀彧、程昱所全。他在徐州為父復讎,而家在別人手裡。",
+        /*
+         * 原本是「於198年前取彭城、下邳」—— 而**曹操沒有取下徐州**:193/194
+         * 兩征,屠彭城,而呂布襲兗州,他回師了;徐州後來是劉備領的。
+         * `reachability-audit` 也說得很清楚:彭城 1.90 夠得著,而下邳 **0.00**
+         * (完全不相鄰)。而且這條與陶謙的「徐州不失」指向同一組城 —— 掃描
+         * 早就把「兩家主目標指向同一座城」列為四種死法之一。
+         * 改成這張盤上他真正在做的那件事:回師與呂布爭兗州(濮陽 1.74)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'chenliu'], byYear: 197 },
       },
       secondary: [
         {
@@ -1853,11 +1861,26 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-194-lubu',
       forceId: 'lubu',
       primary: {
-        title: { zh: '奪兗取徐', en: 'Yan First, Then Xu' },
-        description: 'Hold Puyang and Xiapi by 198.',
-        descriptionZh: "於198年前兼據濮陽、下邳,自濮陽起,終於下邳。",
-        goal: { kind: 'hold-cities', cityIds: ['puyang', 'xiapi'], byYear: 198 },
+        title: { zh: '據濮陽', en: 'Hold Puyang' },
+        description: 'Still hold Puyang in 196 — Chen Gong opened Yan province to him and the two of them held Cao Cao off there for the better part of two years.',
+        descriptionZh: "至196年仍據濮陽 —— 陳宮以兗州迎之,郡縣皆應。濮陽相持百餘日,蝗起,穀一斛五十餘萬錢,人相食,兩家各罷兵。",
+        /*
+         * 原本是「於198年前取濮陽、下邳」,而濮陽他**開局就據有**、下邳是
+         * 陶謙的且 feasibility **0.00**(他只有一座城,跟下邳不相鄰)。
+         * 也就是說這條寫成了「守自己的城 + 一座他構不著的城」。
+         * 主目標留濮陽(他 194–195 真正做到的),取徐州降為次要 ——
+         * 那是 196 年劉備出屯小沛之後的事。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['puyang'], byYear: 196 },
       },
+      secondary: [
+        {
+          title: { zh: '奪兗取徐', en: 'Yan First, Then Xu' },
+          description: 'Take Xiapi by 198 — he did get there in the end, and it is where he ended.',
+          descriptionZh: "於198年前取下邳 —— 他最後確實到了那裡,而那裡也是他的終點。",
+          goal: { kind: 'hold-cities', cityIds: ['xiapi'], byYear: 198 },
+        },
+      ],
     },
     {
       id: 'obj-194-yuanshao',
