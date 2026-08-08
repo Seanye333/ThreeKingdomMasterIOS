@@ -121,6 +121,8 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
   { scenario: 'scn-211-weinan',    force: 'ma-chao',    why: '渭南之戰就是他敗的那一仗:公用賈詡計,離之,一戰而關中平。此後他再沒有回到關中。' },
   { scenario: 'scn-211-weinan',    force: 'han-sui',    why: '同上;而韓遂 215 年為其將麴演等所殺,傳首許都,年七十餘。' },
   { scenario: 'scn-189-eunuchs',   force: 'eunuchs',    why: '中平六年八月,袁紹勒兵捕諸閹人,張讓等挾帝夜出穀門至小平津,辭曰「臣等殄滅,天下亂矣」,投河而死 —— 這張盤開局那一年他們就全滅了。' },
+  { scenario: 'scn-195-jiangdong', force: 'liu-yao',    why: '「守曲阿」—— 而牛渚一破,曲阿即潰;繇奔豫章,明年病卒。這張盤的名字就是孫策定江東。' },
+  { scenario: 'scn-195-jiangdong', force: 'yan-baihu',  why: '孫策原話:「虎等群盜,非有大志,此成禽耳。」建安元年為孫靜自查瀆間道所破。' },
 ];
 const byDesign = (sid: string, fid: string) => BY_DESIGN.some((e) => e.scenario === sid && e.force === fid);
 

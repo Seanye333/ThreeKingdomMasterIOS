@@ -1949,12 +1949,26 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-195-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '江東六郡', en: 'The Six Commanderies' },
-        description: 'Hold Jianye, Wu, Kuaiji and Yuzhang by 200 — with a thousand borrowed men.',
-        descriptionZh: "於200年前盡取建業、吳、會稽、豫章 —— 以千餘借兵,取江東六郡。",
-        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'kuaiji', 'yuzhang'], byYear: 200 },
+        title: { zh: '渡江之基', en: 'A Foothold Across the River' },
+        description: 'Take Jianye and Wu by 198 — Liu Yao broke at Qu\'a and Yan Baihu was a bandit; the first two years did that much.',
+        descriptionZh: "於198年前取建業、吳 —— 興平二年冬渡江,牛渚一破,曲阿即潰;明年擒嚴白虎。江東六郡是三年的事,而這是頭兩年。",
+        /*
+         * 原本一條寫四座城(建業、吳、會稽、豫章,byYear 200),12 輪 0/12 ——
+         * 而**史書上這是分三步的**:195 冬渡江破劉繇、196 擒嚴白虎取吳郡、
+         * 196 末攻會稽走王朗、199 才收豫章(華歆舉郡請降)。寫成一步就變成
+         * 「四家全滅才算數」,而體檢裡孫策確實定了江東(1 → 8 城,劉繇 10/12、
+         * 嚴白虎 11/12 覆滅),只是王朗、華歆那兩座他沒去。
+         * 主目標寫頭兩年真正做到的,六郡降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu'], byYear: 198 },
       },
       secondary: [
+        {
+          title: { zh: '江東六郡', en: 'The Six Commanderies' },
+          description: 'Hold Jianye, Wu, Kuaiji and Yuzhang by 200 — with a thousand borrowed men.',
+          descriptionZh: "於200年前盡取建業、吳、會稽、豫章 —— 以千餘借兵,取江東六郡。",
+          goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'kuaiji', 'yuzhang'], byYear: 200 },
+        },
         {
           title: { zh: '掃平劉繇', en: 'Sweep Away Liu Yao' },
           description: 'Destroy the Liu Yao force.',

@@ -8984,7 +8984,13 @@ export const SCENARIO_195_JIANGDONG: Scenario = {
        金糧雙低,而體檢裡他一城九千五百兵、府庫十二輪見底四次 —— 沒錢就
        募不了兵、打不了仗,主目標(200 年前取江東四郡)0/12。他缺的是**地**,
        不是刻意要窮;窮寫在「一城」這件事本身,不必再在乘數上補一刀。 */
-    sun:         { troops: 1.25, food: 1.00, gold: 1.00, defense: -4, loyalty: 14 },
+    /* 1.25 → 1.45(2026-08-08):`reachability-audit` 算出來這張盤的主角
+       **一座城都打不動** —— 他只有丹陽一座,能施的壓力上限就是 11,875 × 0.6
+       = 7,125,而建業的 effDef 是 16,128(0.44)、吳是 11,700(0.61)。
+       AI 的候選門檻是 1.05,也就是說孫策會在丹陽坐到天荒地老,而這張盤的
+       名字叫「孫策定江東」。
+       「士民見者,莫不盡心,樂為致死」—— 他真正有的是人,不是地。 */
+    sun:         { troops: 1.45, food: 1.00, gold: 1.00, defense: -4, loyalty: 14 },
     cao:         { troops: 1.05, food: 1.25, gold: 1.10, defense: 4,  loyalty: 8 },
     'yuan-shao': { troops: 1.10, food: 1.00, gold: 1.15, defense: 4,  loyalty: 4 },
     'yuan-shu':  { troops: 1.05, food: 1.15, gold: 1.25, defense: 0,  loyalty: -10 },
@@ -8993,10 +8999,21 @@ export const SCENARIO_195_JIANGDONG: Scenario = {
     'liu-yan':   { troops: 0.85, food: 1.20, gold: 1.05, defense: 14, loyalty: 6 },
     gongsun:     { troops: 1.15, food: 0.90, gold: 0.90, defense: -4, loyalty: -4 },
     'ma-teng':   { troops: 1.15, food: 0.95, gold: 0.85, defense: -4, loyalty: 0 },
-    'liu-yao':   { troops: 0.90, food: 1.05, gold: 1.00, defense: 6,  loyalty: 4 },
-    'yan-baihu': { troops: 1.00, food: 0.90, gold: 0.85, defense: -6, loyalty: -8 },
-    'wang-lang': { troops: 0.80, food: 1.10, gold: 1.05, defense: 6,  loyalty: 10 },
-    'hua-xin':   { troops: 0.75, food: 1.15, gold: 1.10, defense: 4,  loyalty: 14 },
+    /*
+     * 江東四家 —— 這一批原本的兵力與孫策相當(劉繇一城 12,600,比孫策那座
+     * 還多),而史書上他們是「兵雖多而無所統一」的地方勢力,不是正規軍。
+     * 各按他自己的敗法寫:
+     */
+    /* 劉繇:朝廷所命的揚州刺史,而「非纲纪之才」;笮融、許劭皆客將,號令不一。
+       神亭一戰、牛渚一破,曲阿即潰。 */
+    'liu-yao':   { troops: 0.75, food: 1.05, gold: 1.00, defense: -4, loyalty: -6 },
+    /* 嚴白虎:孫策原話 —— 「虎等群盜,非有大志,此成禽耳」。有眾而無城守。 */
+    'yan-baihu': { troops: 0.70, food: 0.90, gold: 0.85, defense: -25, loyalty: -14 },
+    /* 王朗:會稽儒宗,不習軍事 —— 但固陵他**守住過**(策數渡不利,後從查瀆
+       間道襲高遷屯才破),所以兵少而城不軟。 */
+    'wang-lang': { troops: 0.70, food: 1.10, gold: 1.05, defense: 6,  loyalty: 10 },
+    /* 華歆:素有名德而無武略,豫章是**舉郡請降**的 —— 兵最少,民忠最高。 */
+    'hua-xin':   { troops: 0.55, food: 1.15, gold: 1.10, defense: 4,  loyalty: 16 },
   }),
   forces: FORCES_195_JIANGDONG,
   officers: buildInitialOfficers(OFFICER_ASSIGNMENTS_195_JIANGDONG, [], 195),
