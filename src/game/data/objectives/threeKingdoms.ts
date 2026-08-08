@@ -960,13 +960,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 「先主表琦為荊州刺史,又南征四郡。武陵太守金旋、長沙太守韓玄、
          *   桂陽太守趙範、零陵太守劉度皆降。」—— 那是他第一次有地。
          */
-        title: { zh: '南征四郡', en: 'The Four Southern Commanderies' },
-        /* ⚠ 長沙開局在孫權手裡,而劉備與孫權是互不侵犯 —— 把長沙寫進去,
-           這條就被外交鎖死了(四輪 0 中)。留武陵、桂陽、零陵三郡,
-           再加公安:那是他借荊州之後的治所。 */
-        description: 'Hold Wuling, Guiyang, Lingling and Gong\'an by 213 — the first land he ever actually held.',
-        descriptionZh: '於213年前據有武陵、桂陽、零陵與公安 —— 南征諸郡,太守皆降,那是他第一次有地。',
-        goal: { kind: 'hold-cities', cityIds: ['wuling', 'guiyang', 'lingling', 'gongan'], byYear: 213 },
+        title: { zh: '借荊州', en: 'Borrow Jingzhou' },
+        description: 'Take Jiangling by 212 — the crossing at Oil River Mouth, and then the south bank the year after.',
+        descriptionZh: "於212年前取江陵 —— 赤壁既勝,備屯油江口,改名公安;周瑜歿而魯肅勸權借之。有了南郡,荊南四郡才在他伸手可及的地方。",
+        /*
+         * 原本是「於213年前取武陵、桂陽、零陵、公安」,而 `reachability-audit`
+         * 算出這四座**全部 0.00**:劉備開局三城(江夏、武昌、赤壁)沒有一座
+         * 與荊南相鄰,中間隔著江陵與巴丘。也就是說 AI 的候選名單裡從來沒有
+         * 這四座城。而江陵是 **1.55** —— 夠得著,而且史書上的順序正是先有
+         * 南郡才有荊南。主目標改成那一步,南征四郡降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 212 },
       },
       secondary: [
         {
@@ -3100,12 +3104,27 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-213-liubei',
       forceId: 'liu-bei',
       primary: {
-        title: { zh: '進取成都', en: 'On to Chengdu' },
-        description: 'Take Luocheng and Chengdu by 217 — the road Pang Tong died on.',
-        descriptionZh: "於217年前攻下雒城、成都 —— 龐統死在這條路上。",
-        goal: { kind: 'hold-cities', cityIds: ['luocheng', 'chengdu'], byYear: 217 },
+        title: { zh: '據涪水關', en: 'Hold the Fu Pass' },
+        description: 'Still hold Fucheng and Jiameng in 216 — he came down from Jiameng, took Fu, and sat down in front of Luocheng for a year.',
+        descriptionZh: "至216年仍據涪城、葭萌 —— 建安十七年南還襲涪,十八年進圍雒城,而雒城圍了將近一年才下。這一年他真正握在手上的,是入蜀那條走廊。",
+        /*
+         * 原本是「於217年前取雒城、成都」,12 輪 0/12。兩層原因:
+         *  ① 盤上的劉備**人不在蜀中** —— 益州腹地一座不漏地給了劉璋,他只有
+         *    荊州加一個永安,對雒城/涪城/梓潼/巴西的 feasibility 一律 0.00。
+         *    已改歸屬(葭萌、白水關、涪城、梓潼給劉備,而雒城、綿竹明寫留給
+         *    劉璋 —— 落鳳坡就在雒城之下)。
+         *  ② 改完之後雒城仍只有 0.44:那座城史書上圍了將近一年才破,硬是對的。
+         * 主目標改成他這一年真正做到的(據涪、守住走廊),進取成都降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['fucheng', 'jiameng'], byYear: 216 },
       },
       secondary: [
+        {
+          title: { zh: '進取成都', en: 'On to Chengdu' },
+          description: 'Take Luocheng and Chengdu by 217.',
+          descriptionZh: "於217年前取雒城、成都 —— 雒城之下,士元中矢;而城破之後,成都只守了數十日。",
+          goal: { kind: 'hold-cities', cityIds: ['luocheng', 'chengdu'], byYear: 217 },
+        },
         {
           title: { zh: '鳳雛不隕', en: 'Keep the Fledgling Phoenix' },
           description: 'Still have Pang Tong in your service.',

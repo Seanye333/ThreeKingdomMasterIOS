@@ -5523,11 +5523,36 @@ const CITY_OWNERSHIP_213: Record<string, string> = {
   lingling:  'liu-bei',
   baqiu:     'liu-bei',
   yongan:    'liu-bei', // entry to Yi
+  /*
+   * 葭萌與涪城 —— **這張盤的劉備人已經在蜀中了**,而原本的歸屬表把益州腹地
+   * 一座不漏地給了劉璋,他手上只有荊州加一個永安。盤自己的描述寫著
+   * 「劉備溯岷江入蜀……是日落鳳坡……玄德傳檄荊州,召孔明、翼德、子龍引兵入川」
+   * —— 落鳳坡就在雒城之下,人不在蜀中演不出這一幕。
+   *
+   * 史書上這條線是:211 年璋迎備,使屯葭萌;212 年備與璋決裂,南還襲涪;
+   * 213 年據涪城而進圍雒城,龐統中矢於雒城下。所以 213 年夏他據有的正是
+   * 葭萌—白水—涪這一條入蜀的走廊。
+   *
+   * 量得出來的差別:改之前劉備對雒城、涪城、梓潼、巴西的 feasibility 一律
+   * **0.00**(完全不相鄰),對成都 0.25 —— 而他的主目標是「進取成都」。
+   */
+  jiameng:     'liu-bei',
+  baishuiguan: 'liu-bei',
+  fucheng:     'liu-bei',
+  zitong:      'liu-bei',   // 南還襲涪時經此
   // Liu Zhang — Yi province, contracting
   chengdu:   'liu-zhang',
   jiangzhou: 'liu-zhang',
   baxi:      'liu-zhang',
   yinping:   'liu-zhang',
+  /*
+   * 雒城與綿竹**明寫**給劉璋 —— 補位會把它們推到劉備手上(給了他葭萌—涪
+   * 那條走廊之後,這兩座就成了最近的鄰居),而落鳳坡正是在**雒城之下**:
+   * 那座城要是開局就姓劉備,這張盤的名字就沒有著落了。
+   * 史書上雒城圍了將近一年(建安十八年夏至十九年夏)才破,綿竹是李嚴出降。
+   */
+  luocheng:  'liu-zhang',
+  mianzhu:   'liu-zhang',
   // Zhang Lu — Hanzhong
   hanzhong:  'zhang-lu',
   wudu:      'zhang-lu',
