@@ -1156,7 +1156,7 @@ export const SCENARIO_GATHERING_OF_HEROES: Scenario = {
     { a: 'dong', b: 'yuan-shao', score: -90, status: 'neutral' },  // 盟主
     { a: 'dong', b: 'sun', score: -85, status: 'neutral' },  // 孫堅為聯軍前鋒,獨破華雄
     { a: 'dong', b: 'yuan-shu', score: -70, status: 'neutral' },
-    { a: 'cao', b: 'yuan-shao', score: 45, status: 'non-aggression' },  // 少時遊俠之交
+    { a: 'cao', b: 'yuan-shao', score: 45, status: 'neutral' }, // 群雄集結是各憑本事的盤,沒有誰對誰有約  // 少時遊俠之交
     { a: 'yuan-shao', b: 'yuan-shu', score: -60, status: 'neutral' },  // 兄弟鬩牆,袁術罵其為家奴
     { a: 'yuan-shu', b: 'sun', score: 50, status: 'non-aggression' },  // 孫堅受其節度,借兵而戰
     { a: 'liu-biao', b: 'sun', score: -80, status: 'neutral' },  // 峴山之伏,孫堅死於黃祖之手
@@ -2262,7 +2262,7 @@ export const SCENARIO_197_BOHAI: Scenario = {
    */
   openingRelations: [
     { a: 'cao', b: 'yuan-shu', score: -85, status: 'neutral' },
-    { a: 'cao', b: 'yuan-shao', score: 50, status: 'allied' },
+    { a: 'cao', b: 'yuan-shao', score: 50, status: 'neutral' }, // 197年紹恥班在太祖下,盟已名存 —— 兩家的主目標都是決河北之局
     { a: 'cao', b: 'lu-bu', score: -40, status: 'neutral' },
     { a: 'sun', b: 'yuan-shu', score: -70, status: 'neutral' },
     { a: 'yuan-shao', b: 'gongsun', score: -85, status: 'neutral' },
@@ -2822,7 +2822,7 @@ export const SCENARIO_198_XIAPI: Scenario = {
    */
   openingRelations: [
     { a: 'cao', b: 'lubu', score: -95, status: 'neutral' },
-    { a: 'cao', b: 'yuan-shao', score: 40, status: 'non-aggression' },
+    { a: 'cao', b: 'yuan-shao', score: 40, status: 'neutral' }, // 198年官渡已在眼前
     { a: 'lubu', b: 'yuan-shu', score: 20, status: 'non-aggression' },
     { a: 'cao', b: 'yuan-shu', score: -85, status: 'neutral' },
     { a: 'sun', b: 'yuan-shu', score: -70, status: 'neutral' },
@@ -3329,7 +3329,7 @@ export const SCENARIO_211_WEINAN: Scenario = {
     { a: 'liu-bei', b: 'sun', score: 55, status: 'allied' },
     { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
     { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
-    { a: 'liu-bei', b: 'liu-zhang', score: 35, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'liu-zhang', score: 35, status: 'neutral' }, // 劉備是被請進益州的,而212年他就回師成都 —— 請帖不是永久的盟約
     { a: 'cao', b: 'zhang-lu', score: 5, status: 'non-aggression' },  // 此時方與孫權相持於濡須,西征漢中在兩年後
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
   ],
@@ -3926,8 +3926,8 @@ export const SCENARIO_189_EUNUCHS: Scenario = {
   openingRelations: [
     { a: 'han', b: 'eunuchs', score: -90, status: 'neutral' },
     { a: 'han', b: 'yuan-shao', score: 75, status: 'allied' },
-    { a: 'han', b: 'cao', score: 50, status: 'non-aggression' },
-    { a: 'han', b: 'dong', score: 30, status: 'non-aggression' },
+    { a: 'han', b: 'cao', score: 50, status: 'neutral' }, // 曹操189年是典軍校尉,而這一局要跑到199年 —— 那時朝廷早在他手裡
+    { a: 'han', b: 'dong', score: 30, status: 'neutral' }, // 董卓奉召而來,而這張盤的描述自己寫著「董卓抵洛陽,少帝已落其手」—— 寫成 non-aggression 等於讓 premise 演不出來
     { a: 'eunuchs', b: 'yuan-shao', score: -85, status: 'neutral' },
     { a: 'eunuchs', b: 'cao', score: -40, status: 'neutral' },
     { a: 'dong', b: 'eunuchs', score: -20, status: 'neutral' },
@@ -4409,7 +4409,7 @@ export const SCENARIO_214_XICHUAN: Scenario = {
    */
   openingRelations: [
     { a: 'liu-bei', b: 'liu-zhang', score: -90, status: 'neutral' },
-    { a: 'liu-bei', b: 'sun', score: 25, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'sun', score: 25, status: 'neutral' }, // 同上:湘水之爭是這張盤的下一步
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
     { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
@@ -5645,7 +5645,7 @@ export const SCENARIO_213_FENGPO: Scenario = {
    */
   openingRelations: [
     { a: 'liu-bei', b: 'liu-zhang', score: -70, status: 'neutral' },
-    { a: 'liu-bei', b: 'sun', score: 45, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'sun', score: 45, status: 'neutral' }, // 215年湘水劃界,兩家已在荊州對兵
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
     { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
@@ -6712,7 +6712,7 @@ export const SCENARIO_264_ZHONGHUI: Scenario = {
   openingRelations: [
     { a: 'cao', b: 'zhonghui', score: -90, status: 'neutral' },
     { a: 'zhonghui', b: 'dengai', score: -80, status: 'neutral' },
-    { a: 'cao', b: 'dengai', score: 30, status: 'non-aggression' },
+    { a: 'cao', b: 'dengai', score: 30, status: 'neutral' }, // 鍾會之亂裡三方各為其身
     { a: 'cao', b: 'sun', score: -80, status: 'neutral' },
     { a: 'zhonghui', b: 'sun', score: 20, status: 'non-aggression' },
     { a: 'dengai', b: 'sun', score: -60, status: 'neutral' },
@@ -7612,7 +7612,7 @@ export const SCENARIO_WHATIF_CAO_WINS_CHIBI: Scenario = {
   openingRelations: [
     { a: 'cao', b: 'sun', score: -95, status: 'neutral' },  // 孫權已斬於江岸,殘部猶在
     { a: 'cao', b: 'liu-bei', score: -90, status: 'neutral' },
-    { a: 'liu-bei', b: 'liu-zhang', score: 55, status: 'non-aggression' },  // 攜孔明西奔,乞庇於劉璋羽翼
+    { a: 'liu-bei', b: 'liu-zhang', score: 55, status: 'neutral' }, // 劉備已無立錐之地,益州是他唯一的去處  // 攜孔明西奔,乞庇於劉璋羽翼
     { a: 'cao', b: 'liu-zhang', score: -30, status: 'neutral' },
     { a: 'cao', b: 'zhang-lu', score: -25, status: 'neutral' },
     { a: 'cao', b: 'ma-teng', score: -40, status: 'neutral' },
@@ -7842,7 +7842,7 @@ export const SCENARIO_WHATIF_WOMEN: Scenario = {
   openingRelations: [
     { a: 'diaochan-han', b: 'caiyan-ye', score: -60, status: 'neutral' },  // 長安與鄴,關西關東之爭
     { a: 'lady-sun', b: 'yueying', score: -45, status: 'neutral' },  // 江東與荊州,大江上下之爭
-    { a: 'lady-sun', b: 'qiao', score: 55, status: 'allied' },  // 二喬本江東之媳
+    { a: 'lady-sun', b: 'qiao', score: 55, status: 'neutral' }, // 架空盤:銅雀之爭在兩家之間  // 二喬本江東之媳
     { a: 'yueying', b: 'zhurong-nan', score: -40, status: 'neutral' },  // 荊益之爭
     { a: 'caiyan-ye', b: 'bian-liang', score: -70, status: 'neutral' },  // 鄴與許都,兩朝並立
     { a: 'diaochan-han', b: 'bian-liang', score: -35, status: 'neutral' },
@@ -7897,7 +7897,7 @@ export const SCENARIO_WHATIF_YUAN_GUANDU: Scenario = {
   id: 'scn-whatif-yuan-guandu',
   openingRelations: [
     { a: 'yuan-shao', b: 'cao', score: -95, status: 'neutral' },  // 官渡既勝,許昌已下,只餘宛城一隅
-    { a: 'yuan-shao', b: 'liu-biao', score: 40, status: 'non-aggression' },  // 南北相結以夾曹
+    { a: 'yuan-shao', b: 'liu-biao', score: 40, status: 'neutral' }, // 袁紹既得官渡,荊州北出宛洛便是與他爭  // 南北相結以夾曹
     { a: 'cao', b: 'liu-biao', score: -60, status: 'neutral' },  // 宛城正在荊州之肘腋
     { a: 'yuan-shao', b: 'sun', score: -30, status: 'neutral' },
     { a: 'cao', b: 'liu-bei', score: -50, status: 'neutral' },
@@ -7926,7 +7926,7 @@ export const SCENARIO_WHATIF_LUBU_XUZHOU: Scenario = {
   openingRelations: [
     { a: 'lubu', b: 'cao', score: -95, status: 'neutral' },  // 下邳未陷,曹操疲師而退
     { a: 'lubu', b: 'yuan-shu', score: -40, status: 'neutral' },  // 轅門射戟之後,婚約既絕
-    { a: 'cao', b: 'yuan-shao', score: 30, status: 'non-aggression' },  // 官渡未至,盟猶未破
+    { a: 'cao', b: 'yuan-shao', score: 30, status: 'neutral' }, // 官渡未打,而兩家遲早要打  // 官渡未至,盟猶未破
     { a: 'cao', b: 'yuan-shu', score: -70, status: 'neutral' },  // 僭號者,人人得而討之
     { a: 'sun', b: 'yuan-shu', score: -65, status: 'neutral' },  // 孫策已與仲家決裂
     { a: 'yuan-shao', b: 'gongsun', score: -80, status: 'neutral' },  // 易京之圍
@@ -7956,12 +7956,12 @@ export const SCENARIO_WHATIF_MACHAO_GUANZHONG: Scenario = {
   id: 'scn-whatif-machao-guanzhong',
   openingRelations: [
     { a: 'ma-chao', b: 'cao', score: -95, status: 'neutral' },  // 潼關既下,長安已入西涼之手
-    { a: 'ma-chao', b: 'han-sui', score: 65, status: 'allied' },  // 離間之計未成,盟好不疑
+    { a: 'ma-chao', b: 'han-sui', score: 65, status: 'neutral' }, // 韓遂與馬超終於相攻,史實如此  // 離間之計未成,盟好不疑
     { a: 'cao', b: 'han-sui', score: -85, status: 'neutral' },
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'liu-bei', b: 'sun', score: 50, status: 'allied' },
     { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
-    { a: 'liu-bei', b: 'liu-zhang', score: 35, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'liu-zhang', score: 35, status: 'neutral' }, // 西川仍是劉備唯一能取的地方
     { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
     { a: 'ma-chao', b: 'zhang-lu', score: 25, status: 'non-aggression' },  // 涼漢之間相倚
   ],
@@ -8051,7 +8051,7 @@ export const SCENARIO_WHATIF_YUANSHU_EMPIRE: Scenario = {
     { a: 'yuan-shu', b: 'yuan-shao', score: -55, status: 'neutral' },  // 兄弟鬩牆,而今一為帝一為公
     { a: 'yuan-shu', b: 'lubu', score: -45, status: 'neutral' },  // 轅門射戟,婚約既絕
     { a: 'cao', b: 'lubu', score: -70, status: 'neutral' },
-    { a: 'cao', b: 'yuan-shao', score: 30, status: 'non-aggression' },
+    { a: 'cao', b: 'yuan-shao', score: 30, status: 'neutral' }, // 袁術既已稱帝,河北與中原終須一決
     { a: 'yuan-shao', b: 'gongsun', score: -80, status: 'neutral' },
     { a: 'liu-biao', b: 'sun', score: -55, status: 'neutral' },
   ],
@@ -8075,7 +8075,7 @@ export const SCENARIO_WHATIF_GUOJIA_LIVES: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'liu-bei', b: 'sun', score: 45, status: 'non-aggression' },  // 孫劉之盟方成
     { a: 'cao', b: 'liu-biao', score: -50, status: 'neutral' },
-    { a: 'liu-bei', b: 'liu-biao', score: 25, status: 'non-aggression' },  // 寄寓新野
+    { a: 'liu-bei', b: 'liu-biao', score: 25, status: 'neutral' }, // 郭嘉若在,劉備連荊州也待不住,只能反客為主  // 寄寓新野
     { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
     { a: 'cao', b: 'ma-teng', score: 20, status: 'non-aggression' },
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
@@ -8101,7 +8101,7 @@ export const SCENARIO_WHATIF_ZHOUYU_LIVES: Scenario = {
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'cao', b: 'ma-chao', score: -95, status: 'neutral' },
     { a: 'ma-chao', b: 'han-sui', score: 60, status: 'allied' },
-    { a: 'liu-bei', b: 'liu-zhang', score: 30, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'liu-zhang', score: 30, status: 'neutral' }, // 周瑜若在則荊州不借,劉備唯有西向
     { a: 'liu-zhang', b: 'zhang-lu', score: -80, status: 'neutral' },
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
   ],
@@ -8123,7 +8123,7 @@ export const SCENARIO_WHATIF_PANGTONG_LIVES: Scenario = {
   openingRelations: [
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
-    { a: 'liu-bei', b: 'sun', score: 20, status: 'non-aggression' },  // 孔明未西去,荊州之爭未起
+    { a: 'liu-bei', b: 'sun', score: 20, status: 'neutral' }, // 荊州之爭是這張盤的題目  // 孔明未西去,荊州之爭未起
     { a: 'cao', b: 'zhang-lu', score: -30, status: 'neutral' },
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
     { a: 'liu-bei', b: 'nanman', score: -40, status: 'neutral' },
@@ -8374,7 +8374,7 @@ export const SCENARIO_255_HUAINAN2: Scenario = {
    */
   openingRelations: [
     { a: 'cao', b: 'guanqiu', score: -95, status: 'neutral' },
-    { a: 'guanqiu', b: 'sun', score: 45, status: 'non-aggression' },
+    { a: 'guanqiu', b: 'sun', score: 45, status: 'neutral' }, // 孫峻將兵向壽春,吳本以取利而來,不是來守約的
     { a: 'cao', b: 'sun', score: -85, status: 'neutral' },
     { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
     { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
@@ -8423,7 +8423,7 @@ export const SCENARIO_257_HUAINAN3: Scenario = {
    */
   openingRelations: [
     { a: 'cao', b: 'huainan', score: -95, status: 'neutral' },
-    { a: 'huainan', b: 'sun', score: 55, status: 'allied' },
+    { a: 'huainan', b: 'sun', score: 55, status: 'neutral' }, // 吳與諸葛誕結援,而援與盟不同 —— 主目標已改用 protect-force
     { a: 'cao', b: 'sun', score: -85, status: 'neutral' },
     { a: 'cao', b: 'liu-bei', score: -80, status: 'neutral' },
     { a: 'liu-bei', b: 'sun', score: 70, status: 'allied' },
@@ -8674,7 +8674,7 @@ export const SCENARIO_195_JIANGDONG: Scenario = {
     { a: 'liu-yao', b: 'yuan-shu', score: -70, status: 'neutral' },  // 揚州刺史之爭
     // ── 中原 ──
     { a: 'cao', b: 'lu-bu', score: -90, status: 'neutral' },         // 濮陽之戰,方逐之
-    { a: 'cao', b: 'yuan-shao', score: 65, status: 'allied' },       // 至 199 年方反目
+    { a: 'cao', b: 'yuan-shao', score: 65, status: 'neutral' }, // 195年兩家還是盟友,但這一局跑到官渡之後 —— 盟約不該是永久的       // 至 199 年方反目
     { a: 'cao', b: 'yuan-shu', score: -70, status: 'neutral' },
     { a: 'yuan-shao', b: 'gongsun', score: -80, status: 'neutral' }, // 界橋以來連年相攻
     { a: 'yuan-shao', b: 'yuan-shu', score: -60, status: 'neutral' }, // 兄弟鬩牆已成
@@ -8757,7 +8757,7 @@ export const SCENARIO_218_DINGJUN: Scenario = {
    */
   openingRelations: [
     { a: 'cao', b: 'liu-bei', score: -90, status: 'neutral' },
-    { a: 'liu-bei', b: 'sun', score: 35, status: 'non-aggression' },
+    { a: 'liu-bei', b: 'sun', score: 35, status: 'neutral' }, // 219年白衣渡江 —— 盟約不撕,這張盤最有名的那一手就永遠出不來
     { a: 'cao', b: 'sun', score: -60, status: 'neutral' },
     { a: 'cao', b: 'shi-xie', score: 15, status: 'non-aggression' },
     { a: 'sun', b: 'shi-xie', score: 30, status: 'non-aggression' },
@@ -9870,7 +9870,7 @@ export const SCENARIO_WS_WEIWEN: Scenario = {
      魏趙韓同出於晉,故相親;而秦弱於河西,魏之西鄙也。
    */
   openingRelations: [
-    { a: 'wei', b: 'zhao', score: 60, status: 'allied' },
+    { a: 'wei', b: 'zhao', score: 60, status: 'neutral' }, // 三晉本是一家,而這張盤的題目就叫「三晉之分」
     { a: 'wei', b: 'han', score: 60, status: 'allied' },
     { a: 'zhao', b: 'han', score: 45, status: 'non-aggression' },
     { a: 'qin', b: 'wei', score: -70, status: 'neutral' },

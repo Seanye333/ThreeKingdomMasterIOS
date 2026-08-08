@@ -1921,10 +1921,10 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-195-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '決戰河北', en: 'Settle It With Yuan Shao' },
-        description: 'Destroy the Yuan Shao force by 207.',
-        descriptionZh: "於207年前擊滅袁紹,定河北之局。",
-        goal: { kind: 'defeat-force', forceId: 'yuan-shao', byYear: 207 },
+        title: { zh: '先定徐方', en: 'Settle Xu First' },
+        description: "Take Xiapi and Langya by 201 — Yuan Shao is still an ally in 195; Lü Bu is the enemy at hand.",
+        descriptionZh: "於201年前取下邳、琅琊 —— 195年的袁紹還是盟友,而呂布就在肘腋之間。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 201 },
       },
       secondary: [
         {
@@ -1939,10 +1939,10 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-195-yuanshao',
       forceId: 'yuan-shao',
       primary: {
-        title: { zh: '南下許都', en: 'Take Xuchang' },
-        description: 'Take Xuchang by 203.',
-        descriptionZh: "於203年前南下攻取許昌,挾天子者當易人。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 203 },
+        title: { zh: '北取幽州', en: 'Take You Province' },
+        description: "Take Yi County and Ji by 202 — the four provinces came before Guandu, and Gongsun Zan came before the four.",
+        descriptionZh: "於202年前取易京、薊 —— 四州之地在官渡之前,而公孫瓚又在四州之前。",
+        goal: { kind: 'hold-cities', cityIds: ['yi-county', 'ji'], byYear: 202 },
       },
     },
     {
@@ -2280,10 +2280,10 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-198-yuanshao',
       forceId: 'yuan-shao',
       primary: {
-        title: { zh: '席捲中原', en: 'Roll Up the Central Plain' },
-        description: 'Take Xuchang by 204.',
-        descriptionZh: "於204年前攻取許昌。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 204 },
+        title: { zh: '易京之滅', en: 'The Tower at Yijing' },
+        description: "Take Yi County and Ji by 203 — Gongsun Zan built a tower ten zhang high and burned in it. That is the war of 198, not Guandu.",
+        descriptionZh: "於203年前取易京、薊 —— 公孫瓚起樓十丈,自焚而死。198年的仗打的是這個,不是官渡。",
+        goal: { kind: 'hold-cities', cityIds: ['yi-county', 'ji'], byYear: 203 },
       },
     },
     {
@@ -4159,9 +4159,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '救壽春', en: 'Relieve Shouchun' },
-        description: 'Take Shouchun by 262 — you sent Wen Qin and three legions in; none came back.',
-        descriptionZh: "於262年前取壽春 —— 遣文欽、唐咨三萬入城,城破皆沒。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 262 },
+        description: "Zhuge Dan must still hold something in 259 — you sent Wen Qin and Tang Zi with thirty thousand into the city, and the city fell with them inside.",
+        descriptionZh: "至259年諸葛誕猶未覆滅 —— 遣文欽、唐咨將三萬入城,而城破皆沒。你去是為了救他,不是為了取那座城。",
+        goal: { kind: 'protect-force', forceId: 'huainan', minCities: 1, byYear: 259 },
       },
     },
     {
@@ -4267,9 +4267,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'dengai',
       primary: {
         title: { zh: '偷渡陰平', en: 'The March Through Yinping' },
-        description: "Still hold Chengdu and Yinping in 268 — seven hundred li of unpeopled mountain, and the war was over.",
-        descriptionZh: "至268年仍據成都、陰平 —— 行無人之地七百餘里,鑿山通道,而蜀亡。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'yinping'], byYear: 268 },
+        description: "Hold Chengdu in 268 — seven hundred li of unpeopled mountain, and the war was over. Yinping is a road, not a prize.",
+        descriptionZh: "至268年仍據成都 —— 行無人之地七百餘里,鑿山通道,以氈自裹推轉而下,而蜀亡。",
+        goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 268 },
       },
       secondary: [
         {

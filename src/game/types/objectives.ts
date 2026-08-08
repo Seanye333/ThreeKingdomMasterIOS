@@ -22,6 +22,19 @@ export type ObjectiveGoal =
    * 「敵人剩幾座城」不在乎是誰打的,只在乎亂平了沒。
    */
   | { kind: 'break-force';     forceId: EntityId;   maxCities: number; byYear?: number }
+  /**
+   * 保住某一家 —— **「救援」這件事,目標系統原本沒有形狀可以裝。**
+   *
+   * 竊符救趙、毛遂自薦、春申君北救、孫吳救壽春,史書上都是同一件事:
+   * 出兵不為取地,而為那一家別亡。系統裡只有 `hold-cities`,於是這幾條被寫成
+   * 「取下你要救的那一家的城」—— 信陵君的主目標成了「攻取鄴城」,而鄴是趙的,
+   * 兩家還是 `allied`。**從第 0 旬就自相矛盾**(見 objective-diplomacy-audit)。
+   *
+   * 判法與守成型同一口徑:到 `byYear` 那一年才結算,之前一律進行中 ——
+   * 盟友中途被打到只剩一城又收復,仍算救成了,救援看的是最後那一刻。
+   * `minCities` 不填視為 1(還沒亡就算)。
+   */
+  | { kind: 'protect-force';   forceId: EntityId;   minCities?: number; byYear: number }
   | { kind: 'recruit-officer'; officerId: EntityId; byYear?: number }
   | { kind: 'survive-until';   year: number }
   | { kind: 'control-province'; provinceId: string; byYear?: number }

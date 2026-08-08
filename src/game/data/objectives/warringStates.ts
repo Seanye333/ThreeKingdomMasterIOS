@@ -498,9 +498,9 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '五國之一', en: 'One of the Five' },
-        description: 'Take Luoyang and Tongguan by 185.',
-        descriptionZh: "於185年前取洛陽、潼關。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'tongguan'], byYear: 185 },
+        description: "Hold Chenliu and take Tongguan by 185 — the coalition marched on the pass, not on Han, who marched beside you.",
+        descriptionZh: "於185年前守大梁而取潼關 —— 五國之師西指關門,而韓與你同行,不在所攻之列。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'tongguan'], byYear: 185 },
       },
     },
     {
@@ -750,9 +750,9 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '援趙', en: 'Reinforce Zhao' },
-        description: 'Hold Luoyang and Chenliu by 184.',
-        descriptionZh: "於184年前據洛陽、陳留 —— 趙若敗,魏即當其鋒。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'chenliu'], byYear: 184 },
+        description: "Zhao must still stand in 184 — Yuyu is Han's city and Zhao's war; if Zhao breaks, Wei is next in line.",
+        descriptionZh: "至184年趙猶未亡 —— 閼與是韓的城、趙的仗,而趙若敗,下一個當秦鋒的就是魏。",
+        goal: { kind: 'protect-force', forceId: 'zhao', minCities: 8, byYear: 184 },
       },
     },
     {
@@ -1026,19 +1026,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '救趙與否', en: 'Whether to Save Zhao' },
-        description: 'Hold Chenliu and Luoyang by 184, and take Shangdang — Zhao falling means Wei is next.',
-        descriptionZh: "於184年前據陳留、洛陽並取上黨 —— 趙亡則魏為秦之鄰。",
-        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'luoyang', 'shangdang'], byYear: 184 },
+        description: "Hold Chenliu and Puyang in 184 — Wei sent no one to Changping, and told itself that was prudence.",
+        descriptionZh: "至184年仍據大梁、濮陽 —— 長平之役,魏一兵未發,而自謂持重。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang'], byYear: 184 },
       },
     },
     {
       id: 'obj-wscp-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '北救之師', en: 'The Army from the South' },
-        description: 'Take Xuchang and Luoyang by 185.',
-        descriptionZh: "於185年前北取許昌、洛陽 —— 春申君將兵救趙,楚亦不能坐視。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 185 },
+        title: { zh: '唇亡齒寒', en: 'The Lips Gone, the Teeth Feel Cold' },
+        description: "Zhao must still stand in 185 — four hundred thousand were buried at Changping, and Chu understood what came next.",
+        descriptionZh: "至185年趙猶未亡 —— 長平坑卒四十萬,楚人聞之而知寒。",
+        goal: { kind: 'protect-force', forceId: 'zhao', minCities: 6, byYear: 185 },
       },
     },
     {
@@ -1122,9 +1122,9 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '竊符救趙', en: 'Steal the Tally, Save Zhao' },
-        description: 'Take Ye by 184 while holding Chenliu — Lord Xinling killed his own general for the seal.',
-        descriptionZh: "於184年前援取鄴城且陳留不失 —— 信陵君椎殺晉鄙,奪符而後救趙。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'chenliu'], byYear: 184 },
+        description: "Zhao must still stand in 184 — Lord Xinling stole the tally and clubbed his own general to death for it. He did not go to take a city.",
+        descriptionZh: "至184年趙猶未亡 —— 信陵君竊符、椎殺晉鄙而奪其軍。他去邯鄲不是為了取一座城。",
+        goal: { kind: 'protect-force', forceId: 'zhao', minCities: 8, byYear: 184 },
       },
     },
     {
@@ -1132,9 +1132,9 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '毛遂自薦', en: 'Mao Sui Recommends Himself' },
-        description: 'Take Luoyang and Xuchang by 186 — Chu agreed to the alliance under a sword.',
-        descriptionZh: "於186年前北取洛陽、許昌 —— 毛遂按劍而前,楚王乃許合縱。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 186 },
+        description: "Zhao must still stand in 186 — Mao Sui stepped forward with his hand on his sword, and the king of Chu agreed to the alliance.",
+        descriptionZh: "至186年趙猶未亡 —— 毛遂按劍歷階而上,楚王乃許合縱,春申君遂將兵北救。",
+        goal: { kind: 'protect-force', forceId: 'zhao', minCities: 8, byYear: 186 },
       },
     },
     {

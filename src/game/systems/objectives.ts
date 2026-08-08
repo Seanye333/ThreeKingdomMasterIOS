@@ -105,6 +105,16 @@ export function evaluateGoal(
       const expired = goal.byYear !== undefined && ctx.year > goal.byYear;
       return { status: expired ? 'failure' : 'pending', progress };
     }
+    case 'protect-force': {
+      // 救援:不看是誰打退的,只看到了那一年他還在不在。
+      const need = goal.minCities ?? 1;
+      const held = Object.values(ctx.cities).filter(
+        (c) => c.ownerForceId === goal.forceId,
+      ).length;
+      const progress = `${held}→≥${need}`;
+      if (ctx.year < goal.byYear) return { status: 'pending', progress };
+      return { status: held >= need ? 'success' : 'failure', progress };
+    }
     case 'recruit-officer': {
       const o = ctx.officers[goal.officerId];
       const recruited = !!o && o.forceId === ctx.playerForceId;

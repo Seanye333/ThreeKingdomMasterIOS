@@ -99,8 +99,30 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
 ];
 const byDesign = (sid: string, fid: string) => BY_DESIGN.some((e) => e.scenario === sid && e.force === fid);
 
+/**
+ * 期限之後再多跑幾年 —— **「做不到」與「太晚」是兩種病,要分開看。**
+ *
+ * 198 盤曹操的「白門樓」是滅呂布,而呂布開局只有下邳、琅琊兩座城;三輪皆 0,
+ * 看起來像「AI 打不下兩城小國」。實際逐旬追下去:他 200 年拿下琅琊、旋即被
+ * 奪回、201 年再取、**202 年才全滅** —— 期限寫的是白門樓那一年。
+ * 目標沒寫錯,是 AI 收尾比史書慢了三年。這種要調的是窗口或 AI,不是改題目。
+ *
+ * 於是掃描一律多跑 GRACE 年,對每條死目標記下「不設期限的話哪一年會成」。
+ */
+const GRACE_YEARS = 6;
+
+/** 這條目標若不設期限,會不會成、哪一年成。守成型另算(見下)。 */
+type Late = {
+  /** 取得/滅/稱帝…:不設期限時最早達成的年份(取多輪最好的一次)。0 = 從未。 */
+  reachedYear: number;
+  /** 守成型:從開局起連續握住的最後一年(取多輪最好的一次)。0 = 開局就丟。 */
+  heldUntil: number;
+};
+
 const st = useGameStore;
-const dead: Array<{ id: string; zh: string; forceId: string; title: string; goal: string }> = [];
+const dead: Array<{
+  id: string; zh: string; forceId: string; title: string; goal: string; late: Late;
+}> = [];
 let boards = 0;
 
 for (const scenario of SCENARIOS) {
@@ -114,15 +136,28 @@ for (const scenario of SCENARIOS) {
 
   const startYear = scenario.startDate?.year ?? 0;
   const latest = Math.max(startYear, ...objs.map((o) => deadlineOf(o.primary.goal)));
-  const turns = Math.min(MAX_TURNS, Math.max(120, (latest - startYear + 1) * 36));
+  const turns = Math.min(MAX_TURNS, Math.max(120, (latest - startYear + 1 + GRACE_YEARS) * 36));
 
   const met: Record<string, number> = {};
-  for (const o of objs) met[o.forceId] = 0;
+  /** 開局歸屬:用來認出守成型(目標城全在自己手上),那一型的「遲到」要另外量。 */
+  const startOwner: Record<string, string | null> = {};
+  for (const c of scenario.cities) startOwner[c.id] = c.ownerForceId ?? null;
+  const isHolding = (o: (typeof objs)[number]) => {
+    const g = o.primary.goal as { kind: string; cityIds?: string[] };
+    return g.kind === 'hold-cities' && !!g.cityIds
+      && g.cityIds.every((c) => startOwner[c] === o.forceId);
+  };
+  const late: Record<string, Late> = {};
+  for (const o of objs) { met[o.forceId] = 0; late[o.forceId] = { reachedYear: 0, heldUntil: 0 }; }
 
   for (let r = 0; r < RUNS; r++) {
     (st.getState() as unknown as { observeScenario: (s: typeof scenario, d: 'normal') => void })
       .observeScenario(scenario, 'normal');
     const hit: Record<string, boolean> = {};
+    /** 這一輪裡不設期限的達成年 / 守成型連續握住到的年份。 */
+    const reached: Record<string, number> = {};
+    const heldTo: Record<string, number> = {};
+    const broken: Record<string, boolean> = {};
     for (let t = 1; t <= turns; t++) {
       st.getState().endSeason();
       const s = st.getState() as unknown as {
@@ -140,25 +175,56 @@ for (const scenario of SCENARIOS) {
       const cur = st.getState() as unknown as typeof s;
       const live = new Set<string>();
       for (const c of Object.values(cur.cities)) if (c.ownerForceId) live.add(c.ownerForceId);
+      const ctxOf = (fid: string) => ({
+        scenarioId: scenario.id, playerForceId: fid,
+        cities: cur.cities as never, officers: cur.officers as never,
+        year: cur.date.year, liveForceIds: live,
+        isEmperor: cur.forces[fid]?.imperialRank === 'emperor',
+      });
       for (const o of objs) {
-        if (hit[o.forceId]) continue;
-        const res = evaluateGoal(o.primary.goal, {
-          scenarioId: scenario.id, playerForceId: o.forceId,
-          cities: cur.cities as never, officers: cur.officers as never,
-          year: cur.date.year, liveForceIds: live,
-          isEmperor: cur.forces[o.forceId]?.imperialRank === 'emperor',
-        } as never);
-        if (res.status === 'success') hit[o.forceId] = true;
+        if (!hit[o.forceId]) {
+          const res = evaluateGoal(o.primary.goal, ctxOf(o.forceId) as never);
+          if (res.status === 'success') hit[o.forceId] = true;
+        }
+        /*
+         * 「太晚」的量法分兩種:
+         *  - 守成型:期限拿掉等於第 1 旬就成(`evaluateGoal` 沒有 byYear 就走取得
+         *    語意),量它沒有意義。改量**他撐到哪一年**。
+         *  - 其餘:把 byYear 拿掉重評一次,記最早達成的那一年。
+         */
+        if (isHolding(o)) {
+          if (broken[o.forceId]) continue;
+          const bare = { ...(o.primary.goal as object), byYear: undefined } as Goal;
+          const res = evaluateGoal(bare, ctxOf(o.forceId) as never);
+          if (res.status === 'success') heldTo[o.forceId] = cur.date.year;
+          else broken[o.forceId] = true;
+        } else if (!reached[o.forceId]) {
+          const bare = { ...(o.primary.goal as object), byYear: undefined } as Goal;
+          const res = evaluateGoal(bare, ctxOf(o.forceId) as never);
+          if (res.status === 'success') reached[o.forceId] = cur.date.year;
+        }
       }
     }
-    for (const o of objs) if (hit[o.forceId]) met[o.forceId]++;
+    for (const o of objs) {
+      if (hit[o.forceId]) met[o.forceId]++;
+      const L = late[o.forceId];
+      // 多輪取最好的一次 —— 問的是「有沒有可能」,不是「平均如何」。
+      if (reached[o.forceId] && (!L.reachedYear || reached[o.forceId] < L.reachedYear)) {
+        L.reachedYear = reached[o.forceId];
+      }
+      if ((heldTo[o.forceId] ?? 0) > L.heldUntil) L.heldUntil = heldTo[o.forceId];
+    }
   }
 
   const zeros = objs.filter((o) => met[o.forceId] === 0);
   const line = objs.map((o) => `${o.forceId}:${met[o.forceId]}`).join(' ');
   console.log(`${zeros.length ? '✗' : '·'} ${scenario.id.padEnd(24)} ${String(turns).padStart(3)}旬 到${scenario.startDate?.year ?? '?'}+  ${line}`);
   for (const o of zeros) {
-    dead.push({ id: scenario.id, zh: scenario.name.zh, forceId: o.forceId, title: o.primary.title.zh, goal: JSON.stringify(o.primary.goal) });
+    dead.push({
+      id: scenario.id, zh: scenario.name.zh, forceId: o.forceId,
+      title: o.primary.title.zh, goal: JSON.stringify(o.primary.goal),
+      late: late[o.forceId],
+    });
   }
 }
 
@@ -204,7 +270,32 @@ for (const d of designed) {
   console.log(`  · ${d.zh}(${d.id}) / ${d.forceId} 「${d.title}」 —— ${e.why}`);
 }
 if (designed.length) console.log('');
-for (const d of unexplained) {
+
+/**
+ * 每條死目標後面那句「差在哪」—— 這一欄決定了修法:
+ *  - `遲 N 年`  期限外做到了 → 調窗口,或讓 AI 收尾快一點。**別改題目。**
+ *  - `守到 X 年(要 Y)` 守成型撐了多久 → 差一年是平衡,差十年是姿態或選錯城。
+ *  - `從未達成`  多跑 GRACE 年也沒有 → 這才是目標本身寫錯了。
+ */
+function gapOf(d: (typeof dead)[number]): string {
+  const g = JSON.parse(d.goal) as { kind: string; byYear?: number; year?: number };
+  const due = g.byYear ?? g.year;
+  if (d.late.heldUntil) return `守到 ${d.late.heldUntil} 年${due ? `(要 ${due})` : ''}`;
+  if (d.late.reachedYear) {
+    return due ? `遲 ${d.late.reachedYear - due} 年(${d.late.reachedYear} 才成)` : `${d.late.reachedYear} 年才成`;
+  }
+  return '從未達成';
+}
+
+const lateOnes = unexplained.filter((d) => d.late.reachedYear || d.late.heldUntil);
+const neverOnes = unexplained.filter((d) => !d.late.reachedYear && !d.late.heldUntil);
+console.log(`--- 期限外做得到 / 撐了一段的 ${lateOnes.length} 條(調窗口或調 AI)---`);
+for (const d of lateOnes) {
+  const sc = SCENARIOS.find((s) => s.id === d.id)!;
+  console.log(`  ${d.zh}(${d.id}) / ${d.forceId} 「${d.title}」 [${shapeOf(sc, d.forceId, JSON.parse(d.goal) as Goal)}] —— ${gapOf(d)}`);
+}
+console.log(`\n--- 多跑 ${GRACE_YEARS} 年也從未達成的 ${neverOnes.length} 條(題目本身要重寫)---`);
+for (const d of neverOnes) {
   const sc = SCENARIOS.find((s) => s.id === d.id)!;
   console.log(`  ${d.zh}(${d.id}) / ${d.forceId} 「${d.title}」 [${shapeOf(sc, d.forceId, JSON.parse(d.goal) as Goal)}]`);
 }
