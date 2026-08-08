@@ -43,10 +43,15 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       id: 'obj-chdz-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '江東子弟八千人', en: 'Eight Thousand Sons of the East' },
-        description: "Still hold Pengcheng in 183 — Xiang Liang crossed the river with eight thousand; Xianyang is four years away.",
-        descriptionZh: "至183年仍據彭城 —— 項梁渡江時只有八千人;咸陽是四年後的事。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng'], byYear: 183 },
+        title: { zh: '江東子弟八千人', en: 'Eight Thousand Sons of Jiangdong' },
+        description: "Still hold Kuaiji and Wu in 181 — Xiang Liang killed the governor in his own hall and raised eight thousand; Pengcheng came later.",
+        descriptionZh: "至181年仍據會稽、吳 —— 梁乃召故所知豪吏,籍遂拔劍斬守頭。得精兵八千人。彭城是後來的事,先要有這八千人。",
+        /*
+         * 原本是「於183年前取彭城」,而彭城對江東的項氏是 **0.00**(不相鄰,
+         * 中間隔著廣陵、下邳)。史書上的順序是:前 209 會稽起兵、渡江北上、
+         * 前 208 立懷王於盱眙才都彭城。主目標寫起兵那一步,取彭城降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['kuaiji', 'wu'], byYear: 181 },
       },
       secondary: [
         {
@@ -305,10 +310,16 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       id: 'obj-chsq-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '北擊齊而已', en: 'Qi First, As Always' },
-        description: 'Hold Pengcheng and take Linzi by 184 — Xiang Yu marched north while Han came out of the west.',
-        descriptionZh: "於184年前守彭城並取臨淄 —— 項羽北擊齊之時,漢已出關。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'linzi'], byYear: 184 },
+        title: { zh: '彭城之守', en: 'Hold Pengcheng' },
+        description: "Still hold Pengcheng in 184 — he went north against Qi, and Liu Bang walked into his capital behind him.",
+        descriptionZh: "至184年仍據彭城 —— 羽北擊齊,而漢王劫五諸侯兵五十六萬人入彭城。羽聞之,自以精兵三萬人南從魯出胡陵,至蕭,大破漢軍。",
+        /*
+         * 原本是「於184年前取彭城、臨淄」—— 彭城他**開局就有**(守成),
+         * 而臨淄是 0.00(不相鄰)。也就是「守自己的都城 + 一座構不著的城」。
+         * 主目標留彭城 —— 那正是這張盤的戲眼:他北擊齊的時候,都城丟了,
+         * 而他三萬人殺回來。北擊齊降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng'], byYear: 184 },
       },
       secondary: [
         {

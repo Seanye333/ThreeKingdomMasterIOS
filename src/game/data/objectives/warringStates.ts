@@ -149,10 +149,16 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wswen-wei',
       forceId: 'wei',
       primary: {
-        title: { zh: '盡取西河', en: 'Take the Hexi' },
-        description: "Hold Tongguan by 190 — Wu Qi took the west bank of the river from Qin and held it as its governor.",
-        descriptionZh: "於190年前取潼關 —— 吳起奪秦河西之地,遂為西河守。咸陽不在這場仗裡。",
-        goal: { kind: 'hold-cities', cityIds: ['tongguan'], byYear: 190 },
+        title: { zh: '三晉之首', en: 'First of the Three Jin' },
+        description: "Still hold Ye and Daliang in 190 — Li Kui's laws, Ximen Bao's canals, Wu Qi's army: this is the generation that made Wei the strongest state in the realm.",
+        descriptionZh: "至190年仍據鄴、大梁 —— 李悝盡地力之教,西門豹治鄴,吳起為西河守,與諸侯大戰七十六,全勝六十四。魏之首霸,始於這一代人。",
+        /*
+         * 原本是「於190年前取潼關」(以潼關代表西河之地),而魏那十二座城
+         * 沒有一座與潼關相鄰 —— `reachability-audit` 算出來是 **0.00**。
+         * 外傳三線借三國地圖,而戰國的地理對不上:西河在河西,盤上沒有這一格。
+         * 主目標改成他這一代真正做到的(變法圖強、三晉之首),取西河降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'chenliu'], byYear: 190 },
       },
       secondary: [
         {
@@ -858,10 +864,16 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wsqm-yan',
       forceId: 'yan',
       primary: {
-        title: { zh: '待時而動', en: 'Wait, Then Strike' },
-        description: 'Take Linzi by 185 — Yan has been preparing this for twenty-eight years.',
-        descriptionZh: "於185年前攻取臨淄 —— 燕昭王等這一天等了二十八年。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi'], byYear: 185 },
+        title: { zh: '築黃金台', en: 'The Terrace of Gold' },
+        description: "Still hold Ji and Liaodong in 185 — Zhao wanted revenge on Qi and spent twenty-eight years getting ready for it.",
+        descriptionZh: "至185年仍據薊、遼東 —— 昭王卑身厚幣以招賢者,築宮而師事郭隗,樂毅自魏往,劇辛自趙往。二十八年,然後伐齊。",
+        /*
+         * 標題叫「待時而動」而目標寫的是**取臨淄** —— 兩者直接矛盾,而且臨淄
+         * 對燕是 0.00(完全不相鄰)。樂毅下齊七十餘城是二十八年後的事,
+         * 那是「樂毅伐齊」那張盤。這一張(齊湣王稱帝)燕正在積蓄。
+         * 主目標寫「待」的字面意思:守住北土,把家底攢出來。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'liaodong'], byYear: 185 },
       },
     },
     {
@@ -1366,10 +1378,16 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wsqu-yan',
       forceId: 'yan',
       primary: {
-        title: { zh: '風蕭蕭兮易水寒', en: 'The Wind is Cold on the Yi River' },
-        description: "Take Chang'an by 192 — a dagger in a map roll was the other plan.",
-        descriptionZh: "於192年前攻取長安 —— 圖窮匕見是另一條路,這條路要用兵。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 192 },
+        title: { zh: '燕祚未絕', en: 'Yan Not Yet Ended' },
+        description: "Still hold Ji and Liaodong in 190 — the dagger failed; the king fled beyond the Liao and gave up his own son's head to buy five more years.",
+        descriptionZh: "至190年仍據薊、遼東 —— 圖窮匕見而事不成,秦將王翦破薊,王喜走遼東,斬太子丹以獻。五年之後,燕亡。",
+        /*
+         * 原本是「於192年前取長安」(以長安代表咸陽)—— 荊軻刺秦是**刺殺**,
+         * 不是進軍;燕在遼東,對長安是 0.00,中間隔著整個天下。
+         * 主目標改成他真正做到的那件事:秦破薊之後,燕在遼東又撐了五年。
+         * 刺秦降為次要 —— 那本來就是一次孤注,不是國策。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'liaodong'], byYear: 190 },
       },
     },
     {
