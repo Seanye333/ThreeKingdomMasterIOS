@@ -112,6 +112,12 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
   { scenario: 'scn-194-xuzhou',    force: 'gongsun',    why: '同上。' },
   { scenario: 'scn-197-bohai',     force: 'yuan-shu',   why: '「淮南之主」—— 199 年他就沒了。' },
   { scenario: 'scn-199-yijing',    force: 'yuan-shu',   why: '同上。' },
+  /*
+   * 後三國三條(2026-08-08 逐盤體檢時補)。判準同上:**在這張盤涵蓋的那幾年裡**,
+   * 史書上他就是輸了 —— 而那正是這張盤要玩家改寫的東西。
+   */
+  { scenario: 'scn-264-zhonghui',  force: 'zhonghui',   why: '「據蜀自王」—— 正月十八日亂兵鼓噪而入,會與姜維皆見殺,死者數百人。' },
+  { scenario: 'scn-280-jin-unite', force: 'sun',        why: '「守此殘江」—— 這張盤的名字就是晉滅吳;三月壬寅,皓面縛輿櫬詣軍門降。' },
 ];
 const byDesign = (sid: string, fid: string) => BY_DESIGN.some((e) => e.scenario === sid && e.force === fid);
 

@@ -3911,6 +3911,48 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 264 鍾會之亂 ─────────────────────────────────────────────── */
   'scn-264-zhonghui': {
+    /*
+     * 這張盤四家,而吳原本一段落幕文本都沒有 —— 選了吳的玩家亡國時讀到的是
+     * 通用輓歌。孫皓正是這一年即位的:264 年七月,濮陽興、張布迎立烏程侯。
+     */
+    sun: {
+      defeat: {
+        titleZh: '一片降旛出石頭',
+        titleEn: 'One White Banner from Shitou',
+        textZh:
+          '王濬樓船下益州,金陵王氣黯然收。\n\n'
+          + '千尋鐵鎖沉江底,一片降旛出石頭。\n\n'
+          + '皓乃面縛輿櫬,詣軍門降。濬解其縛,受璧焚櫬,'
+          + '送於洛陽。詔曰:「孫皓來降,萬里同風,'
+          + '書軌一統。」封歸命侯。\n\n'
+          + '——四百年分崩之局,收於一紙降表。'
+          + '而昔者孫仲謀坐斷東南,戰未曾輸;'
+          + '至於子孫,乃以三十萬之眾,四月而亡。',
+        textEn:
+          "Wang Jun's tower-ships came down from Yi province, and the royal aura of Jinling went out.\n\n"
+          + 'A thousand fathoms of chain sank to the river-bed; one white banner came out from Shitou.\n\n'
+          + 'Sun Hao had himself bound, brought his own coffin, and surrendered at the gate of the camp. Jun cut his bonds, accepted the jade and burned the coffin, and sent him to Luoyang, where the edict read: "Sun Hao has come over. Ten thousand li share one wind; writing and axle-width are one." He was made Marquis Who Returned to Allegiance.\n\n'
+          + 'Four hundred years of division closed on a sheet of paper. Sun Quan had sat athwart the southeast and never lost a war; his descendants lost the state in four months with three hundred thousand men.',
+      },
+      verdictZh:
+        '論曰:吳之亡,不亡於晉之強,亡於**其君先亡其國** ——\n'
+        + '皓初立,發優詔,恤士民,開倉廩,振貧乏,'
+        + '中外欣然,謂為明主;\n'
+        + '及既得志,粗暴驕盈,多忌諱,好酒色,'
+        + '剝人面、鑿人眼,群臣震慄。\n'
+        + '陸抗上疏曰:「臣父遜昔在西垂陳言,'
+        + '以為西陵國之西門」——而疏入不省。\n'
+        + '抗死六年而國亡,亡日,吳兵不戰而潰者過半。',
+      verdictEn:
+        'The historian says: Wu did not fall to the strength of Jin; its ruler destroyed the state before Jin ever crossed. When Hao came to the throne he issued generous edicts, relieved the soldiery and the people, opened the granaries — and everyone within and without called him an enlightened lord. Once he felt secure he turned coarse, cruel and swollen with pride: flaying faces, gouging eyes, until the court trembled to speak. Lu Kang memorialised that Xiling was the western gate of the state; the memorial was received and not acted on. Six years after Kang died the state fell, and on the day it fell more than half the army of Wu dissolved without fighting.',
+      verdictLostZh:
+        '論曰:亂世之君,能守成者亦不易得。'
+        + '此局四家,魏得其大,鍾鄧爭其功,'
+        + '而江東所守者,不過一江之險與一時之運。\n'
+        + '守之而不失,已勝史書多矣。',
+      verdictLostEn:
+        'The historian says: in a broken age even holding what one has is no small thing. Of the four houses on this board Wei held the greater part and Zhong Hui and Deng Ai quarrelled over the credit, while what the southeast had was one river and one turn of luck. To have held it at all is already more than the histories granted.',
+    },
     zhonghui: {
       defeat: {
         titleZh: '事成則得天下',

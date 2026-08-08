@@ -4462,7 +4462,13 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     effects: [
       { kind: 'officer-status', officerId: 'zhong-hui', status: 'dead' },
       { kind: 'officer-status', officerId: 'jiang-wei', status: 'dead' },
-      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhong-hui', fraction: 0.7 },
+      /*
+       * 0.7 → 0.9(2026-08-08)。史書上鍾會一死,那支軍隊當天就散了 ——
+       * 衛瓘接管成都、士卒各還本營,不是留著幾座城跟朝廷慢慢打。
+       * 體檢八輪:反正 0.7 之下鍾會軍終局中位仍有 6 城,而魏的「收蜀定亂」
+       * 只有 1/8 —— 那 1/8 不是魏打不贏,是收尾收不完。
+       */
+      { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'zhong-hui', fraction: 0.9 },
       { kind: 'flag', key: 'zhonghui-ended' },
     ],
   },

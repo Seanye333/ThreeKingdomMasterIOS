@@ -4291,9 +4291,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '收蜀定亂', en: 'Take Shu, End the Mutiny' },
-        description: 'Destroy the Zhong Hui force by 268 — you sent him because he had no family to protect.',
-        descriptionZh: "於268年前平定鍾會 —— 你早知道他會反,只是算準了他成不了。",
-        goal: { kind: 'defeat-force', forceId: 'zhonghui', byYear: 268 },
+        description: 'Hold Chengdu and Hanzhong by 268 — you sent him because he had no family to protect, and what you wanted back was the province, not his head.',
+        descriptionZh: "於268年前收成都、漢中 —— 你早知道他會反,只是算準了他成不了。要回來的是益州,不是他那顆頭。",
+        /*
+         * 原本是 `defeat-force zhonghui`,八輪只有 1/8 —— 而那 1/8 不是魏打不贏
+         * (他七十城對十一城),是**收尾收不完**:亂兵殺會之後那支軍隊還剩幾座
+         * 邊城,AI 要一座一座啃。史書上這件事的結果是衛瓘接管成都、益州歸魏,
+         * 沒有人去追殺鍾會的殘部。目標寫他真正做到的那件事。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 268 },
       },
       secondary: [
         {
