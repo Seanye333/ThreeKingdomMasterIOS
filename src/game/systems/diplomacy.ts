@@ -12,6 +12,15 @@ import { getRelation, pairKey } from '../types';
 import { diplomacyProposalBonus, diplomacyResistance } from './traitEffects';
 
 export const NAP_DURATION_SEASONS = 8;
+/**
+ * 劇本開局那些互不侵犯的期限 —— 二十季(五年)。
+ *
+ * 比局中簽的八季長,因為它陳述的是**一段局勢**而不是一次交易:208 年的
+ * 曹操與六家皆有約,那是赤壁之前的天下,不是一紙兩年的協定。但也必須會到期,
+ * 否則史書上撕得最快的幾紙盟約在盤上撕不掉 —— 195/197 兩張盤的曹操與袁紹
+ * 是同盟,而官渡在 200 年:期限若是永久,那一仗在自己的年代裡打不起來。
+ */
+export const SCENARIO_NAP_SEASONS = 20;
 export const ALLIANCE_PROPOSAL_COST = 500;
 export const NAP_PROPOSAL_COST = 200;
 

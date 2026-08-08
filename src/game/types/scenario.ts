@@ -35,6 +35,15 @@ export interface Scenario {
     b: EntityId;
     score: number;
     status: import('./diplomacy').RelationStatus;
+    /**
+     * 這一紙互不侵犯永不期滿。**預設會期滿**(見 `SCENARIO_NAP_SEASONS`)——
+     * 局中簽的互不侵犯是八季,而劇本開局那些原本是永久的,沒有人是故意寫成
+     * 這樣的:`rel()` 只是沒有帶期限這個欄位。後果是史書上撕得最快的那幾紙
+     * 盟約在盤上撕不掉,官渡在 195/197 兩張盤都打不起來。
+     *
+     * 只有**確實不該期滿**的才設(如三路討賊軍那種同一邊的關係)。
+     */
+    permanent?: boolean;
   }>;
   cities: City[];
   forces: Force[];

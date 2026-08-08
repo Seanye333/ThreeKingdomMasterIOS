@@ -39,6 +39,7 @@ import { newCampaignSeed } from './campaignRng';
 import { loadLegacy } from '../systems/legacy';
 import { emptyTribeDiplomacy } from '../systems/tribesDiplomacy';
 import { rollWeather, type Weather } from '../systems/weather';
+import { addSeasons, SCENARIO_NAP_SEASONS } from '../systems/diplomacy';
 import { createInitialMandate, type MandateState } from '../systems/mandate';
 import { ITEMS } from '../data/items';
 import { STARTER_RECIPE_IDS } from '../systems/forging';
@@ -1283,8 +1284,13 @@ export function loadScenario(
 
   // 初始外交 — opening relations between forces.
   const initialRelations: Record<string, Relation> = {};
-  const rel = (a: EntityId, b: EntityId, score: number, status: Relation['status']): void => {
-    initialRelations[pairKey(a, b)] = { forceA: a < b ? a : b, forceB: a < b ? b : a, score, status };
+  const rel = (
+    a: EntityId, b: EntityId, score: number, status: Relation['status'],
+    expiresAt?: Relation['expiresAt'],
+  ): void => {
+    initialRelations[pairKey(a, b)] = {
+      forceA: a < b ? a : b, forceB: a < b ? b : a, score, status, expiresAt,
+    };
   };
   const allForceIds = scenario.forces.map((f) => f.id);
   if (state.initialDiplomacy === 'warring') {
@@ -1300,9 +1306,23 @@ export function loadScenario(
       for (let j = i + 1; j < aiIds.length; j++)
         if (Math.random() < 0.4) rel(aiIds[i], aiIds[j], 65, 'non-aggression');
   }
-  // 劇本自己的開局外交最後套用 —— 它陳述的是史實(討賊三路是同一邊),
-  // 應當蓋過全域的「亂世死敵/群雄結盟」設定。
-  for (const r of scenario.openingRelations ?? []) rel(r.a, r.b, r.score, r.status);
+  /*
+   * 劇本自己的開局外交最後套用 —— 它陳述的是史實(討賊三路是同一邊),
+   * 應當蓋過全域的「亂世死敵/群雄結盟」設定。
+   *
+   * ⚠ **開局的互不侵犯要會期滿。** 局中簽的是八季(`NAP_DURATION_SEASONS`),
+   * 而劇本開局那些此前是永久的 —— 沒有人是故意寫成這樣的,`rel()` 只是沒有
+   * 帶期限那個欄位。後果是史書上撕得最快的幾紙盟約在盤上撕不掉:195/197 兩張
+   * 盤的曹操與袁紹是同盟,於是**官渡在自己的年代裡打不起來**。
+   * 開局的給得比局中長(五年),它陳述的是一段局勢而非一次交易;
+   * 真的不該期滿的(討賊三路那種)在盤上寫 `permanent: true`。
+   */
+  for (const r of scenario.openingRelations ?? []) {
+    const expires = r.status === 'non-aggression' && !r.permanent
+      ? addSeasons(scenario.startDate ?? { year: 184, season: 'spring' }, SCENARIO_NAP_SEASONS)
+      : undefined;
+    rel(r.a, r.b, r.score, r.status, expires);
+  }
 
   // 京師 — mark the emperor's city so it ranks as 都 (see citySize) and the
   // 挾天子 systems know where the court sits from turn one.
