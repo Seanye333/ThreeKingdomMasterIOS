@@ -233,9 +233,22 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '奉天子以令不臣', en: 'The Emperor at Xu' },
-          description: 'Take Luoyang while holding Xuchang — the court came out of the ruins in 196 and he moved it to Xu.',
-          descriptionZh: '據有許昌之餘並取洛陽 —— 196年天子出焦土,而他把朝廷遷到了許。',
-          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 199 },
+          description: 'Still hold Chenliu in 195 — he raised the first levy there, five thousand men, and everything else came after.',
+          descriptionZh: '至195年仍據陳留 —— 中平六年冬,散家財、合義兵於己吾,五千人而已。這張盤上他夾在袁紹十六城、董卓十六城、劉表十八城之間,守住起兵那一座已經不容易。',
+          /*
+           * 這條改了兩次,兩次的病不一樣:
+           *  ① 原本要「據有許昌之餘並取洛陽」—— 而曹操沒有占洛陽:196 年迎獻帝
+           *     時那裡已被董卓燒成焦土,他做的是把朝廷遷到許。
+           *  ② 改成「取許昌」之後仍然 12 輪 0/12,算一次就知道為什麼:他在這張
+           *     盤上只有陳留一座與許昌相鄰,能施的壓力是 13,000 × 0.6 = 7,800,
+           *     而許昌的 effDef 是 14,520 —— feasibility 0.54,**連候選都進不了**
+           *     (門檻 1.05)。不是難,是評分函式根本不會把它列進來。
+           * 主目標改成守他開局真正握著的那一片(陳留起兵、徐州為基),
+           * 取許昌降為次要。
+           */
+          /* ⚠ 查兩座(陳留+彭城)12 輪仍 0/12 —— 他在這張盤上是被三家夾著的
+             那一個。收到一座:陳留是他起兵之地,也是唯一與洛陽相鄰的那一座。 */
+          goal: { kind: 'hold-cities', cityIds: ['chenliu'], byYear: 195 },
         },
         {
           title: { zh: '袁紹討伐', en: 'Defeat Yuan Shao' },
@@ -1515,11 +1528,27 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-189-eunuchs',
       forceId: 'eunuchs',
       primary: {
-        title: { zh: '挾持宮禁', en: 'Hold the Palace' },
-        description: 'Still hold Luoyang in 193 — the Son of Heaven in your sleeves.',
-        descriptionZh: "至193年仍據洛陽 —— 天子在袖,詔命由我。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 193 },
+        title: { zh: '據關以自固', en: 'Hold the Passes' },
+        description: 'Still hold Hulao and Guandu in 192 — you killed He Jin in the palace; what you never had was an army.',
+        descriptionZh: "至192年仍據虎牢、官渡 —— 誅大將軍於嘉德殿前易,而據天下之險以自固難。史書上你們連夜挾帝出穀門,至小平津,張讓辭曰「臣等殄滅,天下亂矣」,投河而死。",
+        /*
+         * 原本是「至193年仍據洛陽」,而**洛陽在這張盤上是何進的**,十常侍要先
+         * 打下來 —— 算一次就知道打不動:他們三城合兵不到九千,姿態 ×0.55,
+         * 能對洛陽施的壓力是 4,950,而洛陽的 effDef 是 11,700。
+         * feasibility 0.42,連候選都進不了(門檻 1.05)。這條從第 0 旬就是死的,
+         * 而且不是「難」,是**評分函式根本不會把它列進來**。
+         * 改成守他們真正握著的那兩座關;取洛陽降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['hulao', 'guandu'], byYear: 192 },
       },
+      secondary: [
+        {
+          title: { zh: '挾持宮禁', en: 'Hold the Palace' },
+          description: 'Take Luoyang by 193 — the Son of Heaven in your sleeves.',
+          descriptionZh: "於193年前取洛陽 —— 天子在袖,詔命由我。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 193 },
+        },
+      ],
     },
     {
       id: 'obj-189-dong',
@@ -1562,21 +1591,56 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '跨有河北', en: 'Straddle the North' },
-        description: 'Control Ji province by 200 — four provinces, a hundred thousand horse.',
-        descriptionZh: "於200年前盡取冀州 —— 據四州之地,擁百萬之眾。",
-        goal: { kind: 'control-province', provinceId: 'ji', byYear: 200 },
+        description: 'Still hold Ye, Nanpi and Pingyuan in 195 — four provinces, a hundred thousand horse.',
+        descriptionZh: "至195年仍據鄴、南皮、平原 —— 據四州之地,擁百萬之眾。",
+        /*
+         * 原本是 `control-province ji`,而**袁紹開局就據有冀州全部九座** ——
+         * 也就是說這是守成型:九座城守十一年,丟一座就是 0。12 輪 0/12。
+         * 這犯的是「守成查兩三座」那條準則的另一頭:查九座是白扣。
+         * 改查他真正的三個支點(鄴是治所,南皮是渤海起家之地,平原對著青州)。
+         * 盡取冀州降為次要。
+         *
+         * ⚠ 收窄到三座之後**仍然 0/12**,再查才發現第二層:期限寫的是 200 年,
+         * 而這張盤講的是 189 年秋那幾個月。守成十一年,中間任何一次易主都不算數,
+         * 而到 200 年盤面早就不是這張盤了。期限一併壓回 195 —— 這是「反董卓」
+         * 那一段結束的時候,也是這張盤還像它自己的最後一年。
+         * 同一批壓回期限的還有曹操(199→195)與劉表(205→196)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'nanpi', 'pingyuan'], byYear: 195 },
       },
+      secondary: [
+        {
+          title: { zh: '盡取冀州', en: 'All of Ji Province' },
+          description: 'Control Ji province by 200 — all nine walls of it.',
+          descriptionZh: "於200年前盡取冀州九城 —— 一座也不能少。",
+          goal: { kind: 'control-province', provinceId: 'ji', byYear: 200 },
+        },
+      ],
     },
     {
       id: 'obj-189-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '江東猛虎', en: 'The Tiger of Jiangdong' },
-        description: 'Take Xiangyang by 191 — the wall that killed you in history.',
-        descriptionZh: "於191年前攻取襄陽 —— 峴山之下,史書曾載你的死。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 191 },
+        title: { zh: '荊南之基', en: 'A Base in Jingnan' },
+        description: 'Still hold Changsha and Baqiu in 191 — the year of the arrow at Xianshan; up to it, this was what he actually had.',
+        descriptionZh: "至191年仍據長沙、巴丘 —— 中平四年以長沙太守討區星,一月而定,封烏程侯。峴山之箭正在這一年,而在那之前,他真正有的就是這一塊。",
+        /*
+         * 原本是「於191年前攻取襄陽」,而這條目標自己的英文描述寫著
+         * 「the wall that killed you in history」—— 孫堅沒有拿下襄陽,
+         * 他死在那座城下。而且算一次也知道:他兩座城都不與襄陽相鄰,
+         * 對襄陽能施的壓力是 **0**,連候選都進不了。取襄陽降為次要。
+         */
+        /* ⚠ 第一版寫 194,被 `objectiveLifespan.test.ts` 擋下:孫堅卒於 191。
+           期限壓回卒年那一年 —— 那正是「他活著的時候守住了」。 */
+        goal: { kind: 'hold-cities', cityIds: ['changsha', 'baqiu'], byYear: 191 },
       },
       secondary: [
+        {
+          title: { zh: '江東猛虎', en: 'The Tiger of Jiangdong' },
+          description: 'Take Xiangyang by 191 — the wall that killed you in history.',
+          descriptionZh: "於191年前攻取襄陽 —— 峴山之下,史書曾載你的死。",
+          goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 191 },
+        },
         {
           title: { zh: '荊南立業', en: 'A Seat in the South' },
           description: 'Hold Changsha and Jiangling by 198.',
@@ -1590,9 +1654,11 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-biao',
       primary: {
         title: { zh: '坐保江漢', en: 'Keep the Han Valley' },
-        description: 'Still hold Xiangyang, Jiangling and Jiangxia in 205.',
-        descriptionZh: "至205年仍據襄陽、江陵、江夏 —— 守成之主,亦是一種答案。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 205 },
+        description: 'Still hold Xiangyang and Jiangling in 196 — holding is also an answer.',
+        descriptionZh: "至196年仍據襄陽、江陵 —— 單騎入荊州,理兵襄陽,而後坐保江漢。守成之主,亦是一種答案。",
+        /* 原本連江夏一起查,而江夏是他真正丟得最兇的一座(黃祖與孫氏打了十年)
+           —— 三座城守十六年,12 輪 0/12。收窄到襄陽、江陵這兩個真支點。 */
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 196 },
       },
     },
     {
