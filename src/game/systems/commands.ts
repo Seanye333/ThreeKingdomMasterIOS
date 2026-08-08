@@ -718,7 +718,11 @@ export function resolveInternalAffairs(
           messageZh: `${officer.name.zh}大農政遇蝗澇之災,功虧一簣,農業 ${setback}。`,
         };
       }
-      const gain = Math.min(econCap - city.agriculture, applyDevelopment(city.agriculture, statValue, rng, econCap) * 3);
+      // 同大築城:超過上限時 `econCap - 現值` 是負數,而 applyDevelopment 回 0,
+      // `Math.min(負, 0)` 取到負 —— 大農反而把農業做低。開局沒有超額的城,
+      // 但**人口掉一級就會**:189 盤的洛陽民三十二萬(京,上限 320)打到剩
+      // 十九萬(都,上限 250),而它的農業那時是 288。
+      const gain = Math.max(0, Math.min(econCap - city.agriculture, applyDevelopment(city.agriculture, statValue, rng, econCap) * 3));
       return {
         success: gain > 0,
         delta: { agriculture: gain },
@@ -737,7 +741,8 @@ export function resolveInternalAffairs(
           messageZh: `${officer.name.zh}大商政遇市崩火患,商業 ${setback}。`,
         };
       }
-      const gain = Math.min(econCap - city.commerce, applyDevelopment(city.commerce, statValue, rng, econCap) * 3);
+      // 同上 —— 人口掉一級,商業就可能高過新的上限。
+      const gain = Math.max(0, Math.min(econCap - city.commerce, applyDevelopment(city.commerce, statValue, rng, econCap) * 3));
       return {
         success: gain > 0,
         delta: { commerce: gain },
