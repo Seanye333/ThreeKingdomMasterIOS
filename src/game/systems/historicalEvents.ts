@@ -61,6 +61,11 @@ export interface HistoricalEventContext {
    * 見 `Scenario.premiseOfficerIds`。
    */
   premiseOfficerIds?: readonly EntityId[];
+  /**
+   * 這張盤宣告不演的事件 —— 前提裡已經演過或被改寫掉的那幾場。
+   * 見 `Scenario.blockedEventIds`。
+   */
+  blockedEventIds?: readonly string[];
 }
 
 /** 這條事件(含任一選項)會不會把 `ids` 裡的某個人設成 dead。 */
@@ -102,6 +107,8 @@ export function findFiringEventIn(
     // 假想盤的前提人物不死於事件 —— 這一條要在 requires 之前判,因為那些事件
     // 的守衛正是「此人還活著」,在以他活著為前提的盤上必然成立。
     if (ctx.premiseOfficerIds?.length && killsAnyOf(evt, ctx.premiseOfficerIds)) continue;
+    // 盤宣告不演的:前提裡已經打完的那一仗,不該再打一次。
+    if (ctx.blockedEventIds?.includes(evt.id)) continue;
     if (!conditionsMet(evt, ctx)) continue;
     // Romance mode: fire every eligible event. Default: 60% per season
     // (so the next eligible season has another chance, but the campaign

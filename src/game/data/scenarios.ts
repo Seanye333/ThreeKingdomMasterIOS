@@ -7243,6 +7243,11 @@ export const SCENARIO_WHATIF_GUANYU_JING: Scenario = {
   ],
   name: { en: 'Guan Yu Holds Jingzhou', zh: '關羽守住荊州' },
   kind: 'whatif',
+  /* 白衣渡江功敗垂成、呂蒙憂憤而歿 —— 那一場已經有結果了。
+     夷陵也一併不演:關羽還在,伐吳那個理由根本不存在。 */
+  blockedEventIds: [
+    'evt-baiyi', 'evt-battle-of-yiling', 'evt-yiling-fire',
+  ],
   /* 前提人物 —— 盤名就是「守住」,而「關羽,麥城死」第 1 旬就演(3/3)。 */
   premiseOfficerIds: ['guan-yu'],
   description:
@@ -7681,6 +7686,13 @@ export const SCENARIO_WHATIF_CAO_WINS_CHIBI: Scenario = {
   ],
   name: { en: 'Cao Cao Wins Red Cliffs', zh: '曹操贏赤壁' },
   kind: 'whatif',
+  /* 這張盤不演的:整套赤壁。「東南風終是不至,黃蓋詐降早被窺破,周郎殞於
+     亂軍」—— 那一仗的結果就是這張盤的開局盤面,不該再打一次。 */
+  blockedEventIds: [
+    'evt-battle-of-red-cliffs', 'evt-chibi-1', 'evt-chibi-2', 'evt-chibi-3',
+    'evt-huang-gai-ruse', 'evt-pang-tong-chain-ships', 'evt-zhuge-borrows-wind',
+    'evt-borrowing-arrows', 'evt-huarong-path', 'evt-zhou-yu-dies',
+  ],
   description:
     'Winter 208 AD. The southeast wind never blew. Cao Cao\'s scouts spotted Huang Gai\'s fire-ships ' +
     'in time; the chained fleet held; Zhou Yu fell in the rout. Cao Cao pursued to Jianye, killed ' +
@@ -7995,6 +8007,8 @@ export const SCENARIO_WHATIF_YUAN_GUANDU: Scenario = {
   ],
   name: { en: 'If Yuan Shao Had Won Guandu', zh: '若袁紹勝官渡' },
   kind: 'whatif',
+  /* 官渡已經打完了,而且贏的是袁紹 —— 開局盤面就是那一仗的結果。 */
+  blockedEventIds: ['evt-battle-of-guandu', 'evt-wuchao', 'evt-baima-yanliang'],
   /* 前提人物 —— 贏了官渡的人,不該在自己的盤上被史書追回去。 */
   premiseOfficerIds: ['yuan-shao'],
   description:
@@ -8037,6 +8051,8 @@ export const SCENARIO_WHATIF_LUBU_XUZHOU: Scenario = {
   ],
   name: { en: 'If Lü Bu Had Held Xuzhou', zh: '若呂布割據徐州' },
   kind: 'whatif',
+  /* 泗水未潰下邳之牆 —— 這張盤的前提正是那道水沒淹進來。 */
+  blockedEventIds: ['evt-xiapi-flood'],
   /* 前提人物 —— 泗水未潰下邳之牆 —— 白門樓在這張盤上本就不該有。 */
   premiseOfficerIds: ['lu-bu', 'chen-gong'],
   description:
@@ -8123,6 +8139,8 @@ export const SCENARIO_WHATIF_SUNCE_LIVES: Scenario = {
   ],
   name: { en: 'If Sun Ce Had Lived', zh: '若孫策不死' },
   kind: 'whatif',
+  /* 201 年春:官渡已成過去(這張盤的曹操正在收拾殘局),而孫策北上是新的變數。 */
+  blockedEventIds: ['evt-battle-of-guandu', 'evt-wuchao', 'evt-baima-yanliang'],
   /* 前提人物 —— 許貢門客那一刺沒中,正是這張盤的前提;而「孫策死於刺客」第 3–6 旬照演。 */
   premiseOfficerIds: ['sun-ce'],
   description:
@@ -8169,6 +8187,9 @@ export const SCENARIO_WHATIF_DONG_LIVES: Scenario = {
   ],
   name: { en: 'If Dong Zhuo Had Not Fallen', zh: '若董卓未亡' },
   kind: 'whatif',
+  /* 連環美人之計「事泄而敗」是這張盤的前提 —— 那條鏈的前半不該再演一次。
+     (殺董卓的那幾節由 premiseOfficerIds 擋,這裡擋的是不死人的前半。) */
+  blockedEventIds: ['evt-lianhuan-1', 'evt-lianhuan-2', 'evt-diaochan-intrigue'],
   /* 前提人物 —— 連環美人之計未成 —— 而「呂布弒董」第 3–6 旬照樣把他殺了(3/3)。 */
   premiseOfficerIds: ['dong-zhuo'],
   description:
@@ -8215,6 +8236,8 @@ export const SCENARIO_WHATIF_YUANSHU_EMPIRE: Scenario = {
   ],
   name: { en: 'If Yuan Shu\'s Empire Had Stood', zh: '若袁術稱帝成' },
   kind: 'whatif',
+  /* 下邳之圍以曹操疲師而退收場(呂布仍在盤上),那道水也沒淹。 */
+  blockedEventIds: ['evt-xiapi-flood'],
   /* 前提人物 —— 仲家之帝守得住,才有這張盤。 */
   premiseOfficerIds: ['yuan-shu'],
   description:
@@ -9003,6 +9026,8 @@ export const SCENARIO_WHATIF_GUANYU_NORTH: Scenario = {
   ],
   name: { en: 'If Guan Yu Had Taken Fan', zh: '若關羽威震華夏' },
   kind: 'whatif',
+  /* 水淹七軍是這張盤的開局(前提本身),不該當成未來的事再演一次。 */
+  blockedEventIds: ['evt-guan-yu-flooded-armies'],
   /* 前提人物 —— 威震華夏的那一刻 —— 而「白衣渡江」第 1–2 旬就把他帶走。 */
   premiseOfficerIds: ['guan-yu'],
   description:
@@ -11186,6 +11211,14 @@ export function scenarioPremiseOfficerIds(
 ): readonly string[] | undefined {
   if (!scenarioId) return undefined;
   return SCENARIOS_BY_ID[scenarioId]?.premiseOfficerIds;
+}
+
+/** 這張盤宣告不演的事件(見 `Scenario.blockedEventIds`)。 */
+export function scenarioBlockedEventIds(
+  scenarioId: string | null | undefined,
+): readonly string[] | undefined {
+  if (!scenarioId) return undefined;
+  return SCENARIOS_BY_ID[scenarioId]?.blockedEventIds;
 }
 
 /**

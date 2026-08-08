@@ -373,7 +373,7 @@ import { applyAutoBuild } from '../systems/autoBuild';
 import { planAIBuildOrders, planAIFacilities, planAIPerimeterDefense, planAIFortAssaults, planAISiteSeizures, planAIFrontierExploits } from '../systems/aiBuild';
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
-import { isLaterHanBoard, scenarioPremiseOfficerIds } from '../data/scenarios';
+import { isLaterHanBoard, scenarioPremiseOfficerIds, scenarioBlockedEventIds } from '../data/scenarios';
 import { PROVINCES_BY_ID } from '../data/provinces';
 import { planProvinceLevy } from '../systems/provinceGovernor';
 import { findChallenge, evaluateChallenge, challengeStars } from '../data/challenges';
@@ -3981,6 +3981,8 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
            * 沒有這一條,「若周瑜不死」的周瑜第 1 旬就死於「周瑜歸天」。
            */
           premiseOfficerIds: scenarioPremiseOfficerIds(state.scenarioId),
+          /* 前提裡已經打完的那一仗不再打一次 —— 「曹操贏赤壁」不該再燒一次赤壁。 */
+          blockedEventIds: scenarioBlockedEventIds(state.scenarioId),
         };
         // Historical events first; player-authored custom events fill the
         // season if none scripted fired, and fire deterministically.
