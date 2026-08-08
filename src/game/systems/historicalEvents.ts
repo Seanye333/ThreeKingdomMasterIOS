@@ -56,6 +56,21 @@ export interface HistoricalEventContext {
    *  "alternate-history". */
   romanceMode?: boolean;
   rng?: () => number;
+  /**
+   * 假想盤的前提人物 —— 會把他們之一設成 dead 的事件一律不演。
+   * 見 `Scenario.premiseOfficerIds`。
+   */
+  premiseOfficerIds?: readonly EntityId[];
+}
+
+/** 這條事件(含任一選項)會不會把 `ids` 裡的某個人設成 dead。 */
+function killsAnyOf(evt: HistoricalEvent, ids: readonly EntityId[]): boolean {
+  const kills = (effects: EventEffect[] | undefined) =>
+    (effects ?? []).some(
+      (f) => f.kind === 'officer-status' && f.status === 'dead' && ids.includes(f.officerId),
+    );
+  if (kills(evt.effects)) return true;
+  return (evt.choices ?? []).some((c) => kills(c.effects));
 }
 
 /**
@@ -84,6 +99,9 @@ export function findFiringEventIn(
     if (fired.has(evt.id)) continue;
     if (ctx.date.year < evt.yearMin || ctx.date.year > evt.yearMax) continue;
     if (evt.season && ctx.date.season !== evt.season) continue;
+    // 假想盤的前提人物不死於事件 —— 這一條要在 requires 之前判,因為那些事件
+    // 的守衛正是「此人還活著」,在以他活著為前提的盤上必然成立。
+    if (ctx.premiseOfficerIds?.length && killsAnyOf(evt, ctx.premiseOfficerIds)) continue;
     if (!conditionsMet(evt, ctx)) continue;
     // Romance mode: fire every eligible event. Default: 60% per season
     // (so the next eligible season has another chance, but the campaign

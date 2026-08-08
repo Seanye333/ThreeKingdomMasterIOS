@@ -373,7 +373,7 @@ import { applyAutoBuild } from '../systems/autoBuild';
 import { planAIBuildOrders, planAIFacilities, planAIPerimeterDefense, planAIFortAssaults, planAISiteSeizures, planAIFrontierExploits } from '../systems/aiBuild';
 import { SCENARIO_OBJECTIVES } from '../data/objectives';
 import { SCENARIOS } from '../data';
-import { isLaterHanBoard } from '../data/scenarios';
+import { isLaterHanBoard, scenarioPremiseOfficerIds } from '../data/scenarios';
 import { PROVINCES_BY_ID } from '../data/provinces';
 import { planProvinceLevy } from '../systems/provinceGovernor';
 import { findChallenge, evaluateChallenge, challengeStars } from '../data/challenges';
@@ -3976,6 +3976,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
            * 補了外傳三線的事件鏈之後,重播測試立刻紅。
            */
           rng,
+          /*
+           * 假想盤的前提人物 —— 殺他們的事件在這張盤上不演。
+           * 沒有這一條,「若周瑜不死」的周瑜第 1 旬就死於「周瑜歸天」。
+           */
+          premiseOfficerIds: scenarioPremiseOfficerIds(state.scenarioId),
         };
         // Historical events first; player-authored custom events fill the
         // season if none scripted fired, and fire deterministically.

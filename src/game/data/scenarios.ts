@@ -1168,6 +1168,9 @@ export const SCENARIO_GATHERING_OF_HEROES: Scenario = {
   ],
   name: { en: 'Gathering of Heroes', zh: '英雄集結' },
   kind: 'whatif',
+  /* 前提人物 —— 十七路諸侯同台就是這張盤的全部內容 —— 白門樓帶走呂布陳宮、許貢門客帶走孫策,
+   * 一條事件就少一路諸侯。 */
+  premiseOfficerIds: ['sun-ce', 'lu-bu', 'chen-gong'],
   description:
     'The RTK XIV PK fantasy convergence. Seventeen warlords stand simultaneously across the realm — ' +
     'Cao Cao at Xuchang, Sun Ce on the Yangtze, Dong Zhuo holding Chang\'an, Lu Bu at Xiapi, Zhang Lu in Hanzhong, ' +
@@ -7204,6 +7207,8 @@ export const SCENARIO_WHATIF_GUANYU_JING: Scenario = {
   ],
   name: { en: 'Guan Yu Holds Jingzhou', zh: '關羽守住荊州' },
   kind: 'whatif',
+  /* 前提人物 —— 盤名就是「守住」,而「關羽,麥城死」第 1 旬就演(3/3)。 */
+  premiseOfficerIds: ['guan-yu'],
   description:
     'Autumn 220 AD — a world where the white-cloak crossing failed. Guan Yu detected Lü Meng\'s ' +
     'ruse, fortified Jiangling, and held all of Jingzhou. Cao Pi has just received Emperor Xian\'s ' +
@@ -7376,6 +7381,8 @@ export const SCENARIO_WHATIF_ZHUGE_LIVES: Scenario = {
   ],
   name: { en: 'What if Zhuge Liang Lived', zh: '諸葛亮活到八十' },
   kind: 'whatif',
+  /* 前提人物 —— 他沒有殞於五丈原,是這張盤的起點。 */
+  premiseOfficerIds: ['zhuge-liang'],
   description:
     'Spring 240 AD. Zhuge Liang did not die at Wuzhang in 234 — he recovered, completed his sixth ' +
     'northern expedition, and seized Chang\'an in 238. Wei has been driven east of Tong Pass; Cao Rui ' +
@@ -7855,6 +7862,8 @@ export const SCENARIO_WHATIF_WOMEN: Scenario = {
   ],
   name: { en: 'Age of Heroines', zh: '女傑時代' },
   kind: 'whatif',
+  /* 前提人物 —— 呂布是貂蟬的劍鋒、孫策是尚香的驍將 —— 這兩人一死,兩家的兵符就空了。 */
+  premiseOfficerIds: ['sun-ce', 'lu-bu'],
   description:
     'Spring 200 AD — a parallel reality. The women of the Three Kingdoms have stepped from behind ' +
     'silk screens to command armies. Diao Chan rules from Chang\'an with Lü Bu as her sword. Lady Sun ' +
@@ -7911,6 +7920,8 @@ export const SCENARIO_WHATIF_YUAN_GUANDU: Scenario = {
   ],
   name: { en: 'If Yuan Shao Had Won Guandu', zh: '若袁紹勝官渡' },
   kind: 'whatif',
+  /* 前提人物 —— 贏了官渡的人,不該在自己的盤上被史書追回去。 */
+  premiseOfficerIds: ['yuan-shao'],
   description:
     'Autumn 201. At Guandu, Yuan Shao heeded Tian Feng and ground Cao Cao down by attrition rather than gambling on a single battle. Cao\'s granaries burned, his lines broke, and the lord of the four northern provinces poured south to seize Xuchang and the Emperor. Cao Cao clings to a southern remnant around Wancheng — can he claw his way back, or will the Yuan house unify the realm?',
   descriptionZh: "建安六年秋。官渡之役，袁紹納田豐之諫，持重以耗，不賭一陣之勝負。曹操糧盡，烏巢先焚，戰線終潰。河北四州之主揮軍南下，取許昌、挾天子。曹操僅餘宛城一隅殘部——是絕地反撲，抑或袁氏一統天下？",
@@ -7939,6 +7950,8 @@ export const SCENARIO_WHATIF_LUBU_XUZHOU: Scenario = {
   ],
   name: { en: 'If Lü Bu Had Held Xuzhou', zh: '若呂布割據徐州' },
   kind: 'whatif',
+  /* 前提人物 —— 泗水未潰下邳之牆 —— 白門樓在這張盤上本就不該有。 */
+  premiseOfficerIds: ['lu-bu', 'chen-gong'],
   description:
     'Winter 198. The flood-waters never broke Xiapi\'s walls; Chen Gong\'s counsel held, the gates stayed shut, and Cao Cao\'s exhausted host withdrew. The Flying General now commands all of Xuzhou — Xiapi, Pengcheng, Xiaopei, Langya, Guangling — Red Hare and the Sky-Piercer poised between Cao Cao and the sea. The mightiest warrior alive has a base at last. What will he do with it?',
   descriptionZh: "建安三年冬。泗水未潰下邳之牆；陳宮之謀得行，城門緊閉，曹操疲師終退。飛將軍據有全徐州——下邳、彭城、小沛、琅琊、廣陵——赤兔方天，雄踞曹操與東海之間。天下第一猛將，終得一方基業。猛虎得地，將何為哉？",
@@ -7972,6 +7985,8 @@ export const SCENARIO_WHATIF_MACHAO_GUANZHONG: Scenario = {
   ],
   name: { en: 'If Ma Chao Had Taken Guanzhong', zh: '若馬超盡得關中' },
   kind: 'whatif',
+  /* 前提人物 —— 關中之主。 */
+  premiseOfficerIds: ['ma-chao'],
   description:
     'Spring 211. The forged-letter ruse failed; Ma Chao and Han Sui kept their alliance, stormed Tongguan, and drove Cao Cao back across the passes. The Splendid Ma Chao now holds Chang\'an and all the Guanzhong, the warlords of Liang at his back and the road to the central plains open before him. The lance of Xiliang is loosed upon the empire.',
   descriptionZh: "建安十六年春。離間之計未成，馬超與韓遂盟好不疑，強攻潼關，逼退曹操於關隘之東。錦馬超盡得長安與關中之地，涼州群雄為其後盾，中原之路豁然在前。西涼之槍，自此縱橫天下。",
@@ -8000,6 +8015,8 @@ export const SCENARIO_WHATIF_SUNCE_LIVES: Scenario = {
   ],
   name: { en: 'If Sun Ce Had Lived', zh: '若孫策不死' },
   kind: 'whatif',
+  /* 前提人物 —— 許貢門客那一刺沒中,正是這張盤的前提;而「孫策死於刺客」第 3–6 旬照演。 */
+  premiseOfficerIds: ['sun-ce'],
   description:
     'Spring 201. The assassins of Xu Gong\'s retainers missed; the Little Conqueror healed and lived. While Cao Cao and Yuan Shao bled each other white at Guandu, Sun Ce did what he had always planned — march north on Xuchang to seize the Emperor. The tiger of Jiangdong, age twenty-six and unbeaten, holds the southeast and eyes the throne. Sun Quan must wait; this is his brother\'s war.',
   descriptionZh: "建安六年春。許貢門客之刺未中，小霸王傷愈而生。當曹操與袁紹於官渡相持血戰之際，孫策行其夙志——揮師北上，襲許昌以迎天子。江東之虎，年方二十六而未嘗一敗，據東南而窺神器。仲謀且待，此乃其兄之天下。",
@@ -8033,6 +8050,8 @@ export const SCENARIO_WHATIF_DONG_LIVES: Scenario = {
   ],
   name: { en: 'If Dong Zhuo Had Not Fallen', zh: '若董卓未亡' },
   kind: 'whatif',
+  /* 前提人物 —— 連環美人之計未成 —— 而「呂布弒董」第 3–6 旬照樣把他殺了(3/3)。 */
+  premiseOfficerIds: ['dong-zhuo'],
   description:
     'Year 192. Diaochan\'s ploy never turned Lü Bu; Wang Yun\'s plot was uncovered and crushed. With the Flying General still at his side and Hulao held against the eastern lords, Dong Zhuo broke the anti-Dong coalition and rules the Han court by terror from Luoyang to Chang\'an. The tyrant\'s grip tightens — and every warlord east of the passes must decide whether to bow or burn.',
   descriptionZh: "初平三年。連環美人之計未能離間呂布，王允之謀事泄而敗。飛將軍仍在側，虎牢拒東諸侯於關外，董卓遂破反董聯軍，自洛陽至長安，以暴威挾持漢室。暴君之手愈收愈緊——關東群雄，俯首抑或焚身，各自抉擇。",
@@ -8062,6 +8081,8 @@ export const SCENARIO_WHATIF_YUANSHU_EMPIRE: Scenario = {
   ],
   name: { en: 'If Yuan Shu\'s Empire Had Stood', zh: '若袁術稱帝成' },
   kind: 'whatif',
+  /* 前提人物 —— 仲家之帝守得住,才有這張盤。 */
+  premiseOfficerIds: ['yuan-shu'],
   description:
     'Year 198. Holding the Imperial Seal, Yuan Shu proclaimed the Zhongjia dynasty — and this time the harvest did not fail, the generals did not desert, and the Huainan granaries stayed full. The self-made emperor holds Shouchun, Runan and the Huai with a real army at his back, the southeast in his grip and the Han pretenders surrounding him. A false throne, defended at last.',
   descriptionZh: "建安三年。袁術手握傳國玉璽，僭號仲家——而這一回，淮南未逢大旱，部將未叛，府庫充盈如舊。自立之帝據壽春、汝南、淮水之地，麾下實有強兵，雄踞東南，四面皆漢室之臣。一座僭越之龍座，終得守全。",
@@ -8087,6 +8108,8 @@ export const SCENARIO_WHATIF_GUOJIA_LIVES: Scenario = {
   ],
   name: { en: 'If Guo Jia Had Lived', zh: '若郭嘉不死' },
   kind: 'whatif',
+  /* 前提人物 —— 「郭嘉遺計定遼東」的窗口是 207–208,正壓在開局年上:第 9–12 旬必死。 */
+  premiseOfficerIds: ['guo-jia'],
   description:
     'Autumn 208. The fever of the northern campaign never took Guo Jia; Cao Cao\'s finest strategist rides south with the great host toward the Yangtze. "Had Fengxiao lived," Cao Cao would later sigh at Red Cliffs — but here he lives, and the fire-ships and chained fleets are still to come. With the Ghost Master at his side, will Cao Cao still walk into the flames?',
   descriptionZh: "建安十三年秋。北征之疾未奪郭嘉之命；曹操麾下第一謀主，隨大軍南下，直指長江。日後赤壁火起，曹操長嘆「若奉孝在，不使孤至此」——而此世奉孝尚在，連環火攻猶未發。鬼才在側，曹孟德可仍會自投火海？",
@@ -8112,6 +8135,8 @@ export const SCENARIO_WHATIF_ZHOUYU_LIVES: Scenario = {
   ],
   name: { en: 'If Zhou Yu Had Lived', zh: '若周瑜不死' },
   kind: 'whatif',
+  /* 前提人物 —— 巴丘未歿;而「周瑜歸天」窗口 210–211,第 1–5 旬就演。 */
+  premiseOfficerIds: ['zhou-yu'],
   description:
     'Spring 211. Zhou Yu did not sicken and die at Baqiu; the Grand Marshal lives to press the plan he begged of Sun Quan — march west, take Yi province before Liu Bei can, and split the realm in two against Cao Cao. With Gongjin alive, the alliance that won Red Cliffs need not curdle into the rivalry over Jing, and Wu eyes the conquest of Shu itself.',
   descriptionZh: "建安十六年春。周瑜未病歿於巴丘；大都督尚在，得行其向孫權力請之策——西取益州，搶在劉備之前，與曹操二分天下。公瑾既在，赤壁之盟不必為荊州之爭所裂，江東之志，直指全蜀。",
@@ -8135,6 +8160,8 @@ export const SCENARIO_WHATIF_PANGTONG_LIVES: Scenario = {
   ],
   name: { en: 'If Pang Tong Had Lived', zh: '若龐統不死' },
   kind: 'whatif',
+  /* 前提人物 —— 落鳳坡之箭射中的是他的坐騎。 */
+  premiseOfficerIds: ['pang-tong'],
   description:
     'Year 215. The arrows of Luofeng Slope found another rider; Pang Tong lived to finish the conquest of Shu at Liu Bei\'s side. With the Fledgling Phoenix to govern Yi province, Zhuge Liang never had to leave Jingzhou — and the fatal split of Shu\'s strength between two fronts is undone. Both Dragon and Phoenix serve a single lord, exactly as the prophecy promised. The realm trembles.',
   descriptionZh: "建安二十年。落鳳坡之箭射中他騎；龐統得生，佐劉備竟取西蜀之功。鳳雛既在以治益州，諸葛亮便無須西去入川——蜀漢兩線分兵之致命隱患，自此化解。臥龍鳳雛同事一主，正如水鏡之讖。天下為之震動。",
@@ -8804,6 +8831,8 @@ export const SCENARIO_WHATIF_GUANYU_NORTH: Scenario = {
   ],
   name: { en: 'If Guan Yu Had Taken Fan', zh: '若關羽威震華夏' },
   kind: 'whatif',
+  /* 前提人物 —— 威震華夏的那一刻 —— 而「白衣渡江」第 1–2 旬就把他帶走。 */
+  premiseOfficerIds: ['guan-yu'],
   description:
     'Autumn 219. The autumn rains came, the Han burst its banks, and Guan Yu drowned Yu Jin\'s seven armies — but this time the Marquis of Hanshou did not stop. Fan fell, Xiangyang opened its gates, and the Lord of Changsheng drove north up the river road through Xinye to Wancheng, until his banners were a hundred li from Xuchang. Cao Cao, his court in uproar, debates moving the Emperor beyond the Yellow River. Whether Jiangling holds at his back is another question — but for now, all China trembles at the name of Guan Yunchang.',
   descriptionZh: "建安二十四年秋。秋雨大至，漢水暴溢，關羽水淹于禁七軍——然此番漢壽亭侯不止於此。樊城既破，襄陽開門，雲長沿漢北上，經新野直趨宛城，旌旗距許昌不過百里。曹操朝野震動，竟議遷天子於河北以避其鋒。江陵之後路能否守得，尚在未定之天——然此刻舉華夏皆為關雲長之名而戰栗。",
@@ -8854,6 +8883,8 @@ export const SCENARIO_WHATIF_GAOPINGLING: Scenario = {
   ],
   name: { en: 'If Cao Shuang Had Struck First', zh: '若曹爽先發制人' },
   kind: 'whatif',
+  /* 前提人物 —— 曹爽不肯解印就縛,這張盤才成立。 */
+  premiseOfficerIds: ['cao-shuang'],
   description:
     'Spring 249. As Sima Yi seizes the gates of Luoyang behind his back, the regent Cao Shuang — escorting the young Emperor home from the Gaoping Tombs — does not falter. Huan Fan\'s counsel wins out: rather than lay down his seals, Cao Shuang gallops the Emperor to safety, raises the Guanzhong armies, and proclaims the Simas rebels. The capital, Xuchang, and the rich Huai frontier rally to the man who holds the Son of Heaven; Sima Yi, his lightning coup turned to open war, falls back on the family\'s old strength in Hebei. Wei is cloven in two, and the empire holds its breath.',
   descriptionZh: "正始十年春。司馬懿閉洛陽城門於其後，而大將軍曹爽——方自高平陵奉幼帝還京——竟不自亂。桓範之謀得行：曹爽不肯解印就縛，反挾天子疾走，發關中之兵，傳檄討司馬為叛逆。京畿、許昌、淮南膏腴之地，皆歸於挾天子者；司馬懿閃電之變化為明火戰爭，退保河北司馬氏之舊基。魏室自此一分為二，天下屏息。",
@@ -8885,6 +8916,8 @@ export const SCENARIO_WHATIF_LUXUN_LIVES: Scenario = {
   ],
   name: { en: 'If Lu Xun Had Not Been Hounded to Death', zh: '若陸遜不冤死' },
   kind: 'whatif',
+  /* 前提人物 —— 他撐過了二宮之爭。 */
+  premiseOfficerIds: ['lu-xun'],
   description:
     'Year 249. The Two-Palaces feud — Sun Quan\'s ruinous quarrel between crown prince and rival son — broke many great men of Wu with grief and disgrace; chief among them Lu Xun, the burner of Liu Bei\'s camps at Xiaoting and the breaker of Cao Xiu at Shiting, hounded into his grave by royal reproaches in 245. Here he weathered the storm. As Wei tears itself apart at the Gaoping Tombs and Shu drills for new northern campaigns, the aged Grand Marshal still stands at the head of Wu\'s armies on the Great River — the last of the founding generation, and worth a province to Sun Quan\'s failing house.',
   descriptionZh: "赤烏十二年。二宮之爭——孫權於太子與魯王之間釀成的毀滅性內鬩——以憂憤與屈辱折損吳國無數棟梁；其首者，便是夷陵焚劉備連營、石亭破曹休的陸遜，竟於赤烏八年為君上詰責，憤恚而亡。此世他撐過了這場風暴。當魏室於高平陵自相撕裂、蜀漢整軍再圖北伐之際，這位老邁的上大將軍，仍立於大江之上、吳軍之首——開國一代之碩果僅存者，於孫權衰朽之家，一人可抵一州。",
@@ -10916,6 +10949,28 @@ for (const scenario of SCENARIOS) {
   }
 }
 
+/*
+ * ── 前提人物:史實卒年在他自己的盤上不作數 ─────────────────────────
+ *
+ * 攔住殺他的那條事件只解決了一半。另一半在壽命系統:`deathChance` 一旦
+ * 「當前年 ≥ 史實卒年」就回 `0.3 + 0.15 ×(超出年數)` —— 而假想盤的前提人物
+ * 正是頂著自己的卒年開局:
+ *
+ *   周瑜 卒 210,盤 211 開局   → 每年 45%
+ *   郭嘉 卒 207,盤 208 開局   → 每年 45%
+ *   陸遜 卒 245,盤 249 開局   → 每年 90%(實測 3/3 全死在第 36 旬,第一個冬季)
+ *
+ * 也就是說在壽命系統眼裡,「若郭嘉不死」的前提是「他去年就該死了」。
+ * 清掉 deathYear 之後他們走年齡兜底(60 歲起每年 (age-60)×5%)—— 這正是
+ * 「諸葛亮活到八十」那張盤想說的事:不是不死,是活到該活的歲數。
+ */
+for (const scenario of SCENARIOS) {
+  for (const id of scenario.premiseOfficerIds ?? []) {
+    const o = scenario.officers.find((x) => x.id === id);
+    if (o) o.deathYear = undefined;
+  }
+}
+
 
 /** Built-in scenarios plus any the installed Mod packs contribute.
  *  (mods.ts imports only types, so this static import is cycle-free.) */
@@ -10927,6 +10982,19 @@ export function allScenarios(): Scenario[] {
   } catch {
     return SCENARIOS;
   }
+}
+
+/**
+ * 這張盤的前提人物 —— 殺他們的歷史事件不演(見 `Scenario.premiseOfficerIds`)。
+ *
+ * 走 `SCENARIOS_BY_ID` 而不是 `allScenarios()`:每旬都要查一次,而模組盤要不要
+ * 支援前提保護是另一件事(模組沒有這個欄位就等於沒有保護,行為與從前相同)。
+ */
+export function scenarioPremiseOfficerIds(
+  scenarioId: string | null | undefined,
+): readonly string[] | undefined {
+  if (!scenarioId) return undefined;
+  return SCENARIOS_BY_ID[scenarioId]?.premiseOfficerIds;
 }
 
 /**

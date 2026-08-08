@@ -46,10 +46,14 @@ npm run docs:catalog   # 改過 src/game/data/*.ts 之後
 | ② 主目標 × 每一家 | `data/objectives/*.ts` | **540/540** |
 | ③ 戰役專屬事件鏈 | `data/events.ts` + 盤上的 `eventFlags` | 零事件的盤 **0/86**;但有十來張只有 3–8 條(見 §4) |
 | ④ 史官論曰 + 每家敗亡變體 | `data/scenarioVerdicts.ts` | 論曰 86/86;**每家敗亡變體缺 325/540**(選填,見 §4) |
-| ⑤ 開局數值差異化 | `buildInitialCities` 第二參數 + `openingRelations` | 姿態 86/86、開局外交 86/86 |
+| ⑤ 開局數值差異化 | `buildInitialCities` 第二參數 + `openingRelations` | 姿態 **69/86**、開局外交 86/86 |
 | ⑥ AI 自走體檢 | `scripts/scenario-report.ts` | 逐盤,無全庫數字 |
 
 六格全做完的樣板:**黃巾之亂 `scn-184-yellow-turban`**。
+
+⚠ **姿態那一格先前記成 86/86,實際是 69/86** —— 數的時候只數了歷史盤。
+**十七張假想盤一張都沒有開局姿態**,也一條戰役專屬事件鏈都沒宣告
+(`eventFlags` 全空),敗亡變體每盤只有 1 家。假想盤是全庫最薄的一塊。
 
 ---
 
