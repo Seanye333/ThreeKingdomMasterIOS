@@ -2299,7 +2299,43 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     effects: [
       { kind: 'officer-loyalty', officerId: 'sun-jian', delta: 10 },
       { kind: 'flag', key: 'imperial-seal-found' },
+      /*
+       * 記下**誰**拿到了 —— `imperial-seal-found` 原本是個只寫不讀的死旗標
+       * (全庫沒有任何地方讀它),於是這個名場面在遊戲裡不影響任何東西。
+       * 旗標沒有欄位可以放持有者,所以把持有者寫進旗標名:`seal-with-<君主>`。
+       * 讀它的是 `aiCourt` 的僭號分支(見 systems/aiCourt.ts)。
+       */
+      { kind: 'flag', key: 'seal-with-sun-jian' },
     ],
+  },
+  {
+    /*
+     * 玉璽的下一手 —— 興平元年,孫策以父之玉璽質於袁術,借兵千餘、騎數十匹,
+     * 而後渡江。史書上這一質是袁術僭號的本錢:建安二年,術以讖言「代漢者
+     * 當塗高」與傳國璽在手,遂僭號於壽春。
+     *
+     * 沒有這一節,袁術手上永遠沒有玉璽,而僭號那條路也就走不通。
+     */
+    id: 'evt-sun-ce-pledges-seal',
+    name: { en: 'The Seal Pledged for Soldiers', zh: '孫策以璽借兵' },
+    yearMin: 193,
+    yearMax: 197,
+    requires: [
+      { kind: 'flag-set', key: 'seal-with-sun-jian' },
+      { kind: 'officer-active', officerId: 'sun-ce' },
+      { kind: 'officer-alive', officerId: 'yuan-shu' },
+      { kind: 'flag-unset', key: 'seal-with-yuan-shu' },
+    ],
+    description:
+      "Sun Ce puts his father's seal in Yuan Shu's hands as surety and asks for men. He gets a thousand foot and a few dozen horse — and with them he crosses the river and never comes back. Yuan Shu keeps the seal, and four years later he puts on a yellow robe.",
+    descriptionZh: '興平元年,策以父所得傳國璽質於袁術,得兵千餘、騎數十匹。渡江而東,此後不復北向。而術得璽,建安二年遂以「代漢者當塗高」之讖僭號於壽春 —— 那一方璽,借的是兵,押的是命。',
+    effects: [
+      { kind: 'flag', key: 'seal-with-yuan-shu' },
+      { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shu', delta: 6 },
+      { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'sun-ce', multiplier: 1.25 },
+      { kind: 'officer-loyalty', officerId: 'sun-ce', delta: 8 },
+    ],
+    mood: 'ominous',
   },
   {
     id: 'evt-liu-bei-tan-stream',

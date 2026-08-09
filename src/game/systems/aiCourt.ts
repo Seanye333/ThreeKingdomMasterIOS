@@ -188,11 +188,21 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
     // --- Decide which edict (if any) to issue ---
     // Priority order: enthronement > denounce > tax-amnesty > reward-merit
     // > self-deprecation > call-for-talent. One edict per force per tick.
-    const tryIssue = (kind: EdictKind, target?: EntityId, extraEffects?: () => void): boolean => {
+    const tryIssue = (
+      kind: EdictKind,
+      target?: EntityId,
+      extraEffects?: () => void,
+      /*
+       * 僭號那條路要繞開爵位門檻 —— 即位詔的 `minRank` 是王爵,而僭號的
+       * 本質就是「還不夠格而做了」。袁術僭號時是後將軍,不是王。
+       * 其餘門檻(冷卻、金、上限)照舊,代價在呼叫端另計。
+       */
+      ignoreRank = false,
+    ): boolean => {
       const def = EDICTS_BY_KIND[kind];
       if (!def) return false;
       const minTier = IMPERIAL_RANKS_BY_ID[def.minRank]?.tier ?? 0;
-      if (rankTier < minTier) return false;
+      if (!ignoreRank && rankTier < minTier) return false;
       if (onCooldown(edictCooldowns, cooldownKey(force.id, kind), ctx.date)) return false;
       if (!canAffordEdict(forces[force.id], cities, def.goldCost)) return false;
       // Pay cost.
@@ -230,6 +240,48 @@ export function planAICourt(ctx: AICourtContext): AICourtOutput {
      * 附庸不在此列(上面已 continue)。
      */
     const enthronementEraOk = ctx.laterHanBoard === false || ctx.date.year >= 220;
+    /*
+     * 僭號 —— 傳國璽在手的那一條路(2026-08-08)。
+     *
+     * 上面那條規則要「王爵(二十城 + 215 年後)且 220 年之後」,而**袁術
+     * 建安二年就僭號了**,憑的不是實力:他據淮南八九座城,靠的是「代漢者
+     * 當塗高」那句讖與孫策質下的傳國璽。照原規則,他在 192/194/197/198
+     * 四張盤上永遠稱不了帝 —— 而那四張盤上他的主目標就叫「仲氏之業」。
+     *
+     * 玉璽的持有者記在旗標名裡(`seal-with-<君主 id>`,見 events.ts 的
+     * 「孫堅得玉璽」與「孫策以璽借兵」)—— `imperial-seal-found` 本身是個
+     * 只寫不讀的死旗標,這一條是它第一次真的被讀到。
+     *
+     * 門檻刻意低而代價刻意重:八座城就夠(袁術僭號時的本錢),而僭號之後
+     * 眾叛親離 —— 那正是史書給他的下場(「士眾離心,不能相攻,遂棄軍去」)。
+     */
+    const holdsSeal = !!ctx.eventFlags[`seal-with-${force.rulerOfficerId}`];
+    const ownCityCount = Object.values(cities).filter((c) => c.ownerForceId === force.id).length;
+    const canUsurpBySeal = holdsSeal && rankTier >= (IMPERIAL_RANKS_BY_ID['marquis']?.tier ?? 1)
+      && ownCityCount >= 8;
+    if (canUsurpBySeal && ctx.rng() < 0.3) {
+      const issued = tryIssue('enthronement', undefined, () => {
+        forces[force.id] = { ...forces[force.id], imperialRank: 'emperor' };
+        rankChanges.push({ forceId: force.id, newRank: 'emperor' });
+        newEnthronements.push(force.id);
+        /*
+         * 僭號的代價:天下側目。稱帝那條正路只讓外人忠誠 −10,而僭號是
+         * **自己人也離心** —— 袁術稱帝之後,孫策絕之、呂布絕婚、部將雷薄
+         * 陳蘭以其眾自守於灊山。
+         */
+        for (const o of Object.values(officers)) {
+          if (!o.forceId) continue;
+          const drop = o.forceId === force.id ? 14 : 10;
+          officers[o.id] = { ...o, loyalty: Math.max(0, o.loyalty - drop) };
+        }
+        for (const c of Object.values(cities)) {
+          if (c.ownerForceId === force.id) {
+            cities[c.id] = { ...c, loyalty: Math.max(0, c.loyalty - 12) };
+          }
+        }
+      }, true);
+      if (issued) continue;
+    }
     if (ranknow === 'king' && enthronementEraOk) {
       const otherEmperors = Object.values(forces).filter(
         (f) => f.imperialRank === 'emperor' && f.id !== force.id,
