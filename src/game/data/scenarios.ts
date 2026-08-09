@@ -8352,6 +8352,7 @@ export const SCENARIO_WHATIF_GUOJIA_LIVES: Scenario = {
 //    presses his bold design — take Shu before Liu Bei can. ──
 export const SCENARIO_WHATIF_ZHOUYU_LIVES: Scenario = {
   id: 'scn-whatif-zhouyu-lives',
+  eventFlags: ['chain-zhouyu'],
   openingRelations: [
     { a: 'sun', b: 'liu-bei', score: -20, status: 'neutral' },  // 公瑾在,西取益州要搶在劉備之前
     { a: 'cao', b: 'sun', score: -75, status: 'neutral' },

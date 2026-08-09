@@ -4997,6 +4997,76 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     mood: 'martial',
   },
 
+  /* ---- 假想:若周瑜不死(chain-zhouyu)---------------------------------
+   * 骨架是現成的 —— 周瑜臨終前上疏所請的那個方略:「乞與奮威俱進取蜀,
+   * 得蜀而并張魯,因留奮威固守其地,好與馬超結援。瑜還與將軍據襄陽以蹙操,
+   * 北方可圖也。」他死在巴丘,而這張盤的前提是他沒有。
+   */
+  {
+    id: 'evt-zhouyu-alt-1',
+    name: { en: "The Memorial from Baqiu", zh: '巴丘上疏' },
+    yearMin: 211,
+    yearMax: 213,
+    requires: [
+      { kind: 'flag-set', key: 'chain-zhouyu' },
+      { kind: 'officer-active', officerId: 'zhou-yu' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'flag-unset', key: 'zhouyu-alt-plan' },
+    ],
+    description:
+      "The memorial Zhou Yu wrote at Baqiu was the last thing he did. This time he delivers it standing up: take Shu, swallow Zhang Lu, leave Fenwei to hold it, ally with Ma Chao — then come back and press Cao Cao at Xiangyang from both ends.",
+    descriptionZh: '「乞與奮威俱進取蜀,得蜀而并張魯,因留奮威固守其地,好與馬超結援。瑜還與將軍據襄陽以蹙操,北方可圖也。」—— 史書上這道疏是他最後做的一件事;這一回他是站著呈上來的。',
+    effects: [],
+    chooserRulerId: 'sun-quan',
+    choices: [
+      {
+        id: 'west',
+        label: { zh: '許之 —— 西取巴蜀', en: 'Grant it — take Shu' },
+        effects: [
+          { kind: 'flag', key: 'zhouyu-alt-plan' },
+          { kind: 'flag', key: 'zhouyu-alt-west' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'sun-quan', multiplier: 1.12 },
+          { kind: 'officer-loyalty', officerId: 'zhou-yu', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: -6 },
+        ],
+      },
+      {
+        id: 'hold',
+        label: { zh: '不許 —— 荊州未定,不宜遠圖', en: 'Deny it — Jingzhou is not settled' },
+        effects: [
+          { kind: 'flag', key: 'zhouyu-alt-plan' },
+          { kind: 'city-defense', cityId: 'jiangling', delta: 14 },
+          { kind: 'officer-loyalty', officerId: 'zhou-yu', delta: -8 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 3 },
+        ],
+      },
+    ],
+  },
+  {
+    /* 許之之後 —— 那條路上第一個要過的人是劉備,而不是劉璋。 */
+    id: 'evt-zhouyu-alt-2',
+    name: { en: 'The Man in the Way', zh: '借道之議' },
+    yearMin: 211,
+    yearMax: 215,
+    requires: [
+      { kind: 'flag-set', key: 'chain-zhouyu' },
+      { kind: 'flag-set', key: 'zhouyu-alt-west' },
+      { kind: 'officer-active', officerId: 'zhou-yu' },
+      { kind: 'officer-alive', officerId: 'liu-bei' },
+      { kind: 'flag-unset', key: 'zhouyu-alt-road' },
+    ],
+    description:
+      "The road west runs through Liu Bei's Jiangling. He replies that Liu Zhang is his kinsman and that he would rather let his hair down and go into the hills than see Shu taken — which everyone present understands as a threat.",
+    descriptionZh: '西向之道,取於劉備之江陵。備報曰:「備與璋託為宗室,若備討璋,則備放發歸於山林,不失信於天下也。」—— 在座者皆知此為拒辭。',
+    effects: [
+      { kind: 'flag', key: 'zhouyu-alt-road' },
+      { kind: 'city-troops-multiplier', cityId: 'jiangling', multiplier: 0.9 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -4 },
+      { kind: 'officer-loyalty', officerId: 'zhou-yu', delta: 6 },
+    ],
+    mood: 'ominous',
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
