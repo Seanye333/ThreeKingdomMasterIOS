@@ -7467,6 +7467,7 @@ const DEAD_BY_ZHUGE_LIVES: string[] = [
 
 export const SCENARIO_WHATIF_ZHUGE_LIVES: Scenario = {
   id: 'scn-whatif-zhuge-lives',
+  eventFlags: ['chain-zhugelives'],
   openingRelations: [
     { a: 'cao', b: 'liu-bei', score: -95, status: 'neutral' },  // 漢已復長安,魏失關中
     { a: 'liu-bei', b: 'sun', score: 60, status: 'allied' },  // 兩路北伐之約猶在

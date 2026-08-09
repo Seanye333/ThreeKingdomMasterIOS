@@ -6008,6 +6008,93 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:諸葛亮活到八十(chain-zhugelives)--------------------------
+   * 前提是他沒有殞於五丈原,而且復了長安。那麼史書上他在五丈原交代的那件事
+   * ——「後事」—— 就從遺命變成了他自己要做的決定。
+   */
+  {
+    id: 'evt-zhugelives-alt-1',
+    name: { en: 'Governing Chang\'an', zh: '長安之政' },
+    yearMin: 240,
+    yearMax: 244,
+    requires: [
+      { kind: 'flag-set', key: 'chain-zhugelives' },
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'flag-unset', key: 'zhugelives-alt-govern' },
+    ],
+    description:
+      "Guanzhong is back in Han hands after forty years of somebody else's law. The Chancellor's method has always been the same — clear statutes, certain rewards and punishments — but Guanzhong is not Shu, and the men who farm it grew up under Wei.",
+    descriptionZh: '關中復為漢有,而其民四十年在他人法度之下。丞相之政向來是「科教嚴明,賞罰必信,無惡不懲,無善不顯」—— 而關中不是蜀,耕其地者生於魏。',
+    effects: [],
+    chooserRulerId: 'liu-shan',
+    choices: [
+      {
+        id: 'law',
+        label: { zh: '一以蜀科 —— 賞罰必信', en: 'One law, as in Shu' },
+        effects: [
+          { kind: 'flag', key: 'zhugelives-alt-govern' },
+          { kind: 'city-loyalty', cityId: 'changan', delta: 14 },
+          { kind: 'city-defense', cityId: 'changan', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 6 },
+        ],
+      },
+      {
+        id: 'local',
+        label: { zh: '因其舊俗 —— 徐徐圖之', en: 'Leave their customs; move slowly' },
+        effects: [
+          { kind: 'flag', key: 'zhugelives-alt-govern' },
+          { kind: 'city-food', cityId: 'changan', delta: 30000 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'liu-shan', multiplier: 1.08 },
+          { kind: 'city-loyalty', cityId: 'changan', delta: -6 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 後事 —— 史書上他在五丈原病篤時,李福奉命來問的正是這件事:
+     * 「公百年後,誰可任大事者?」曰:「蔣琬之後,文偉可以繼之。」
+     * 再問其次,不答 —— 而這一回他有時間答完。
+     */
+    id: 'evt-zhugelives-alt-2',
+    name: { en: 'Who Comes After', zh: '後事之議' },
+    yearMin: 241,
+    yearMax: 248,
+    requires: [
+      { kind: 'flag-set', key: 'chain-zhugelives' },
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'flag-unset', key: 'zhugelives-alt-heir' },
+    ],
+    description:
+      "At Wuzhang Plains, Li Fu was sent to ask who could take on the great affairs after him. Jiang Wan, he said; and after Jiang Wan, Fei Yi. Asked who came after that, he did not answer. This time there is time to finish the sentence.",
+    descriptionZh: '五丈原病篤,李福奉命而問:「公百年後,誰可任大事者?」曰:「蔣琬之後,文偉可以繼之。」復問其次 —— 亮不答。這一回,那句話說得完。',
+    effects: [],
+    chooserRulerId: 'liu-shan',
+    choices: [
+      {
+        id: 'civil',
+        label: { zh: '蔣琬、費禕次第 —— 守成而已', en: 'Jiang Wan, then Fei Yi — hold what we have' },
+        effects: [
+          { kind: 'flag', key: 'zhugelives-alt-heir' },
+          { kind: 'officer-loyalty', officerId: 'jiang-wan', delta: 20 },
+          { kind: 'officer-loyalty', officerId: 'fei-yi', delta: 18 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: 8 },
+        ],
+      },
+      {
+        id: 'wei',
+        label: { zh: '付之伯約 —— 志繼北伐', en: 'Jiang Wei — the northern campaigns go on' },
+        effects: [
+          { kind: 'flag', key: 'zhugelives-alt-heir' },
+          { kind: 'officer-loyalty', officerId: 'jiang-wei', delta: 25 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'liu-shan', multiplier: 1.12 },
+          { kind: 'officer-loyalty', officerId: 'fei-yi', delta: -10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-shan', delta: -4 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
