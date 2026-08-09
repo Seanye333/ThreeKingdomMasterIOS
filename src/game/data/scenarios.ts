@@ -8274,6 +8274,7 @@ const CITY_OWNERSHIP_YUANSHU_EMPIRE: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_YUANSHU_EMPIRE: Scenario = {
   id: 'scn-whatif-yuanshu-empire',
+  eventFlags: ['chain-yuanshu'],
   openingRelations: [
     { a: 'yuan-shu', b: 'cao', score: -90, status: 'neutral' },  // 僭號仲家,漢臣共討
     { a: 'yuan-shu', b: 'sun', score: -80, status: 'neutral' },  // 孫策絕之,江東自立

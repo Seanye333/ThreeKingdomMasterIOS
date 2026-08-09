@@ -5581,6 +5581,89 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:若袁術稱帝成(chain-yuanshu)-------------------------------
+   * 盤的前提替他免掉了大旱與部將之叛,府庫充盈如舊。那麼題目就換了一個:
+   * 史書上他不是**沒有**糧,是把糧用錯了地方。
+   */
+  {
+    id: 'evt-yuanshu-alt-1',
+    name: { en: 'Every Neighbour a Han Officer', zh: '四面皆漢臣' },
+    yearMin: 198,
+    yearMax: 201,
+    requires: [
+      { kind: 'flag-set', key: 'chain-yuanshu' },
+      { kind: 'officer-active', officerId: 'yuan-shu' },
+      { kind: 'flag-unset', key: 'yuanshu-alt-isolation' },
+    ],
+    description:
+      "The throne is up and holding. What comes with it: Sun Ce writes to break off relations, Lü Bu breaks the marriage, and every man within reach now has a lawful reason to march on Shouchun. An envoy could still be sent.",
+    descriptionZh: '僭號既成而守得住。隨之而來的是:孫策以書絕之,呂布斷婚,而四境之內人人都有了一個討伐壽春的名分。使者還遣得出去。',
+    effects: [],
+    chooserRulerId: 'yuan-shu',
+    choices: [
+      {
+        id: 'envoy',
+        label: { zh: '遣使自解 —— 尊漢而不去號', en: 'Send envoys — keep the title, court the Han' },
+        effects: [
+          { kind: 'flag', key: 'yuanshu-alt-isolation' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shu', delta: 8 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'yuan-shu', multiplier: 0.94 },
+        ],
+      },
+      {
+        id: 'defy',
+        label: { zh: '益兵拒守 —— 天下非漢有久矣', en: 'Reinforce the walls — the Han is long gone' },
+        effects: [
+          { kind: 'flag', key: 'yuanshu-alt-isolation' },
+          { kind: 'city-defense', cityId: 'shouchun', delta: 20 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shu', delta: -6 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 真正的敗因 —— 「荒侈滋甚,後宮數百皆服綺縠,餘粱肉,而士卒凍餒」。
+     * 盤給了他糧,而糧到底進誰的嘴,是這一節。
+     */
+    id: 'evt-yuanshu-alt-2',
+    name: { en: 'Silk in the Palace, Frost in the Camp', zh: '後宮數百' },
+    yearMin: 198,
+    yearMax: 202,
+    requires: [
+      { kind: 'flag-set', key: 'chain-yuanshu' },
+      { kind: 'officer-active', officerId: 'yuan-shu' },
+      { kind: 'flag-unset', key: 'yuanshu-alt-luxury' },
+    ],
+    description:
+      "Several hundred women in the palace all in patterned silk, meat and fine grain left over — and the soldiers outside are cold and hungry. The granaries are full this time. Whose mouths they fill is the question.",
+    descriptionZh: '荒侈滋甚,後宮數百皆服綺縠,餘粱肉,而士卒凍餒。這一回倉是滿的 —— 而糧進誰的嘴,是另一件事。',
+    effects: [],
+    chooserRulerId: 'yuan-shu',
+    choices: [
+      {
+        id: 'army',
+        label: { zh: '散府庫以賞士 —— 減後宮之奉', en: 'Open the stores to the army; cut the palace' },
+        effects: [
+          { kind: 'flag', key: 'yuanshu-alt-luxury' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'yuan-shu', multiplier: 1.16 },
+          { kind: 'city-loyalty', cityId: 'shouchun', delta: 16 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shu', delta: 6 },
+        ],
+      },
+      {
+        id: 'palace',
+        label: { zh: '仍舊 —— 天子之奉,固當如是', en: 'As before — this is what a Son of Heaven is owed' },
+        effects: [
+          { kind: 'flag', key: 'yuanshu-alt-luxury' },
+          { kind: 'city-loyalty', cityId: 'shouchun', delta: -20 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'yuan-shu', multiplier: 0.9 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shu', delta: -10 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
