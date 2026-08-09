@@ -7165,6 +7165,507 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'martial',
   },
+
+  /* ════════════════════════════════════════════════════════════════════
+     戰國 · 通用場面(2026-08-09)
+
+     為什麼要有這一批:十四張戰國盤**一條事件都不會演**。實測
+     `scenario-report scn-ws-changping 200 4`,四輪兩百回合,觸發清單完全是空的
+     —— 不是薄,是徹底的空白。楚漢的鉅鹿/還定三秦/彭城/井陘、隋唐的淺水原/
+     柏壁/安史也一樣(21 張外傳盤全空)。
+
+     成因:三國那一百八十餘條事件的守衛全是 `officer-alive: cao-cao` 這一類,
+     而戰國盤上沒有曹操 —— `findFiringEventIn` 查不到人就回 false。
+     **這個天然隔離是好的**,結果是戰國那一側從來沒有人往裡面放東西。
+
+     兩個寫這一批必須先知道的事實:
+
+     1. **年份軸是借三國的**(`startDate.year = 178`),所以窗口寫 178–192,
+        不是 -260。鎖住它的不是年份,是「只有那條線才有的人」。
+     2. **十四張戰國盤共用同一個人物池** —— 154 人在每一張盤上都在場
+        (多數 forceId=null 在野)。於是 `officer-alive` 擋得住三國線,
+        **擋不住戰國盤彼此**。所以這一批寫的是「戰國時代都可能發生」的場面;
+        某一戰自己的鏈(長平、馬陵、即墨)另綁 `chain-xxx` 逐盤寫。
+
+     君主 id 因盤而異,寫 chooserRulerId 前查過覆蓋面:
+     秦昭襄王 10 張、趙武靈王 8、魏惠王 12、齊宣王 9、燕昭王 13、楚懷王 12、
+     韓昭侯 14。史實正確但只有一兩張盤的(秦孝公、趙惠文王),照樣寫它們 ——
+     其餘盤自動走第一項(史實線),不會壞。
+     ════════════════════════════════════════════════════════════════════ */
+  {
+    id: 'evt-ws-simu-lixin',
+    name: { en: 'The Pole at the South Gate', zh: '徙木立信' },
+    yearMin: 178,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-shang-yang' },
+      { kind: 'flag-unset', key: 'ws-shangyang-law' },
+    ],
+    description:
+      'The new statutes are drafted and not yet promulgated, because nobody believes the government does what it says. So a pole thirty feet long is set at the south gate of the market and it is announced that whoever moves it to the north gate gets ten pieces of gold. Nobody touches it. The reward is raised to fifty. One man moves it, out of curiosity as much as anything, and is paid fifty on the spot. Then the statutes go out. A year later the heir breaks one of them; the heir cannot be punished, so his tutor is branded and his guardian has his nose cut off, and after that nobody in Qin asks whether the law means it.',
+    descriptionZh:
+      '令既具,未布,恐民之不信,乃立三丈之木於國都市南門,'
+      + '募民有能徙置北門者予十金。民怪之,莫敢徙。復曰:「能徙者予五十金。」'
+      + '有一人徙之,輒予五十金,以明不欺。卒下令。\n\n'
+      + '令行於民期年,秦民之國都言初令之不便者以千數。'
+      + '於是太子犯法。衛鞅曰:「法之不行,自上犯之。」將法太子。'
+      + '太子,君嗣也,不可施刑,刑其傅公子虔,黥其師公孫賈。'
+      + '明日,秦人皆趨令。行之十年,秦民大說,道不拾遺,山無盜賊,'
+      + '家給人足,民勇於公戰,怯於私鬥,鄉邑大治。',
+    effects: [],
+    chooserRulerId: 'hist-qin-xiaogong',
+    choices: [
+      {
+        id: 'enforce',
+        label: { zh: '法之不行,自上犯之 —— 刑其傅,黥其師', en: 'The law fails from the top: brand the tutor' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'changan', delta: 16 },
+          { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+          { kind: 'officer-loyalty', officerId: 'hist-shang-yang', delta: 15 },
+          { kind: 'flag', key: 'ws-shangyang-law' },
+        ],
+      },
+      {
+        id: 'spare',
+        label: { zh: '太子,君嗣也 —— 此事作罷', en: 'The heir is the heir; let it go' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'changan', delta: -10 },
+          { kind: 'officer-loyalty', officerId: 'hist-shang-yang', delta: -20 },
+          { kind: 'flag', key: 'ws-shangyang-law' },
+        ],
+      },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-hufu-qishe',
+    name: { en: 'Nomad Dress and Mounted Archery', zh: '胡服騎射' },
+    yearMin: 178,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-zhao-wuling' },
+      { kind: 'flag-unset', key: 'ws-hufu' },
+    ],
+    description:
+      'The proposal is that the army put away its chariots and its long court robes and dress like the people it keeps losing to: short jacket, trousers, boots, and shoot from the saddle. The objection is not military. It is that the robes of the central states are what makes them the central states, and that a king who dresses his men like Hu is announcing the end of something. The king says: a garment is for wearing and a rule is for the work it does, and a sage does not tie the present to the customs of the dead.',
+    descriptionZh:
+      '王曰:「今吾將胡服騎射以教百姓,而世必議寡人矣。」'
+      + '公子成不朝,曰:「中國者,蓋聰明徇智之所居也,萬物財用之所聚也,'
+      + '賢聖之所教也,仁義之所施也……而今王舍此而襲遠方之服,'
+      + '變古之教,易古之道,逆人之心,臣願王孰圖之也。」\n\n'
+      + '王曰:「聖人觀鄉而順宜,因事而制禮,所以利其民而厚其國也。'
+      + '……故禮世不必一其道,便國不必法古。」\n\n'
+      + '遂胡服。招騎射,略中山地,北至燕、代,西至雲中、九原。',
+    effects: [],
+    chooserRulerId: 'hist-zhao-wuling',
+    choices: [
+      {
+        id: 'reform',
+        label: { zh: '便國不必法古 —— 遂胡服騎射', en: 'What serves the state need not follow antiquity' },
+        effects: [
+          { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 1.2 },
+          { kind: 'city-troops-multiplier', cityId: 'yanmen', multiplier: 1.3 },
+          { kind: 'city-defense', cityId: 'yanmen', delta: 15 },
+          { kind: 'officer-loyalty', officerId: 'hist-li-mu', delta: 10 },
+          { kind: 'flag', key: 'ws-hufu' },
+        ],
+      },
+      {
+        id: 'keep',
+        label: { zh: '從公子成之議,仍用車戰', en: 'Heed the objection; keep the chariots' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'ye', delta: 10 },
+          { kind: 'city-troops-multiplier', cityId: 'yanmen', multiplier: 0.9 },
+          { kind: 'flag', key: 'ws-hufu' },
+        ],
+      },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ws-wanbi',
+    name: { en: 'The Jade Returns Whole', zh: '完璧歸趙' },
+    yearMin: 179,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-lin-xiangru' },
+      { kind: 'flag-unset', key: 'ws-wanbi' },
+    ],
+    description:
+      'Qin offers fifteen cities for the Heshi jade, which everyone understands to mean that Qin will take the jade. A retainer named Lin Xiangru carries it west, sees the king pass it round his consorts without a word about the cities, and says there is a flaw in it that he must point out. With the jade back in his hands he backs against a pillar, his hair standing up under his cap, and says that if he is pressed his head and the jade go into the pillar together. He then sends it home by night with a servant in plain clothes, and stays to be executed. Qin does not execute him, because killing him would only prove the point.',
+    descriptionZh:
+      '秦昭王聞趙得和氏璧,使人遺趙王書,願以十五城請易璧。'
+      + '趙王與大將軍廉頗諸大臣謀:欲予秦,秦城恐不可得,徒見欺;'
+      + '欲勿予,即患秦兵之來。計未定,求人可使報秦者,未得。\n\n'
+      + '藺相如奉璧西入秦。秦王坐章臺見相如,相如奉璧奏秦王。'
+      + '秦王大喜,傳以示美人及左右,左右皆呼萬歲 ——'
+      + '相如視秦王無意償趙城,乃前曰:「璧有瑕,請指示王。」王授璧。\n\n'
+      + '相如因持璧卻立,倚柱,怒髮上衝冠,曰:'
+      + '「大王必欲急臣,臣頭今與璧俱碎於柱矣!」'
+      + '……乃使其從者衣褐,懷其璧,從徑道亡,歸璧於趙。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-lin-xiangru', delta: 18 },
+      { kind: 'city-loyalty', cityId: 'ye', delta: 10 },
+      { kind: 'flag', key: 'ws-wanbi' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-fujing',
+    name: { en: 'The Bramble on His Back', zh: '負荊請罪' },
+    yearMin: 180,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-lian-po' },
+      { kind: 'officer-alive', officerId: 'hist-lin-xiangru' },
+      { kind: 'flag-set', key: 'ws-wanbi' },
+      { kind: 'flag-unset', key: 'ws-fujing' },
+    ],
+    description:
+      'Lian Po, who has taken cities and cut down armies, is placed below a man who talked his way through two embassies, and says publicly that he will humiliate him when he sees him. Lin Xiangru stops going to court and turns his carriage down side streets. His own retainers ask to leave, ashamed of him. He asks them: who is more frightening, the king of Qin or General Lian? Then why does Qin not attack Zhao? Because the two of us are here. Two tigers fighting means one of us dies, and that is the day Qin comes. Lian Po hears of it, strips to the waist, has a bramble rod tied on his back, and goes to the gate.',
+    descriptionZh:
+      '既罷歸國,以相如功大,拜為上卿,位在廉頗之右。'
+      + '廉頗曰:「我為趙將,有攻城野戰之大功,而藺相如徒以口舌為勞,'
+      + '而位居我上,且相如素賤人,吾羞,不忍為之下!」宣言曰:'
+      + '「我見相如,必辱之。」\n\n'
+      + '相如聞,不肯與會,每朝時常稱病,不欲與廉頗爭列;'
+      + '出,望見廉頗,引車避匿。舍人相與諫,請辭去。\n\n'
+      + '相如曰:「夫以秦王之威,而相如廷叱之,辱其群臣,'
+      + '相如雖駑,獨畏廉將軍哉?顧吾念之,強秦之所以不敢加兵於趙者,'
+      + '徒以吾兩人在也。今兩虎共鬥,其勢不俱生。'
+      + '吾所以為此者,以先國家之急而後私讎也。」\n\n'
+      + '廉頗聞之,肉袒負荊,因賓客至藺相如門謝罪,'
+      + '曰:「鄙賤之人,不知將軍寬之至此也!」卒相與驩,為刎頸之交。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-lian-po', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'hist-lin-xiangru', delta: 15 },
+      { kind: 'city-defense', cityId: 'ye', delta: 15 },
+      { kind: 'city-loyalty', cityId: 'ye', delta: 12 },
+      { kind: 'flag', key: 'ws-fujing' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-yuanjiao',
+    name: { en: 'Befriend the Far and Attack the Near', zh: '遠交近攻' },
+    yearMin: 180,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-fan-ju' },
+      { kind: 'flag-unset', key: 'ws-yuanjiao' },
+    ],
+    description:
+      'Fan Ju tells the king that the standing policy has it backwards: Qin has been crossing Han and Wei to attack Qi, and even when it wins the ground cannot be held, because it does not touch Qin. Be friendly with the distant states and attack the ones you border. Take an inch and the inch is yours; take a foot and the foot is yours. And begin with Han and Wei, because whoever holds them holds the middle of the realm.',
+    descriptionZh:
+      '范雎曰:「王不如遠交而近攻,得寸則王之寸,得尺亦王之尺也。'
+      + '今釋此而遠攻,不亦繆乎?……夫韓、魏,中國之處而天下之樞也。'
+      + '王其欲霸,必親中國以為天下樞,以威楚、趙。'
+      + '楚彊則附趙,趙彊則附楚,楚、趙皆附,齊必懼矣。」\n\n'
+      + '王曰:「善。」乃拜范雎為客卿,謀兵事 —— 秦之東出,自此有次第。',
+    effects: [],
+    chooserRulerId: 'hist-qin-zhaoxiang',
+    choices: [
+      {
+        id: 'adopt',
+        label: { zh: '得寸則王之寸 —— 用其策', en: 'Take the inch and keep it: adopt the policy' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'hist-fan-ju', delta: 15 },
+          { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.12 },
+          { kind: 'city-defense', cityId: 'luoyang', delta: -12 },
+          { kind: 'city-defense', cityId: 'xuchang', delta: -12 },
+          { kind: 'flag', key: 'ws-yuanjiao' },
+        ],
+      },
+      {
+        id: 'keep-old',
+        label: { zh: '仍越韓魏以攻齊', en: 'Go on crossing Han and Wei to strike Qi' },
+        effects: [
+          { kind: 'city-defense', cityId: 'linzi', delta: -15 },
+          { kind: 'force-gold-ruler', rulerOfficerId: 'hist-qin-zhaoxiang', delta: -4000 },
+          { kind: 'officer-loyalty', officerId: 'hist-fan-ju', delta: -12 },
+          { kind: 'flag', key: 'ws-yuanjiao' },
+        ],
+      },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ws-hezong',
+    name: { en: 'The Vertical Alliance', zh: '合縱' },
+    yearMin: 179,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-su-qin' },
+      { kind: 'flag-unset', key: 'ws-hezong' },
+    ],
+    description:
+      'Su Qin walks the six courts with one argument, adjusted at each stop: your land together is five times Qin, your soldiers ten times Qin, and you are being taken one at a time because each of you would rather serve the west than stand next to your neighbour. He comes out of it holding the chancellor seals of all six states at once, and for fifteen years Qin does not come through the pass.',
+    descriptionZh:
+      '蘇秦說六國曰:「臣竊以天下之地圖案之,諸侯之地五倍於秦,'
+      + '料度諸侯之卒十倍於秦,六國并力西鄉而攻秦,秦必破矣。'
+      + '今西面而事之,見臣於秦。夫破人之與破於人也,'
+      + '臣人之與臣於人也,豈可同日而言之哉!」\n\n'
+      + '於是六國從合而并力焉。蘇秦為從約長,并相六國。'
+      + '……秦兵不敢闚函谷關十五年。',
+    effects: [
+      { kind: 'city-defense', cityId: 'luoyang', delta: 14 },
+      { kind: 'city-defense', cityId: 'ye', delta: 12 },
+      { kind: 'city-defense', cityId: 'chenliu', delta: 12 },
+      { kind: 'city-defense', cityId: 'linzi', delta: 10 },
+      { kind: 'city-defense', cityId: 'jiangling', delta: 10 },
+      { kind: 'officer-loyalty', officerId: 'hist-su-qin', delta: 18 },
+      { kind: 'flag', key: 'ws-hezong' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-lianheng',
+    name: { en: 'Six Hundred Li of Shangyu', zh: '連橫·商於六百里' },
+    yearMin: 180,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-zhang-yi' },
+      { kind: 'officer-alive', officerId: 'hist-chu-huaiwang' },
+      { kind: 'flag-unset', key: 'ws-lianheng' },
+    ],
+    description:
+      'Zhang Yi comes to Chu and offers six hundred li of Shangyu if Chu will break with Qi. Chen Zhen says: take the land first and break afterwards. The king breaks with Qi first, sends an officer to take delivery, and Zhang Yi says he promised six li of his own fief, not six hundred of the state. Chu goes to war over it and loses eighty thousand men and Hanzhong. Later, offered Zhang Yi in exchange for land, the king takes him — and then lets him go again, having been talked round by his own favourite consort.',
+    descriptionZh:
+      '張儀說楚王曰:「大王誠能聽臣,閉關絕約於齊,'
+      + '臣請獻商於之地六百里。」楚王大說而許之。'
+      + '陳軫諫曰:「臣見商於之地不可得,而患必至也。」王曰:'
+      + '「吾事善矣!子其弭口無言,以待吾事。」\n\n'
+      + '楚使者既絕齊,張儀曰:「儀有奉邑六里,願以獻大王左右。」'
+      + '使者曰:「臣受令於王,以商於之地六百里,不聞六里。」'
+      + '……楚王大怒,發兵而攻秦,大敗於丹陽,斬首八萬,遂取漢中。',
+    effects: [],
+    chooserRulerId: 'hist-chu-huaiwang',
+    choices: [
+      {
+        id: 'break-first',
+        label: { zh: '閉關絕約於齊,先與秦交', en: 'Break with Qi first and take Qin at its word' },
+        effects: [
+          { kind: 'city-troops-multiplier', cityId: 'jiangling', multiplier: 0.82 },
+          { kind: 'city-defense', cityId: 'hanzhong', delta: -20 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-chu-huaiwang', delta: -8 },
+          { kind: 'flag', key: 'ws-lianheng' },
+        ],
+      },
+      {
+        id: 'land-first',
+        label: { zh: '從陳軫之諫:先受地,而後絕齊', en: 'Heed Chen Zhen: take the land first, break after' },
+        effects: [
+          { kind: 'city-defense', cityId: 'jiangling', delta: 12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-chu-huaiwang', delta: 6 },
+          { kind: 'officer-loyalty', officerId: 'hist-qu-yuan', delta: 12 },
+          { kind: 'flag', key: 'ws-lianheng' },
+        ],
+      },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-ws-jixia',
+    name: { en: 'The Academy at the Ji Gate', zh: '稷下學宮' },
+    yearMin: 179,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-zou-yan' },
+      { kind: 'flag-unset', key: 'ws-jixia' },
+    ],
+    description:
+      'Below the Ji gate at Linzi the state keeps several hundred men in mansions on the main avenue, ranked as senior officers, who hold no office and are not required to govern: they argue. Zou Yan on the five phases, Chunyu Kun on everything, Shen Dao and Tian Pian and Huan Yuan on the way and its power, and later Xunzi three times as libationer. It is the largest single concentration of argument in the ancient world, and it is funded by the state that will do the least with it.',
+    descriptionZh:
+      '齊宣王喜文學游說之士,自如騶衍、淳于髡、田駢、接子、慎到、環淵之徒,'
+      + '七十六人,皆賜列第,為上大夫,不治而議論。'
+      + '是以齊稷下學士復盛,且數百千人。\n\n'
+      + '……天下之學術,半在此城。而其後四十餘年不受兵,'
+      + '亦四十餘年不修備 —— 這座城裡辯得最多的事,'
+      + '恰恰不是它自己最該想的那一件。',
+    effects: [],
+    chooserRulerId: 'hist-qi-xuanwang',
+    choices: [
+      {
+        id: 'endow',
+        label: { zh: '賜列第,為上大夫,不治而議論', en: 'Mansions and rank, and no duties but argument' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'linzi', delta: 18 },
+          { kind: 'officer-loyalty', officerId: 'hist-zou-yan', delta: 15 },
+          { kind: 'officer-loyalty', officerId: 'hist-xunzi', delta: 15 },
+          { kind: 'force-gold-ruler', rulerOfficerId: 'hist-qi-xuanwang', delta: -3000 },
+          { kind: 'flag', key: 'ws-jixia' },
+        ],
+      },
+      {
+        id: 'spend-on-arms',
+        label: { zh: '罷稷下之廩,以其費繕甲兵', en: 'Close the stipends and spend it on armour' },
+        effects: [
+          { kind: 'city-troops-multiplier', cityId: 'linzi', multiplier: 1.18 },
+          { kind: 'city-defense', cityId: 'linzi', delta: 14 },
+          { kind: 'city-loyalty', cityId: 'linzi', delta: -12 },
+          { kind: 'flag', key: 'ws-jixia' },
+        ],
+      },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-ximenbao',
+    name: { en: 'The Bride for the River Lord', zh: '西門豹治鄴' },
+    yearMin: 178,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-ximen-bao' },
+      { kind: 'flag-unset', key: 'ws-ximenbao' },
+    ],
+    description:
+      'At Ye the elders and the shamaness have been collecting several hundred thousand a year to marry a girl to the river god, spending twenty or thirty thousand on the wedding and keeping the rest, and families with daughters have been leaving. The new magistrate attends the ceremony and says the bride is not pretty enough — would the shamaness go and explain the delay to the river lord? She is put in. After a while: she is slow, send an apprentice. Then another. Then, since women cannot manage it, would the senior elder go? By then everyone is on their knees with their foreheads on the ground. Afterwards he cuts twelve canals from the river, and the fields of Ye are watered ever since.',
+    descriptionZh:
+      '鄴三老、廷掾常歲賦斂百姓,收取其錢得數百萬,'
+      + '用其二三十萬為河伯娶婦,而與祝巫共分其餘錢持歸。'
+      + '當其時,巫行視人家女好者,曰:「是當為河伯婦。」'
+      + '……以故多持女遠逃亡,城中益空無人。\n\n'
+      + '西門豹至,曰:「至為河伯娶婦時,願三老、巫祝、父老送女河上,'
+      + '幸來告語之,吾亦往送女。」及其時,豹視其女曰:'
+      + '「是女子不好,煩大巫嫗為入報河伯,得更求好女,後日送之。」'
+      + '即使吏卒共抱大巫嫗投之河中。有頃,曰:「巫嫗何久也?弟子趣之!」'
+      + '復以弟子一人投河中。……凡投三弟子。'
+      + '豹曰:「巫嫗、弟子是女子也,不能白事,煩三老為入白之。」復投三老河中。\n\n'
+      + '皆叩頭,叩頭且破,額血流地,色如死灰。'
+      + '自是以後,不敢復言為河伯娶婦。'
+      + '豹即發民鑿十二渠,引河水灌民田,田皆溉。',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'ye', delta: 20 },
+      { kind: 'city-food', cityId: 'ye', delta: 30000 },
+      { kind: 'officer-loyalty', officerId: 'hist-ximen-bao', delta: 15 },
+      { kind: 'flag', key: 'ws-ximenbao' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-jiming',
+    name: { en: 'The Cock-Crow and the Dog-Thief', zh: '雞鳴狗盜' },
+    yearMin: 181,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-mengchang-jun' },
+      { kind: 'flag-unset', key: 'ws-jiming' },
+    ],
+    description:
+      'The lord of Mengchang keeps three thousand retainers, taking anyone who comes, and is mocked for the quality of them. Detained in Qin and about to be killed, he sends to the king favourite for help; she wants the white fox robe, which he has already presented to the king. One of the useless retainers goes through a dog-hole into the treasury and steals it back. They get out at night and reach the pass, which does not open until the cock crows. Another useless retainer crows, every cock in the district answers, the gate opens, and they are through before the pursuit arrives.',
+    descriptionZh:
+      '孟嘗君在薛,招致諸侯賓客及亡人有罪者,皆歸孟嘗君 ——'
+      + '食客數千人,無貴賤一與文等。\n\n'
+      + '入秦,昭王囚之,欲殺。孟嘗君使人抵昭王幸姬求解,'
+      + '姬曰:「妾願得君狐白裘。」此時孟嘗君有一狐白裘,直千金,'
+      + '天下無雙,入秦獻之昭王,更無他裘。'
+      + '客有能為狗盜者,曰:「臣能得狐白裘。」乃夜為狗,'
+      + '以入秦宮臧中,取所獻狐白裘至,以獻秦王幸姬 —— 姬為言,得出。\n\n'
+      + '夜半至函谷關。秦昭王後悔出孟嘗君,求之已去,即使人馳傳逐之。'
+      + '關法:雞鳴而出客。客之居下坐者有能為雞鳴,而雞盡鳴,遂發傳出。'
+      + '出如食頃,秦追果至關,已後孟嘗君出,乃還。\n\n'
+      + '始孟嘗君列此二人於賓客,賓客盡羞之;及此,莫不服。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-mengchang-jun', delta: 15 },
+      { kind: 'city-loyalty', cityId: 'linzi', delta: 12 },
+      { kind: 'flag', key: 'ws-jiming' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-qihuo',
+    name: { en: 'A Rare Piece of Merchandise', zh: '奇貨可居' },
+    yearMin: 182,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-lu-buwei' },
+      { kind: 'flag-unset', key: 'ws-qihuo' },
+    ],
+    description:
+      'A merchant of Yangdi doing business in Handan sees a Qin prince being kept there as a hostage, one of more than twenty sons, by a mother nobody favours, living poorly and going nowhere. He goes home and asks his father what the return is on farming. Ten to one. On pearls and jade? A hundred. On establishing a sovereign and settling a state? Beyond calculation. He spends five hundred in gold on the prince and another five hundred on gifts for the childless principal consort of the heir, and buys, in the end, an adoption.',
+    descriptionZh:
+      '呂不韋賈邯鄲,見秦質子異人,歸而謂父曰:'
+      + '「耕田之利幾倍?」曰:「十倍。」'
+      + '「珠玉之贏幾倍?」曰:「百倍。」'
+      + '「立國家之主贏幾倍?」曰:「無數。」\n\n'
+      + '曰:「今力田疾作,不得煖衣餘食;今建國立君,澤可以遺世 —— 願往事之。」'
+      + '乃以五百金與子楚,為進用,結賓客;'
+      + '而復以五百金買奇物玩好,自奉而西游秦,'
+      + '求見華陽夫人姊,而皆以其物獻華陽夫人。\n\n'
+      + '此局之後,秦之嗣君,由一個商人挑定。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-lu-buwei', delta: 15 },
+      { kind: 'force-gold-ruler', rulerOfficerId: 'hist-qin-zhaoxiang', delta: 5000 },
+      { kind: 'city-loyalty', cityId: 'changan', delta: -8 },
+      { kind: 'flag', key: 'ws-qihuo' },
+    ],
+    mood: 'mystic',
+  },
+  {
+    id: 'evt-ws-limu-border',
+    name: { en: 'Li Mu Will Not Come Out', zh: '李牧守邊' },
+    yearMin: 181,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-li-mu' },
+      { kind: 'flag-unset', key: 'ws-limu' },
+    ],
+    description:
+      'For years he sets his own officers, spends the market taxes of the district on his troops, kills several oxen a day for them, drills them at riding and shooting, mans the beacons carefully, sends out many scouts — and has a standing order that when the Xiongnu come in, everyone goes inside the walls, and any man who goes out to fight will be beheaded. Both his own soldiers and the Xiongnu conclude he is a coward. He is recalled; his replacement fights every raid and loses. He is sent back and resumes doing nothing. Then, one day, he puts fifteen hundred thousand chariots, thirteen thousand horse, fifty thousand picked infantry and a hundred thousand archers in the field at once, opens with a deliberate rout of his own herdsmen as bait, and destroys over a hundred thousand Xiongnu cavalry in a single day.',
+    descriptionZh:
+      '李牧者,趙之北邊良將也。常居代、雁門,備匈奴。'
+      + '以便宜置吏,市租皆輸入莫府,為士卒費。'
+      + '日擊數牛饗士,習騎射,謹烽火,多間諜,厚遇戰士。為約曰:'
+      + '「匈奴即入盜,急入收保,有敢捕虜者斬。」'
+      + '匈奴每入,烽火謹,輒入收保,不敢戰。如是數歲,亦不亡失。\n\n'
+      + '然匈奴以李牧為怯,雖趙邊兵亦以為吾將怯。趙王讓之,牧如故。'
+      + '王怒,召之,使他人代將。歲餘,匈奴每來,出戰,'
+      + '出戰數不利,失亡多,邊不得田畜。復請李牧 —— 牧曰:'
+      + '「王必用臣,臣如前,乃敢奉令。」王許之。\n\n'
+      + '乃具選車得千三百乘,選騎得萬三千匹,百金之士五萬人,彀者十萬人,'
+      + '悉勒習戰。大縱畜牧,人民滿野。匈奴小入,詳北不勝,以數千人委之。'
+      + '單于聞之,大率眾來入。李牧多為奇陳,張左右翼擊之,'
+      + '大破殺匈奴十餘萬騎 —— 其後十餘歲,匈奴不敢近趙邊城。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-li-mu', delta: 18 },
+      { kind: 'city-troops-multiplier', cityId: 'yanmen', multiplier: 1.25 },
+      { kind: 'city-defense', cityId: 'yanmen', delta: 20 },
+      { kind: 'city-food', cityId: 'yanmen', delta: 15000 },
+      { kind: 'flag', key: 'ws-limu' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ws-quyuan',
+    name: { en: 'The Whole World Is Muddy', zh: '舉世皆濁' },
+    yearMin: 181,
+    yearMax: 192,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-qu-yuan' },
+      { kind: 'flag-set', key: 'ws-lianheng' },
+      { kind: 'flag-unset', key: 'ws-quyuan' },
+    ],
+    description:
+      'Exiled to the river country, he walks the bank reciting, gaunt. A fisherman asks whether he is not the Master of the Three Wards, and what he is doing here. Because the whole world is muddy and I alone am clear; everyone is drunk and I alone am sober, and so I was sent away. The fisherman says: a sage is not held fast by things but moves with the age. If the world is muddy, why not stir the silt and raise the waves with it? He answers that a man who has just washed his hair flicks his cap before putting it on, and that he would sooner go into the river and be buried in the bellies of fish than let what is white in him take the dust of the world. Then he writes one more poem and takes a stone into the Miluo.',
+    descriptionZh:
+      '屈原至於江濱,被髮行吟澤畔,顏色憔悴,形容枯槁。'
+      + '漁父見而問之曰:「子非三閭大夫歟?何故而至此?」'
+      + '屈原曰:「舉世混濁而我獨清,眾人皆醉而我獨醒,是以見放。」\n\n'
+      + '漁父曰:「夫聖人者,不凝滯於物而能與世推移。'
+      + '舉世混濁,何不隨其流而揚其波?眾人皆醉,何不餔其糟而啜其醨?'
+      + '何故懷瑾握瑜而自令見放為?」\n\n'
+      + '屈原曰:「吾聞之,新沐者必彈冠,新浴者必振衣。'
+      + '人又誰能以身之察察,受物之汶汶者乎!'
+      + '寧赴常流而葬乎江魚腹中耳,又安能以皓皓之白而蒙世俗之溫蠖乎!」\n\n'
+      + '乃作《懷沙》之賦。於是懷石遂自沉汨羅以死。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-qu-yuan', status: 'dead' },
+      { kind: 'city-loyalty', cityId: 'jiangling', delta: -14 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-chu-huaiwang', delta: -6 },
+      { kind: 'flag', key: 'ws-quyuan' },
+    ],
+    mood: 'somber',
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(

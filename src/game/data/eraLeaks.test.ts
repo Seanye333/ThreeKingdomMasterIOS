@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isLaterHanBoard, SCENARIOS } from './scenarios';
 import { tribesOnBoard } from './tribes';
+import { HISTORICAL_EVENTS } from './events';
 
 /*
  * 外傳三線的「時代漏法」—— 同一個形狀犯過三次,所以在這裡一起釘住。
@@ -36,5 +37,25 @@ describe('時代漏法 — 外傳三線不吃漢末專屬內容', () => {
   it('部族也依盤別分時代(同一個形狀的舊修正,一併守住)', () => {
     expect(tribesOnBoard('scn-ws-seven').map((t) => t.id)).not.toContain('linyi');
     expect(tribesOnBoard('scn-208-chibi').map((t) => t.id)).toContain('linyi');
+  });
+
+  /*
+   * 反方向的漏法(2026-08-09):外傳事件漏進三國盤。
+   *
+   * 外傳三線借三國曆法軸,所以年份**擋不住任何東西** —— 戰國那批的窗口寫的是
+   * 178–192,而三國盤同樣走過那幾年。真正鎖住它們的是**只有那條線才有的人**:
+   * `officer-alive` 查不到人就回 false(historicalEvents.ts:135)。
+   *
+   * 於是規矩是:**外傳事件的 requires 至少要有一條 `hist-` 開頭的人物條件。**
+   * 忘了寫就會在赤壁盤上演「徙木立信」,而那不會有任何測試自然地紅 ——
+   * 所以在這裡明寫。
+   */
+  it('外傳事件一定帶得動它自己的時代守衛', () => {
+    const alt = HISTORICAL_EVENTS.filter((e) => /^evt-(ws|ch|st)-/.test(e.id));
+    expect(alt.length, '外傳事件一條都沒有?判準或 id 命名變了').toBeGreaterThan(10);
+    const naked = alt.filter((e) => !(e.requires ?? []).some(
+      (r) => 'officerId' in r && String(r.officerId).startsWith('hist-'),
+    ));
+    expect(naked.map((e) => `${e.id} ${e.name.zh}`)).toEqual([]);
   });
 });
