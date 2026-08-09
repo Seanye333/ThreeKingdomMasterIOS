@@ -78,6 +78,22 @@ describe('戰役落幕文本(敗亡變體 / 史官論曰)', () => {
     expect(ending?.textZh).not.toContain('劉備');
   });
 
+  /*
+   * 全庫 540 段敗亡於 2026-08-09 補滿(逐盤 + 共享兩層合計)。這條把它釘住:
+   * **加新盤或給既有盤加一家,忘了寫敗亡就會紅。**
+   * 紅了不是壞事,是提醒 —— 兩條路可選:逐盤寫進 SCENARIO_VERDICTS,
+   * 或者(周邊勢力/只活在一個十年裡的家)加進 SHARED_DEFEATS。
+   */
+  it('全庫每一盤每一家都有敗亡變體', () => {
+    const gaps: string[] = [];
+    for (const sc of SCENARIOS) {
+      for (const f of sc.forces) {
+        if (!scenarioVerdict(sc.id, f.id)?.defeat) gaps.push(`${sc.name.zh}/${f.name.zh}(${sc.id}/${f.id})`);
+      }
+    }
+    expect(gaps).toEqual([]);
+  });
+
   /* ── 共享敗亡層(2026-08-09)────────────────────────────────────────── */
 
   it('周邊勢力吃得到共享敗亡 —— 沒逐盤寫也有自己的輓歌', () => {

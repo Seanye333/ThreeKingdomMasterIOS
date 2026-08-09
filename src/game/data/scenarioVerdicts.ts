@@ -2751,6 +2751,31 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 211 渭南之戰 ─────────────────────────────────────────────── */
   'scn-211-weinan': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '今指與吾為水火者,曹操也',
+        titleEn: 'The Man Set Against Me Like Water Against Fire Is Cao Cao',
+        textZh:
+          '是歲,劉璋遣法正迎之,將數萬人入益州,'
+          + '至涪,璋自出迎,相見甚歡,'
+          + '駐三十餘日 —— 而龐統已在勸他就席間取之。\n\n'
+          + '他不肯。曰:「此大事也,不可倉卒。」'
+          + '又嘗語龐統:「今指與吾為水火者,曹操也。'
+          + '操以急,吾以寬;操以暴,吾以仁;操以譎,吾以忠 ——'
+          + '每與操反,事乃可成耳。以小故而失信義於天下者,吾所不取也。」\n\n'
+          + '**他的本錢就是那句話,而那句話要用一輩子付。**'
+          + '此局他在涪城多留了幾個月,'
+          + '而北面渭南已定,關中之兵可以南下了。',
+        textEn:
+          'That year Liu Zhang sent Fa Zheng to invite him, and he went into Yi province with several tens of thousands. At Fu, Liu Zhang came out to meet him personally and they were delighted with each other and spent over thirty days there — with Pang Tong already urging him to take the man at the banquet.\n\n'
+          + 'He refused: this is a great matter and cannot be done in haste. And he had said to Pang Tong: the man set against me like water against fire is Cao Cao. He is urgent, I am lenient; he is violent, I am humane; he is devious, I am straight. Doing the opposite of him in every case is how the thing can be done. To lose the faith of the realm over some small matter is not something I will do.\n\n'
+          + 'That sentence was his entire capital, and it has to be paid for over a lifetime. On this board he stays a few months longer at Fu, and by then Weinan is settled in the north and the Guanzhong cavalry is free to come south.',
+      },
+      verdictLostZh:
+        '論曰:以信義為資者,其資最厚,而**周轉最慢。**',
+      verdictLostEn:
+        'The historian says: good faith is the largest capital a man can have and the slowest to turn over.',
+    },
     sun: {
       defeat: {
         titleZh: '徙治秣陵,築石頭城',
@@ -2864,6 +2889,31 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 213 落鳳坡 ───────────────────────────────────────────────── */
   'scn-213-fengpo': {
+    cao: {
+      defeat: {
+        titleZh: '本興義兵,為天下除暴亂',
+        titleEn: 'I Raised a Righteous Army to Clear the Realm of Violence',
+        textZh:
+          '建安十八年,策為魏公,加九錫,建魏國,置丞相以下群卿百寮。'
+          + '前一年,荀文若以憂薨於壽春 —— 空食盒的那一年。\n\n'
+          + '《讓縣自明本志令》寫在此前一年:'
+          + '「孤始舉孝廉,年少,自以本非巖穴知名之士,'
+          + '欲為一郡守,好作政教……'
+          + '設使國家無有孤,不知當幾人稱帝,幾人稱王。」\n\n'
+          + '**這篇令的真意,是他知道有人開始問了。**'
+          + '而九錫一加,問的人只會更多 ——'
+          + '他此後七年做的每一件事,都是在回答一個'
+          + '他自己說「本無此心」的問題。',
+        textEn:
+          'In the eighteenth year of Jian-an he was made duke of Wei with the Nine Bestowals, and the state of Wei was constituted with a chancellor and a full set of ministers below him. The year before, Xun Yu had died of anxiety at Shouchun — the year of the empty food box.\n\n'
+          + 'The declaration on returning his fiefs and stating his intentions was written the year before that: when I was first recommended as filial and incorrupt I was young, and knew I was not one of the famous recluses; I wanted to be a commandery administrator and do some good governing... and were it not for me, who knows how many would be calling themselves emperor and how many king.\n\n'
+          + 'The real content of that document is that he knew people had begun to ask. And once the Nine Bestowals were accepted, more of them asked. Everything he did in his last seven years was an answer to a question he had said he never had in mind.',
+      },
+      verdictLostZh:
+        '論曰:自明本志者,必已為人所疑 —— **文章寫得越長,疑得越深。**',
+      verdictLostEn:
+        'The historian says: a man who publishes a statement of his intentions is already under suspicion, and the longer the statement the deeper it goes.',
+    },
     'liu-bei': {
       defeat: {
         titleZh: '進退狼跋',
@@ -2948,6 +2998,32 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 189 十常侍之亂 ───────────────────────────────────────────── */
   'scn-189-eunuchs': {
+    cao: {
+      defeat: {
+        titleZh: '治世之能臣,亂世之姦雄',
+        titleEn: 'A Capable Minister in an Ordered Age, a Treacherous Hero in a Broken One',
+        textZh:
+          '這一年他三十五歲,是典軍校尉,'
+          + '西園八校尉之一 —— 上面還有七個人,'
+          + '而下面一個郡都沒有。\n\n'
+          + '汝南許劭,有知人之名。太祖問之:「我何如人?」'
+          + '劭鄙其人而不肯對。太祖固問之,'
+          + '劭曰:「子治世之能臣,亂世之姦雄。」太祖大笑。\n\n'
+          + '**那句話要能應驗,先得有一個亂世,'
+          + '而亂世裡他得先活下來。**'
+          + '此局他沒有走出那一年:'
+          + '中平六年的洛陽,死在裡面的公卿子弟不止一個,'
+          + '而史書為他們留的位置,是「等」字後面的空白。',
+        textEn:
+          'He was thirty-five that year, a colonel of the standard army, one of the eight colonels of the Western Garden — with seven men above him and not one commandery below him.\n\n'
+          + 'Xu Shao of Runan had a name for judging people. Cao Cao asked him: what sort of man am I? Xu Shao thought little of him and would not answer; pressed, he said: you would be a capable minister in an ordered age and a treacherous hero in a broken one. Cao Cao laughed out loud.\n\n'
+          + 'For that judgement to be borne out there first has to be a broken age, and he has to survive into it. On this board he does not get out of that year. More than one son of a good family died inside Luoyang in the sixth year of Zhongping, and the space the record keeps for them is the blank after the words and others.',
+      },
+      verdictLostZh:
+        '論曰:許劭之言,人皆以為讖。**而讖之所以為讖,在於說中的那個人活了下來。**',
+      verdictLostEn:
+        'The historian says: everyone treats Xu Shao judgement as a prophecy. What makes a prophecy a prophecy is that the man it was about survived.',
+    },
     sun: {
       defeat: {
         titleZh: '洛陽有變的那一年,他在長沙',
@@ -3397,6 +3473,32 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 192 王允連環計 ───────────────────────────────────────────── */
   'scn-192-wangyun': {
+    cao: {
+      defeat: {
+        titleZh: '受降卒三十餘萬,號青州兵',
+        titleEn: 'Three Hundred Thousand Surrendered, and Were Called the Qing Province Troops',
+        textZh:
+          '初平三年,青州黃巾眾百萬入兗州。'
+          + '兗州刺史劉岱欲擊之,鮑信諫不聽,遂戰,死。'
+          + '陳宮等迎太祖領兗州牧。\n\n'
+          + '太祖設奇伏,晝夜會戰,'
+          + '追至濟北,乞降。'
+          + '**冬,受降卒三十餘萬,男女百餘萬口,收其精銳者,號為青州兵。**\n\n'
+          + '這一年是他所有本錢的來處:'
+          + '在此之前他兩次起兵兩次散盡,'
+          + '在此之後他有了一支只認他的軍隊 ——'
+          + '而鮑信為救他而死,屍首找不到,'
+          + '乃刻木如信形狀,祭而哭焉。',
+        textEn:
+          'In the third year of Chuping a million Qing province Turbans came into Yan province. The inspector Liu Dai wanted to fight them, would not listen to Bao Xin, fought, and was killed. Chen Gong and others brought Cao Cao in as governor of Yan.\n\n'
+          + 'He set ambushes and fought day and night, pursued them to Jibei, and they asked to surrender. In the winter he took the surrender of over three hundred thousand soldiers and more than a million people, and picked out the best of them and called them the Qing province troops.\n\n'
+          + 'That year is where all his capital came from. Before it he had raised troops twice and lost them twice. After it he had an army that answered to him and to nobody else. And Bao Xin died saving him and his body could not be found, so he had a likeness carved in wood and made the offering and wept over that.',
+      },
+      verdictLostZh:
+        '論曰:兩起兩散而不倦者,天下不過數人 —— **而第三次能不能成,不由他。**',
+      verdictLostEn:
+        'The historian says: few men in the realm raise an army twice, lose it twice, and are not discouraged. Whether the third time works is not up to them.',
+    },
     han: {
       defeat: {
         titleZh: '關東鼠子,豈能為我患',
@@ -3491,6 +3593,32 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 199 易京之戰 ─────────────────────────────────────────────── */
   'scn-199-yijing': {
+    cao: {
+      defeat: {
+        titleZh: '志大而智小,色厲而膽薄',
+        titleEn: 'Great Ambition and Small Judgement, Fierce Outside and Thin Within',
+        textZh:
+          '孔融謂荀彧曰:「紹地廣兵強,'
+          + '田豐、許攸,智計之士也,為之謀;'
+          + '審配、逢紀,盡忠之臣也,任其事;'
+          + '顏良、文醜,勇冠三軍,統其兵 —— 殆難克乎!」\n\n'
+          + '而太祖之言曰:「吾知紹之為人,志大而智小,色厲而膽薄,'
+          + '忌克而少威,兵多而分畫不明,將驕而政令不一,'
+          + '土地雖廣,糧食雖豐,適足以為吾奉也。」\n\n'
+          + '**這是他一生看得最準的一次判斷。**'
+          + '而看準與贏之間,還隔著一座烏巢、一個許攸、'
+          + '和一句「公其勿疑」——'
+          + '任何一環不落地,這段話就只是一段話。',
+        textEn:
+          'Kong Rong said to Xun Yu: Yuan Shao has broad territory and a strong army; Tian Feng and Xu You, men of calculation, plan for him; Shen Pei and Feng Ji, thoroughly loyal, run his business; Yan Liang and Wen Chou, the bravest in the realm, command his troops. Surely he cannot be beaten?\n\n'
+          + 'And Cao Cao said: I know the man. Great ambition and small judgement, fierce outside and thin within, jealous and without authority; many troops but no clear division of them; proud officers and inconsistent orders. His land may be broad and his grain plentiful, but it will do very well as my supply.\n\n'
+          + 'It is the single most accurate judgement he ever made. Between an accurate judgement and a victory there is still Wuchao, and Xu You, and one sentence — let my lord not hesitate. If any of those does not land, the passage is only a passage.',
+      },
+      verdictLostZh:
+        '論曰:料敵如神而終不勝者,史書上不寫他料得準,只寫他敗。',
+      verdictLostEn:
+        'The historian says: when a man reads his enemy perfectly and still loses, the record does not report the reading. It reports the loss.',
+    },
     sun: {
       defeat: {
         titleZh: '沙羨之戰,流血赤野',
@@ -7956,6 +8084,56 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-cao-wins-chibi': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '若不如志,便當渡海投蒼梧吳巨',
+        titleEn: 'If It Fails, I Shall Cross the Sea to Wu Ju in Cangwu',
+        textZh:
+          '當陽既敗,眾十餘萬,輜重數千兩,日行十餘里。'
+          + '或勸速行保江陵,先主曰:'
+          + '「夫濟大事必以人為本,今人歸吾,吾何忍棄去!」\n\n'
+          + '及至夏口,魯肅問所之,'
+          + '備曰:「與蒼梧太守吳巨有舊,欲往投之。」'
+          + '肅曰:「吳巨是凡人,偏在遠郡,行將為人所并,豈足託乎!」\n\n'
+          + '**赤壁那把火不燒起來,他真的要去投吳巨。**'
+          + '——史書上寫他一生「數失城郭」,'
+          + '而每一次都還有下一個地方可去;'
+          + '蒼梧是那張名單上的最後一個。',
+        textEn:
+          'After the rout at Dangyang he had a hundred thousand people with him and several thousand carts of baggage and was making ten li a day. Someone urged him to hurry on and secure Jiangling. He said: any great enterprise takes people as its foundation, and these people have come to me — how could I bear to abandon them?\n\n'
+          + 'At Xiakou, Lu Su asked where he was going. He said: I have an old connection with Wu Ju, the administrator of Cangwu, and mean to go to him. Lu Su said: Wu Ju is an ordinary man in a remote commandery and will shortly be swallowed by somebody. How can you entrust yourself to that?\n\n'
+          + 'If the fire at Red Cliffs does not catch, he really does go to Wu Ju. The record says he lost his cities repeatedly, and every time there was somewhere else to go. Cangwu is the last name on the list.',
+      },
+      verdictLostZh:
+        '論曰:數失城郭而不亡者,以其有所往;**無所往之日,即其亡日。**',
+      verdictLostEn:
+        'The historian says: a man who loses his cities repeatedly and survives does so because there is somewhere to go. The day there is nowhere is the day he ends.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '孤與老賊,勢不兩立',
+        titleEn: 'Between Me and the Old Villain There Is No Standing Together',
+        textZh:
+          '權拔刀斫前奏案曰:「諸將吏敢復有言當迎操者,與此案同!」\n\n'
+          + '那一刀砍下去之前,議者皆勸迎之:'
+          + '「操豺虎也,挾天子以征四方,動以朝廷為辭……'
+          + '且將軍大勢可以拒操者,長江也。今操得荊州,'
+          + '奄有其地,劉表治水軍,蒙衝鬥艦乃以千數,'
+          + '操悉浮以沿江,兼有步兵,水陸俱下,'
+          + '此為長江之險已與我共之矣。」\n\n'
+          + '**張昭說的每一個字都是對的。**'
+          + '這一局裡,那一刀砍在了案上,而火沒有燒起來;'
+          + '於是史書會照著張昭的話,一句一句地應驗。',
+        textEn:
+          'Sun Quan drew his sword and cut the memorial table in front of him: any officer who speaks again of receiving Cao goes the way of this table.\n\n'
+          + 'Before that stroke everyone had been urging surrender: Cao is a wolf and a tiger who holds the Son of Heaven and campaigns in his name, and every move is framed as the court business. And what gave you the strength to resist him was the Yangtze; now he has Jing province and everything on it, and Liu Biao trained a navy, and the war junks number in the thousands, and he can float all of them down the river with his infantry alongside, and come at us by land and water together. The advantage of the river is now shared with him.\n\n'
+          + 'Every word Zhang Zhao said was correct. On this board the sword goes into the table and the fire does not catch, and the record proceeds to bear out Zhang Zhao, sentence by sentence.',
+      },
+      verdictLostZh:
+        '論曰:主戰之議勝於朝堂,而勝負決於江上 —— **二者之間,只隔一陣東南風。**',
+      verdictLostEn:
+        'The historian says: the argument for fighting was won in the hall and the war was decided on the water, and between the two there was one southeast wind.',
+    },
     cao: {
       defeat: {
         titleZh: '東風不與周郎便',
@@ -8167,6 +8345,32 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-yuan-guandu': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '袁紹贏了,而他正在袁紹帳下',
+        titleEn: 'Yuan Shao Won, and He Was Sitting in Yuan Shao Camp',
+        textZh:
+          '建安五年,先主為曹公所破,奔青州,'
+          + '袁譚將步騎迎之,紹遣將道路奉迎,身去鄴二百里與先主相見。'
+          + '駐月餘日,所失亡士卒稍稍來集。\n\n'
+          + '而官渡方急,先主曰:「請南連劉表。」'
+          + '——他走得比誰都早。'
+          + '《先主傳》寫得很委婉:「紹遣先主將本兵復至汝南」;'
+          + '實際上是他看出來了。\n\n'
+          + '**此局他沒有看錯,只是這一次錯的是那個判斷:**'
+          + '袁紹贏了。而一個贏了的袁紹,'
+          + '不會需要一個「數失城郭」的客將,'
+          + '更不會需要一個姓劉的。',
+        textEn:
+          'In the fifth year of Jian-an, beaten by Cao Cao, he fled to Qing province; Yuan Tan came out with foot and horse to receive him and Yuan Shao sent officers to escort him along the road and came two hundred li out from Ye to meet him in person. He stayed a month and more, and his scattered soldiers gradually came in to him.\n\n'
+          + 'Then, with Guandu at its worst, he proposed going south to make contact with Liu Biao. He left earlier than anyone. His biography puts it delicately — Shao sent him with his own troops back to Runan — but what happened is that he had seen how it would go.\n\n'
+          + 'On this board he had not misjudged the situation; the judgement itself was simply wrong. Yuan Shao won. And a Yuan Shao who has won has no use for a guest commander who keeps losing his cities, and still less for one surnamed Liu.',
+      },
+      verdictLostZh:
+        '論曰:客將之安危,不繫於主人之成敗,繫於主人**贏了之後還需不需要他**。',
+      verdictLostEn:
+        'The historian says: a guest commander safety does not depend on whether his host wins. It depends on whether the host still needs him afterwards.',
+    },
     /*
      * 這張盤上曹操只剩宛城一隅 —— 官渡輸掉的那一版。他的敗亡不該讀通用輓歌:
      * 那個「設使國家無有孤,不知當幾人稱帝,幾人稱王」的人,在這裡是輸家。
@@ -8262,6 +8466,59 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-lubu-xuzhou': {
+    cao: {
+      defeat: {
+        titleZh: '兗州八十城,惟三城不叛',
+        titleEn: 'Eighty Cities in Yan Province, and Three Did Not Turn',
+        textZh:
+          '興平元年,太祖征陶謙,'
+          + '張邈與陳宮叛迎呂布,郡縣皆應 ——'
+          + '**唯鄄城、范、東阿三城不動。**\n\n'
+          + '荀彧、程昱保之。昱說范令靳允曰:'
+          + '「今天下大亂,英雄並起,必有命世,能息天下之亂者,'
+          + '此智者所詳擇也。得主者昌,失主者亡。'
+          + '陳宮叛迎呂布而百城皆應,似能有為,'
+          + '然以君觀之,布何如人哉!」\n\n'
+          + '太祖還,與布相持百餘日,'
+          + '蝗蟲起,百姓大餓,布糧食亦盡,各引去。'
+          + '此局那三城沒有保住 —— 而失了兗州的人,'
+          + '史書上叫「客」。',
+        textEn:
+          'In the first year of Xingping, while Cao Cao was campaigning against Tao Qian, Zhang Miao and Chen Gong revolted and brought in Lü Bu, and the commanderies and counties went over with them. Three towns did not move: Juancheng, Fan and Dong-e.\n\n'
+          + 'Xun Yu and Cheng Yu held them. Cheng Yu said to Jin Yun, the magistrate of Fan: the realm is in great disorder and men of ability are rising everywhere, and there will certainly be one with the mandate of the age who can end it — this is what a thinking man weighs carefully. Find the right lord and you flourish; miss him and you are finished. Chen Gong has brought in Lü Bu and a hundred cities have answered, and it looks as though something may come of it. But look at the man yourself: what sort of person is Lü Bu?\n\n'
+          + 'Cao Cao came back and faced Lü Bu for over a hundred days; the locusts came, the people starved, Lü Bu grain ran out too, and both sides drew off. On this board the three towns are not held. A man who loses Yan province is called, in the record, a guest.',
+      },
+      verdictLostZh:
+        '論曰:根本之地,不在大小,在**叛的時候還有沒有人替你關城門。**',
+      verdictLostEn:
+        'The historian says: what makes a base a base is not its size. It is whether, when everything turns, anyone shuts a gate for you.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '徐州不定,則江東無人可以北望',
+        titleEn: 'With Xu Province Unsettled, Nobody in the Southland Looks North',
+        textZh:
+          '策定江東,五年而有六郡;'
+          + '而他真正在等的是北方打成什麼樣子。'
+          + '建安五年,曹公與袁紹相拒於官渡,'
+          + '策陰欲襲許,迎漢帝 —— 未發,為許貢客所害。\n\n'
+          + '此局北方不是兩家相拒,是三家糾纏:'
+          + '呂布據徐州而不倒,則曹公之背常有一刺,'
+          + '袁紹之南亦不能一意南下。\n\n'
+          + '**看起來是機會,而細算不是:**'
+          + '襲許要走徐州,而徐州在一個誰也不服的人手裡;'
+          + '借道不成,繞道則遠 ——'
+          + '江東的北望,自此仍舊只是望。',
+        textEn:
+          'Sun Ce settled the Southland and had six commanderies in five years, and what he was really waiting on was how the north turned out. In the fifth year of Jian-an, with Cao Cao and Yuan Shao locked at Guandu, he quietly planned to raid Xu and take custody of the Han emperor — and was killed by Xu Gong retainers before he moved.\n\n'
+          + 'On this board the north is not two houses facing off but three tangled together: with Lü Bu holding Xu province and not falling, there is a permanent thorn behind Cao Cao and Yuan Shao cannot come south with his whole mind on it.\n\n'
+          + 'It looks like an opening and the arithmetic says otherwise: a raid on Xu goes through Xu province, and Xu province is in the hands of a man who defers to nobody. Passage cannot be borrowed and the way around is long. The Southland goes on looking north and only looking.',
+      },
+      verdictLostZh:
+        '論曰:三家相持,未必利於第四家 —— 尤其當那條路正好從第三家門前過。',
+      verdictLostEn:
+        'The historian says: three powers deadlocked is not automatically good for a fourth, especially when the road runs past the third one door.',
+    },
     /* 下邳沒陷的那個世界 —— 而其餘幾家的下場,史書上寫得比呂布還清楚。 */
     'yuan-shu': {
       defeat: {
@@ -8346,6 +8603,79 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-machao-guanzhong': {
+    cao: {
+      defeat: {
+        titleZh: '馬兒不死,吾無葬地也',
+        titleEn: 'If the Ma Boy Lives, I Shall Have Nowhere to Be Buried',
+        textZh:
+          '渭南之役,公將過河,超將步騎萬餘人來逼營,矢下如雨。'
+          + '許褚扶公上船,以左手舉馬鞍蔽公,'
+          + '船工為流矢所中死,褚右手並溯船,僅乃得渡。\n\n'
+          + '既定關中,諸將問曰:「初,賊守潼關,渭北道缺,'
+          + '不從河東擊馮翊而反守潼關,引日而後北渡,何也?」'
+          + '公曰:「賊守潼關,若吾入河東,賊必引守諸津,'
+          + '則西河未可渡……故盛兵向潼關;賊悉眾南守,西河之備虛,'
+          + '故二將得擅取西河。」——**他贏在對面把兵擺錯了地方。**\n\n'
+          + '而此局對面沒有擺錯。公嘗嘆曰:「馬兒不死,吾無葬地也。」'
+          + '這句話在史書上是慶幸,在這裡是判詞。',
+        textEn:
+          'At Weinan, as Cao Cao was crossing the river, Ma Chao came at the camp with over ten thousand foot and horse and the arrows came down like rain. Xu Chu got him aboard a boat and held a saddle over him with his left hand; the boatman was killed by a stray arrow and Xu Chu poled with his right, and they barely got across.\n\n'
+          + 'After Guanzhong was settled his officers asked: at first the enemy held Tong pass and the road north of the Wei was open — why not strike Pingyi from Hedong instead of sitting in front of Tong pass and only crossing north later? He said: if I had gone into Hedong while they held Tong pass, they would have gone to hold all the fords and the western river could not have been crossed. So I made a show of strength at the pass; they all went south to hold it, the western bank was left thin, and my two officers took it at will.\n\n'
+          + 'He won because the other side put its troops in the wrong place. On this board the other side did not. He once said, with relief, that if the Ma boy lived he would have nowhere to be buried. Here it is not relief. It is the verdict.',
+      },
+      verdictLostZh:
+        '論曰:關中十部,其強在合,其弱在分 —— **而分他們的是他,不分的也是他。**',
+      verdictLostEn:
+        'The historian says: the ten captains of Guanzhong were strong together and weak apart. He was the one who divided them — and on the day he could not, so was he.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '入蜀那條路,是別人替他讓開的',
+        titleEn: 'The Road Into Shu Was Cleared by Somebody Else',
+        textZh:
+          '劉璋之所以迎他入蜀,是因為北面有張魯,'
+          + '而張魯之所以可怕,是因為關中一亂,涼州之兵可以南下 ——'
+          + '**璋懼的從來不是漢中那五斗米,是漢中背後的那條路。**\n\n'
+          + '此局關中盡入馬超之手,那條路不再是威脅,是一堵牆:'
+          + '涼州之兵有了自己的君主,不會替誰南下。'
+          + '於是益州不必請援,張松之議亦無由發。\n\n'
+          + '那一年他四十九歲,自新野以來,'
+          + '客荊州七年 —— 而這一局裡,他繼續客下去。',
+        textEn:
+          'Liu Zhang invited him into Shu because Zhang Lu was to the north, and Zhang Lu was frightening because if Guanzhong came apart the Liang province cavalry could come south. What Zhang was afraid of was never the Five Pecks of Rice. It was the road behind them.\n\n'
+          + 'On this board Guanzhong is entirely Ma Chao, and that road is no longer a threat but a wall: the Liang cavalry has a sovereign of its own now and will not come south for anyone. So Yi province does not need to ask for help, and Zhang Song has no occasion to make his proposal.\n\n'
+          + 'He was forty-nine that year and had been a guest in Jing province for seven, ever since Xinye. On this board he goes on being a guest.',
+      },
+      verdictLostZh:
+        '論曰:寄寓者之機,常在他人之懼。**他人不懼,則無機可乘。**',
+      verdictLostEn:
+        'The historian says: a guest opening comes out of somebody else fear. When nobody is afraid, there is no opening.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '北方多了一家,而長江還是那一條',
+        titleEn: 'One More House in the North, and Still the Same River',
+        textZh:
+          '關中自立,北方由一而二 —— 對江東來說,'
+          + '這聽起來是天大的好消息:曹公的兵從此要分兩處用。\n\n'
+          + '而細看地圖,好處落不到吳身上。'
+          + '涼州與江東之間隔著整個中原,'
+          + '合肥還是那座合肥,襄陽還是那座襄陽;'
+          + '**分兵的是曹公,而分到的那一份,壓在漢中與關隴,'
+          + '不在淮南。**\n\n'
+          + '魯肅之策要的是「天下有釁」,'
+          + '而這一次的釁開在兩千里之外 ——'
+          + '看得見,用不上,這是吳國四十年最常見的一種處境。',
+        textEn:
+          'Guanzhong standing on its own turns one northern house into two, which sounds like the best news the Southland could have: from now on Cao Cao troops have to be in two places.\n\n'
+          + 'Look at the map and the benefit does not land on Wu. The whole central plain lies between Liang province and the Southland; Hefei is still Hefei and Xiangyang is still Xiangyang. Cao Cao does divide his forces, and the divided part presses on Hanzhong and the Long passes, not on Huainan.\n\n'
+          + 'Lu Su strategy wanted a fracture in the realm. This one opened two thousand li away. Visible and unusable — the most common situation Wu found itself in across forty years.',
+      },
+      verdictLostZh:
+        '論曰:敵之分,未必為我之利 —— 要看它分在哪裡。',
+      verdictLostEn:
+        'The historian says: your enemy dividing is not automatically to your advantage. It depends where the division falls.',
+    },
     'ma-chao': {
       defeat: {
         titleZh: '抹書之計不成',
@@ -8377,6 +8707,32 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-sunce-lives': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '南邊那條退路,被人先走了',
+        titleEn: 'Somebody Took the Southern Road First',
+        textZh:
+          '官渡之際,他南連劉表,屯新野,'
+          + '荊州豪傑歸先主者日益多 —— '
+          + '而表疑其心,陰禦之。'
+          + '這七年之所以住得下去,是因為**荊州北面有曹公、'
+          + '東面有一個剛死了主君的江東**:'
+          + '劉表兩頭要防,誰也不能得罪,於是也不能動他。\n\n'
+          + '此局孫策未死。江東不但沒有內顧之憂,'
+          + '而且正在西向 —— 黃祖之後便是江陵。'
+          + '劉表的東線一緊,新野那點客兵就從「屏障」變成了「累贅」。\n\n'
+          + '髀肉之嘆的那一年,他四十七歲。'
+          + '**這一局裡,連那句嘆的地方都沒有。**',
+        textEn:
+          'Around the time of Guandu he went south to Liu Biao and camped at Xinye, and men of standing in Jing province came over to him in growing numbers — and Liu Biao, suspicious, quietly kept him in check. What made those seven years liveable was that Jing province had Cao Cao to the north and, to the east, a Southland that had just lost its lord: Liu Biao had to watch both ways and could afford to offend nobody, and therefore could not move against him either.\n\n'
+          + 'On this board Sun Ce does not die. The Southland has no internal crisis and is moving west — after Huang Zu comes Jiangling. The moment Liu Biao eastern line tightens, the small guest force at Xinye stops being a screen and becomes a liability.\n\n'
+          + 'He was forty-seven the year he remarked on the flesh growing back on his thighs. On this board there is not even a place to make the remark.',
+      },
+      verdictLostZh:
+        '論曰:寄寓之所以能寄,在主人有兩頭之患。**患去,則客先去。**',
+      verdictLostEn:
+        'The historian says: a guest can stay while his host has trouble on two sides. When the trouble goes, the guest goes first.',
+    },
     /* 小霸王沒死的那個世界 —— 官渡照常在打,而北邊那兩家的下場照舊。 */
     cao: {
       defeat: {
@@ -8594,6 +8950,32 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-yuanshu-empire': {
+    cao: {
+      defeat: {
+        titleZh: '奉天子以令不臣,而天子不止一個',
+        titleEn: 'He Held the Son of Heaven, and There Was More Than One',
+        textZh:
+          '毛玠語太祖曰:「宜奉天子以令不臣,'
+          + '脩耕植,畜軍資,如此則霸王之業可成也。」'
+          + '太祖敬納其言。\n\n'
+          + '**這條策略的全部力量,來自「只有一個」:**'
+          + '天下只有一個天子,而他在許都。'
+          + '袁術僭號而敗,不是因為他弱,'
+          + '是因為他把自己變成了那個「不臣」——'
+          + '一年之內所有人都得表態,而所有人都表得很快。\n\n'
+          + '此局壽春的號守住了。'
+          + '兩個天子並存,則「奉天子」四個字不再是獨門;'
+          + '而許都那一位,價值正是由「別無分號」定的。',
+        textEn:
+          'Mao Jie said to Cao Cao: you should hold the Son of Heaven and use him to command those who will not submit, work the fields and store military supplies, and the enterprise of a hegemon can be accomplished. Cao Cao took the advice respectfully.\n\n'
+          + 'The whole force of that strategy comes from there being only one: one Son of Heaven in the realm, and he is at Xu. Yuan Shu took a title and failed, not because he was weak, but because he turned himself into the one who will not submit — inside a year everyone had to declare, and everyone declared quickly.\n\n'
+          + 'On this board the Shouchun title holds. With two emperors in existence, holding the Son of Heaven is no longer an exclusive line of business — and the one at Xu was priced entirely on there being no other branch.',
+      },
+      verdictLostZh:
+        '論曰:挾天子之利,在天下無二 —— **有二,則挾者與所挾者俱賤。**',
+      verdictLostEn:
+        'The historian says: the value of holding the Son of Heaven lies in there being no other. With two, both the holder and the held are cheapened.',
+    },
     /* 僭號守得住的那個世界 —— 而周邊幾家的敗法,史書上各有各的定格。 */
     lubu: {
       defeat: {
@@ -8759,6 +9141,56 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-zhouyu-lives': {
+    cao: {
+      defeat: {
+        titleZh: '孤燒船自退,橫使周瑜虛獲此名',
+        titleEn: 'I Burned the Ships Myself and Handed Zhou Yu the Credit',
+        textZh:
+          '赤壁之敗,公與孫權書曰:'
+          + '「赤壁之役,值有疾病,孤燒船自退,橫使周瑜虛獲此名。」\n\n'
+          + '這句話有一半是真的:'
+          + '軍中確有大疫,吏士多死,乃引軍還。'
+          + '而另一半是**它必須是真的** ——'
+          + '一個從未在陸上輸過的人,不能承認自己輸在水上。\n\n'
+          + '此局那個「虛獲此名」的人沒有死。'
+          + '他三十六歲取江陵,三十七歲請取蜀,'
+          + '而此後十年他都還在 ——'
+          + '**那封信裡的自我安慰,要用十年來一年一年地推翻。**',
+        textEn:
+          'After Red Cliffs, Cao Cao wrote to Sun Quan: at the Red Cliffs affair there happened to be sickness; I burned the ships and withdrew of my own accord, and so handed Zhou Yu a reputation he did not earn.\n\n'
+          + 'Half of that is true — there was a great epidemic in the army, many officers and men died, and he did withdraw. The other half had to be true: a man who had never lost on land could not admit to losing on water.\n\n'
+          + 'On this board the man who did not earn the reputation does not die. He took Jiangling at thirty-six and asked for Shu at thirty-seven, and he is still there ten years later. The consolation in that letter has to be disproved one year at a time, for ten years.',
+      },
+      verdictLostZh:
+        '論曰:敗而諱之,則不知所以敗;不知所以敗,則再敗。',
+      verdictLostEn:
+        'The historian says: a defeat you talk around is a defeat you do not understand, and one you do not understand you have again.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '備,梟雄也,宜徙吳',
+        titleEn: 'Liu Bei Is a Bird of Prey; Move Him to Wu',
+        textZh:
+          '瑜上疏曰:「劉備以梟雄之姿,而有關羽、張飛熊虎之將,'
+          + '必非久屈為人用者。愚謂大計宜徙備置吳,盛為築宮室,'
+          + '多其美女玩好,以娛其耳目;分此二人,各置一方,'
+          + '使如瑜者得挾與攻戰,大事可定也。'
+          + '今猥割土地以資業之,聚此三人,俱在疆場,'
+          + '恐蛟龍得雲雨,終非池中物也。」\n\n'
+          + '權以曹公在北,方當廣攬英雄,不從。\n\n'
+          + '**這一局裡,上這道疏的人沒有死** ——'
+          + '而他每多活一年,那道疏就多一分被採納的可能。'
+          + '池中之物與雲雨之間,隔的從來只是一個人的壽命。',
+        textEn:
+          'Zhou Yu memorialised: Liu Bei has the makings of a bird of prey and has Guan Yu and Zhang Fei, generals like bear and tiger; he will not stay long in anyone service. My view is that he should be moved to Wu and given a fine residence, plenty of beautiful women and objects to occupy his eyes and ears, and the other two separated and posted apart, so that someone like myself can take them into the field. The great business could then be settled. To carve off territory now to set him up, and gather all three of them together on the frontier, is to risk a dragon getting cloud and rain — he will not stay a creature of the pond.\n\n'
+          + 'Sun Quan, with Cao Cao in the north and a policy of gathering men of ability, did not act on it.\n\n'
+          + 'On this board the man who wrote that memorial does not die. Every extra year he lives is another chance of it being acted on. Between a creature of the pond and cloud and rain there was only ever one man lifespan.',
+      },
+      verdictLostZh:
+        '論曰:寄人籬下者,所賴非其力,是**那個主張徙他的人說話不算數。**',
+      verdictLostEn:
+        'The historian says: what shelters a man living under someone else roof is not his own strength. It is that the person arguing for his removal is not being listened to.',
+    },
     sun: {
       defeat: {
         titleZh: '公瑾未歿於巴丘',
@@ -8791,6 +9223,56 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-pangtong-lives': {
+    cao: {
+      defeat: {
+        titleZh: '西邊那個人不必親自西去了',
+        titleEn: 'The Man in the West No Longer Has to Go West Himself',
+        textZh:
+          '漢中之爭,勝負繫於一件很實際的事:'
+          + '誰能在那條路上同時放兩個人。\n\n'
+          + '史實裡不能。龐統死於雒城,'
+          + '諸葛亮、張飛、趙雲乃自荊州溯江而上,分定郡縣;'
+          + '**荊州從此只剩一個關羽。**'
+          + '八年之後,那件事的帳單送到了。\n\n'
+          + '此局士元未死。既治益州,則臥龍不必西去 ——'
+          + '襄樊之北,對面站的是兩個人。'
+          + '公自漢中還,謂左右曰「雞肋」的那一年,'
+          + '這一次沒有可以棄的餘地。',
+        textEn:
+          'The contest for Hanzhong turned on something very practical: which side could put two capable men on that road at once.\n\n'
+          + 'In the record, one side could not. Pang Tong died at Luocheng, so Zhuge Liang, Zhang Fei and Zhao Yun went up the river from Jing province settling the commanderies as they went — and from then on Jing province had only Guan Yu in it. Eight years later the bill for that arrived.\n\n'
+          + 'On this board Pang Tong lives. With him governing Yi province the Sleeping Dragon does not have to go west, and north of Xiangyang and Fancheng there are two men on the other side. In the year Cao Cao came back from Hanzhong and said chicken ribs to his staff, there is nothing here that can be given up.',
+      },
+      verdictLostZh:
+        '論曰:國之強弱,常不在兵數,在**同一時刻能放幾個人在關鍵的位置上。**',
+      verdictLostEn:
+        'The historian says: the strength of a state is usually not in its troop numbers but in how many capable men it can have standing in decisive places at the same moment.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '荊州那邊多了一個人,而借出去的還是那幾郡',
+        titleEn: 'One More Man in Jing Province, and the Same Commanderies Still Out on Loan',
+        textZh:
+          '對吳而言,西邊的鄰居強一分,'
+          + '荊州那筆帳就難算一分。\n\n'
+          + '史實裡,關羽獨鎮荊州八年,'
+          + '而呂子明的白衣之所以能渡,'
+          + '正是因為那八年裡**荊州只有一個人可以被算計**:'
+          + '驕其志、卑其辭、稱疾還建業,一套針對一個人的手法。\n\n'
+          + '此局荊州不止一個人。'
+          + '單刀赴會之後,魯肅的湘水之盟仍在,'
+          + '而盟約劃的界,是要靠對面沒有餘力來守的 ——'
+          + '**對面有餘力的那一天,盟約就只是一張紙。**',
+        textEn:
+          'For Wu, every increment of strength in the western neighbour makes the Jing province account harder to settle.\n\n'
+          + 'In the record Guan Yu held Jing province alone for eight years, and what made Lü Meng crossing in white possible was precisely that in those eight years there was only one man there to be worked on: feed his pride, humble your own language, take sick leave to Jianye. A whole method aimed at one person.\n\n'
+          + 'On this board there is more than one man there. After the single-blade meeting Lu Su treaty on the Xiang still stands, and a treaty line is held by the other side lacking the capacity to cross it. On the day it has the capacity, the treaty is a sheet of paper.',
+      },
+      verdictLostZh:
+        '論曰:針對一個人的計謀,遇到兩個人就不成立。',
+      verdictLostEn:
+        'The historian says: a stratagem designed around one man stops working when there are two of them.',
+    },
     'liu-bei': {
       defeat: {
         titleZh: '臥龍鳳雛俱在',
@@ -8821,6 +9303,58 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-guanyu-north': {
+    cao: {
+      defeat: {
+        titleZh: '吾知禁三十年,何意臨危處難,反不如龐德邪',
+        titleEn: 'I Have Known Yu Jin Thirty Years, and at the Test He Was Less Than Pang De',
+        textZh:
+          '秋,大霖雨,漢水溢,平地水數丈,'
+          + '于禁等七軍皆沒。禁與諸將登高望水,無所迴避,'
+          + '羽乘大船就攻之,禁遂降。'
+          + '龐德被甲持弓,箭不虛發,'
+          + '格鬥自平旦至日中,矢盡短兵接;'
+          + '船覆,為羽所得,立而不跪,遂殺之。\n\n'
+          + '公聞之,哀嘆者久之,曰:'
+          + '「吾知禁三十年,何意臨危處難,反不如龐德邪!」\n\n'
+          + '**三十年的判斷,一場水就沖沒了。**'
+          + '而此局那場水沒有退:陸渾群盜遙受印號,'
+          + '許都以南,郡縣望風;議徙都者不止一人。',
+        textEn:
+          'In the autumn there was torrential rain, the Han river burst, the flat country stood several yards deep, and the seven armies under Yu Jin were all lost. Yu Jin and his officers climbed high ground and had nowhere to go; Guan Yu came at them in large boats and Yu Jin surrendered. Pang De put on armour and took his bow and did not waste an arrow, and fought from dawn to noon, and when the arrows were gone fought with short weapons; when his boat capsized and Guan Yu had him, he stood and would not kneel, and was killed.\n\n'
+          + 'Cao Cao heard of it and mourned a long while, and said: I have known Yu Jin thirty years, and how is it that at the test he turned out less than Pang De?\n\n'
+          + 'Thirty years of judgement washed away by one flood. And on this board the water does not go down: the bandit bands at Luhun take seals at a distance, the counties south of Xu turn with the wind, and more than one voice at court is for moving the capital.',
+      },
+      verdictLostZh:
+        '論曰:知人三十年而不知其臨危,則所知者非其人,是其平日。',
+      verdictLostEn:
+        'The historian says: to know a man thirty years and not know what he does at the test is to have known his ordinary days, not him.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '羽君臣矜其詐力,所在反覆',
+        titleEn: 'Guan Yu and His People Trade on Force and Deceit, and Turn Wherever They Are',
+        textZh:
+          '關羽北伐,對吳來說從來不是好消息。\n\n'
+          + '呂蒙密陳曰:「羽素驍雄,有兼并之心,'
+          + '且居國上流,其勢難久。'
+          + '……今征虜守南郡,潘璋住白帝,蔣欽將游兵萬人,'
+          + '循江上下,應敵所在,蒙為國家前據襄陽,如此,'
+          + '何憂於操,何賴於羽?且羽君臣矜其詐力,所在反覆,'
+          + '不可以腹心待也。」\n\n'
+          + '**「居國上流」四個字,是吳一切決定的根**:'
+          + '荊州在誰手裡,建業就在誰的下游。'
+          + '此局關羽威震華夏 —— 上游那個人變強了,'
+          + '而下游的人只剩兩種選擇,而其中一種這一次沒有成功。',
+        textEn:
+          'Guan Yu marching north was never good news in the Southland.\n\n'
+          + 'Lü Meng argued privately: Guan Yu has always been bold and ambitious and means to swallow us, and he sits upstream of us, which cannot last. Put Sun Jiao in Nan commandery, Pan Zhang at Baidi, Jiang Qin with ten thousand mobile troops working up and down the river to meet whatever comes, and let me take Xiangyang for the state — then what is there to fear from Cao and what do we need from Guan Yu? Besides, he and his people trade on force and deceit and turn whichever way suits them, and cannot be treated as intimates.\n\n'
+          + 'The phrase sits upstream of us is the root of every decision Wu ever made: whoever holds Jing province has Jianye downstream of him. On this board Guan Yu shakes the whole country — the man upstream has grown stronger, and the man downstream has only two choices, one of which did not work this time.',
+      },
+      verdictLostZh:
+        '論曰:上下游之勢,不可以盟約易之 —— 這是吳一生的難處。',
+      verdictLostEn:
+        'The historian says: which of you is upstream cannot be changed by treaty. That was the standing difficulty of Wu.',
+    },
     'liu-bei': {
       defeat: {
         titleZh: '威震華夏',
