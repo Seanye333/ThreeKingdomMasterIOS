@@ -5408,6 +5408,91 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:若龐統不死(chain-pangtong)--------------------------------
+   * 前提是落鳳坡之箭射中的是坐騎。那麼這張盤要回答的是:鳳雛活著,
+   * 臥龍就不必西去 —— 蜀漢兩線分兵那個致命隱患,從此在誰身上。
+   */
+  {
+    id: 'evt-pangtong-alt-1',
+    name: { en: 'Not the War of a Benevolent Man', zh: '非仁者之兵' },
+    yearMin: 215,
+    yearMax: 218,
+    requires: [
+      { kind: 'flag-set', key: 'chain-pangtong' },
+      { kind: 'officer-active', officerId: 'pang-tong' },
+      { kind: 'officer-alive', officerId: 'liu-bei' },
+      { kind: 'flag-unset', key: 'pangtong-alt-feast' },
+    ],
+    description:
+      "At the feast in Fucheng, Liu Bei says this is a joyful occasion. Pang Tong says: to invade another man's state and call it a party is not the war of a benevolent man. Liu Bei, drunk and angry, tells him to get out.",
+    descriptionZh: '涪城大會置酒,備謂統曰:「今日之會,可謂樂矣。」統曰:「伐人之國而以為歡,非仁者之兵也。」備醉,怒曰:「武王伐紂,前歌後舞,非仁者邪?卿言不當,宜速起出!」於是統起而退。',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    choices: [
+      {
+        id: 'recall',
+        label: { zh: '既而悔,請還 —— 復故位', en: 'Regret it, and call him back' },
+        effects: [
+          { kind: 'flag', key: 'pangtong-alt-feast' },
+          { kind: 'officer-loyalty', officerId: 'pang-tong', delta: 20 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 6 },
+        ],
+      },
+      {
+        id: 'keep-out',
+        label: { zh: '不召 —— 軍中無戲言', en: 'Let him stay out' },
+        effects: [
+          { kind: 'flag', key: 'pangtong-alt-feast' },
+          { kind: 'officer-loyalty', officerId: 'pang-tong', delta: -18 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: -8 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 這張盤的前提本身 —— 鳳雛既在益州,孔明就不必入川;而荊州有沒有一個
+     * 能與關羽共事的人,是後來那十年的分水嶺。
+     */
+    id: 'evt-pangtong-alt-2',
+    name: { en: "The Dragon Need Not Go West", zh: '臥龍不必西去' },
+    yearMin: 215,
+    yearMax: 219,
+    requires: [
+      { kind: 'flag-set', key: 'chain-pangtong' },
+      { kind: 'officer-active', officerId: 'pang-tong' },
+      { kind: 'officer-active', officerId: 'zhuge-liang' },
+      { kind: 'flag-unset', key: 'pangtong-alt-west' },
+    ],
+    description:
+      "With Pang Tong running Yi province, there is no reason to summon Zhuge Liang up the river. The question is what to do with him instead: leave him in Jingzhou beside Guan Yu, or bring him west anyway.",
+    descriptionZh: '鳳雛既治益州,則孔明不必溯江而西 —— 水鏡所謂「臥龍鳳雛,得一可安天下」,這一回兩個都在。所餘者一問:那一個留在荊州,還是仍舊召之入川。',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    choices: [
+      {
+        id: 'stay',
+        label: { zh: '留鎮荊州 —— 與雲長共事', en: 'Leave him in Jingzhou, beside Guan Yu' },
+        effects: [
+          { kind: 'flag', key: 'pangtong-alt-west' },
+          { kind: 'city-defense', cityId: 'jiangling', delta: 16 },
+          { kind: 'city-loyalty', cityId: 'jiangling', delta: 12 },
+          { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 8 },
+        ],
+      },
+      {
+        id: 'summon',
+        label: { zh: '仍召入川 —— 兩人共佐', en: 'Summon him west anyway — both at your side' },
+        effects: [
+          { kind: 'flag', key: 'pangtong-alt-west' },
+          { kind: 'city-defense', cityId: 'chengdu', delta: 14 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 8 },
+          { kind: 'city-loyalty', cityId: 'jiangling', delta: -10 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',

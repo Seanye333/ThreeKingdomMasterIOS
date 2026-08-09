@@ -8391,6 +8391,7 @@ export const SCENARIO_WHATIF_ZHOUYU_LIVES: Scenario = {
 //    he holds Shu so the Sleeping Dragon need never leave Jingzhou. ──
 export const SCENARIO_WHATIF_PANGTONG_LIVES: Scenario = {
   id: 'scn-whatif-pangtong-lives',
+  eventFlags: ['chain-pangtong'],
   openingRelations: [
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
     { a: 'cao', b: 'sun', score: -70, status: 'neutral' },
