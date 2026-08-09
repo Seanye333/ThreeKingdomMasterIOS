@@ -5067,6 +5067,92 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     mood: 'ominous',
   },
 
+  /* ---- 假想:若孫策不死(chain-sunce)-----------------------------------
+   * 前提是許貢門客那一刺沒中。他被刺那年正在做的事,史書寫得很清楚:
+   * 「建安五年,曹公與袁紹相拒於官渡,策陰欲襲許,迎漢帝。」
+   */
+  {
+    id: 'evt-sunce-alt-1',
+    name: { en: 'Secretly, to Xu', zh: '陰欲襲許' },
+    yearMin: 201,
+    yearMax: 203,
+    requires: [
+      { kind: 'flag-set', key: 'chain-sunce' },
+      { kind: 'officer-active', officerId: 'sun-ce' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'flag-unset', key: 'sunce-alt-plan' },
+    ],
+    description:
+      "Cao Cao is pinned at Guandu with everything he has. Sun Ce, twenty-six and never beaten, has the shortest road to an empty Xuchang and the Emperor sitting in it. His officers point out that the road runs past Huang Zu, who killed his father.",
+    descriptionZh: '曹公與袁紹相拒於官渡,許下空虛。策年二十六而未嘗一敗,去許最近者莫如江東。而諸將言:北上之道,先過黃祖 —— 那是殺父之讎。',
+    effects: [],
+    chooserRulerId: 'sun-ce',
+    choices: [
+      {
+        id: 'north',
+        label: { zh: '北上襲許,迎天子', en: 'North to Xu — and the Emperor' },
+        effects: [
+          { kind: 'flag', key: 'sunce-alt-plan' },
+          { kind: 'flag', key: 'sunce-alt-north' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'sun-ce', multiplier: 1.15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-ce', delta: 8 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -6 },
+        ],
+      },
+      {
+        id: 'west',
+        label: { zh: '先報父讎 —— 西討黃祖', en: "First the blood debt — west against Huang Zu" },
+        effects: [
+          { kind: 'flag', key: 'sunce-alt-plan' },
+          { kind: 'city-troops-multiplier', cityId: 'jiangxia', multiplier: 0.7 },
+          { kind: 'officer-loyalty', officerId: 'sun-ce', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-ce', delta: 4 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 代價那一面 —— 郭嘉在他死前就把話說完了,而那段話是這張盤真正的難題:
+     * 前提保護攔得住事件,攔不住他自己的性子。
+     */
+    id: 'evt-sunce-alt-2',
+    name: { en: "What Guo Jia Said", zh: '郭嘉之言' },
+    yearMin: 201,
+    yearMax: 205,
+    requires: [
+      { kind: 'flag-set', key: 'chain-sunce' },
+      { kind: 'officer-active', officerId: 'sun-ce' },
+      { kind: 'flag-unset', key: 'sunce-alt-warning' },
+    ],
+    description:
+      "Guo Jia's assessment gets repeated back to him: Sun Ce has killed every man of standing in Jiangdong, and every one of them left someone behind; he rides out with no guard; a hundred thousand men are no protection against one determined nobody.",
+    descriptionZh: '有以郭嘉語聞於策者:「策新并江東,所誅皆英豪雄傑,能得人死力者也。然策輕而無備,雖有百萬之眾,無異於獨行中原也。若刺客伏起,一人之敵耳。」策聞之而笑,左右不敢言。',
+    effects: [],
+    chooserRulerId: 'sun-ce',
+    choices: [
+      {
+        id: 'guard',
+        label: { zh: '自此出必以兵衛', en: 'Ride with a guard from now on' },
+        effects: [
+          { kind: 'flag', key: 'sunce-alt-warning' },
+          { kind: 'flag', key: 'sunce-alt-guarded' },
+          { kind: 'officer-loyalty', officerId: 'sun-ce', delta: 6 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-ce', delta: -3 },
+        ],
+      },
+      {
+        id: 'laugh',
+        label: { zh: '笑而不改 —— 大丈夫豈畏匹夫', en: 'Laugh it off' },
+        effects: [
+          { kind: 'flag', key: 'sunce-alt-warning' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-ce', delta: 5 },
+          { kind: 'officer-loyalty', officerId: 'sun-quan', delta: -6 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',

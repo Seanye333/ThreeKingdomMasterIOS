@@ -8174,6 +8174,7 @@ const CITY_OWNERSHIP_SUNCE_LIVES: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_SUNCE_LIVES: Scenario = {
   id: 'scn-whatif-sunce-lives',
+  eventFlags: ['chain-sunce'],
   openingRelations: [
     { a: 'sun', b: 'cao', score: -90, status: 'neutral' },  // 小霸王北上襲許,直取天子
     { a: 'cao', b: 'yuan-shao', score: -90, status: 'neutral' },  // 官渡相持
