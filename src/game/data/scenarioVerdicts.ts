@@ -2640,6 +2640,31 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 214 入主西川 ─────────────────────────────────────────────── */
   'scn-214-xichuan': {
+    sun: {
+      defeat: {
+        titleZh: '借荊州的那筆帳,這一年開始算',
+        titleEn: 'This Is the Year the Jing Province Account Was Opened',
+        textZh:
+          '是歲,呂蒙、甘寧攻皖城,晨夜攻之,食時而破,'
+          + '獲廬江太守朱光及參軍董和,男女數萬口 ——'
+          + '吳在江北,第一次拿到一塊像樣的地。\n\n'
+          + '而同年,劉備定益州。'
+          + '權遣諸葛瑾從求荊州諸郡,備不許,曰:'
+          + '「吾方圖涼州,涼州定,乃盡以荊州相與。」'
+          + '權曰:「此假而不反,而欲以虛辭引歲。」'
+          + '遂置長沙、零陵、桂陽三郡長吏,關羽盡逐之。\n\n'
+          + '**單刀赴會的那一年,同盟仍在,而帳已經開始算了。**'
+          + '此後五年,吳的每一個決定都繞著這筆帳。',
+        textEn:
+          'That year Lü Meng and Gan Ning attacked Wan, went at it day and night and had it by the morning meal, taking the Lujiang administrator Zhu Guang, the staff officer Dong He, and tens of thousands of people. It was the first decent piece of ground Wu had got north of the river.\n\n'
+          + 'And in the same year Liu Bei settled Yi province. Sun Quan sent Zhuge Jin to ask for the Jing commanderies and was refused: I am about to take Liang province, and when Liang is settled I will hand over the whole of Jing. Sun Quan said: this is borrowing without returning, and putting me off with words while the years go by. He appointed magistrates to Changsha, Lingling and Guiyang, and Guan Yu drove all of them out.\n\n'
+          + 'In the year of the single-blade meeting the alliance was still standing, and the account had been opened. For the next five years every decision Wu made went around that account.',
+      },
+      verdictLostZh:
+        '論曰:同盟之亡,常始於一筆算得清而說不清的帳。',
+      verdictLostEn:
+        'The historian says: alliances usually start to die over an account that can be calculated exactly and not discussed at all.',
+    },
     'liu-bei': {
       defeat: {
         titleZh: '雒城一年',
@@ -2726,6 +2751,29 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 211 渭南之戰 ─────────────────────────────────────────────── */
   'scn-211-weinan': {
+    sun: {
+      defeat: {
+        titleZh: '徙治秣陵,築石頭城',
+        titleEn: 'He Moved the Seat to Moling and Built the Stone City',
+        textZh:
+          '建安十六年,權徙治秣陵,明年城石頭,改名建業 ——'
+          + '劉備勸之曰:「秣陵有小江百餘里,可以安大船,'
+          + '吾方理水軍,當移據之。」\n\n'
+          + '這一年他做的每一件事,都在把一個「暫住之地」變成一座都城:'
+          + '築城、置官、立市。而都城的意思是**再也退不了了**。\n\n'
+          + '曹公在渭南,一封抹改過的信破了關中十部;'
+          + '而長江那條線,自此要用整個政權去守。'
+          + '守得住的那些年叫國,守不住的那一年 —— 就是這一段。',
+        textEn:
+          'In the sixteenth year of Jian-an he moved his seat to Moling, walled the Stone City the following year and renamed the place Jianye. Liu Bei had recommended it: Moling has a hundred li of sheltered water where large ships can lie; I am organising a navy and would move there myself.\n\n'
+          + 'Everything he did that year turned somewhere people were staying into a capital: walls, offices, markets. And a capital means there is no longer anywhere to fall back to.\n\n'
+          + 'Cao Cao was at Weinan, where one doctored letter took apart ten confederate captains. And from then on the line of the Yangtze had to be held with the whole weight of the state. The years it held are called a kingdom. The year it did not is this.',
+      },
+      verdictLostZh:
+        '論曰:立都者,以退路換正統。**正統既立,退路即無。**',
+      verdictLostEn:
+        'The historian says: founding a capital trades the line of retreat for legitimacy. Once the legitimacy is there, the retreat is not.',
+    },
     cao: {
       defeat: {
         titleZh: '離之而已',
@@ -2900,6 +2948,30 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 189 十常侍之亂 ───────────────────────────────────────────── */
   'scn-189-eunuchs': {
+    sun: {
+      defeat: {
+        titleZh: '洛陽有變的那一年,他在長沙',
+        titleEn: 'The Year Luoyang Came Apart, He Was in Changsha',
+        textZh:
+          '中平六年,天下之事都在洛陽:大將軍與中官相圖,'
+          + '袁紹勸盡誅之,董卓將兵在夕陽亭。\n\n'
+          + '而孫堅在長沙 —— 距洛陽二千餘里。'
+          + '他這一生的位置一向如此:十七歲在錢塘手刃海賊,'
+          + '討許昌於會稽,平區星於長沙,'
+          + '越境擊周朝、郭石於零陵、桂陽 ——'
+          + '**每一件都做成了,每一件都在別人看不見的地方。**\n\n'
+          + '「江東猛虎」這個名號,是後來才傳到中原的;'
+          + '而傳到的時候,分餅的人已經坐定了。',
+        textEn:
+          'In the sixth year of Zhongping everything that mattered was happening in Luoyang: the grand general and the palace eunuchs plotting against each other, Yuan Shao urging that all of them be killed, Dong Zhuo with an army at Xiyang pavilion.\n\n'
+          + 'And Sun Jian was in Changsha, two thousand li away. His whole career had that shape: at seventeen he cut down sea-robbers at Qiantang; he put down Xu Chang in Kuaiji and Ou Xing in Changsha, and crossed his own border to break Zhou Chao and Guo Shi in Lingling and Guiyang. Every one of them successful, and every one of them somewhere nobody was looking.\n\n'
+          + 'The name Tiger of the Southland reached the central plain later. By the time it did, the people dividing the pie were already seated.',
+      },
+      verdictLostZh:
+        '論曰:功在遠方者,名至而位不至 —— **朝廷分的是離它近的東西。**',
+      verdictLostEn:
+        'The historian says: merit earned far away brings the name and not the seat. A court distributes what is close to it.',
+    },
     han: {
       defeat: {
         titleZh: '召外兵',
@@ -3092,6 +3164,31 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 198 下邳之圍 ─────────────────────────────────────────────── */
   'scn-198-xiapi': {
+    sun: {
+      defeat: {
+        titleZh: '袁術僭號,而他等的就是這一天',
+        titleEn: 'Yuan Shu Took the Title, and That Was the Day He Was Waiting For',
+        textZh:
+          '策初以父兵屬袁術,術每嘆曰:「使術有子如孫郎,死復何恨!」'
+          + '而許以九江太守,竟不用;'
+          + '又許以廬江,拔之而復用劉勳 —— 兩次許諾,兩次食言。\n\n'
+          + '及術僭號,策以書責而絕之。'
+          + '**這一封信是他一生最划算的一次交易:**'
+          + '斷了一個名義上的主君,換來曹公的討逆將軍與吳侯,'
+          + '以及此後與中原打交道的資格。\n\n'
+          + '而下邳城下那一年之後,中原只剩兩家,'
+          + '江東的位置從「誰的部曲」變成「誰的鄰居」——'
+          + '鄰居這個位置,是要自己站住的。',
+        textEn:
+          'Sun Ce had first attached his father troops to Yuan Shu, who used to sigh that if he had a son like young Sun he could die without regret — and who promised him Jiujiang and did not give it to him, then promised him Lujiang, and when he took it appointed Liu Xun instead. Two promises, two breaches.\n\n'
+          + 'When Yuan Shu took the imperial title, Sun Ce wrote to denounce him and broke with him. That letter was the best bargain he ever made: it cost him a nominal overlord and bought him a generalship, a marquisate, and the standing to deal with the central plain as a party in his own right.\n\n'
+          + 'And after the year of Xiapi there were only two houses left in the central plain, and the Southland went from being somebody retainers to being somebody neighbour. A neighbour has to stand up by itself.',
+      },
+      verdictLostZh:
+        '論曰:絕一個名義上的主君容易,難的是此後每一件事都要自己署名。',
+      verdictLostEn:
+        'The historian says: breaking with a nominal overlord is easy. What is hard is having to sign your own name to everything afterwards.',
+    },
     cao: {
       defeat: {
         titleZh: '決泗沂之水',
@@ -3184,6 +3281,29 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 204 鄴城陷落 ─────────────────────────────────────────────── */
   'scn-204-yecheng': {
+    sun: {
+      defeat: {
+        titleZh: '兄長死時他十九歲,而江東還沒有名字',
+        titleEn: 'He Was Nineteen When His Brother Died, and the Southland Had No Name Yet',
+        textZh:
+          '建安五年策薨,權年十九,是時惟有會稽、吳郡、丹楊、豫章、廬陵,'
+          + '而深險之地猶未盡從;天下英豪布在州郡,賓旅寄寓之士以安危去就為意,'
+          + '未有君臣之固。\n\n'
+          + '**這一段記載的意思是:那時候「江東」還不是一個政權,是一批人暫住的地方。**'
+          + '張昭率群僚立而輔之,周瑜、程普、呂範等為將率 ——'
+          + '它靠的不是制度,是幾個人肯留下來。\n\n'
+          + '北方既定,四州一家;而南邊仍在打黃祖的第三次。'
+          + '賓旅寄寓之士,終於還是以安危去就為意了。',
+        textEn:
+          'Sun Ce died in the fifth year of Jian-an and Sun Quan was nineteen. What he held was Kuaiji, Wu, Danyang, Yuzhang and Luling, and the difficult country in them was not fully in hand; men of ability were scattered across the provinces, and the sojourners and guests calculated where safety lay before deciding whether to stay. There was no settled bond of lord and servant.\n\n'
+          + 'What that passage means is that the Southland was not yet a state. It was a place where a number of people were staying for now. Zhang Zhao led the officials in supporting him and Zhou Yu, Cheng Pu and Lü Fan held the commands. It rested not on institutions but on a few men choosing not to leave.\n\n'
+          + 'With the north settled and four provinces under one house, the south was still on its third campaign against Huang Zu. And the sojourners did, in the end, calculate where safety lay.',
+      },
+      verdictLostZh:
+        '論曰:江東立國,在赤壁之後 —— **赤壁之前它只是一群人的暫住之地。**',
+      verdictLostEn:
+        'The historian says: the Southland became a state after Red Cliffs. Before that it was somewhere a number of people were staying.',
+    },
     cao: {
       defeat: {
         titleZh: '決漳水灌城',
@@ -3371,6 +3491,31 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 199 易京之戰 ─────────────────────────────────────────────── */
   'scn-199-yijing': {
+    sun: {
+      defeat: {
+        titleZh: '沙羨之戰,流血赤野',
+        titleEn: 'At Shaxian the Blood Reddened the Fields',
+        textZh:
+          '建安四年,策攻黃祖於沙羨,'
+          + '劉表遣從子虎、南陽韓晞將長矛五千來為祖援。'
+          + '大破之,「祖脫身得走,鋒刃所截,猋火所焚,'
+          + '前無生寇,惟祖迸走。'
+          + '獲其妻息男女七人,斬虎、韓晞已下二萬餘級,'
+          + '其赴水溺者一萬餘口,船六千餘艘,財物山積。」\n\n'
+          + '這是他一生最徹底的一場勝仗 —— 而黃祖走了。'
+          + '**父仇未報,長江上游仍在別人手裡;'
+          + '而他自己只剩下一年。**\n\n'
+          + '明年四月,獵於丹徒山中,為許貢客所傷,創甚,年二十六。',
+        textEn:
+          'In the fourth year of Jian-an he attacked Huang Zu at Shaxian, and Liu Biao sent his nephew Hu and Han Xi of Nanyang with five thousand long spears to support him. The record: Zu got away with his life; what the blades did not cut the fire burned; there was no living enemy in front, only Zu bolting. Seven of his household taken, over twenty thousand heads including Hu and Han Xi, more than ten thousand drowned in the water, six thousand boats, and goods piled like hills.\n\n'
+          + 'It was the most complete victory of his life, and Huang Zu got away. The father was still unavenged, the upper river was still somebody else, and he had one year left.\n\n'
+          + 'In the fourth month of the next year he was hunting in the hills at Dantu when Xu Gong retainers wounded him. He was twenty-six.',
+      },
+      verdictLostZh:
+        '論曰:大捷而仇人走脫,則此捷不了一事 —— **而他沒有第二次的時間。**',
+      verdictLostEn:
+        'The historian says: a great victory in which the enemy gets away settles nothing. And he had no time for a second one.',
+    },
     gongsun: {
       defeat: {
         titleZh: '百樓不攻',
@@ -3432,6 +3577,30 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 207 白狼山·北征烏桓 ──────────────────────────────────────── */
   'scn-207-bailang': {
+    sun: {
+      defeat: {
+        titleZh: '漢室不可復興,曹操不可卒除',
+        titleEn: 'Han Cannot Be Revived and Cao Cao Cannot Be Removed Quickly',
+        textZh:
+          '魯肅初見,合榻對飲,曰:「肅竊料之,漢室不可復興,'
+          + '曹操不可卒除。為將軍計,惟有鼎足江東,以觀天下之釁。'
+          + '規模如此,亦自無嫌。何者?北方誠多務也。'
+          + '因其多務,剿除黃祖,進伐劉表,竟長江所極,據而有之,'
+          + '然後建號帝王以圖天下 —— 此高帝之業也。」\n\n'
+          + '這是天下第一份把「不能贏」寫進去的戰略:**它的前提是等對方犯錯。**\n\n'
+          + '而北方這一年沒有犯錯。烏桓既破,胡漢降者二十餘萬口,'
+          + '三郡突騎自此為天下名騎;'
+          + '南邊第三次打黃祖,還沒打完。等的那個「釁」,沒有來。',
+        textEn:
+          'At their first meeting Lu Su drew his couch up beside Sun Quan and said: in my private reckoning, Han cannot be revived and Cao Cao cannot be removed quickly. Your best course is to stand as one leg of a tripod in the Southland and watch for a fracture in the realm. There is nothing shameful in a plan on that scale — why? Because the north has a great deal on its hands. While it does, wipe out Huang Zu, then move against Liu Biao, take the Yangtze to its farthest reach and hold it, and then take an imperial title and contend for the realm. That is what the Exalted Founder did.\n\n'
+          + 'It is the first strategy in the realm to write not winning into itself: the premise is that the other side makes a mistake.\n\n'
+          + 'The north made no mistake that year. The Wuhuan were broken and over two hundred thousand submitted, and the shock cavalry of the three commanderies became the most famous horse in the realm. In the south the third campaign against Huang Zu was still unfinished. The fracture did not come.',
+      },
+      verdictLostZh:
+        '論曰:待釁之策,勝負不在自己手上 —— 而**沒有釁的那幾年,它就是一個空計劃。**',
+      verdictLostEn:
+        'The historian says: a strategy of waiting for a fracture puts the outcome in someone else hands. In the years when no fracture appears it is simply an empty plan.',
+    },
     cao: {
       defeat: {
         titleZh: '虜卒聞之',
@@ -4339,6 +4508,33 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 197 渤海戰線 ─────────────────────────────────────────────── */
   'scn-197-bohai': {
+    sun: {
+      defeat: {
+        titleZh: '猘兒難與爭鋒',
+        titleEn: 'That Mad Pup Is Not to Be Contended With',
+        textZh:
+          '策以父兵千餘人渡江,五年而盡有江東 ——'
+          + '曹公方與袁紹相持於官渡,聞之曰:'
+          + '「猘兒難與爭鋒也!」乃以弟女配策弟匡,'
+          + '又為子彰取賁女,表策為討逆將軍,封吳侯。\n\n'
+          + '這一年他二十三歲。'
+          + '**所有的事都做成了,而所有的事都做得太快:**'
+          + '劉繇走了,王朗降了,嚴白虎破了,'
+          + '而江東的士族還沒有一個真心把他當主人 ——'
+          + '許貢的門客,就是從那裡來的。\n\n'
+          + '「策為人美姿顏,好笑語,性闊達聽受,'
+          + '善於用人,是以士民見者,莫不盡心,樂為致死。」'
+          + '——這一段裡沒有一個字寫「制度」。',
+        textEn:
+          'Sun Ce crossed the river with a thousand of his father men and had the whole Southland in five years. Cao Cao, locked with Yuan Shao at Guandu, heard about it and said: that mad pup is not to be contended with. So he married a niece to Sun Ce younger brother, took a daughter of the Sun house for his own son, and had Sun Ce appointed General Who Suppresses Rebels and marquis of Wu.\n\n'
+          + 'He was twenty-three that year. Everything had worked, and everything had worked too fast: Liu Yao gone, Wang Lang surrendered, Yan Baihu broken — and not one of the great families of the Southland yet regarded him as their lord in their hearts. Xu Gong retainers came from there.\n\n'
+          + 'The record: Ce was handsome, fond of talk and laughter, open by nature and willing to be told things, and good at using men, so that everyone who met him gave him their whole heart and was glad to die for him. There is not one word in that passage about institutions.',
+      },
+      verdictLostZh:
+        '論曰:五年而有江東,而**五年不足以生一個能自己站住的政權。**',
+      verdictLostEn:
+        'The historian says: five years was enough to take the Southland. Five years is not enough to grow a state that can stand on its own.',
+    },
     cao: {
       defeat: {
         titleZh: '失不便取其質',
@@ -8264,6 +8460,31 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-dong-lives': {
+    sun: {
+      defeat: {
+        titleZh: '關東諸將莫敢先進,而他把洛陽掃乾淨了',
+        titleEn: 'Nobody East of the Pass Would Advance, and He Swept the Palaces',
+        textZh:
+          '關東諸將十餘萬眾,日置酒高會,不圖進取 ——'
+          + '真打的只有一個。堅移屯梁東,大為卓軍所攻,'
+          + '與數十騎潰圍而出;常著赤罽幘,乃脫幘與親近將祖茂著之,'
+          + '卓騎爭逐茂,故堅得免。\n\n'
+          + '復收散卒,大戰於陽人,大破卓軍,梟其都督華雄。'
+          + '卓憚之,遣李傕來求和親,堅曰:「卓逆天無道,'
+          + '蕩覆王室,今不夷汝三族,懸示四海,則吾死不瞑目!」\n\n'
+          + '進至洛陽,修諸陵,平塞卓所發掘 —— **一座沒有人的都城,'
+          + '他掃了一遍,然後退兵。**'
+          + '此局那把火沒有燒完,而掃它的人,仍然只有一個。',
+        textEn:
+          'A hundred thousand men east of the pass held banquets daily and did not advance. One man actually fought. Jian moved his camp east of Liang and was heavily attacked, and got out through the encirclement with a few dozen horse; he always wore a red headcloth, so he took it off and gave it to his officer Zu Mao to wear, and Dong Zhuo riders chased Zu Mao and he got away.\n\n'
+          + 'He collected the scattered men, fought a large action at Yangren, broke the Dong Zhuo army and took the head of its commander Hua Xiong. Dong Zhuo, wary of him, sent Li Jue to propose a marriage alliance. Jian said: Zhuo defies heaven and has no principle, and has overturned the royal house. If I do not wipe out his three clans and hang them up for the four seas to see, I will not close my eyes when I die.\n\n'
+          + 'He entered Luoyang, repaired the imperial tombs and filled in the pits Dong Zhuo diggers had opened. An empty capital, swept once, and then he withdrew. On this board the fire was never finished — and there is still only one man doing the sweeping.',
+      },
+      verdictLostZh:
+        '論曰:討卓之師十餘萬,而入洛陽者一人。**義兵之難,不在敵,在同盟。**',
+      verdictLostEn:
+        'The historian says: a hundred thousand marched against Dong Zhuo and one man entered Luoyang. The difficulty with a righteous army is not the enemy. It is the allies.',
+    },
     /*
      * 這張盤上董卓沒死,而關東群雄各自的敗法反而更清楚 —— 他們本來就不是
      * 被董卓打散的,是自己散的。
@@ -8886,6 +9107,25 @@ function lineOf(scenarioId: string): 'ws' | 'ch' | 'st' | 'sg' {
   return 'sg';
 }
 
+const TAO_QIAN_DEFEAT: DefeatText = {
+  titleZh: '謙背道任情,而徐州殷實',
+  titleEn: 'He Governed by Mood, and Xu Province Was Rich',
+  textZh:
+    '徐州百姓殷盛,穀米封贍,流民多歸之 ——'
+    + '這是初平年間中原唯一還喂得飽人的地方。\n\n'
+    + '而《魏書》寫他:「謙背道任情:廣陵太守趙昱,徐方名士也,'
+    + '以忠直見疏;曹宏等,讒慝小人也,謙親任之 —— 由是刑政失和,'
+    + '良善多被其害,由是漸亂。」\n\n'
+    + '曹嵩之死,兵至,五縣皆屠,泗水為之不流。'
+    + '謙年老病篤,謂別駕糜竺曰:「非劉備不能安此州也。」'
+    + '——**一州之富,養得起流民,養不出一個能守它的人。**',
+  textEn:
+    'Xu province was populous and rich, its granaries full, and refugees came to it: in the Chuping years it was the one place in the central plain that could still feed people.\n\n'
+    + 'And the Book of Wei says of him: he governed against the way and by his moods. Zhao Yu, the Guangling administrator, a noted man of the province, was pushed away for being honest; Cao Hong and his sort, slanderous small men, were taken into his confidence. So punishment and policy went out of joint, decent people suffered, and disorder set in by degrees.\n\n'
+    + 'After the death of Cao Cao father the armies came and five counties were put to the sword and the Si river did not flow. Old and failing, he told his aide Mi Zhu: nobody but Liu Bei can settle this province.\n\n'
+    + 'A province rich enough to feed refugees, and not rich enough to produce one man who could hold it.',
+};
+
 export const SHARED_DEFEATS: Record<string, DefeatText> = {
   /* ── 三國 · 周邊勢力 ─────────────────────────────────────────────── */
   'sg:ma-teng': {
@@ -9047,6 +9287,131 @@ export const SHARED_DEFEATS: Record<string, DefeatText> = {
       + 'At White Wolf Mountain the armies met unexpectedly and the enemy was very numerous. Cao went up the high ground, saw their line was not properly formed, and sent everything in with Zhang Liao at the front. Tadun and the chief kings were killed; over two hundred thousand Hu and Han surrendered.\n\n'
       + 'And afterwards: from this the Wuhuan of the three commanderies became the most famous cavalry in the realm. The people were finished; the cavalry was not. Only the banner over it changed, and they charged for somebody else.',
   },
+
+  /* ── 三國 · 群雄期的幾家 ────────────────────────────────────────────
+     這幾位跟曹/孫/劉不一樣:他們**只活在同一個十年裡**,於是在哪一張盤上
+     敗亡都是同一件事。逐盤寫過的角度(袁紹已有九段、袁術五段)不重複 ——
+     底下這幾段各取一個那些段落沒用過的支點。 */
+  'sg:yuan-shao': {
+    titleZh: '河北四州,分給了兩個兒子',
+    titleEn: 'Four Provinces, Divided Between Two Sons',
+    textZh:
+      '他真正的敗亡不在官渡那一夜,在他死後那一天。\n\n'
+      + '紹有三子:譚長而慧,尚少而美 —— 紹後妻劉氏愛尚,數稱其才,'
+      + '紹亦奇其貌,欲以為後,而未顯言之。'
+      + '乃出譚為青州,沮授諫曰:「必為禍始。」紹曰:'
+      + '「孤欲令諸兒各據一州也。」\n\n'
+      + '及紹發病嘔血薨,審配、逢紀與辛評、郭圖爭權,'
+      + '配、紀矯紹遺命奉尚為嗣;譚不得立,自號車騎將軍,屯黎陽。'
+      + '兄弟相攻於外,曹操坐收於後 ——'
+      + '**四州之地,不是被打散的,是被分掉的。**',
+    textEn:
+      'His real defeat is not the night at Guandu. It is the day after he died.\n\n'
+      + 'He had three sons. Tan was the eldest and clever, Shang the youngest and handsome; his second wife favoured Shang and kept praising his ability, and Shao liked the look of him and meant to make him heir, and never said so plainly. He sent Tan out to Qing province instead. Ju Shou objected that this would be the beginning of the trouble. Shao said: I intend each of my sons to hold a province.\n\n'
+      + 'When he fell ill and died vomiting blood, Shen Pei and Feng Ji fell out with Xin Ping and Guo Tu over the succession, and forged a testament naming Shang. Tan, passed over, styled himself General of Chariots and Cavalry and camped at Liyang. The brothers fought each other in the open and Cao Cao collected the pieces behind them.\n\n'
+      + 'The four provinces were not broken up by an enemy. They were divided.',
+  },
+  'sg:yuan-shu': {
+    titleZh: '稱帝那一年,所有舊交在同一年與他絕交',
+    titleEn: 'The Year He Took the Title, Everyone He Knew Cut Him Off',
+    textZh:
+      '建安二年,術以讖文「代漢者當塗高」,又以袁姓出於陳,'
+      + '陳者舜之後,以土承火,得應運之次 —— 遂僭號於壽春。\n\n'
+      + '而那一年:孫策與之絕,呂布斬其使,'
+      + '陳珪、陳登父子背之,舊將雷薄、陳蘭據山不納;'
+      + '曹操以天子之詔討之,劉備斷其歸路。\n\n'
+      + '**一個人稱帝,而他認識的每一個人都在同一年離開他。**'
+      + '這不是被打敗,是被**放下**了。'
+      + '後奔灊山,士卒散盡,問廚下,尚有麥屑三十斛。',
+    textEn:
+      'In the second year of Jian-an he took the imperial title at Shouchun, on the strength of a prophecy about the one who replaces Han being high on the road, plus a genealogy running his surname back through Chen to the sage Shun, so that earth would properly succeed fire.\n\n'
+      + 'And in that same year: Sun Ce broke with him, Lü Bu beheaded his envoy, the Chen father and son went over, his own officers Lei Bo and Chen Lan held the hills and would not let him in, Cao Cao came against him under an imperial edict, and Liu Bei cut the road behind him.\n\n'
+      + 'One man took a title and every person he knew left him inside twelve months. That is not being beaten. It is being put down. He fled to the Qian hills with his troops gone, and asked the kitchen what was left: thirty bushels of wheat husks.',
+  },
+  'sg:kong-rong': {
+    titleZh: '座上客恆滿,樽中酒不空',
+    titleEn: 'The Seats Always Full and the Cup Never Empty',
+    textZh:
+      '融在北海六年,立學校,表顯儒術,薦達賢士,'
+      + '郡人甄子然、臨孝存知名早卒,融恨不及之,'
+      + '乃令配食縣社 —— 一州之政,辦得像一場清談。\n\n'
+      + '而黃巾管亥圍城,融不能戰,單騎出走,妻子為所虜;'
+      + '劉備救之,融曰「孔北海知世間有劉備邪」。'
+      + '在職六年,終不能保四境。\n\n'
+      + '所嘗自言:「座上客恆滿,樽中酒不空,吾無憂矣。」'
+      + '——**名士之所長,正是諸侯之所短。**'
+      + '及後為曹操所忌,以「招合徒眾,欲圖不軌」下獄,'
+      + '二子方弈棋,不起,曰:「安有巢毀而卵不破乎?」',
+    textEn:
+      'Six years at Beihai: he founded schools, promoted classical learning, put forward men of worth, and when he learned that two local scholars had died young before he could recognise them he had them given sacrifices at the county altar. The government of a province run like a salon.\n\n'
+      + 'And when the Turban leader Guan Hai invested the city he could not fight, rode out alone, and lost his wife and children to them; Liu Bei relieved him, and he said, so Kong of Beihai knows there is a Liu Bei in the world. Six years in office and at the end of them he could not hold his own four borders.\n\n'
+      + 'He liked to say: the seats always full and the cup never empty, and I have nothing to worry about. What a man of letters is good at is exactly what a lord of a province needs least. When Cao Cao finally moved against him on a charge of gathering a faction with designs, his two sons were playing weiqi and did not get up: whoever heard of the nest coming down and the eggs staying whole?',
+  },
+  'sg:tao-qian': TAO_QIAN_DEFEAT,
+  'sg:tao': TAO_QIAN_DEFEAT,
+  'sg:lubu': {
+    titleZh: '縛虎不得不急',
+    titleEn: 'You Do Not Tie a Tiger Loosely',
+    textZh:
+      '布轅門射戟以解劉備之圍,一箭中小支,'
+      + '諸將皆驚,言「將軍天威也」——'
+      + '那是他一生最像一個諸侯的一天。\n\n'
+      + '而《魏書》總其平生:「布驍猛,而無謀略,'
+      + '輕狡反覆,唯利是視 —— 自古及今,未有若此不夷滅也。」'
+      + '殺丁原、殺董卓、襲劉備、叛袁術,'
+      + '每一次都換來更好的位置,和更少的人。\n\n'
+      + '下邳城破,縛之。布曰:「縛太急,小緩之。」'
+      + '太祖曰:「縛虎不得不急也。」'
+      + '布復言:「明公所患不過於布,今已服矣,'
+      + '公為大將,布副之,天下不足定也。」'
+      + '太祖顧劉備,備曰:「明公不見布之事丁建陽、董太師乎!」',
+    textEn:
+      'He shot the halberd at the gate to lift the siege on Liu Bei, hit the small blade, and his officers were astonished and called it heaven own marksmanship. That was the closest he ever came to being a lord of a province for a day.\n\n'
+      + 'And the Book of Wei sums him up: bold and fierce, without strategy, light and slippery and always turning, seeing only advantage — from antiquity to the present there has never been such a man who was not destroyed. He killed Ding Yuan, killed Dong Zhuo, jumped Liu Bei, broke with Yuan Shu, and each betrayal bought him a better position and fewer people.\n\n'
+      + 'With Xiapi taken and himself tied, he said: the ropes are too tight, loosen them a little. Cao Cao said: you do not tie a tiger loosely. He tried again: what troubles you is no more than Bu, and Bu is now yours; with you commanding and Bu as your second, the realm is easily settled. Cao Cao looked at Liu Bei, and Liu Bei said: has my lord not seen how he served Ding Yuan and the Grand Preceptor?',
+  },
+  'sg:ma-chao': {
+    titleZh: '臣門宗二百餘口,為孟德所誅略盡',
+    titleEn: 'Two Hundred of My Clan, Killed by Cao Cao, All But One',
+    textZh:
+      '超之勇,渭南一戰,曹公幾不免:'
+      + '「馬兒不死,吾無葬地也。」\n\n'
+      + '而勇之為勇,在他這裡是一種只往前的東西:'
+      + '起兵時父騰在許都為質,超曰「今超棄父,以將軍為父」;'
+      + '既敗,一門二百餘口皆誅。'
+      + '入蜀之後,位至驃騎將軍、涼州牧,'
+      + '而「羈旅歸國,常懷危懼」—— 彭羕來說,不敢應,'
+      + '密表其言。\n\n'
+      + '年四十七,臨沒上疏:「臣門宗二百餘口,'
+      + '為孟德所誅略盡,惟有從弟岱,當為微宗血食之繼,'
+      + '深託陛下,餘無復言。」——'
+      + '**一封遺表,只求給宗族留一個能上香的人。**',
+    textEn:
+      'His courage was real: at Weinan Cao Cao barely got away, and said afterwards that if the Ma boy had lived he would have had nowhere to be buried.\n\n'
+      + 'And courage in his case only ever pointed forward. When he raised troops his father was a hostage at Xu, and he said: today I give up my father and take you as my father. After the defeat, two hundred and more of the clan were executed. In Shu he rose to General of Agile Cavalry and governor of Liang province, and the record says that as an outsider who had come over he lived in constant fear — when Peng Yang came to sound him out he did not dare answer and reported the conversation instead.\n\n'
+      + 'At forty-seven, dying, he memorialised: two hundred and more of my clan were killed by Cao Cao, all but my cousin Dai, who must carry the blood offerings of this small line. I entrust him deeply to Your Majesty. I have nothing else to say.\n\n'
+      + 'A last memorial asking only that someone be left to burn incense.',
+  },
+  'sg:gongsun-du': {
+    titleZh: '三世遼東,而終於一個僭號',
+    titleEn: 'Three Generations in Liaodong, Ended by One Title',
+    textZh:
+      '公孫氏在遼東三世五十年:度自立為遼東侯、平州牧,'
+      + '越海收東萊諸縣;康分屯有縣以南荒地為帶方郡,'
+      + '斬袁尚、袁熙送首於曹公 —— 知道什麼時候該低頭,是這一家的家法。\n\n'
+      + '而淵改了家法。'
+      + '南結孫權受燕王之封,又斬吳使以邀魏賞,'
+      + '兩面取利而兩面皆失;既而自立為燕王,置百官。\n\n'
+      + '**塞外的政權活得長,靠的是永遠不讓中原覺得非打不可。**'
+      + '一個王號,把五十年的分寸一次用完。',
+    textEn:
+      'The Gongsun held Liaodong for three generations and fifty years. Du styled himself marquis of Liaodong and governor of Ping province and took the Donglai counties across the water; Kang carved the empty land south of Tunyou into Daifang commandery, and beheaded the Yuan brothers and sent the heads to Cao Cao. Knowing when to bow was this family method.\n\n'
+      + 'Yuan changed the method. He treated with Wu in the south and accepted the title king of Yan from them, then executed the Wu envoys to claim a reward from Wei — playing both and losing both. Then he declared himself king of Yan and appointed a full set of officers.\n\n'
+      + 'A frontier polity survives by never making the central state feel that it has to come. One royal title spent fifty years of judgement in a single stroke.',
+  },
+
+  /* 「若董卓未亡」那張盤上陶謙的 id 是 `tao` 而不是 `tao-qian` —— 同一個人,
+     兩個 id,兩張盤都要接上。(不是筆誤,是那張盤自己的命名。) */
 
   /* ── 戰國七雄 ───────────────────────────────────────────────────────
      十三張戰國盤共用這七段。七國之亡各有各的形狀,而那個形狀在哪一張盤上
