@@ -7310,6 +7310,69 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-yuan-guandu': {
+    /*
+     * 這張盤上曹操只剩宛城一隅 —— 官渡輸掉的那一版。他的敗亡不該讀通用輓歌:
+     * 那個「設使國家無有孤,不知當幾人稱帝,幾人稱王」的人,在這裡是輸家。
+     */
+    cao: {
+      defeat: {
+        titleZh: '設使國家無有孤',
+        titleEn: 'Were It Not for Me',
+        textZh:
+          '官渡既敗,許昌不守,天子入鄴。\n\n'
+          + '公退保宛城,尚有兵數千、將十餘人。'
+          + '每夜與諸將論兵,言及舊事,自烏巢至白馬,'
+          + '一一如在目前 —— 而說到「烏巢」二字,便止。\n\n'
+          + '及城破之日,左右請降,公曰:'
+          + '「孤起兵於己吾,散家財、合義兵,'
+          + '本欲為國家討賊立功,題墓道言『漢故征西將軍曹侯之墓』,'
+          + '此其志也。」\n\n'
+          + '—— 那塊碑,終究是別人替他立的。',
+        textEn:
+          "Guandu lost, Xuchang gone, and the Son of Heaven carried off to Ye.\n\n"
+          + 'He fell back on Wancheng with a few thousand men and a dozen officers. Every night he talked war with them and the talk turned to old campaigns — Baima, Yanjin, all of it clear as this morning. When it reached the word Wuchao he stopped.\n\n'
+          + 'On the day the walls broke his staff asked him to surrender. He said: "I raised troops at Jiwu, spent the family money, gathered a righteous army. What I wanted was to do the state some service against the rebels, and to have written on my tomb-road: THE TOMB OF THE LATE MARQUIS CAO, GENERAL WHO SUBDUES THE WEST OF HAN. That was the whole of my ambition."\n\n'
+          + 'In the end somebody else carved the stone.',
+      },
+      verdictZh:
+        '論曰:操之敗,不在烏巢一炬,在**以寡當眾而無可再失** ——\n'
+        + '紹之眾十倍於操,敗一陣尚有九陣;'
+        + '操敗一陣,則無陣矣。\n'
+        + '故荀彧之勸持重,郭嘉之言十勝,'
+        + '皆謂勝負在一日之內定;而定之者,天也。\n'
+        + '使那一夜烏巢無火,則今日史筆所書者,袁氏之興也。',
+      verdictEn:
+        'The historian says: it was not the one fire at Wuchao that destroyed him, but that a man fighting with the smaller army has nothing in reserve. Shao had ten times his numbers; losing one battle still left him nine. Cao lost one battle and had none. Xun Yu urging caution and Guo Jia counting the ten advantages both understood that the whole issue would be settled inside a single day — and who settled it was not a man. Had there been no fire at Wuchao that night, what the brush would be recording today is the rise of the house of Yuan.',
+      verdictLostZh:
+        '論曰:以一隅抗四州,能保宛城數歲,已非常人。'
+        + '天下事有可為者,有不可為者 —— 而分辨二者,'
+        + '往往要到最後一日才知道。',
+      verdictLostEn:
+        'The historian says: to hold one corner against four provinces, and to keep Wancheng for years doing it, is already beyond the ordinary. Some things in this world can be done and some cannot, and telling which is which is knowledge that usually arrives on the last day.',
+    },
+    /* 江東:這張盤上孫氏不是主角,而「限江自保」四個字本來就是他們的底線。 */
+    sun: {
+      defeat: {
+        titleZh: '江表之終',
+        titleEn: 'The End of the River Country',
+        textZh:
+          '北人終於學會了水。\n\n'
+          + '樓船蔽江而下,烽火自西陵至建業,三日而絕。'
+          + '孫氏三世,自江東十萬戶起家,'
+          + '至於今日,惟餘一江在。\n\n'
+          + '而那條江,從來不是他們的 —— 是他們替它守了三代。',
+        textEn:
+          'In the end the northerners learned the water.\n\n'
+          + 'Tower-ships came down the river under a covered sky; the beacon chain from Xiling to Jianye went out in three days. Three generations of the Sun house, from a hundred thousand households in the east to this — and all that is left is the river.\n\n'
+          + 'And the river was never theirs. They kept it for three generations, that is all.',
+      },
+      verdictZh:
+        '論曰:江東之立國,恃江而不恃德。'
+        + '恃江者,江在則國在;而江者,天下之公器,'
+        + '非一姓所得私也。',
+      verdictEn:
+        'The historian says: the southeastern state rested on the river and not on virtue. What rests on a river stands as long as the river holds it — and a river belongs to the realm, not to any one family.',
+    },
     'yuan-shao': {
       defeat: {
         titleZh: '納田豐之諫',
@@ -7495,6 +7558,55 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-guojia-lives': {
+    /* 這張盤上劉備只有三城,而他在史書上正是從這種處境裡站起來的那一個。 */
+    'liu-bei': {
+      defeat: {
+        titleZh: '三城之主',
+        titleEn: 'Lord of Three Walls',
+        textZh:
+          '奉孝在,則連環不成,火不得起。\n\n'
+          + '江上無風,而夏口三城,終不能久。'
+          + '備走漢津,顧謂諸將曰:「吾豈欲棄此哉?'
+          + '所以拒曹公者,以此耳。」\n\n'
+          + '—— 二十餘年間,他失徐州、失小沛、失汝南、失新野,'
+          + '每一次都有人跟著走。這一次,跟著走的人少了。',
+        textEn:
+          "With Fengxiao alive the hulls were never chained, and there was nothing on the river to burn.\n\n"
+          + 'No wind came, and three walls at Xiakou could not hold for long. Falling back to Hanjin he turned to his officers: "Do you think I wanted to give this up? It was the only thing standing between us and Lord Cao."\n\n'
+          + 'In twenty years he had lost Xuzhou, Xiaopei, Runan, Xinye — and every time, people went with him. This time fewer went.',
+      },
+      verdictZh:
+        '論曰:備之所以屢敗而不亡者,以其能得人也。'
+        + '曹公有奉孝,而備有關張諸葛 ——\n'
+        + '故赤壁之勝,非勝於火,勝於**那一年江東肯與他結盟**。\n'
+        + '使奉孝在而連環不設,則盟自解,盟解則備無所依。'
+        + '此非戰之罪也。',
+      verdictEn:
+        'The historian says: what kept Liu Bei from extinction through all those defeats was that men would follow him. Cao Cao had Guo Jia; Liu Bei had Guan Yu, Zhang Fei and Zhuge Liang. The victory at Red Cliffs was not a victory of fire but of the fact that in that particular year the southeast was willing to ally with him. With Guo Jia alive and no chain across the hulls, the alliance comes apart — and once it does, Liu Bei has nothing to stand on. That is not a failure of arms.',
+    },
+    /* 孫權:赤壁沒燒起來的那一版江東。 */
+    sun: {
+      defeat: {
+        titleZh: '風不至',
+        titleEn: 'The Wind Did Not Come',
+        textZh:
+          '公瑾陳兵於赤壁,黃蓋之計已具,而北船不鎖。\n\n'
+          + '諸將問:「火何時發?」瑜視江面久之,曰:「無可燃者。」\n\n'
+          + '—— 江東之勝,從來繫於一夕之風與一條鐵索;'
+          + '二者缺一,則十萬之眾,不過臨江而望。',
+        textEn:
+          'Zhou Yu drew up at Red Cliffs with Huang Gai\'s plan ready, and the northern hulls were not chained.\n\n'
+          + 'His officers asked when the fire would start. He looked at the water a long time and said: there is nothing there to burn.\n\n'
+          + 'The victory of the southeast always hung on one night\'s wind and one length of chain. Take away either and a hundred thousand men are only standing on the bank, looking across.',
+      },
+      verdictZh:
+        '論曰:赤壁之役,論者多歸功於周郎之火,'
+        + '而火之能燃,繫於連環;連環之能設,繫於曹公信龐統。\n'
+        + '故曰:那一戰勝負之樞,不在江上,在許都的謀士堂上 ——'
+        + '而奉孝正坐在那裡。',
+      verdictEn:
+        'The historian says: most accounts give Red Cliffs to Zhou Yu\'s fire, but the fire needed the chain, and the chain needed Cao Cao to believe Pang Tong. The hinge of that battle was never on the water. It was in the strategists\' hall at Xuchang — and Guo Jia was sitting in it.',
+    },
     cao: {
       defeat: {
         titleZh: '奉孝在',
