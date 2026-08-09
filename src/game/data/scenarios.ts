@@ -5103,6 +5103,14 @@ const DEAD_BY_192: string[] = [
 
 export const SCENARIO_192_WANGYUN: Scenario = {
   id: 'scn-192-wangyun',
+  /*
+   * 玉璽此刻已在袁術手上 —— 這張盤上孫堅**已經死了**(描述:「江東猛虎孫堅
+   * 方殞於襄陽」),而孫策還是在野未出仕(`unsearched`),所以玉璽那條鏈的
+   * 兩節在這裡都演不了:得璽要孫堅 active,質璽要孫策 active。
+   * 而這張盤袁術的主目標就叫「玉璽在手」—— 盤的意思本來就是他得璽而僭號。
+   * 用盤級旗標把這個既成事實說出來(見 systems/aiCourt.ts 的僭號分支)。
+   */
+  eventFlags: ['seal-with-yuan-shu'],
   name: { en: "Wang Yun's Chain Plot", zh: '王允連環計' },
   kind: 'historical',
   description:

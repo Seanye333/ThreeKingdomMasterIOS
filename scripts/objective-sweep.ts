@@ -124,6 +124,7 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
   { scenario: 'scn-195-jiangdong', force: 'liu-yao',    why: '「守曲阿」—— 而牛渚一破,曲阿即潰;繇奔豫章,明年病卒。這張盤的名字就是孫策定江東。' },
   { scenario: 'scn-195-jiangdong', force: 'yan-baihu',  why: '孫策原話:「虎等群盜,非有大志,此成禽耳。」建安元年為孫靜自查瀆間道所破。' },
   { scenario: 'scn-ch-sanqin',     force: 'sanqin',     why: '「還定三秦」就是他敗的那件事:韓信明修棧道暗度陳倉,章邯守廢丘十月而自剄,司馬欣、董翳皆降。' },
+  { scenario: 'scn-192-wangyun',   force: 'lijue',      why: '「還都長安」—— 而李傕 195 年與郭汜相攻,劫天子出奔,長安遂空;198 年為段煨所滅,夷三族。' },
 ];
 const byDesign = (sid: string, fid: string) => BY_DESIGN.some((e) => e.scenario === sid && e.force === fid);
 
