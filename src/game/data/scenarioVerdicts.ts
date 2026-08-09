@@ -3599,6 +3599,33 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 244 興勢之戰 ─────────────────────────────────────────────── */
   'scn-244-xingshi': {
+    sun: {
+      defeat: {
+        titleZh: '中外官僚將軍大臣,舉國中分',
+        titleEn: 'The Whole State Divided Into Two Halves',
+        textZh:
+          '魏蜀在秦嶺對耗的這幾年,吳在自己家裡對耗。\n\n'
+          + '太子和與魯王霸並寵,寵秩如一 —— '
+          + '而「中外官僚將軍大臣,舉國中分」。'
+          + '丞相陸遜、太常顧譚、驃騎將軍朱據皆言嫡庶之分,'
+          + '而中使責讓者前後數輩。\n\n'
+          + '興勢之役,魏師敗於駱谷,牛馬騾驢多死;'
+          + '而這一年建業所爭的,是誰站在哪一邊。'
+          + '——外面沒有人打進來,裡面已經先分成了兩半。',
+        textEn:
+          'In the years when Wei and Shu ground against each other in the Qinling, Wu ground against itself.\n\n'
+          + 'The heir Sun He and the prince Sun Ba were favoured equally, with equal establishments — and the record says the whole apparatus of state, inside and out, split down the middle. The chancellor Lu Xun, the chamberlain Gu Tan, the cavalry general Zhu Ju all wrote that the distinction between the main line and the branch must be kept, and palace messengers came out to reprimand them, one delegation after another.\n\n'
+          + 'At Xingshi the Wei army broke in the Luo valley and its oxen and mules died on the road. What Jianye was contesting that year was who stood on which side. Nobody came in from outside. It had already come apart on the inside.',
+      },
+      verdictZh:
+        '論曰:二宮之爭,不見於戰史,而吳之折損,無一役過之。'
+        + '**亡國者未必是刀,可以是一個沒有定下來的名分。**',
+      verdictEn:
+        'The historian says: the struggle of the two palaces appears in no battle account, and no battle cost Wu as much. What ends a state need not be a blade. It can be a question of precedence that nobody would settle.',
+      verdictLostZh: '論曰:外無強敵而國中分,此其所以先亡也。',
+      verdictLostEn:
+        'The historian says: no strong enemy outside, and the state in two halves within. That is why it went first.',
+    },
     cao: {
       defeat: {
         titleZh: '牛馬騾驢多死',
@@ -3672,6 +3699,33 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 252 東興之戰 ─────────────────────────────────────────────── */
   'scn-252-dongxing': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '吾等不如丞相亦已遠矣',
+        titleEn: 'We Are a Long Way Short of the Chancellor',
+        textZh:
+          '費禕當國,保國治民,敬守社稷 —— 而已。\n\n'
+          + '姜維每欲興軍大舉,禕常裁制不從,與其兵不過萬人,曰:'
+          + '「吾等不如丞相亦已遠矣;丞相猶不能定中夏,況吾等乎!'
+          + '且不如保國治民,敬守社稷,如其功業,以俟能者,'
+          + '無以為希冀徼倖而決成敗於一舉。若不如志,悔之無及。」\n\n'
+          + '這是三國最清醒的一句話,也是最沒有出路的一句話:'
+          + '**他知道自己做不到,於是什麼也沒做,然後仍然亡了。**'
+          + '——不做的那一種亡法,史書上不留戰場,只留一個日期。',
+        textEn:
+          'Fei Yi held the government: keep the state, govern the people, guard the altars respectfully. That was the whole of it.\n\n'
+          + 'Whenever Jiang Wei wanted a campaign, Fei Yi cut him back and never gave him more than ten thousand men, saying: we are a long way short of the chancellor; if he could not settle the central plain, what are we? Better to keep the state and govern the people and guard the altars, and leave the enterprise for someone abler. Do not gamble the outcome on one throw in the hope of luck. If it goes wrong, regret will be no use.\n\n'
+          + 'It is the most clear-eyed sentence of the age and the one with the least road out of it: he knew he could not do it, so he did nothing, and it fell anyway. That way of ending leaves no battlefield in the record. It leaves a date.',
+      },
+      verdictZh:
+        '論曰:守成之言,人皆以為持重。'
+        + '**而小國之持重,與慢性的敗亡,外形上分不出來。**',
+      verdictEn:
+        'The historian says: everyone takes the language of consolidation for prudence. In a small state, prudence and a slow defeat look the same from outside.',
+      verdictLostZh: '論曰:待能者,而能者不至;守社稷,而社稷自朽。',
+      verdictLostEn:
+        'The historian says: he waited for an abler man and the abler man did not come; he guarded the altars and the altars rotted where they stood.',
+    },
     sun: {
       defeat: {
         titleZh: '雪中短兵',
@@ -3746,6 +3800,33 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 253 合肥新城之戰 ─────────────────────────────────────────── */
   'scn-253-hefei': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '歲首大會,禕歡飲沉醉',
+        titleEn: 'At the New Year Feast the Chancellor Drank Deep',
+        textZh:
+          '延熙十六年歲首大會於漢壽,郡守以下畢集。'
+          + '大將軍費禕歡飲沉醉,為魏降人郭循手刃所害。\n\n'
+          + '循本魏人,姜維破西平時所得,禕待之甚厚 ——'
+          + '而循每因上壽,欲刺後主,左右遏止之,不得親近;'
+          + '乃退而求其次。\n\n'
+          + '禕死,裁制姜維的那隻手沒有了。'
+          + '同年,維率數萬人出石營,經董亭,圍南安 —— 兵是放開了,'
+          + '而國本已經只剩那麼多。'
+          + '**蜀漢最後十年,是一個被鬆開的剎車滑到底的十年。**',
+        textEn:
+          'At the new year assembly at Hanshou, with every officer down to commandery level present, the grand general Fei Yi drank deep and was knifed by Guo Xun, a Wei man who had come over.\n\n'
+          + 'Xun had been taken when Jiang Wei broke Xiping, and Fei Yi treated him generously. He had been trying to get close enough to the emperor at the toasts, and the attendants kept him off — so he took the next best target.\n\n'
+          + 'With Fei Yi dead, the hand that had been holding Jiang Wei back was gone. That same year Wei took tens of thousands out through Shiying and Dongting and invested Nan-an. The brake was off. What was left to spend had not grown. The last ten years of Shu are ten years of a released brake running downhill.',
+      },
+      verdictZh:
+        '論曰:禕之死,蜀人謂之失一柱。**而柱之為柱,在於它擋著誰。**',
+      verdictEn:
+        'The historian says: the men of Shu called Fei Yi death the loss of a pillar. What makes a pillar a pillar is what it is holding back.',
+      verdictLostZh: '論曰:降人厚遇之,亦以此死 —— 蜀之亡,亦有其厚道在。',
+      verdictLostEn:
+        'The historian says: he treated a man who had come over generously, and died of it. There was a decency in the way Shu ended, too.',
+    },
     cao: {
       defeat: {
         titleZh: '被攻過百日',
@@ -3822,6 +3903,59 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 255 淮南二叛 ─────────────────────────────────────────────── */
   'scn-255-huainan2': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '可止矣,不宜復進',
+        titleEn: 'Stop Here; Do Not Go On',
+        textZh:
+          '這一年是姜維一生打得最好的一年。'
+          + '洮西之戰,大破王經,經眾死者數萬人,'
+          + '「魏人震恐」—— 自諸葛亮之後,蜀漢再沒有贏得這樣大過。\n\n'
+          + '征西大將軍張翼曰:「可止矣,不宜復進,進或毀此大功。」'
+          + '維大怒曰:「為蛇畫足。」乃進圍狄道 —— 不克,而還。\n\n'
+          + '**贏得最多的那一年,也是折返的那一年。**'
+          + '此後段谷一敗,士卒星散,蜀人由是怨維。'
+          + '一國之力打出來的一次大勝,沒有換成任何可以守的東西。',
+        textEn:
+          'This was the best year Jiang Wei ever had. At Taoxi he broke Wang Jing and tens of thousands of his men died; the record says the Wei were shaken. Shu had not won anything on that scale since Zhuge Liang.\n\n'
+          + 'Zhang Yi said: stop here; do not go on; going on may destroy what you have just achieved. Wei was furious — you are drawing legs on a snake — and pushed on to invest Didao. He did not take it, and came back.\n\n'
+          + 'The year of the largest win is also the year of the turn. After it came the defeat at Duangu, where the troops scattered like stars, and from then on the people of Shu held it against him. One great victory bought with the whole strength of a state, and none of it converted into anything that could be held.',
+      },
+      verdictZh:
+        '論曰:大勝而不能守,與敗同。**小國之勝,必須換得回東西才算勝。**',
+      verdictEn:
+        'The historian says: a great victory you cannot hold is the same as a defeat. For a small state a win only counts if it can be exchanged for something.',
+      verdictLostZh: '論曰:為蛇畫足者,非維一人 —— 是那個非贏不可的位置。',
+      verdictLostEn:
+        'The historian says: it was not Jiang Wei alone who drew the legs on the snake. It was the position he was in, where nothing but winning would do.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '峻素無重名,驕矜險害',
+        titleEn: 'Sun Jun Had No Standing, and a Cruel Streak',
+        textZh:
+          '孫峻既誅諸葛恪,遂為丞相大將軍,督中外諸軍事。'
+          + '「峻素無重名,驕矜險害,多所刑殺,百姓囂然。」'
+          + '又姦亂宮人,與公主私通 —— 而無人能問。\n\n'
+          + '魏之淮南再叛,文欽奔吳,'
+          + '吳出兵至橐皋,不能有所為而還。'
+          + '——鄰國的裂縫開在眼前,而伸不出手去。\n\n'
+          + '**吳自孫權死後的十年,換了三個當國的人,'
+          + '每一個都死於下一個手裡。**'
+          + '這樣的十年裡,外面的機會等於不存在。',
+        textEn:
+          'Having killed Zhuge Ke, Sun Jun became chancellor and grand general with command of all forces inside and out. The record: he had no standing to begin with, was arrogant and cruel, executed a great many people, and the population was in an uproar. He also debauched the palace women and had an affair with a princess, and nobody could raise it.\n\n'
+          + 'When Huainan rose against Wei a second time and Wen Qin fled south, Wu marched as far as Tuogao, could accomplish nothing, and came home. The crack in the neighbour state opened in plain view and no hand could be got into it.\n\n'
+          + 'In the ten years after Sun Quan died, Wu went through three men holding the government, and each of them died at the hands of the next. In a decade like that, opportunities abroad might as well not exist.',
+      },
+      verdictZh:
+        '論曰:國有隙可乘而不能乘,不在兵力,在朝中無人能定一議。',
+      verdictEn:
+        'The historian says: to see an opening in another state and be unable to take it is not a question of troop numbers. It is that no one at court could settle on a single proposal.',
+      verdictLostZh: '論曰:十年三易當國,而三人皆死於其次 —— 亡不待敵。',
+      verdictLostEn:
+        'The historian says: three regents in ten years and each killed by the next. A state like that does not need an enemy.',
+    },
     cao: {
       defeat: {
         titleZh: '目瘤突出',
@@ -3898,6 +4032,33 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
   /* ── 257 淮南三叛 ─────────────────────────────────────────────── */
   'scn-257-huainan3': {
+    'liu-bei': {
+      defeat: {
+        titleZh: '維數下挑戰,望、艾不應',
+        titleEn: 'Wei Offered Battle Repeatedly, and They Did Not Come Out',
+        textZh:
+          '諸葛誕據壽春反,司馬昭挾天子親征,關中之兵東下 ——'
+          + '這是蜀漢等了二十年的那一個空檔。\n\n'
+          + '姜維率數萬人出駱谷,至沈嶺。時長城積穀甚多而守兵少,'
+          + '聞維方至,眾皆惶懼。司馬望、鄧艾進兵據之,維前住芒水,'
+          + '皆倚山為營。**維數下挑戰,望、艾不應。**\n\n'
+          + '明年,聞誕破敗,乃還成都。'
+          + '——最後一次外部機會,對面只用了一個動作就化解了:不出來。\n\n'
+          + '此後蜀漢再無出兵之力,而伐蜀之師,五年後就到了。',
+        textEn:
+          'Zhuge Dan held Shouchun in revolt and Sima Zhao went east with the emperor in tow, taking the Guanzhong troops with him. This was the gap Shu had been waiting twenty years for.\n\n'
+          + 'Jiang Wei took tens of thousands out through the Luo valley to Shenling. Changcheng had a great deal of grain stored and few men to hold it, and when they heard he was coming they were badly frightened. Sima Wang and Deng Ai got there first and occupied it; Wei camped at Mangshui, both sides with their backs to the hills. He offered battle repeatedly and they did not come out.\n\n'
+          + 'The next year, hearing that Zhuge Dan had been broken, he went back to Chengdu. The last opening from outside, answered with a single move: staying indoors.\n\n'
+          + 'After that Shu had no strength left to march with, and the army that came to take it arrived five years later.',
+      },
+      verdictZh:
+        '論曰:機會之為機會,須有取之之力。**蜀之亡,亡在那幾萬人已是全部。**',
+      verdictEn:
+        'The historian says: an opening is only an opening if you have the strength to take it. What ended Shu was that those few tens of thousands were all there was.',
+      verdictLostZh: '論曰:挑戰而人不應,則挑戰者先窮。',
+      verdictLostEn:
+        'The historian says: offer battle to a man who will not come out, and it is the offering side that runs out first.',
+    },
     cao: {
       defeat: {
         titleZh: '長圍',
@@ -7426,6 +7587,62 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-guanyu-jing': {
+    cao: {
+      defeat: {
+        titleZh: '議徙許都以避其銳',
+        titleEn: 'The Court Discussed Moving the Capital',
+        textZh:
+          '羽威震華夏。魏王議徙許都以避其銳 ——'
+          + '這句話寫在《關羽傳》裡,而它是真的:'
+          + '于禁七軍已沒,龐德已斬,'
+          + '陸渾民孫狼等作亂,南附關羽,羽授印給兵,還為寇賊,'
+          + '自許以南,往往遙應。\n\n'
+          + '史實裡救了許都的,是江東的那條船。'
+          + '而此局那條船沒有開出來。\n\n'
+          + '**曹魏最險的一刻,原本靠的不是自己的兵。**'
+          + '蔣濟、司馬懿說「羽得志,孫權必不願」的那一句,'
+          + '這一次沒有應驗;而許都以南的印綬,發出去就收不回來了。',
+        textEn:
+          'Guan Yu shook the whole country. The king of Wei discussed moving the capital away from Xu to get out of his way — the sentence is in Guan Yu biography and it is not decoration: Yu Jin seven armies were gone, Pang De was executed, Sun Lang and others rose in Luhun and went over to him, and he handed out seals and troops to them and they turned bandit again, and everywhere south of Xu people were answering him at a distance.\n\n'
+          + 'What saved Xu in the record was a boat from the Southland. On this board the boat never left.\n\n'
+          + 'The most dangerous moment Cao Wei ever had was survived on somebody else troops. Jiang Ji and Sima Yi said that Sun Quan would not want Guan Yu to get what he wanted; this time that was not borne out. And seals handed out south of Xu do not come back.',
+      },
+      verdictZh:
+        '論曰:魏之得免於建安二十四年,史書歸於呂子明之白衣。'
+        + '**而白衣之所以能渡,在於盟友本來就想要那塊地。**',
+      verdictEn:
+        'The historian says: Wei escaped the twenty-fourth year of Jian-an, and the record credits Lü Meng men in white. What made the crossing possible was that the ally had wanted that land all along.',
+      verdictLostZh: '論曰:恃盟友之背盟以自全者,盟友一旦守約,則無以自全。',
+      verdictLostEn:
+        'The historian says: a state that survives on its ally breaking faith has no way to survive an ally who keeps it.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '荊州這個選項,沒有了',
+        titleEn: 'The Jing Province Option Is Gone',
+        textZh:
+          '吳之國策,自魯子敬至呂子明,只變過一次:'
+          + '從「與備共拒操」變成「取羽以自廣」。'
+          + '因為江東的地形只給了兩條路 ——'
+          + '北出合肥,西取荊州。\n\n'
+          + '合肥那條路,五攻而五不下。'
+          + '此局西邊那條路也關上了:雲長仍在,烽火臺仍在,'
+          + '而糜芳、傅士仁沒有開門。\n\n'
+          + '**於是它只剩守。**守得住的時候叫鼎立,'
+          + '守不住的時候,就叫這一段文字。',
+        textEn:
+          'Wu policy changed exactly once between Lu Su and Lü Meng: from stand with Liu Bei against Cao to take Guan Yu and grow. Because the geography of the Southland offers two roads and no others — north to Hefei, west into Jing.\n\n'
+          + 'The Hefei road was tried five times and failed five times. On this board the western road is shut too: Lord Guan is still there, the beacon towers are still manned, and Mi Fang and Fu Shiren did not open the gates.\n\n'
+          + 'Which leaves holding. While the holding works it is called the tripod standing. When it stops working, it is called this.',
+      },
+      verdictZh:
+        '論曰:國有二策而一策自絕,則其國之壽,即另一策之壽。',
+      verdictEn:
+        'The historian says: a state with two strategies that cuts off one of them lives exactly as long as the other one lasts.',
+      verdictLostZh: '論曰:守江者必守淮,而淮不可得 —— 吳之亡,亡在地圖上。',
+      verdictLostEn:
+        'The historian says: to hold the Yangtze you must hold the Huai, and the Huai could not be got. Wu ended on the map.',
+    },
     'liu-bei': {
       defeat: {
         titleZh: '荊州未失',
@@ -7457,6 +7674,61 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-zhuge-lives': {
+    cao: {
+      defeat: {
+        titleZh: '明帝早崩,而對面那個人還在',
+        titleEn: 'The Emperor Died Young, and the Other Man Did Not',
+        textZh:
+          '魏之所以能守住秦嶺,靠的從來不是一道防線,'
+          + '是**時間**:對面那個人五十四歲就沒了,'
+          + '而這邊的明帝雖然崩得早,接手的司馬懿還有二十年好活。\n\n'
+          + '此局把這筆帳倒過來算:五丈原沒有星墜,'
+          + '而景初三年正月,曹叡三十六歲,執司馬懿之手曰'
+          + '「以後事相托」—— 一個七歲的養子,'
+          + '兩個誰也不服誰的輔政,面對一個還在寫《出師表》的人。\n\n'
+          + '**魏的國祚,原本是靠對手的壽命買下來的。**'
+          + '這一局沒有人賣。',
+        textEn:
+          'What held the Qinling for Wei was never a line of fortifications. It was time: the man on the other side was gone at fifty-four, and although its own emperor died young, the Sima Yi who took over had twenty good years left.\n\n'
+          + 'This board reverses the ledger. No star falls at Wuzhangyuan, and in the first month of the third year of Jingchu, Cao Rui at thirty-six takes Sima Yi by the hand and entrusts him with what comes after — a seven-year-old adopted heir, two regents who will not defer to each other, and across the mountains a man still writing memorials before setting out.\n\n'
+          + 'The Wei mandate was bought with the other side lifespan. On this board nobody was selling.',
+      },
+      verdictZh:
+        '論曰:魏之勝蜀,人謂國大兵多。**而細數其歲月,勝負常在生死之間。**',
+      verdictEn:
+        'The historian says: Wei beat Shu, and people say it was the larger state with more soldiers. Count the years and the margin is usually a matter of who died when.',
+      verdictLostZh: '論曰:少主幼弱,二輔相疑,而敵國有一老人 —— 此其所以危。',
+      verdictLostEn:
+        'The historian says: a child on the throne, two regents suspicious of each other, and one old man in the enemy state. That is what danger looks like.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '盟國強了,而盟約沒有變厚',
+        titleEn: 'The Ally Grew Stronger, and the Treaty Did Not',
+        textZh:
+          '丞相不死,漢師連年出秦川 —— 對吳來說,'
+          + '這是最好的消息,也是最壞的消息。\n\n'
+          + '好在魏之兵力盡繫於西,'
+          + '合肥、壽春之守,十年不曾加一磚;'
+          + '壞在**盟國一旦真的贏了,盟約裡沒有一條寫著荊州歸誰**。\n\n'
+          + '孫權稱帝之年,與漢盟書並分天下:'
+          + '「豫、青、徐、幽屬吳,兗、冀、并、涼屬蜀,'
+          + '其司州之土,以函谷關為界。」'
+          + '——紙上分得很清楚,而紙上的那幾州,'
+          + '當時一寸也不在任何一方手裡。',
+        textEn:
+          'With the chancellor still alive and Han armies going out into the Qin valley year after year, this is the best news Wu could have and also the worst.\n\n'
+          + 'Good, because Wei strength is pinned in the west and not one brick is added to Hefei or Shouchun in ten years. Bad, because if the ally actually wins, there is no clause anywhere in the treaty saying who gets Jing province.\n\n'
+          + 'In the year Sun Quan took the imperial title the two courts signed a partition: Yu, Qing, Xu and You to Wu; Yan, Ji, Bing and Liang to Shu; and the metropolitan province split at Hangu pass. Very clearly divided on paper. Not one inch of any of it was in either side hands at the time.',
+      },
+      verdictZh:
+        '論曰:盟於未得之地者,其約必敗於既得之日。',
+      verdictEn:
+        'The historian says: an alliance that divides land nobody holds yet comes apart on the day somebody holds it.',
+      verdictLostZh: '論曰:恃盟以自安,而盟之強弱不由己 —— 此吳之常患。',
+      verdictLostEn:
+        'The historian says: to rest your security on an alliance whose strength is not yours to set. That was the standing Wu problem.',
+    },
     'liu-bei': {
       defeat: {
         titleZh: '長安既復,而丞相老矣',
@@ -7518,7 +7790,161 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
         'The historian says: winning at Red Cliffs and losing in the rear is a common enough shape. The hearts of surrendered troops are not on the ships. They are back where they came from.',
     },
   },
+  /* ── 女傑時代:七家共用一個題眼 —— **史書給過她們多小的位置,這一局就給
+       她們多大的位置;而敗亡是回到那個小位置。** 每一家的形狀不同,支點都取
+       她本人在正史裡那一行(或那半行)。 ── */
   'scn-whatif-women': {
+    'diaochan-han': {
+      defeat: {
+        titleZh: '布與卓侍婢私通',
+        titleEn: 'Bu Had Relations With a Serving-Woman of Zhuo',
+        textZh:
+          '長安既失,呂布之騎散於藍田道上。\n\n'
+          + '她的權柄從第一天起就架在別人的欲望上 —— 連環之計成了,'
+          + '而代價是此後每一日,她都要管住一群曾為她互相殺死的人。'
+          + '劍鋒不認主:奉先為她斬董卓,也能為別人斬她。\n\n'
+          + '《後漢書》寫這件事,用了九個字:「布與卓侍婢私通」。'
+          + '沒有名字,沒有出身,沒有下落 —— 而這一局把長安給了她十二年。',
+        textEn:
+          'Chang-an is gone and Lü Bu horse is scattered along the Lantian road.\n\n'
+          + 'Her authority stood from the first day on other men appetites. The chain-plan worked — and the price was that every day afterwards she had to keep in hand a set of men who had killed each other over her. A blade does not know whose it is: the man who cut down Dong Zhuo for her can cut her down for somebody else.\n\n'
+          + 'The History of the Later Han gives the whole affair nine characters: Bu had relations with a serving-woman of Zhuo. No name, no origin, no end. This board gave her Chang-an for twelve years.',
+      },
+      verdictZh:
+        '論曰:連環之計,史稱王允之謀,而執行者無名。'
+        + '**此局所改者非戰陣,是署名。**',
+      verdictEn:
+        'The historian says: the chain-plan is credited to Wang Yun, and the person who carried it out is not named. What this board changes is not the battles. It is the byline.',
+      verdictLostZh: '論曰:以色事人者,色衰而愛弛 —— 而她要的從來不是愛。',
+      verdictLostEn:
+        'The historian says: she who serves by her looks is set aside when the looks go. What she wanted was never the affection.',
+    },
+    'lady-sun': {
+      defeat: {
+        titleZh: '侍婢百餘人,皆親執刀侍立',
+        titleEn: 'A Hundred Waiting-Women, Every One With a Blade',
+        textZh:
+          '建業既下,江東諸將降者過半 —— 而降的是孫家的兵,不是她的兵。\n\n'
+          + '伯符仲謀皆為其驍將,聽起來是她的本錢,細想是她的枷:'
+          + '這支軍隊姓孫,而她也姓孫,於是每一次號令都要先證明'
+          + '「她配坐這個位置」,而不只是「這個位置該聽她的」。\n\n'
+          + '正史裡的她,才捷剛猛,有諸兄之風,'
+          + '侍婢百餘人皆親執刀侍立 —— 劉備每入,「心常凜凜」。'
+          + '而她回吳之後,史書再無一字:哪年死的,葬在哪裡,都沒有。',
+        textEn:
+          'Jianye has fallen and more than half the Southland officers have come over — and what came over was the Sun family army, not hers.\n\n'
+          + 'Having Sun Ce and Sun Quan as her field commanders sounds like capital and is closer to a yoke: the army is a Sun army and so is she, so every order has first to prove that she deserves the seat, rather than simply that the seat is to be obeyed.\n\n'
+          + 'The woman in the record was quick and hard and had the manner of her brothers, and kept over a hundred waiting-women who stood with drawn blades — Liu Bei went in to her, the record says, with a chill on him every time. And after she went back to Wu there is not one further word: not the year she died, not where she is buried.',
+      },
+      verdictZh:
+        '論曰:孫氏三世,兄弟相及。**此局所問者是第四種可能。**',
+      verdictEn:
+        'The historian says: three generations of Sun, and the succession went brother to brother. This board asks about a fourth possibility.',
+      verdictLostZh: '論曰:她回吳之後,史書再無一字 —— 敗與不敗,都是那樣。',
+      verdictLostEn:
+        'The historian says: after she returned to Wu the record says nothing more about her. Win or lose, it would have said the same.',
+    },
+    yueying: {
+      defeat: {
+        titleZh: '造得出木牛流馬,造不出人心',
+        titleEn: 'She Could Build the Ox and the Horse, and Not the Other Thing',
+        textZh:
+          '荊州之政,件件如機括:漕運有時,倉廩有數,'
+          + '連軍中傳令都有一套自己的簧舌 —— 她把每一件事都做成了一部機器。\n\n'
+          + '而機器壞了要人修,人卻不是機器。'
+          + '襄陽既圍,轉輸不至,堂上諸吏各持一份精確的簿冊,'
+          + '而沒有一份寫著誰願意為她死。\n\n'
+          + '《襄陽記》寫她,只有一句:「黃承彥有女,黃頭黑色,而才堪相配。」'
+          + '——連名字都是後人給的。這一局給了她二十座城。',
+        textEn:
+          'The government of Jing province ran like clockwork: the grain barges on a timetable, the granaries by exact count, even the army signal system with a mechanism of its own. She had turned every part of it into a machine.\n\n'
+          + 'And machines need people to repair them, and people are not machines. With Xiangyang invested and the transport not arriving, every clerk in the hall held an exact ledger, and not one of the ledgers recorded who was willing to die for her.\n\n'
+          + 'The Records of Xiangyang give her one line: Huang Chengyan has a daughter, yellow-haired and dark-skinned, and her ability is a match for yours. Even the name she is known by was supplied by later hands. This board gave her twenty cities.',
+      },
+      verdictZh:
+        '論曰:諸葛之巧,世稱木牛流馬。**而那個「才堪相配」的人,姓黃。**',
+      verdictEn:
+        'The historian says: the wooden ox and the gliding horse are credited to Zhuge Liang. The person whose ability was a match for his was surnamed Huang.',
+      verdictLostZh: '論曰:器可以精,而器不能代人立於堂上。',
+      verdictLostEn:
+        'The historian says: a mechanism can be made exact. A mechanism cannot stand in the hall in your place.',
+    },
+    'zhurong-nan': {
+      defeat: {
+        titleZh: '山中的規矩,出了山就不作數',
+        titleEn: 'The Rules of the Hills Do Not Travel',
+        textZh:
+          '南中之兵,善伏、善射、善於林間旬日不炊而行 ——'
+          + '飛刀取將的本事,是山裡養出來的。\n\n'
+          + '而出了山,那些本事在一座三丈的城牆下面全部作廢:'
+          + '不習攻城,不耐久頓,糧道一長,寨中先亂。'
+          + '成都城下四十日,南人思歸者過半 —— 不是敗於一戰,是敗於「久」。\n\n'
+          + '她在正史裡不存在。祝融夫人出自演義,'
+          + '而演義給她的位置,是被諸葛亮擒了再放回去的那一環。',
+        textEn:
+          'The southern troops ambush well, shoot well, and can march ten days through forest without lighting a fire. Taking a commander with a thrown blade is a skill the hills produce.\n\n'
+          + 'Outside the hills all of it is void at the foot of a thirty-foot wall: no siege practice, no patience for a long stand, and once the supply road runs long the camp comes apart before the enemy does. Forty days below Chengdu and more than half the southerners want to go home. Not beaten in an action — beaten by duration.\n\n'
+          + 'She does not exist in the standard histories. Lady Zhurong comes from the novel, and the place the novel gives her is one link in a chain of captures and releases.',
+      },
+      verdictZh:
+        '論曰:七擒之後,南中出兵出賦。**而那七次,是誰擒誰,史書其實沒說。**',
+      verdictEn:
+        'The historian says: after the seven captures the south sent soldiers and taxes. Who captured whom on those seven occasions is not something the record actually states.',
+      verdictLostZh: '論曰:恃險者,險亡則亡 —— 而她的險,是不肯走出來。',
+      verdictLostEn:
+        'The historian says: those who rely on difficult ground fall when the ground is lost. Her difficult ground was her unwillingness to leave it.',
+    },
+    qiao: {
+      defeat: {
+        titleZh: '一人先走,剩下的那個不是半個',
+        titleEn: 'When One Goes First, What Is Left Is Not a Half',
+        textZh:
+          '天下沒有第二個這樣的政權:兩個人共領一軍,'
+          + '文書兩署,號令兩出,而三軍不疑 —— 因為她們從不彼此矯令。\n\n'
+          + '這是它最強的地方,也是它唯一的死穴。'
+          + '姊病篤於宛城,妹在柴桑,信到之日已無可及。'
+          + '此後號令仍是兩署,一署已無人執筆 —— 三軍始疑。\n\n'
+          + '《江表傳》寫她們,只有一句:「策納大喬,瑜納小喬」,'
+          + '外加四個字:「皆國色也」。史書給她們的,是兩個賓語。',
+        textEn:
+          'There has never been another government like it: two people commanding one army, documents signed twice, orders issued twice, and the troops never in doubt — because neither of them ever forged the other hand.\n\n'
+          + 'That was its strength and its one fatal spot. The elder fell ill at Wan while the younger was at Chaisang, and by the time the letter arrived nothing could be done. The orders still went out with two signatures, one of which no longer had anyone behind it. After that the army was in doubt.\n\n'
+          + 'The Records of the Jiang Region give them one sentence: Ce took the elder Qiao, Yu took the younger. Plus four characters: both were beauties of the realm. What the record gave them was two grammatical objects.',
+      },
+      verdictZh:
+        '論曰:銅雀春深之句,鎖的是二喬。**而下注的人,從來不是她們。**',
+      verdictEn:
+        'The historian says: the famous couplet has the bronze bird tower locking up the two Qiao. The wager was never theirs to place.',
+      verdictLostZh: '論曰:並肩者,一人倒則兩人皆倒 —— 這是它的價錢。',
+      verdictLostEn:
+        'The historian says: when two stand shoulder to shoulder, one falling takes both. That was the price of it.',
+    },
+    'bian-liang': {
+      defeat: {
+        titleZh: '倡家女為國母,而立嗣那一天',
+        titleEn: 'A Singing-Girl Became the Mother of a State, and Then Came the Succession',
+        textZh:
+          '涼隴健兒服的是她的賞罰,不是她的出身 ——'
+          + '軍中無一人問她從哪裡來,因為問了也不影響領到多少。'
+          + '二十年,她把出身這件事按在了地下。\n\n'
+          + '而它會在一個特定的日子自己浮上來:立嗣。'
+          + '諸將可以受一個倡家女的號令,不肯受一個倡家女的兒子的號令;'
+          + '「賞罰」二字管得住當下,管不住身後。\n\n'
+          + '正史裡的卞后,倡家出身,性約儉,不尚華麗,'
+          + '「無文繡珠玉,器皆黑漆」—— 而她被立為王后那一年,五十歲。',
+        textEn:
+          'The men of Liang and Long obeyed her scale of rewards and punishments, not her birth. Nobody in the army asked where she came from, because asking would not change what they drew. For twenty years she kept the question of origin pressed flat under the ground.\n\n'
+          + 'And it comes up by itself on one particular day: naming an heir. The officers will take orders from a singing-girl; they will not take orders from a singing-girl son. Rewards and punishments govern the present. They do not govern what comes after you.\n\n'
+          + 'The Empress Bian of the record came from an entertainer household, was frugal by nature and did not care for display — no embroidery, no pearls or jade, all her vessels plain black lacquer. She was fifty the year she was raised to queen.',
+      },
+      verdictZh:
+        '論曰:魏之國母出於倡家,而終為太后。**史書許了她結局,沒許她開頭。**',
+      verdictEn:
+        'The historian says: the mother of the Wei state came out of an entertainer household and ended as dowager empress. The record allowed her the ending. It did not allow her the beginning.',
+      verdictLostZh: '論曰:賞罰可以服眾於一時,不能為出身贖一世。',
+      verdictLostEn:
+        'The historian says: a scale of rewards can hold people for a while. It cannot buy off a birth for a lifetime.',
+    },
     'caiyan-ye': {
       defeat: {
         titleZh: '胡笳十八拍',
@@ -8206,6 +8632,90 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-gaopingling': {
+    sima: {
+      defeat: {
+        titleZh: '等,是唯一一種要對手配合的本事',
+        titleEn: 'Waiting Is the One Skill That Needs the Other Man to Cooperate',
+        textZh:
+          '太傅之能,不在陣上。'
+          + '十年稱病,見李勝而持衣衣落,指口言渴,'
+          + '婢進粥,粥皆流出霑胸 —— 勝出,曰:「太傅患不可復濟,令人愴然。」'
+          + '爽等由是不復設備。\n\n'
+          + '這一局,對面沒有給他那十年。'
+          + '車駕出城,桓範持大司農印綬奔至,'
+          + '曰:「天子在外,以詔書召天下兵,誰敢不應!」——而爽聽了。\n\n'
+          + '**他一生贏在別人肯等,而這一次沒有人等。**'
+          + '洛水之誓沒有機會說出口,河南尹與司隸校尉的印,'
+          + '第二天就換了主人。',
+        textEn:
+          'What the Grand Tutor was good at did not happen on a battlefield. Ten years of pleading illness; when Li Sheng came he let his robe fall out of his hands, pointed at his mouth to say he was thirsty, and when the maid brought gruel it ran out of his mouth and down his chest. Li Sheng went away and said: the Tutor is past saving, it is a pitiful sight. After which Cao Shuang stopped taking precautions.\n\n'
+          + 'On this board the other side did not give him the ten years. The imperial carriage went out of the city and Huan Fan came galloping after it with the seals of the Minister of Agriculture, saying: with the Son of Heaven outside the walls, summon the armies of the realm by edict — who would dare not come? And Cao Shuang listened.\n\n'
+          + 'He had won all his life because other people were willing to wait. This time nobody waited. There was no chance to swear anything by the Luo, and the seals of the Henan governor and the Colonel-Director changed hands the next day.',
+      },
+      verdictZh:
+        '論曰:司馬氏之得天下,起於一次無人設備的清晨。'
+        + '**而清晨之所以無備,是因為有人相信了一碗流出來的粥。**',
+      verdictEn:
+        'The historian says: the Sima ascendancy begins on one morning when nobody had taken precautions. And nobody had, because somebody believed a bowl of gruel running down a chin.',
+      verdictLostZh: '論曰:能忍者未必能勝;忍之所以成事,必待彼之不疑。',
+      verdictLostEn:
+        'The historian says: the man who can endure does not always win. Endurance only works while the other side is not suspicious.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '魏自相攻,而漢不能出',
+        titleEn: 'Wei Tore Itself Apart, and Han Could Not Get Out',
+        textZh:
+          '關中之兵東下,秦嶺以北,一時空虛 ——'
+          + '這是丞相死後十五年,最像機會的一個機會。\n\n'
+          + '而漢中之外,兵不滿五萬;'
+          + '費禕裁制於前,黃皓弄權於後;'
+          + '斜谷之糧,運三月而支一月。\n\n'
+          + '**看得見,而伸不出手 —— 蜀漢的每一次亡國,'
+          + '都不是敗在那一仗,是敗在它從來只夠打一仗。**',
+        textEn:
+          'The Guanzhong troops went east and everything north of the Qinling was briefly empty. Fifteen years after the chancellor died, this was the closest thing to an opening that had appeared.\n\n'
+          + 'And outside Hanzhong there were not fifty thousand men; Fei Yi held the reins in front and Huang Hao worked the palace behind; three months of hauling up the Xie valley supported one month in the field.\n\n'
+          + 'Visible, and out of reach. Every version of Shu ending is like this: not lost in the battle, lost in only ever having enough for one battle.',
+      },
+      verdictZh: '論曰:機會之於小國,如燈之於盲者。',
+      verdictEn:
+        'The historian says: an opening is to a small state what a lamp is to a blind man.',
+      verdictLostZh: '論曰:三十年間,漢之出兵十有一次,而糧未嘗足一次。',
+      verdictLostEn:
+        'The historian says: in thirty years Han marched eleven times, and not once with enough grain.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '合肥城下,第五次',
+        titleEn: 'Below Hefei, the Fifth Time',
+        textZh:
+          '北方內鬥,吳人動於淮南 —— 一如既往。\n\n'
+          + '而合肥新城之下,張特以三千人守之,'
+          + '城將陷,乃遺魏將書曰:「今我無心復戰也,'
+          + '然魏法,被攻過百日而救不至者,雖降,家不坐也。'
+          + '自受敵以來,已九十餘日矣;此城中本有四千餘人,'
+          + '戰死者已過半,城雖陷,尚有半人不欲降,'
+          + '我當還為相語之,條名別善惡,明日早送名,'
+          + '且以我印綬去以為信。」乃投其印綬。\n\n'
+          + '吳人信之。其夜,特乃夜徹諸屋材柵,補其缺為二重。'
+          + '**明日復戰,吳人怒,攻之,不能拔。**'
+          + '——五攻合肥而五不下,吳之北界,四十年不曾移過一寸。',
+        textEn:
+          'The north was fighting itself and Wu moved in Huainan, as it always did.\n\n'
+          + 'And below Hefei New City, Zhang Te held it with three thousand men. With the place about to fall he sent a letter out: I have no heart left to fight. But by Wei law, a garrison attacked for more than a hundred days without relief may surrender without its families being charged. I have been under attack ninety-odd days. There were four thousand here and over half are dead; even so, half of what is left does not want to surrender. Let me go back and talk them round, and list the names of the willing and unwilling, and I will send the list in the morning. Here is my seal of office as a pledge. And he threw his seal over the wall.\n\n'
+          + 'The Wu commanders believed it. That night he pulled down the houses and palisades inside and built the breach up double. The next day he fought again, and Wu, furious, attacked and could not take it.\n\n'
+          + 'Five attempts on Hefei and five failures. In forty years the northern border of Wu did not move one inch.',
+      },
+      verdictZh:
+        '論曰:吳之水軍甲天下,而其北界止於一座城。'
+        + '**攻不下的不是合肥,是「下了船之後」那四個字。**',
+      verdictEn:
+        'The historian says: the Wu navy was the best in the realm and its northern border stopped at one town. What could not be taken was not Hefei. It was the words after getting off the boats.',
+      verdictLostZh: '論曰:五攻合肥,五不下 —— 而每一次的理由都不一樣,這才是問題。',
+      verdictLostEn:
+        'The historian says: five attempts on Hefei and five failures, each for a different reason. That is the part that should have worried them.',
+    },
     cao: {
       defeat: {
         titleZh: '桓範之謀得行',
@@ -8239,6 +8749,83 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-luxun-lives': {
+    sima: {
+      defeat: {
+        titleZh: '對面有一個會用兵的人,而且他還在',
+        titleEn: 'The Other Side Still Has a Man Who Can Handle an Army',
+        textZh:
+          '高平陵那一天,司馬氏取的是洛陽,而不是天下 ——'
+          + '天下還要靠此後十年,一寸一寸地換過來。\n\n'
+          + '那十年之所以夠用,前提是南邊沒有人能趁。'
+          + '而此局的前提正好是那一句:**伯言未憤恚而卒。**\n\n'
+          + '石亭之敗,是他打的;夷陵之火,是他放的;'
+          + '兩次以少擊眾,兩次改寫國界。'
+          + '一個內戰未定的政權,對上這樣一個人 ——'
+          + '洛陽的門還沒關嚴,江上的船已經到了。',
+        textEn:
+          'What the Sima took at Gaopingling was Luoyang, not the realm. The realm still had to be exchanged for, an inch at a time, over the following ten years.\n\n'
+          + 'Those ten years were only enough because nobody in the south was in a position to use them. The premise of this board is exactly the sentence that removes that: Lu Xun did not die of grief.\n\n'
+          + 'Shiting was his; the fire at Yiling was his; twice he beat a larger army with a smaller one and twice he moved a border. Set a government whose own civil war is not finished against a man like that, and the boats are on the river before the door of Luoyang has been properly shut.',
+      },
+      verdictZh:
+        '論曰:篡代之業,最怕的不是忠臣,是**外面有一個會用兵的人**。',
+      verdictEn:
+        'The historian says: what a usurpation most has to fear is not a loyal minister. It is a competent general on the other side of the border.',
+      verdictLostZh: '論曰:內事未定而外釁已開,雖有智者,不能善其後。',
+      verdictLostEn:
+        'The historian says: the internal question unsettled and the external one already opened — no amount of cleverness makes that end well.',
+    },
+    cao: {
+      defeat: {
+        titleZh: '曹爽之敗,不必等到那個清晨',
+        titleEn: 'Cao Shuang Did Not Need That Particular Morning',
+        textZh:
+          '爽兄弟並典禁兵,而專擅朝政:'
+          + '飲食車服,擬於乘輿;尚方珍玩,充牣其家;'
+          + '妻妾盈後庭,又私取先帝才人七八人為伎樂。\n\n'
+          + '桓範、何晏、鄧颺、丁謐之徒,號為智囊,'
+          + '而正始五年伐蜀,至駱谷,牛馬騾驢多死,'
+          + '關中大擾,羌胡怨叛 —— 一次出兵就把關中的人心賠光了。\n\n'
+          + '**他不是輸給司馬懿,他是輸給了他自己這十年**;'
+          + '那個清晨只是把帳結了。'
+          + '此局南邊多了一個陸伯言,而帳一樣要結,只是換一隻手來收。',
+        textEn:
+          'The Cao Shuang brothers held the palace guard between them and ran the government as their own: their food, carriages and dress copied the imperial establishment, the treasures of the imperial workshops filled their houses, their households were full of women, and they privately took seven or eight of the late emperor palace ladies as musicians.\n\n'
+          + 'Huan Fan, He Yan, Deng Yang and Ding Mi were called the bag of brains, and in the fifth year of Zhengshi they invaded Shu, got as far as the Luo valley, lost oxen and mules by the road, threw Guanzhong into disorder and turned the Qiang and Hu against them. One campaign spent all the goodwill Guanzhong had.\n\n'
+          + 'He did not lose to Sima Yi. He lost to his own ten years, and that morning merely settled the account. On this board there is a Lu Xun in the south as well, and the account still gets settled — only by a different hand.',
+      },
+      verdictZh:
+        '論曰:輔政者以宗室自恃,而不知宗室之名,正是眾目所在。',
+      verdictEn:
+        'The historian says: a regent who leans on being of the ruling clan does not realise that being of the ruling clan is precisely what everyone is watching.',
+      verdictLostZh: '論曰:駱谷之役,爽敗於未戰之前 —— 關中之心,一次而盡。',
+      verdictLostEn:
+        'The historian says: the Luo valley campaign was lost before contact. Guanzhong goodwill went in one go.',
+    },
+    'liu-bei': {
+      defeat: {
+        titleZh: '兩強俱亂,而漢仍舊出不去',
+        titleEn: 'Both Great Powers in Disorder, and Han Still Could Not Get Out',
+        textZh:
+          '北有高平陵之變,東有陸伯言在 ——'
+          + '這是三國最後一次,兩個對手同時把背露在外面。\n\n'
+          + '而漢中之外,兵不滿五萬,'
+          + '斜谷之糧運三月而支一月;'
+          + '費禕曰:「不如保國治民,敬守社稷,以俟能者。」\n\n'
+          + '**機會來過,而它不是為誰準備的 ——'
+          + '它只是恰好落在一個伸不出手的人面前。**',
+        textEn:
+          'The coup at Gaopingling in the north, and Lu Xun still alive in the east: the last occasion on which both of the other two turned their backs at the same time.\n\n'
+          + 'And outside Hanzhong there were not fifty thousand men, and three months of hauling up the Xie valley kept one month in the field, and Fei Yi said: better to keep the state and govern the people and guard the altars, and wait for an abler man.\n\n'
+          + 'The opening came. It was not prepared for anyone. It simply happened to land in front of someone who could not reach it.',
+      },
+      verdictZh: '論曰:機會不擇人,而能取之者擇力。',
+      verdictEn:
+        'The historian says: an opening does not choose who gets it. Who can take it is chosen by strength.',
+      verdictLostZh: '論曰:待能者而國先亡,則所待者非人,是時間。',
+      verdictLostEn:
+        'The historian says: if the state falls before the abler man arrives, what was being waited for was not a man. It was time.',
+    },
     sun: {
       defeat: {
         titleZh: '伯言未憤恚而卒',
