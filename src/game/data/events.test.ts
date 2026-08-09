@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { HISTORICAL_EVENTS } from './events';
 import { OFFICER_IDS, TALENT_POOL_IDS } from './index';
 import { HISTORICAL_OFFICER_TEMPLATES } from './historicalOfficers';
+import { buildInitialCities } from './cities';
 
 describe('historical event catalog integrity', () => {
   /*
@@ -19,15 +20,49 @@ describe('historical event catalog integrity', () => {
   });
 
   it('every referenced officer id exists', () => {
+    // ⚠ 這條原本只掃 requires 與頂層 effects —— **choices 裡的 officerId
+    //   一直沒查**,而抉擇型事件的效果全在 choices 裡。同 cityId 那條的成因。
+    const bad: string[] = [];
+    const chk = (id: string | undefined, where: string) => {
+      if (id && !known.has(id)) bad.push(where + ' → ' + id);
+    };
     for (const e of HISTORICAL_EVENTS) {
-      for (const r of e.requires ?? []) {
-        if ('officerId' in r) expect(known.has(r.officerId), `${e.id} requires ${r.officerId}`).toBe(true);
-      }
-      for (const f of e.effects) {
-        if ('officerId' in f) expect(known.has(f.officerId), `${e.id} effect ${f.officerId}`).toBe(true);
-        if ('rulerOfficerId' in f) expect(known.has(f.rulerOfficerId), `${e.id} ruler ${f.rulerOfficerId}`).toBe(true);
-      }
+      for (const r of e.requires ?? []) if ('officerId' in r) chk(r.officerId, `${e.id} requires`);
+      const scan = (fs: typeof e.effects, where: string) => {
+        for (const f of fs) {
+          if ('officerId' in f) chk(f.officerId, where);
+          if ('rulerOfficerId' in f) chk(f.rulerOfficerId, where + ' ruler');
+        }
+      };
+      scan(e.effects, `${e.id} effect`);
+      chk(e.chooserRulerId, `${e.id} chooser`);
+      for (const c of e.choices ?? []) scan(c.effects, `${e.id} choice ${c.id}`);
     }
+    expect(bad).toEqual([]);
+  });
+
+  /*
+   * 為什麼補這一條:officerId 從一開始就查,cityId **從來沒查過** —— 而
+   * cityId 是個裸 string,寫錯了 `tsc` 不會紅、事件照樣「觸發」,只是那條
+   * 效果落在一座不存在的城上,靜默蒸發。2026-08-09 補後三國事件時一次就寫
+   * 錯了兩個(`chang-an` 其實叫 `changan`、`yecheng` 其實叫 `ye`),兩條都
+   * 通過了 build 和當時的全部測試。
+   */
+  it('every referenced city id exists', () => {
+    const cityIds = new Set(buildInitialCities({}).map((c) => c.id));
+    const bad: string[] = [];
+    for (const e of HISTORICAL_EVENTS) {
+      const check = (o: unknown, where: string) => {
+        if (o && typeof o === 'object' && 'cityId' in o) {
+          const id = (o as { cityId?: string }).cityId;
+          if (id && !cityIds.has(id)) bad.push(`${e.id} ${where} → ${id}`);
+        }
+      };
+      for (const r of e.requires ?? []) check(r, 'requires');
+      for (const f of e.effects) check(f, 'effect');
+      for (const c of e.choices ?? []) for (const f of c.effects) check(f, `choice ${c.id}`);
+    }
+    expect(bad).toEqual([]);
   });
 
   it('year windows are sane', () => {
