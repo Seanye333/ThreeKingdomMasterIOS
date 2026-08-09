@@ -7666,6 +7666,718 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'somber',
   },
+
+  /* ════════════════════════════════════════════════════════════════════
+     楚漢 · 通用場面(2026-08-09)
+
+     同戰國那一批的成因與寫法:鉅鹿、還定三秦、彭城、井陘四張盤原本一條事件
+     都不會演(濰水與垓下有自己的鏈,其餘沒有)。守衛用 `hist-` 人物,
+     年份窗口散在 178–187 讓它們不要擠在開局頭半年。
+     ════════════════════════════════════════════════════════════════════ */
+  {
+    id: 'evt-ch-pofu',
+    name: { en: 'Break the Cauldrons, Sink the Boats', zh: '破釜沉舟' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'flag-unset', key: 'ch-pofu' },
+    ],
+    description:
+      'The relief army has sat forty-six days without moving because its commander thinks it better to let Qin and Zhao wear each other out. Xiang Yu kills him in his tent, takes the army across the river, sinks every boat, smashes every cooking pot, burns the huts and issues three days of rations, so that the men understand there is nothing behind them. Nine engagements. When it is over the other lords come to his gate on their knees, and none of them dares look up.',
+    descriptionZh:
+      '宋義行至安陽,留四十六日不進。羽曰:'
+      + '「今歲饑民貧,士卒食芋菽,軍無見糧,乃飲酒高會,'
+      + '不引兵渡河因趙食,與趙并力攻秦,乃曰『承其敝』。'
+      + '夫以秦之彊,攻新造之趙,其勢必舉趙。趙舉而秦彊,何敝之承!」'
+      + '晨朝上將軍宋義,即其帳中斬宋義頭。\n\n'
+      + '乃悉引兵渡河,皆沉船,破釜甑,燒廬舍,持三日糧,'
+      + '以示士卒必死,無一還心。於是至則圍王離,與秦軍遇,九戰,絕其甬道,'
+      + '大破之。當是時,楚兵冠諸侯,諸侯軍救鉅鹿下者十餘壁,莫敢縱兵。\n\n'
+      + '及楚擊秦,諸將皆從壁上觀。楚戰士無不一以當十,'
+      + '楚兵呼聲動天,諸侯軍無不人人惴恐。於是已破秦軍,'
+      + '項羽召見諸侯將,入轅門,無不膝行而前,莫敢仰視。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-xiang-yu', delta: 20 },
+      { kind: 'city-troops-multiplier', cityId: 'pengcheng', multiplier: 1.2 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-xiang-yu', delta: 12 },
+      { kind: 'flag', key: 'ch-pofu' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ch-yuefa',
+    name: { en: 'Three Articles and No More', zh: '約法三章' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-liu-bang' },
+      { kind: 'flag-unset', key: 'ch-yuefa' },
+    ],
+    description:
+      'First into the passes, he summons the elders and men of standing of the districts and tells them they have suffered long enough under the Qin statutes — criticise the government and your clan is wiped out, talk in private and you are executed in the market. He is here by agreement to be king of the passes, and he is repealing all of it. Three articles: a killer dies, a man who injures or steals is dealt with according to the offence. He also refuses the treasuries, seals the palaces, and withdraws to camp. The people of Qin bring beef and wine and are afraid only that he will not stay.',
+    descriptionZh:
+      '沛公西入咸陽,諸將皆爭走金帛財物之府分之,'
+      + '蕭何獨先入收秦丞相御史律令圖書藏之。'
+      + '沛公欲止宮休舍,樊噲、張良諫,乃封秦重寶財物府庫,還軍霸上。\n\n'
+      + '召諸縣父老豪桀曰:「父老苦秦苛法久矣,誹謗者族,偶語者棄市。'
+      + '吾與諸侯約,先入關者王之,吾當王關中。'
+      + '與父老約,法三章耳:殺人者死,傷人及盜抵罪。餘悉除去秦法。」\n\n'
+      + '秦人大喜,爭持牛羊酒食獻饗軍士。沛公又讓不受,曰:'
+      + '「倉粟多,非乏,不欲費人。」人又益喜,唯恐沛公不為秦王。',
+    effects: [],
+    chooserRulerId: 'hist-liu-bang',
+    choices: [
+      {
+        id: 'three-articles',
+        label: { zh: '悉除秦法,約法三章', en: 'Repeal it all; three articles only' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'changan', delta: 22 },
+          { kind: 'city-loyalty', cityId: 'mei', delta: 15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: 12 },
+          { kind: 'flag', key: 'ch-yuefa' },
+        ],
+      },
+      {
+        id: 'take-the-treasury',
+        label: { zh: '止宮休舍,收其府庫', en: 'Stay in the palace and take the treasuries' },
+        effects: [
+          { kind: 'force-gold-ruler', rulerOfficerId: 'hist-liu-bang', delta: 12000 },
+          { kind: 'city-loyalty', cityId: 'changan', delta: -18 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: -10 },
+          { kind: 'flag', key: 'ch-yuefa' },
+        ],
+      },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ch-hongmen',
+    name: { en: 'The Banquet at Hongmen', zh: '鴻門宴' },
+    yearMin: 179,
+    yearMax: 186,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'officer-alive', officerId: 'hist-liu-bang' },
+      { kind: 'officer-alive', officerId: 'hist-fan-zeng' },
+      { kind: 'flag-set', key: 'ch-yuefa' },
+      { kind: 'flag-unset', key: 'ch-hongmen' },
+    ],
+    description:
+      'Fan Zeng has told him three times that the man drank and took women in Shandong and has touched neither since entering the passes, which means his ambition is not small, and that the vapour over his camp is dragon-shaped in five colours, and that he should be killed now. At the banquet Fan Zeng raises his jade ring three times as the signal and gets no answer. Xiang Zhuang dances with a sword; Xiang Bo gets up and dances too, shielding Liu Bang with his body. Fan Kuai comes in through the guards, drinks a gallon standing, eats a raw shoulder of pork off his shield, and lectures the Hegemon-King on how the man who takes the passes should be treated. Liu Bang leaves on the excuse of the latrine and rides for his camp by the back roads.',
+    descriptionZh:
+      '范增說項羽曰:「沛公居山東時,貪於財貨,好美姬。'
+      + '今入關,財物無所取,婦女無所幸,此其志不在小。'
+      + '吾令人望其氣,皆為龍虎,成五采,此天子氣也。急擊勿失!」\n\n'
+      + '……范增數目項王,舉所佩玉玦以示之者三,項王默然不應。'
+      + '范增起,出召項莊,曰:「君王為人不忍。若入前為壽,'
+      + '壽畢,請以劍舞,因擊沛公於坐,殺之。」'
+      + '項莊拔劍起舞,項伯亦拔劍起舞,常以身翼蔽沛公,莊不得擊。\n\n'
+      + '樊噲側其盾以撞,衛士仆地,遂入,披帷西向立,瞋目視項王,'
+      + '頭髮上指,目眥盡裂。……項王曰:「壯士!賜之卮酒。」'
+      + '則與斗卮酒。噲拜謝,起,立而飲之。\n\n'
+      + '坐須臾,沛公起如廁,因招樊噲出,道芷陽間行。'
+      + '范增拔劍撞而破之,曰:「唉!豎子不足與謀。奪項王天下者,必沛公也。」',
+    effects: [],
+    chooserRulerId: 'hist-xiang-yu',
+    choices: [
+      {
+        id: 'let-him-go',
+        label: { zh: '默然不應 —— 為人不忍', en: 'Say nothing; the ring is raised three times in vain' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'hist-fan-zeng', delta: -15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-xiang-yu', delta: 5 },
+          { kind: 'flag', key: 'ch-hongmen' },
+        ],
+      },
+      {
+        id: 'strike',
+        label: { zh: '從亞父之計,擊之於坐', en: 'Answer the ring: kill him at the mat' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'hist-fan-zeng', delta: 20 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'hist-liu-bang', multiplier: 0.7 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-xiang-yu', delta: -10 },
+          { kind: 'city-loyalty', cityId: 'changan', delta: -15 },
+          { kind: 'flag', key: 'ch-hongmen' },
+        ],
+      },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-ch-yuexia-zhuihan',
+    name: { en: 'Xiao He Rides After Han Xin', zh: '蕭何月下追韓信' },
+    yearMin: 179,
+    yearMax: 187,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-han-xin' },
+      { kind: 'officer-alive', officerId: 'hist-xiao-he' },
+      { kind: 'flag-unset', key: 'ch-zhuihan' },
+    ],
+    description:
+      'Dozens of officers have deserted on the road into Hanzhong. When the chancellor himself goes missing, the king is told and reacts as though he has lost both hands. Two days later Xiao He is back. Why did you run? I did not run, I went after someone who ran. Who? Han Xin. Dozens of officers have deserted and you went after that one — you are lying. Xiao He says: the others are easy to come by; that one is the finest man in the realm and there is not a second. If you mean to be king of Hanzhong and no more, you have no use for him. If you mean to contend for the realm, there is nobody else to discuss it with.',
+    descriptionZh:
+      '諸將行道亡者數十人。信度何等已數言上,上不我用,即亡。'
+      + '何聞信亡,不及以聞,自追之。人有言上曰:「丞相何亡。」'
+      + '上大怒,如失左右手。\n\n'
+      + '居一二日,何來謁上。上且怒且喜,罵何曰:「若亡,何也?」'
+      + '何曰:「臣不敢亡也,臣追亡者。」曰:「若所追者誰?」曰:「韓信也。」'
+      + '上復罵曰:「諸將亡者以十數,公無所追;追信,詐也。」\n\n'
+      + '何曰:「諸將易得耳。至如信者,國士無雙。'
+      + '王必欲長王漢中,無所事信;必欲爭天下,非信無所與計事者。'
+      + '顧王策安所決耳。」……王曰:「吾為公以為將。」'
+      + '何曰:「雖為將,信必不留。」王曰:「以為大將。」何曰:「幸甚。」\n\n'
+      + '……乃擇良日,齋戒,設壇場,具禮。至拜大將,乃韓信也,一軍皆驚。',
+    effects: [],
+    chooserRulerId: 'hist-liu-bang',
+    choices: [
+      {
+        id: 'altar',
+        label: { zh: '擇良日,設壇場,拜為大將', en: 'Pick a day, build the altar, make him marshal' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'hist-han-xin', delta: 25 },
+          { kind: 'officer-loyalty', officerId: 'hist-xiao-he', delta: 12 },
+          { kind: 'city-troops-multiplier', cityId: 'hanzhong', multiplier: 1.2 },
+          { kind: 'flag', key: 'ch-zhuihan' },
+        ],
+      },
+      {
+        id: 'a-command',
+        label: { zh: '與一將軍而已', en: 'Give him a command and leave it there' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'hist-han-xin', delta: -20 },
+          { kind: 'officer-loyalty', officerId: 'hist-xiao-he', delta: -10 },
+          { kind: 'flag', key: 'ch-zhuihan' },
+        ],
+      },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ch-andu-chencang',
+    name: { en: 'Repair the Galleries, Cross at Chencang', zh: '明修棧道,暗度陳倉' },
+    yearMin: 180,
+    yearMax: 187,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-han-xin' },
+      { kind: 'flag-set', key: 'ch-zhuihan' },
+      { kind: 'flag-unset', key: 'ch-chencang' },
+    ],
+    description:
+      'The plank roads out of Hanzhong were burned on the way in, to show there was no intention of coming back — which is now the problem. Work parties are put on rebuilding them in plain sight, a job of months that Zhang Han watches with satisfaction. The army goes out by the old Chencang road instead. Zhang Han meets it too late, is beaten at Chencang, falls back on Feiqiu, and the three kings of the passes are undone inside a season.',
+    descriptionZh:
+      '漢王之國,行南鄭,道燒絕所過棧道,以備諸侯盜兵,'
+      + '亦示項羽無東意 —— 而今東出,棧道正是難處。\n\n'
+      + '信乃使人明修棧道,示以東還之期。章邯聞之而笑,益不為備。'
+      + '而漢王用韓信之計,從故道還,襲雍王章邯。'
+      + '邯迎擊漢陳倉,雍兵敗,還走;止戰好畤,又復敗,走廢丘。\n\n'
+      + '漢王遂定雍地,東至咸陽,引兵圍雍王廢丘,而遣諸將略定隴西、北地、上郡。'
+      + '——三秦之地,一季而下。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-han-xin', delta: 15 },
+      { kind: 'city-defense', cityId: 'changan', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.85 },
+      { kind: 'city-troops-multiplier', cityId: 'hanzhong', multiplier: 1.15 },
+      { kind: 'flag', key: 'ch-chencang' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ch-beishui',
+    name: { en: 'With the River at Their Backs', zh: '背水一陣' },
+    yearMin: 180,
+    yearMax: 187,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-han-xin' },
+      { kind: 'flag-set', key: 'ch-chencang' },
+      { kind: 'flag-unset', key: 'ch-beishui' },
+    ],
+    description:
+      'He sends scouts to find out whether Li Zuoche advice to cut the baggage train on the Jingxing road has been taken. It has not. Only then does he bring the army down. He puts ten thousand across the river with their backs to it, which the Zhao camp watches and laughs at, and sends two thousand light horse with red banners up a side path. When the Zhao army comes out and cannot break the line — because there is nowhere for that line to run — the two thousand ride into the empty camp and change every flag. Afterwards his officers ask what military manual that is in. The manual says put your back to a hill and your front to water. He says: it also says throw them where they will die and they live, and besides, these are men I picked up in the street; if I had not put them somewhere they could not run from, they would all have run.',
+    descriptionZh:
+      '信使人間視,知其不用廣武君策,還報,則大喜,乃敢引兵遂下。\n\n'
+      + '未至井陘口三十里,止舍。夜半傳發,選輕騎二千人,人持一赤幟,'
+      + '從間道萆山而望趙軍,誡曰:「趙見我走,必空壁逐我,'
+      + '若疾入趙壁,拔趙幟,立漢赤幟。」……乃使萬人先行,出,背水陳。'
+      + '趙軍望見而大笑。\n\n'
+      + '……趙開壁擊之,大戰良久。於是信、張耳詳棄鼓旗,走水上軍。'
+      + '水上軍開入之,復疾戰。趙果空壁爭漢鼓旗,逐韓信、張耳。'
+      + '韓信、張耳已入水上軍,軍皆殊死戰,不可敗。'
+      + '信所出奇兵二千騎,共候趙空壁逐利,則馳入趙壁,皆拔趙旗,立漢赤幟二千。\n\n'
+      + '諸將問曰:「兵法右倍山陵,前左水澤,今者將軍令臣等反背水陳,'
+      + '曰破趙會食,臣等不服。然竟以勝,此何術也?」\n'
+      + '信曰:「此在兵法,顧諸君不察耳。兵法不曰『陷之死地而後生,'
+      + '置之亡地而後存』?且信非得素拊循士大夫也,此所謂『驅市人而戰之』,'
+      + '其勢非置之死地,使人人自為戰;今予之生地,皆走,寧尚可得而用之乎!」',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-han-xin', delta: 18 },
+      { kind: 'city-defense', cityId: 'ye', delta: -18 },
+      { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 0.85 },
+      { kind: 'flag', key: 'ch-beishui' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ch-fanzeng-leaves',
+    name: { en: 'The Meal for the Hegemon Envoy', zh: '亞父之去' },
+    yearMin: 181,
+    yearMax: 187,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-fan-zeng' },
+      { kind: 'officer-alive', officerId: 'hist-chen-ping' },
+      { kind: 'flag-set', key: 'ch-hongmen' },
+      { kind: 'flag-unset', key: 'ch-fanzeng' },
+    ],
+    description:
+      'Chen Ping is given forty thousand catties of gold and told not to account for it. Word goes round the Chu camp that Zhong Li Mo and the others have great merit and no fief and are in touch with Han. When a Chu envoy arrives, a magnificent meal is brought in; the servants look at him, say oh, we thought you came from the Grand Tutor, and take it away, returning with plain food. The envoy reports this. Xiang Yu begins to suspect Fan Zeng. Fan Zeng, when he understands, says: the realm business is settled; my lord may see to it himself; let these old bones go home. He gets as far as Pengcheng and dies of a boil on his back.',
+    descriptionZh:
+      '漢王患之,乃用陳平之計間項王。'
+      + '項王使者來,為太牢具,舉欲進之。'
+      + '見使者,詳驚曰:「吾以為亞父使者,乃反項王使者。」'
+      + '更持去,以惡食食項王使者。使者歸報項王,項王乃疑范增與漢有私,稍奪之權。\n\n'
+      + '范增大怒,曰:「天下事大定矣,君王自為之!願賜骸骨歸卒伍。」'
+      + '項王許之。行未至彭城,疽發背而死。\n\n'
+      + '——項王帳中只有一個能謀的人,而他把那個人送走了。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-fan-zeng', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-chen-ping', delta: 15 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-xiang-yu', delta: -8 },
+      { kind: 'city-loyalty', cityId: 'pengcheng', delta: -10 },
+      { kind: 'flag', key: 'ch-fanzeng' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-ch-jixin',
+    name: { en: 'The Man Who Went Out in the Yellow Carriage', zh: '紀信誑楚' },
+    yearMin: 181,
+    yearMax: 187,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-ji-xin' },
+      { kind: 'officer-alive', officerId: 'hist-liu-bang' },
+      { kind: 'flag-set', key: 'ch-hongmen' },
+      { kind: 'flag-unset', key: 'ch-jixin' },
+    ],
+    description:
+      'Xingyang has been invested for a year and the corn road is cut. Ji Xin says: the situation is urgent; let me impersonate the king and deceive Chu, and my lord can go out the other side. Two thousand women in armour are sent out of the east gate at night and the Chu army closes on them from all four sides; the yellow-canopied carriage goes out behind them with Ji Xin in it, announcing that the food is gone and the king of Han surrenders. The whole Chu army shouts for joy and goes to the east side to watch. Liu Bang leaves by the west gate with a few dozen horse. Xiang Yu, seeing what has happened, has Ji Xin burned.',
+    descriptionZh:
+      '漢王食乏,恐,請和,割滎陽以西為漢。項王不聽。'
+      + '漢王患之,乃用陳平計,夜出女子滎陽東門二千餘人,被甲,楚因四面擊之。'
+      + '紀信乃乘王駕,詐為漢王,誑楚,曰:「城中食盡,漢王降。」'
+      + '楚皆呼萬歲,之城東觀,以故漢王得與數十騎出西門遁去。\n\n'
+      + '項王見紀信,問:「漢王安在?」曰:「漢王已出矣。」'
+      + '項王燒殺紀信。\n\n'
+      + '……周苛、樅公守滎陽。項王拔滎陽,烹周苛。'
+      + '——滎陽這一年,漢王活了下來,而替他活的人都沒有。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-ji-xin', status: 'dead' },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: 8 },
+      { kind: 'city-loyalty', cityId: 'luoyang', delta: -12 },
+      { kind: 'flag', key: 'ch-jixin' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-ch-yibeigeng',
+    name: { en: 'Then Send Me a Cup of the Soup', zh: '分我一杯羹' },
+    yearMin: 182,
+    yearMax: 187,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'officer-alive', officerId: 'hist-liu-bang' },
+      { kind: 'flag-set', key: 'ch-jixin' },
+      { kind: 'flag-unset', key: 'ch-yibeigeng' },
+    ],
+    description:
+      'Stalemated across the ravine, Xiang Yu has a high chopping board set up with Liu Bang father on it and calls across that unless Han surrenders now he will boil the old man. The answer comes back: you and I faced north together and took our commission from King Huai, and swore to be brothers, so my father is your father — and if you insist on boiling your father, be so good as to send me a cup of the soup. Xiang Bo says: the fate of the realm is not knowable, and a man who contends for it does not care about his family; killing him gains nothing and adds harm. The board is taken down.',
+    descriptionZh:
+      '項王為高俎,置太公其上,告漢王曰:'
+      + '「今不急下,吾烹太公。」\n\n'
+      + '漢王曰:「吾與項羽俱北面受命懷王,曰『約為兄弟』,'
+      + '吾翁即若翁,必欲烹而翁,則幸分我一杯羹。」\n\n'
+      + '項王怒,欲殺之。項伯曰:「天下事未可知,且為天下者不顧家,'
+      + '雖殺之無益,祗益禍耳。」項王從之。',
+    effects: [],
+    chooserRulerId: 'hist-xiang-yu',
+    choices: [
+      {
+        id: 'stand-down',
+        label: { zh: '從項伯之言,撤俎', en: 'Heed Xiang Bo; take the board down' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-xiang-yu', delta: 4 },
+          { kind: 'flag', key: 'ch-yibeigeng' },
+        ],
+      },
+      {
+        id: 'boil',
+        label: { zh: '烹之', en: 'Boil him' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-xiang-yu', delta: -12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: 8 },
+          { kind: 'city-loyalty', cityId: 'pengcheng', delta: -15 },
+          { kind: 'flag', key: 'ch-yibeigeng' },
+        ],
+      },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-ch-pengyue',
+    name: { en: 'Peng Yue Behind the Lines', zh: '彭越撓楚' },
+    yearMin: 182,
+    yearMax: 188,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-peng-yue' },
+      { kind: 'flag-set', key: 'ch-chencang' },
+      { kind: 'flag-unset', key: 'ch-pengyue' },
+    ],
+    description:
+      'He never fights a battle anyone records the name of. He takes the country between Liang and Chu with a few tens of thousands, goes where the granaries are, burns the corn road, and disappears; Xiang Yu turns east to deal with him and by the time he has, Xingyang has been resupplied and the front has moved back. Chu wins nearly every engagement of the war and cannot finish it, because every time it presses in the west somebody is burning its food in the east.',
+    descriptionZh:
+      '彭越常往來為漢游兵,擊楚,絕其後糧於梁地。'
+      + '……漢王敗,越亦亡所得城,獨將其兵北居河上。'
+      + '項王與漢王相距滎陽,越攻下睢陽、外黃十七城。'
+      + '項王聞之,乃使曹咎守成皋,自東收越所下城邑,皆復為楚。\n\n'
+      + '越將其兵北走穀城。……越復下昌邑旁二十餘城,得穀十餘萬斛,以給漢王食。\n\n'
+      + '——楚戰無不勝而不能終,正在於此:'
+      + '每當它在西邊壓上去,東邊就有人在燒它的糧。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-peng-yue', delta: 15 },
+      { kind: 'city-food', cityId: 'pengcheng', delta: -25000 },
+      { kind: 'strip-force-paint', forceId: 'chu' },
+      { kind: 'flag', key: 'ch-pengyue' },
+    ],
+    mood: 'martial',
+  },
+
+  /* ════════════════════════════════════════════════════════════════════
+     隋唐 · 兩組(2026-08-09)
+
+     ⚠ 這一線的守衛跟另外兩線不一樣,因為**人物池不對稱**:
+     隋末群雄(隋煬帝/竇建德/王世充/劉武周/宋金剛/李密)**不在安史盤上**,
+     而安史那批(安祿山/楊貴妃/哥舒翰/顏真卿)**在淺水原、柏壁、虎牢盤上都在**。
+
+     於是:唐初那組靠人物就擋得住安史盤(用隋末人物當守衛);
+     **安史那組靠人物擋不住**,必須綁 `chain-anshi`(已在 scenarios.ts 宣告)。
+     ════════════════════════════════════════════════════════════════════ */
+  {
+    id: 'evt-st-jinyang',
+    name: { en: 'The Rising at Jinyang', zh: '晉陽起兵' },
+    yearMin: 178,
+    yearMax: 188,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-sui-yangdi' },
+      { kind: 'officer-alive', officerId: 'hist-li-yuan' },
+      { kind: 'flag-unset', key: 'st-jinyang' },
+    ],
+    description:
+      'The garrison commander at Taiyuan has lost engagements against the Turks and is liable for it under a law that does not care about circumstances. His second son and Liu Wenjing have already been recruiting, on the argument that the realm is in pieces and holding a province for a dynasty that is finished is the least safe thing available. When it is finally put to him he refuses, then says he will report his own son — and then says: if I inform, the house dies; if I do not, the house may live. As you have brought it this far, what else is there to do?',
+    descriptionZh:
+      '高祖為太原留守,與突厥戰,數不利,恐獲罪。'
+      + '太宗與晉陽令劉文靜謀舉大事,計已決,而未敢言。'
+      + '……太宗乘間屏人說曰:「今主上無道,百姓困窮,'
+      + '晉陽城外皆為戰場;大人若守小節,下有寇盜,上有嚴刑,'
+      + '危亡無日。不若順民心,興義兵,轉禍為福,此天授之時也。」\n\n'
+      + '高祖大驚曰:「汝安得為此言!吾今執汝以告縣官。」'
+      + '取紙筆,欲表其事。太宗徐曰:「兒觀天時人事如此,故敢發言;'
+      + '必欲執告,不敢辭死。」高祖曰:「吾豈忍告汝,汝慎勿出口。」\n\n'
+      + '明日,又曰:「吾一夕思汝言,亦大有理。今日破家亡軀亦由汝,'
+      + '化家為國亦由汝矣。」',
+    effects: [],
+    chooserRulerId: 'hist-li-yuan',
+    choices: [
+      {
+        id: 'rise',
+        label: { zh: '化家為國亦由汝 —— 舉義兵', en: 'Raise the standard at Jinyang' },
+        effects: [
+          { kind: 'city-troops-multiplier', cityId: 'taiyuan', multiplier: 1.25 },
+          { kind: 'officer-loyalty', officerId: 'hist-tang-taizong', delta: 15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-yuan', delta: 10 },
+          { kind: 'flag', key: 'st-jinyang' },
+        ],
+      },
+      {
+        id: 'hold-post',
+        label: { zh: '守留守之職,以待朝命', en: 'Hold the post and wait for the court' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'taiyuan', delta: 10 },
+          { kind: 'officer-loyalty', officerId: 'hist-tang-taizong', delta: -12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-yuan', delta: -6 },
+          { kind: 'flag', key: 'st-jinyang' },
+        ],
+      },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-st-huoyi',
+    name: { en: 'The Rain at Huoyi', zh: '霍邑之雨' },
+    yearMin: 179,
+    yearMax: 189,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-tang-taizong' },
+      { kind: 'officer-alive', officerId: 'hist-liu-wuzhou' },
+      { kind: 'flag-set', key: 'st-jinyang' },
+      { kind: 'flag-unset', key: 'st-huoyi' },
+    ],
+    description:
+      'Stopped at Huoyi by rain that will not end, with the grain low and a rumour that the Turks and Liu Wuzhou are moving on Taiyuan behind them, the council votes to go back and secure the base. The second son argues: we came out on a just cause, and an army that advances wins and one that turns back disperses; if it disperses and the enemy comes on behind, we die where we stand. He is not heard. That night he weeps outside the tent loudly enough to be summoned in, repeats it, and the order to withdraw is cancelled at dawn.',
+    descriptionZh:
+      '義師至賈胡堡,隋將宋老生屯霍邑以拒。會霖雨積旬,饋運不給,'
+      + '又傳突厥與劉武周乘虛襲晉陽 —— 高祖集將佐議還師,以救根本。\n\n'
+      + '太宗諫曰:「今禾菽被野,何憂乏糧?'
+      + '宋老生輕躁,一戰可擒。李密顧戀倉粟,未遑遠略。'
+      + '劉武周外雖倚突厥,內實猜嫌。'
+      + '本興大義以救蒼生,當須先入咸陽,號令天下;'
+      + '今遇小敵,遽已班師,恐從義之徒一朝解體。」\n\n'
+      + '高祖不納,催令引發。太宗遂號泣於外,聲聞帳中。'
+      + '高祖召問其故,對曰:「今兵以義動,進戰則克,退還則散;'
+      + '眾散於前,敵乘於後,死亡無日,何得不悲!」'
+      + '高祖乃悟而止。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-tang-taizong', delta: 18 },
+      { kind: 'city-troops-multiplier', cityId: 'taiyuan', multiplier: 1.1 },
+      { kind: 'city-defense', cityId: 'changan', delta: -12 },
+      { kind: 'flag', key: 'st-huoyi' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-st-yuchi',
+    name: { en: 'Yuchi Jingde Comes Over', zh: '尉遲敬德歸唐' },
+    yearMin: 180,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-yuchi-gong' },
+      { kind: 'officer-alive', officerId: 'hist-song-jingang' },
+      { kind: 'flag-unset', key: 'st-yuchi' },
+    ],
+    description:
+      'With Song Jingang broken and gone north, Yuchi Jingde holds Jiexiu and Yong-an and then surrenders both. Shortly afterwards two other officers who had come over the same way desert again, and the staff put Yuchi under arrest on the reasonable ground that he will be next. The prince has him released, brought in, given gold, and told: a man decides these things for himself, and I will not have anyone believe I would harm a man who came to me. If you truly want to leave, take this for the road. He does not leave. At Meiliangchuan, at Hulao, and later at the Xuanwu gate, he is the man standing next to him.',
+    descriptionZh:
+      '宋金剛之敗,尋相與尉遲敬德收其餘眾,守介休。'
+      + '太宗遣任城王道宗、宇文士及往諭之,敬德與尋相舉城來降。\n\n'
+      + '其後尋相與諸將復叛去,諸將疑敬德必叛,囚之軍中。'
+      + '行臺左僕射屈突通、尚書殷開山咸言:「敬德驍勇絕倫,'
+      + '今既囚之,心必怨望,留之恐貽後悔,請即殺之。」\n\n'
+      + '太宗曰:「不然。敬德若懷翻背之計,豈在尋相之後邪?」'
+      + '遽命釋之,引入臥內,賜以金寶,謂曰:'
+      + '「丈夫意氣相期,勿以小疑介意,寡人終不聽讒言以害忠良,公宜體之。'
+      + '必欲去者,以此相資,表一時共事之情也。」\n\n'
+      + '是日,獵於榆窠,遇王世充,單雄信直趨太宗,敬德躍馬大呼,'
+      + '橫刺雄信墜馬,護太宗以出。',
+    effects: [
+      { kind: 'officer-join-ruler', officerId: 'hist-yuchi-gong', rulerOfficerId: 'hist-li-yuan' },
+      { kind: 'officer-loyalty', officerId: 'hist-yuchi-gong', delta: 25 },
+      { kind: 'city-troops-multiplier', cityId: 'taiyuan', multiplier: 1.12 },
+      { kind: 'flag', key: 'st-yuchi' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-st-xuanjia',
+    name: { en: 'The Black Armour', zh: '玄甲軍' },
+    yearMin: 181,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-tang-taizong' },
+      { kind: 'officer-alive', officerId: 'hist-dou-jiande' },
+      { kind: 'flag-set', key: 'st-yuchi' },
+      { kind: 'flag-unset', key: 'st-xuanjia' },
+    ],
+    description:
+      'A thousand picked horse in black armour, split into two wings under Qin Shubao, Cheng Yaojin, Yuchi Jingde and Zhai Zhangsun, kept for the moment when a line is already bending. Before Hulao the prince takes Yuchi and four riders out to look at Dou Jiande camp and says: I take the bow, you take the lance, and a hundred thousand of them can do nothing to us. They ride up to the pickets, announce themselves, kill the men who come out, and lead five or six thousand cavalry back into an ambush.',
+    descriptionZh:
+      '太宗簡精銳千餘騎,皆皂衣玄甲,分為左右隊,'
+      + '使秦叔寶、程知節、尉遲敬德、翟長孫分將之。'
+      + '每戰,太宗親披玄甲帥之為前鋒,乘機進擊,所向無不摧破,敵人畏之。\n\n'
+      + '將戰,太宗以五百騎行視戰地,謂敬德曰:'
+      + '「吾執弓矢,公執槊相隨,雖百萬眾若我何!」'
+      + '又曰:「彼見我而還,上策也。」\n\n'
+      + '遂至其營,去賊營三里所,賊眾大驚,'
+      + '曰:「秦王也。」太宗曰:「我秦王也。」引弓射之,斃其一將。'
+      + '賊眾五六千騎逐之,太宗徐引而還,與李世勣、程咬金伏兵,大破之。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-tang-taizong', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'hist-qin-qiong', delta: 12 },
+      { kind: 'officer-loyalty', officerId: 'hist-cheng-yaojin', delta: 12 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'flag', key: 'st-xuanjia' },
+    ],
+    mood: 'martial',
+  },
+
+  /* ── 安史之亂(綁 chain-anshi:靠人物擋不住,見上面的說明)── */
+  {
+    id: 'evt-st-anshi-1',
+    name: { en: 'The Drums of Yuyang', zh: '漁陽鼙鼓' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-active', officerId: 'hist-an-lushan' },
+      { kind: 'flag-unset', key: 'anshi-rising' },
+    ],
+    description:
+      'He commands three frontier commands and a hundred and fifty thousand men, and marches south from Fanyang on a forged edict ordering him to punish the chief minister. The interior has not seen a war in a century: the commanderies of Hebei fold as he passes, the officials either flee, surrender, or are killed, and the column covers the ground faster than the reports of it. At Chang-an the court is still discussing whether the report is true.',
+    descriptionZh:
+      '天寶十四載十一月,祿山發所部兵及同羅、奚、契丹、室韋凡十五萬眾,'
+      + '夜半發漁陽,以誅楊國忠為名,詐為敕書,曰:'
+      + '「有密旨,令祿山將兵入朝討楊國忠。」\n\n'
+      + '時海內久承平,百姓累世不識兵革,猝聞范陽兵起,遠近震駭。'
+      + '河北皆祿山統內,所過州縣,望風瓦解,'
+      + '守令或開門出迎,或棄城竄匿,或為所擒戮,無敢拒之者。\n\n'
+      + '而長安猶以為妄,議者尚論其書之真偽。',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'ye', delta: -25 },
+      { kind: 'city-loyalty', cityId: 'beiping', delta: -25 },
+      { kind: 'city-defense', cityId: 'luoyang', delta: -20 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: -12 },
+      { kind: 'flag', key: 'anshi-rising' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-st-anshi-2',
+    name: { en: 'Twenty-Four Commanderies and Not One Man', zh: '河北二十四郡' },
+    yearMin: 178,
+    yearMax: 187,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-alive', officerId: 'hist-yan-zhenqing' },
+      { kind: 'flag-set', key: 'anshi-rising' },
+      { kind: 'flag-unset', key: 'anshi-hebei' },
+    ],
+    description:
+      'With every commandery in Hebei gone over, the emperor says: in twenty-four commanderies of Hebei was there not one loyal man? Then word comes that the governor of Pingyuan has raised troops, and his cousin at Changshan with him, and seventeen commanderies have declared for the throne in a single day with two hundred thousand men. The emperor strikes the arm of his couch and says: I do not even know what Yan Zhenqing looks like, and he does this.',
+    descriptionZh:
+      '河北二十四郡皆從賊。上歎曰:'
+      + '「河北二十四郡,曾無一人義士邪!」\n\n'
+      + '既而平原太守顏真卿遣使間道奉表 —— 真卿先度祿山必反,'
+      + '陰完城浚池,料丁壯,實廩實,而以霖雨為解。'
+      + '祿山以為書生,不足慮也。\n\n'
+      + '從兄常山太守顏杲卿起兵斷賊歸路,河北十七郡同日歸朝廷,'
+      + '得兵二十餘萬。上撫床歎曰:'
+      + '「朕不識顏真卿作何狀,乃能如是!」',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'ye', delta: 20 },
+      { kind: 'city-loyalty', cityId: 'bohai', delta: 22 },
+      { kind: 'officer-loyalty', officerId: 'hist-yan-zhenqing', delta: 20 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: 8 },
+      { kind: 'flag', key: 'anshi-hebei' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-st-anshi-3',
+    name: { en: 'The Cry of Wrong at the Camp Gate', zh: '邊令誠之譖' },
+    yearMin: 179,
+    yearMax: 187,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-alive', officerId: 'hist-gao-xianzhi' },
+      { kind: 'officer-alive', officerId: 'hist-feng-changqing' },
+      { kind: 'flag-set', key: 'anshi-rising' },
+      { kind: 'flag-unset', key: 'anshi-tongguan' },
+    ],
+    description:
+      'Feng Changqing raised troops in Luoyang from the market crowd, lost, and told Gao Xianzhi the honest thing: these men cannot hold, fall back to Tong pass and hold that. They abandoned Shanzhou and got the pass fortified before the rebels arrived, which is the reason Chang-an did not fall that winter. The eunuch supervisor, refused a bribe, reported that Feng had exaggerated the enemy and that Gao had abandoned several hundred li and skimmed the ration allowance. Both were executed at the camp. When Gao denied the skimming and asked the ranks whether it was true, the whole army shouted that it was a wrong, and the sound of it shook the ground.',
+    descriptionZh:
+      '封常清募兵洛陽,所募皆市井子弟,不習戰,屢敗。'
+      + '謂高仙芝曰:「累日血戰,賊鋒不可當。且潼關無兵,'
+      + '若賊豕突入關,則長安危矣。宜棄陝守潼關。」'
+      + '仙芝從之,遂焚太原倉,引兵趣潼關,修完守備 ——'
+      + '賊至,不得入而去。長安之不即陷,由此也。\n\n'
+      + '監軍邊令誠數以事干仙芝,仙芝多不從,'
+      + '令誠入奏,具言二人罪狀,曰:'
+      + '「常清以賊搖眾,而仙芝棄陝地數百里,又盜減軍士糧賜。」\n\n'
+      + '上怒,遣令誠即軍中斬之。仙芝曰:'
+      + '「我遇敵而退,死則宜矣。今上戴天,下履地,'
+      + '謂我盜減糧賜則誣也。」顧謂令誠曰:'
+      + '「上是天,下是地,士卒皆在,足下豈不知乎!」'
+      + '其麾下皆呼「枉」,其聲振地。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-gao-xianzhi', status: 'dead' },
+      { kind: 'officer-status', officerId: 'hist-feng-changqing', status: 'dead' },
+      { kind: 'city-defense', cityId: 'changan', delta: -18 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: -10 },
+      { kind: 'flag', key: 'anshi-tongguan' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-st-anshi-4',
+    name: { en: 'He Wept as He Went Out the Pass', zh: '慟哭出關' },
+    yearMin: 180,
+    yearMax: 188,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-alive', officerId: 'hist-geshu-han' },
+      { kind: 'flag-set', key: 'anshi-tongguan' },
+      { kind: 'flag-unset', key: 'anshi-lingbao' },
+    ],
+    description:
+      'Geshu Han holds Tong pass with two hundred thousand and will not come out, on the grounds that the rebels are veterans, his own men are new, and that Guo Ziyi and Li Guangbi are cutting the rebel line in the north and time is on the imperial side. The chief minister, who is afraid of what an army sitting still might eventually be used for, tells the emperor the rebels at Shanzhou are weak and that this is dithering. Order after order arrives. He beats his chest, weeps, and goes out. At Lingbao the column is caught in a defile, fire and rolling logs come down from the heights, and of two hundred thousand about eight thousand come back.',
+    descriptionZh:
+      '哥舒翰以病廢在家,倉卒發兵二十萬守潼關,'
+      + '議者以為賊悉銳兵在陝,而潼關之兵皆新募烏合,不可輕出。'
+      + '翰上言:「祿山久習用兵,今始為逆,豈肯無備?'
+      + '是必羸師以誘我,若往,正墮其計。'
+      + '且賊遠來,利在速戰;王師自戰其地,利在堅守。'
+      + '況賊殘虐失眾,兵勢日蹙,將有內變 —— 因而乘之,可不戰擒也。」\n\n'
+      + '楊國忠疑翰謀己,言於上曰:「兵法『安不忘危』,'
+      + '今大軍留關,而賊在陝,不亟討,恐失機會。」'
+      + '上以為然,遣中使趣翰進兵,項背相望。\n\n'
+      + '翰撫膺慟哭,引兵出關。至靈寶西原,'
+      + '南薄山,北阻河,隘道七十里,賊伏兵於險,'
+      + '以草車數十乘塞路,縱火焚之,煙焰亙天,官軍不能視。'
+      + '……二十萬眾,存者八千而已。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-geshu-han', status: 'imprisoned' },
+      { kind: 'city-defense', cityId: 'changan', delta: -30 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.5 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: -14 },
+      { kind: 'flag', key: 'anshi-lingbao' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-st-anshi-5',
+    name: { en: 'The Post Station at Mawei', zh: '馬嵬驛' },
+    yearMin: 180,
+    yearMax: 189,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-alive', officerId: 'hist-yang-guifei' },
+      { kind: 'flag-set', key: 'anshi-lingbao' },
+      { kind: 'flag-unset', key: 'anshi-mawei' },
+    ],
+    description:
+      'The column out of Chang-an has not eaten properly for a day when it stops at Mawei and the Six Armies will not go on. The chief minister is cut down by soldiers while talking to Tibetan envoys about supplies. The emperor comes out on a stick to tell them to disperse and nobody moves; Chen Xuanli says the minister is dealt with but the lady is still at his side, and the men cannot feel safe. Gao Lishi says: the lady is truly guiltless, but the men have killed her cousin, and while she is beside Your Majesty they will not settle. He goes back inside. She is taken to a Buddhist shrine at the station and strangled with a length of silk, and the body is laid out in the courtyard for Chen Xuanli to inspect.',
+    descriptionZh:
+      '至馬嵬驛,將士飢疲,皆憤怒。'
+      + '龍武大將軍陳玄禮以禍由楊國忠,欲誅之,因東宮宦者李輔國以告太子,太子未決。\n\n'
+      + '會吐蕃使者二十餘人遮國忠馬,訴以無食。'
+      + '軍士呼曰:「國忠與胡虜謀反!」或射之,中鞍。'
+      + '國忠走至西門內,軍士追殺之,屠割支體,以槍揭其首於驛門外。\n\n'
+      + '上杖屨出驛門,慰勞軍士,令收隊,軍士不應。'
+      + '上使高力士問之,玄禮對曰:「國忠謀反,貴妃不宜供奉,願陛下割恩正法。」'
+      + '上曰:「朕當自處之。」入門,倚杖傾首而立。久之,京兆司錄韋諤前言:'
+      + '「今眾怒難犯,安危在晷刻,願陛下速決!」\n\n'
+      + '高力士曰:「貴妃誠無罪,然將士已殺國忠,'
+      + '而貴妃在陛下左右,豈敢自安?願陛下審思之,將士安則陛下安矣。」'
+      + '上乃命力士引貴妃於佛堂,縊殺之。'
+      + '輿屍置驛庭,召玄禮等入視之。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-yang-guifei', status: 'dead' },
+      { kind: 'officer-status', officerId: 'hist-yang-guozhong', status: 'dead' },
+      { kind: 'city-loyalty', cityId: 'changan', delta: -20 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: -16 },
+      { kind: 'officer-loyalty', officerId: 'hist-guo-ziyi', delta: 10 },
+      { kind: 'flag', key: 'anshi-mawei' },
+    ],
+    mood: 'somber',
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(
