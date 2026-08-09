@@ -9196,6 +9196,7 @@ const FORCES_WHATIF_GAOPINGLING: Force[] = [
 ];
 export const SCENARIO_WHATIF_GAOPINGLING: Scenario = {
   id: 'scn-whatif-gaopingling',
+  eventFlags: ['chain-caoshuang'],
   openingRelations: [
     { a: 'cao', b: 'sima', score: -95, status: 'neutral' },  // 挾天子疾走許昌,傳檄討司馬為叛逆
     { a: 'cao', b: 'liu-bei', score: -70, status: 'neutral' },

@@ -5750,6 +5750,91 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:若曹爽先發制人(chain-caoshuang)---------------------------
+   * 前提是桓範之謀得行:爽不解印就縛,挾天子疾走,發關中之兵。
+   * 那麼接下來要回答的是檄文有沒有人應,以及那一句洛水之誓信不信。
+   */
+  {
+    id: 'evt-caoshuang-alt-1',
+    name: { en: "The Dispatch Goes Out", zh: '傳檄四方' },
+    yearMin: 249,
+    yearMax: 252,
+    requires: [
+      { kind: 'flag-set', key: 'chain-caoshuang' },
+      { kind: 'officer-active', officerId: 'cao-shuang' },
+      { kind: 'flag-unset', key: 'caoshuang-alt-call' },
+    ],
+    description:
+      "Huan Fan had it right: the carriage is outside the city, the Emperor is in your hands, and a man who holds the Emperor gives orders to the realm. The dispatch naming Sima Yi a rebel is written. Who it is addressed to is the choice.",
+    descriptionZh: '桓範之言果驗:「車駕在外,天子在手,挾令諸侯,誰敢不應?」討司馬為叛逆之檄已具 —— 而發給誰,是另一件事。',
+    effects: [],
+    chooserRulerId: 'cao-shuang',
+    choices: [
+      {
+        id: 'huainan',
+        label: { zh: '發淮南之兵 —— 王凌方鎮壽春', en: 'Call Huainan — Wang Ling holds Shouchun' },
+        effects: [
+          { kind: 'flag', key: 'caoshuang-alt-call' },
+          { kind: 'city-troops-multiplier', cityId: 'shouchun', multiplier: 1.3 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-shuang', delta: 8 },
+        ],
+      },
+      {
+        id: 'guanzhong',
+        label: { zh: '發關中之兵 —— 據險而後圖', en: 'Call Guanzhong — hold the passes first' },
+        effects: [
+          { kind: 'flag', key: 'caoshuang-alt-call' },
+          { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.3 },
+          { kind: 'city-defense', cityId: 'tongguan', delta: 16 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-shuang', delta: 4 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 洛水之誓 —— 史書上曹爽信了,然後被族誅。這一節把那個信不信交回去,
+     * 而它也是後來「淮南三叛」都拿來說事的那一句:太傅指洛水為誓,而食言。
+     */
+    id: 'evt-caoshuang-alt-2',
+    name: { en: 'Sworn by the Luo', zh: '指洛水為誓' },
+    yearMin: 249,
+    yearMax: 253,
+    requires: [
+      { kind: 'flag-set', key: 'chain-caoshuang' },
+      { kind: 'officer-active', officerId: 'cao-shuang' },
+      { kind: 'officer-alive', officerId: 'sima-yi' },
+      { kind: 'flag-unset', key: 'caoshuang-alt-oath' },
+    ],
+    description:
+      "Sima Yi sends word swearing by the Luo river that Cao Shuang will keep his marquisate and his household if he lays down the seals. In the histories he believed it — \"I can still be a rich man at home\" — and was executed with three degrees of kin.",
+    descriptionZh: '太傅遣使,指洛水為誓:解印就第,不失侯爵之奉。史書上爽信之,曰「我亦不失作富家翁」;桓範哭曰:「曹子丹佳人,生汝兄弟,犢耳!」—— 旬日而夷三族。',
+    effects: [],
+    chooserRulerId: 'cao-shuang',
+    choices: [
+      {
+        id: 'refuse',
+        label: { zh: '不信 —— 桓範之言在耳', en: 'Refuse — Huan Fan is still shouting' },
+        effects: [
+          { kind: 'flag', key: 'caoshuang-alt-oath' },
+          { kind: 'officer-loyalty', officerId: 'cao-shuang', delta: 15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-shuang', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sima-yi', delta: -8 },
+        ],
+      },
+      {
+        id: 'believe',
+        label: { zh: '信之 —— 解印就第,不失富家翁', en: 'Believe it — lay down the seals' },
+        effects: [
+          { kind: 'flag', key: 'caoshuang-alt-oath' },
+          { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'cao-shuang', fraction: 0.5 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-shuang', delta: -20 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sima-yi', delta: 15 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
