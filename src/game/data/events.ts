@@ -7407,12 +7407,15 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       + '臣人之與臣於人也,豈可同日而言之哉!」\n\n'
       + '於是六國從合而并力焉。蘇秦為從約長,并相六國。'
       + '……秦兵不敢闚函谷關十五年。',
+    /* 數值刻意壓到一半:第一版五座城各 +10~14 防,等於全庫六國一起加固,
+       而秦是唯一的進攻方 —— 實測長平盤秦從 41 城掉到 26。合縱該有份量,
+       但它撐了十五年不是靠城牆厚,是靠六國肯站在一起(那才是它的難處)。 */
     effects: [
-      { kind: 'city-defense', cityId: 'luoyang', delta: 14 },
-      { kind: 'city-defense', cityId: 'ye', delta: 12 },
-      { kind: 'city-defense', cityId: 'chenliu', delta: 12 },
-      { kind: 'city-defense', cityId: 'linzi', delta: 10 },
-      { kind: 'city-defense', cityId: 'jiangling', delta: 10 },
+      { kind: 'city-defense', cityId: 'luoyang', delta: 7 },
+      { kind: 'city-defense', cityId: 'ye', delta: 6 },
+      { kind: 'city-defense', cityId: 'chenliu', delta: 6 },
+      { kind: 'city-defense', cityId: 'linzi', delta: 5 },
+      { kind: 'city-defense', cityId: 'jiangling', delta: 5 },
       { kind: 'officer-loyalty', officerId: 'hist-su-qin', delta: 18 },
       { kind: 'flag', key: 'ws-hezong' },
     ],
@@ -8788,6 +8791,150 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'flag', key: 'gongsun-beheads' },
     ],
     mood: 'ominous',
+  },
+
+  /* ── 戰國補三條給秦、一條給魏 ──────────────────────────────────────
+     為什麼補:上一批照史書挑名場面,而**史書裡趙的名場面最多** ——
+     胡服騎射、完璧歸趙、負荊請罪、李牧守邊四條全落在趙身上,
+     於是長平盤實測趙從 13 城漲到 24,秦從 41 掉到 33,跟這張盤要講的事情相反。
+     照史寫沒錯,錯在**只寫了一半的史**:秦那一側的鄭國渠、白起、王翦
+     同樣是名場面,先前漏了。 ── */
+  {
+    id: 'evt-ws-zhengguo-canal',
+    name: { en: 'The Spy Who Dug the Canal', zh: '鄭國渠' },
+    yearMin: 179,
+    yearMax: 191,
+    // ⚠ 守衛不能用鄭國本人:`hist-zheng-guo` 是**秦朝**的人物,不在戰國盤的
+    //   人物池裡(李斯、蒙恬同樣不在),寫了就永遠不觸發 —— 第一版正是這樣。
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-han-zhaohou' },
+      { kind: 'officer-alive', officerId: 'hist-wang-jian' },
+      { kind: 'flag-unset', key: 'ws-zhengguo' },
+    ],
+    description:
+      'Han, being next in line and unable to fight, sends a water engineer to Qin to propose a canal three hundred li long from the Jing to the Luo — the intention being to sink the Qin treasury and the Qin labour force into a public work for a decade so that it cannot march east. Halfway through, the plan is discovered. Brought out to be executed, the engineer says: I did gain Han a few more years. But when this canal is finished it is also a benefit to Qin for ten thousand generations. Qin thinks about it and tells him to carry on. Four hundred thousand acres of alkaline flat become good land, and the field yields one zhong per mu, and Qin becomes rich and eats the other states.',
+    descriptionZh:
+      '韓聞秦之好興事,欲罷之,毋令東伐,'
+      + '乃使水工鄭國間說秦,令鑿涇水自中山西邸瓠口為渠,'
+      + '並北山東注洛三百餘里,欲以溉田。\n\n'
+      + '中作而覺,秦欲殺鄭國。鄭國曰:'
+      + '「始臣為間,然渠成亦秦之利也。臣為韓延數歲之命,而為秦建萬世之功。」'
+      + '秦以為然,卒使就渠。\n\n'
+      + '渠成,注填閼之水,溉澤鹵之地四萬餘頃,收皆畝一鍾。'
+      + '於是關中為沃野,無凶年,秦以富彊,卒并諸侯 —— 因命曰鄭國渠。',
+    /* 效果攤在關中四城而不是只給長安 —— 秦在戰國盤上有四十一座城,
+       單城加成等於沒加(第一版量出來秦反而更弱)。 */
+    effects: [
+      { kind: 'city-food', cityId: 'changan', delta: 40000 },
+      { kind: 'city-food', cityId: 'chencang', delta: 25000 },
+      { kind: 'city-food', cityId: 'mei', delta: 25000 },
+      { kind: 'city-loyalty', cityId: 'changan', delta: 12 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.12 },
+      { kind: 'city-troops-multiplier', cityId: 'chencang', multiplier: 1.12 },
+      { kind: 'city-defense', cityId: 'xuchang', delta: -10 },
+      { kind: 'flag', key: 'ws-zhengguo' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-baiqi',
+    name: { en: 'The Butcher Never Lost', zh: '白起未嘗敗' },
+    yearMin: 180,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-active', officerId: 'hist-bai-qi' },
+      { kind: 'flag-unset', key: 'ws-baiqi' },
+    ],
+    description:
+      'Seventy cities taken and never a defeat. At Yique he broke the joint Han and Wei armies and took two hundred and forty thousand heads; going down into Chu he dammed the Yi and turned it into the city of Yan and drowned several hundred thousand; he burned the ancestral tombs at Yiling and Chu moved its capital east and never came back. What the annals record about him is almost entirely head-counts, and the total, if you add up what is written, is over a million — which is why the histories, having no other word for him, call him the Butcher.',
+    descriptionZh:
+      '白起料敵合變,出奇無窮,聲震天下 —— 而所書於史者,'
+      + '幾乎只有斬首之數。\n\n'
+      + '伊闕之戰,大破韓、魏聯軍,斬首二十四萬,虜其將公孫喜,拔五城。'
+      + '攻楚,拔鄢、鄧五城;明年,拔郢,燒夷陵,遂東至竟陵 ——'
+      + '引西山長谷水灌鄢城,城東北角潰,百姓隨水流,死於城東者數十萬。'
+      + '楚遂東徙,不復西向。\n\n'
+      + '「其所殺伐,前後計之,不下百萬。」——'
+      + '故號曰人屠。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-bai-qi', delta: 18 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'city-troops-multiplier', cityId: 'chencang', multiplier: 1.15 },
+      { kind: 'city-troops-multiplier', cityId: 'mei', multiplier: 1.15 },
+      { kind: 'city-troops-multiplier', cityId: 'tongguan', multiplier: 1.15 },
+      { kind: 'city-troops-multiplier', cityId: 'jiangling', multiplier: 0.82 },
+      { kind: 'city-troops-multiplier', cityId: 'xuchang', multiplier: 0.85 },
+      { kind: 'city-defense', cityId: 'luoyang', delta: -12 },
+      { kind: 'flag', key: 'ws-baiqi' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-ws-wangjian-sixty',
+    name: { en: 'Sixty Myriads and Not One Fewer', zh: '非六十萬人不可' },
+    yearMin: 182,
+    yearMax: 192,
+    requires: [
+      { kind: 'officer-active', officerId: 'hist-wang-jian' },
+      { kind: 'flag-set', key: 'ws-baiqi' },
+      { kind: 'flag-unset', key: 'ws-wangjian' },
+    ],
+    description:
+      'Asked how many men it takes to finish Chu, Wang Jian says six hundred thousand. Li Xin says two hundred thousand will do, and the king says Wang Jian is old and timid, and sends Li Xin — who is beaten. The king then rides to Wang Jian house himself and apologises. Given the six hundred thousand, Wang Jian spends the campaign asking for gardens and ponds and good fields for his family, repeatedly, until his own officers are embarrassed; when asked why, he says: the king is suspicious by nature and has now handed me every soldier in Qin, and asking for orchards is how I tell him I want orchards and not the throne.',
+    descriptionZh:
+      '始皇問李信:「吾欲攻取荊,於將軍度用幾何人而足?」'
+      + '李信曰:「不過用二十萬人。」問王翦,王翦曰:「非六十萬人不可。」'
+      + '始皇曰:「王將軍老矣,何怯也!李將軍果勢壯勇,其言是也。」'
+      + '遂使李信及蒙恬將二十萬南伐荊 —— 大敗,亡七都尉。\n\n'
+      + '始皇聞之,大怒,自馳如頻陽,見謝王翦曰:'
+      + '「寡人以不用將軍計,李信果辱秦軍。將軍雖病,獨忍棄寡人乎!」\n\n'
+      + '王翦行,請美田宅園池甚眾;至關,使使還請善田者五輩。'
+      + '或曰:「將軍之乞貸,亦已甚矣。」王翦曰:'
+      + '「不然。夫秦王怚而不信人,今空秦國甲士而專委於我,'
+      + '我不多請田宅為子孫業以自堅,顧令秦王坐而疑我邪?」',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-wang-jian', delta: 18 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.2 },
+      { kind: 'city-troops-multiplier', cityId: 'chencang', multiplier: 1.2 },
+      { kind: 'city-troops-multiplier', cityId: 'tianshui', multiplier: 1.2 },
+      { kind: 'city-troops-multiplier', cityId: 'hanzhong', multiplier: 1.2 },
+      { kind: 'city-troops-multiplier', cityId: 'jiangling', multiplier: 0.85 },
+      { kind: 'flag', key: 'ws-wangjian' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ws-maling',
+    name: { en: 'Pang Juan Dies Under This Tree', zh: '龐涓死於此樹之下' },
+    yearMin: 179,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-active', officerId: 'hist-sun-bin' },
+      { kind: 'officer-active', officerId: 'hist-pang-juan' },
+      { kind: 'flag-unset', key: 'ws-maling' },
+    ],
+    description:
+      'Sun Bin tells Tian Ji that the men of Wei think Qi troops are cowards, and that a good commander uses what the enemy already believes. Entering Wei territory he lights a hundred thousand cooking fires the first night, fifty thousand the second, thirty thousand the third. Pang Juan, reading the count, says: I knew Qi were cowards — three days in my country and more than half of them have run. He leaves his infantry behind and comes on with light troops by forced marches. At Maling in the evening he finds a large tree with the bark stripped and something written on it, and lights a torch to read it. Ten thousand crossbows go off along both sides of the road.',
+    descriptionZh:
+      '孫子曰:「彼三晉之兵素悍勇而輕齊,齊號為怯,善戰者因其勢而利導之。'
+      + '兵法:百里而趣利者蹶上將,五十里而趣利者軍半至。」\n\n'
+      + '使齊軍入魏地為十萬灶,明日為五萬灶,又明日為三萬灶。'
+      + '龐涓行三日,大喜曰:「我固知齊軍怯,入吾地三日,士卒亡者過半矣!」'
+      + '乃棄其步軍,與其輕銳倍日并行逐之。\n\n'
+      + '孫子度其行,暮當至馬陵。馬陵道陝,而旁多阻隘,可伏兵,'
+      + '乃斫大樹白而書之曰「龐涓死于此樹之下」。'
+      + '於是令齊軍善射者萬弩,夾道而伏,期曰「暮見火舉而俱發」。\n\n'
+      + '龐涓果夜至斫木下,見白書,乃鑽火燭之。讀其書未畢,齊軍萬弩俱發,'
+      + '魏軍大亂相失。龐涓自知智窮兵敗,乃自剄,曰:「遂成豎子之名!」',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-pang-juan', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-sun-bin', delta: 20 },
+      { kind: 'city-troops-multiplier', cityId: 'chenliu', multiplier: 0.8 },
+      { kind: 'city-troops-multiplier', cityId: 'linzi', multiplier: 1.15 },
+      { kind: 'city-defense', cityId: 'chenliu', delta: -15 },
+      { kind: 'flag', key: 'ws-maling' },
+    ],
+    mood: 'martial',
   },
 ];
 
