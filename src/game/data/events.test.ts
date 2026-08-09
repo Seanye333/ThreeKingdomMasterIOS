@@ -65,6 +65,28 @@ describe('historical event catalog integrity', () => {
     expect(bad).toEqual([]);
   });
 
+  /*
+   * 中文正文裡混進西里爾/諺文 —— 2026-08-09 一天犯了兩次:
+   * 「融не能戰」(西里爾 не)、「以此愧見닌下」(諺文 닌,本該是「陛」)。
+   * 兩次都通過了 build 與全部測試,因為它們在字串裡,型別看不出來;
+   * 而畫面上就是一個看不懂的字。
+   *
+   * 片假名中點「・」是刻意的標題分隔符(雞肋・楊修之死),放行。
+   */
+  it('中文正文沒有混進西里爾或諺文', () => {
+    const bad: string[] = [];
+    const suspicious = /[Ѐ-ӿ가-힯぀-ヺー-ヿ]/;
+    const scan = (s: string | undefined, where: string) => {
+      if (s && suspicious.test(s)) bad.push(`${where}: ${s.match(new RegExp(suspicious, 'g'))?.join('')}`);
+    };
+    for (const e of HISTORICAL_EVENTS) {
+      scan(e.name.zh, `${e.id} name`);
+      scan(e.descriptionZh, `${e.id} desc`);
+      for (const c of e.choices ?? []) scan(c.label.zh, `${e.id} choice ${c.id}`);
+    }
+    expect(bad).toEqual([]);
+  });
+
   it('year windows are sane', () => {
     for (const e of HISTORICAL_EVENTS) {
       expect(e.yearMin, e.id).toBeLessThanOrEqual(e.yearMax);

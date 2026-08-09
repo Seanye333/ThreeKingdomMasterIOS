@@ -8378,6 +8378,286 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'somber',
   },
+
+  /* ── 唐初補五條:全庫掃描下來隋唐線只有 4–6 條,是三線裡最薄的
+       (戰國 11–13、楚漢 10–20)。守衛一律配一個**隋末專屬**的人
+       (煬帝/李密/翟讓/竇建德/屈突通/宇文化及 —— 安史盤全無),
+       否則會漏進安史盤。平陽公主、李建成、李世勣在安史盤上都在,
+       單靠他們擋不住。 ── */
+  {
+    id: 'evt-st-niangzi',
+    name: { en: 'The Army of the Lady', zh: '娘子軍' },
+    yearMin: 178,
+    yearMax: 189,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-princess-pingyang' },
+      { kind: 'officer-alive', officerId: 'hist-sui-yangdi' },
+      { kind: 'flag-unset', key: 'st-niangzi' },
+    ],
+    description:
+      'Her husband rides to join the rising and she does not go with him: a woman on the road is easy to hide, she says, and she has her own plans. She sells the estate in Hu county, feeds the starving with it, and within months has seven thousand men. Then she takes He Panren, a bandit chief with tens of thousands, by sending one retainer to talk to him; then Li Zhongwen, Xiang Shanzhi, Qiu Shili the same way. Sui columns are sent against her repeatedly and beaten. When her brother crosses the river she meets him with ten thousand picked troops and her own headquarters staff, and the camp is entered in the records as the Lady Army.',
+    descriptionZh:
+      '柴紹將赴太原,謂公主曰:「尊公舉義,今欲迎接,同去不可,'
+      + '獨行恐罹後患,為計若何?」\n'
+      + '公主曰:「君宜速去。我一婦人,臨時易可藏隱,當自為計。」\n\n'
+      + '紹即間行赴太原。公主乃歸鄠縣莊所,遂散家資,'
+      + '招引山中亡命,得數百人,以應高祖。\n'
+      + '時有胡人賊帥何潘仁聚眾於司竹園,自稱總管,'
+      + '公主遣家僮馬三寶說潘仁,令降,竟率其徒屬歸於公主。'
+      + '又攻鄠縣,陷之。……前後遣兵七總管來討,公主皆摧破之。\n\n'
+      + '高祖渡河,公主引精兵萬餘與太宗軍會於渭北,'
+      + '與紹各置幕府,號曰「娘子軍」。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-princess-pingyang', delta: 20 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'city-loyalty', cityId: 'mei', delta: 15 },
+      { kind: 'flag', key: 'st-niangzi' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-st-xingluo',
+    name: { en: 'The Granary Is Opened', zh: '開倉恣民就食' },
+    yearMin: 178,
+    yearMax: 189,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-li-mi-sui' },
+      { kind: 'officer-alive', officerId: 'hist-zhai-rang' },
+      { kind: 'flag-unset', key: 'st-xingluo' },
+    ],
+    description:
+      'The Xingluo granary is the largest in the realm and it is full while the counties around it are eating bark. Li Mi takes it with seven thousand men before the garrison has finished forming up, and then does the thing that makes him for one year the most powerful man between the rivers: he throws it open and lets anyone take what they can carry, with no register and no receipt. The old and the weak come with children on their backs in an unbroken line, and the roads are full of people carrying grain who cannot carry it all and drop it, so that the grain lies inches deep from the gate to the horizon.',
+    descriptionZh:
+      '密與讓帥精兵七千人,出陽城北,踰方山,自羅口襲興洛倉,破之。'
+      + '開倉恣民就食,老弱襁負,道路不絕。\n\n'
+      + '倉城周迴二十餘里,穿三千窖,窖容八千石 ——'
+      + '取之者隨意多少,無人禁制,'
+      + '眾至數十萬,而米粟狼藉於道,厚數寸,踐之如泥。\n\n'
+      + '隋東都遣兵二萬五千討之,大敗。'
+      + '……自是四方豪傑歸之者不可勝數。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-li-mi-sui', delta: 18 },
+      { kind: 'city-food', cityId: 'luoyang', delta: -40000 },
+      { kind: 'city-loyalty', cityId: 'luoyang', delta: -18 },
+      { kind: 'flag', key: 'st-xingluo' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-st-dou-sanshang',
+    name: { en: 'He Kept None of It', zh: '所得資財,並散賞諸將' },
+    yearMin: 179,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-dou-jiande' },
+      { kind: 'flag-unset', key: 'st-dousan' },
+    ],
+    description:
+      'He shares the work and the rest of his soldiers, eats vegetables and millet, and his wife wears no patterned silk and keeps a bare dozen women about her. Whatever a campaign brings in goes out again to the officers, and he takes none of it. When he captures Sui officials he lets them choose whether to stay or go, and gives travelling money to those who go. When the empress and the court ladies of the fallen dynasty come into his hands he treats them with the forms due to them and sends them on to the Turks. The eastern provinces come to him the way water runs downhill — which is exactly what makes him dangerous enough to be worth the whole Tang effort at Hulao.',
+    descriptionZh:
+      '建德每戰勝,所得資財,並散賞諸將,一無所取。'
+      + '又不啖肉,常食唯有菜蔬、脫粟之飯;'
+      + '妻曹氏不衣紈綺,所使婢妾才十數人。\n\n'
+      + '獲隋官吏及士人,皆善遇之,'
+      + '欲去者恣聽,仍給糧饋送;由是隋官吏多歸之。'
+      + '……得隋蕭皇后,以禮遣送於突厥。\n\n'
+      + '山東之民,歸之如流。河北之地,幾為所有。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-dou-jiande', delta: 18 },
+      { kind: 'city-loyalty', cityId: 'ye', delta: 18 },
+      { kind: 'city-loyalty', cityId: 'bohai', delta: 15 },
+      { kind: 'flag', key: 'st-dousan' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-st-qutu-tong',
+    name: { en: 'I Have Not Failed You', zh: '力屈兵敗,不負陛下' },
+    yearMin: 179,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-qutu-tong' },
+      { kind: 'officer-alive', officerId: 'hist-sui-yangdi' },
+      { kind: 'flag-set', key: 'st-huoyi' },
+      { kind: 'flag-unset', key: 'st-qutu' },
+    ],
+    description:
+      'Holding Hedong for a dynasty whose emperor is in Jiangdu and will not come back, he refuses every summons to surrender. When he finally moves east his army is intercepted; the Tang bring out his own sons to call to him, and he shouts that once they were father and son and are now enemies, and has them shot at. Then his officers seize him. Taken to the camp, he faces southeast — the direction of Jiangdu — bows twice and cries aloud: my strength is spent and my army is beaten, I have not failed Your Majesty. He is made a duke and, five years later, one of the twenty-four in the Lingyan pavilion.',
+    descriptionZh:
+      '屈突通鎮河東,義師至,通拒守久之。'
+      + '……通聞京師平,家屬盡沒,乃留桑顯和鎮潼關,'
+      + '自引兵將往洛陽。行至稠桑,為劉文靜所躡,前後受敵。\n\n'
+      + '通遣其子壽往諭之,通大呼曰:'
+      + '「昔與汝為父子,今與汝為讎!」命左右射之。'
+      + '顯和呼其眾曰:「京師陷矣,汝並關西人,欲何所去?」眾皆釋仗。\n\n'
+      + '通勢窮,下馬東南向再拜號哭,曰:'
+      + '「臣力屈兵敗,不負陛下,天地神祇,實所鑒察。」遂為所執。'
+      + '高祖曰:「何相見晚耶?」通泣曰:「通不能盡人臣之節,'
+      + '力屈而至,為本朝之辱,以此愧見陛下。」\n'
+      + '高祖曰:「隋室忠臣也。」命釋之,授兵部尚書。',
+    effects: [
+      { kind: 'officer-join-ruler', officerId: 'hist-qutu-tong', rulerOfficerId: 'hist-li-yuan' },
+      { kind: 'officer-loyalty', officerId: 'hist-qutu-tong', delta: 15 },
+      { kind: 'city-defense', cityId: 'changan', delta: 12 },
+      { kind: 'flag', key: 'st-qutu' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-st-xuanwumen',
+    name: { en: 'The Xuanwu Gate', zh: '玄武門之變' },
+    yearMin: 182,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-tang-taizong' },
+      { kind: 'officer-alive', officerId: 'hist-li-jiancheng' },
+      { kind: 'officer-alive', officerId: 'hist-yuchi-gong' },
+      { kind: 'officer-alive', officerId: 'hist-dou-jiande' },
+      { kind: 'flag-set', key: 'st-xuanjia' },
+      { kind: 'flag-unset', key: 'st-xuanwumen' },
+    ],
+    description:
+      'The heir and the fourth son have been working on the second son staff for two years: Yuchi Jingde offered a cartload of gold and, when he refused it, an assassin; Fang Xuanling and Du Ruhui transferred out by edict. With the Turkic raid as pretext the heir asks for the second son best officers to be posted under the fourth son, which would leave him with a title and nobody. On the fourth of the sixth month he memorialises that his brothers are debauching the palace women, and is told to come in the morning and explain himself. He and nine others are inside the gate before dawn.',
+    descriptionZh:
+      '建成、元吉與後宮日夜譖訴太宗於高祖。'
+      + '元吉密請害太宗,高祖曰:「彼有定天下之功,罪狀未著,何以為辭?」\n\n'
+      + '建成夜召太宗,飲酒而鴆之,太宗暴心痛,吐血數升。'
+      + '……又以金帛誘尉遲敬德,敬德辭曰:「敬德蒙秦王生全,'
+      + '今又策名事王,唯當以身報恩。於殿下無功,不敢謬當重賜。'
+      + '若私交殿下,乃是二心,徇利忘忠,殿下亦何所用?」'
+      + '元吉乃遣壯士夜刺敬德。敬德知其計,乃重門洞開,安臥不動,'
+      + '賊頻至其庭,終不敢入。\n\n'
+      + '會突厥犯邊,建成薦元吉北征,又請秦府尉遲敬德、程知節、'
+      + '段志玄及秦叔寶等並與同行,簡閱秦府精銳之士以益其軍。\n\n'
+      + '六月四日,太宗率長孫無忌、尉遲敬德等九人入玄武門。',
+    effects: [],
+    chooserRulerId: 'hist-li-yuan',
+    choices: [
+      {
+        id: 'strike',
+        label: { zh: '先發於玄武門', en: 'Move first, at the Xuanwu gate' },
+        effects: [
+          { kind: 'officer-status', officerId: 'hist-li-jiancheng', status: 'dead' },
+          { kind: 'officer-loyalty', officerId: 'hist-tang-taizong', delta: 20 },
+          { kind: 'officer-loyalty', officerId: 'hist-yuchi-gong', delta: 15 },
+          { kind: 'city-loyalty', cityId: 'changan', delta: -12 },
+          { kind: 'flag', key: 'st-xuanwumen' },
+        ],
+      },
+      {
+        id: 'send-away',
+        label: { zh: '從封德彝之議,遣秦王之洛陽,分陝而治', en: 'Send the second son east to Luoyang and split the realm' },
+        effects: [
+          { kind: 'city-troops-multiplier', cityId: 'luoyang', multiplier: 1.25 },
+          { kind: 'officer-loyalty', officerId: 'hist-li-jiancheng', delta: 12 },
+          { kind: 'officer-loyalty', officerId: 'hist-tang-taizong', delta: -10 },
+          { kind: 'city-loyalty', cityId: 'changan', delta: -8 },
+          { kind: 'flag', key: 'st-xuanwumen' },
+        ],
+      },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 安史再補三條(那張盤只有兩家、十年窗口,五條偏少)── */
+  {
+    id: 'evt-st-anshi-6',
+    name: { en: 'Yan Gaoqing Curses With What Is Left of His Mouth', zh: '顏杲卿罵賊' },
+    yearMin: 179,
+    yearMax: 187,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-alive', officerId: 'hist-yan-gaoqing' },
+      { kind: 'flag-set', key: 'anshi-hebei' },
+      { kind: 'flag-unset', key: 'anshi-changshan' },
+    ],
+    description:
+      'He held Changshan, cut the rebel road home, and brought seventeen commanderies back to the throne in a day — and then the relief he was promised did not come, and the city fell after six days with no arrows left. Brought before An Lushan at Luoyang, he is asked what he means by revolting against a man who raised him from a district clerk to a governor. He answers that he was raised by the Son of Heaven, and asks by what right a stablehand from Yingzhou turns on the sovereign who made him. His tongue is cut out. He goes on making the sound until he is dismembered on a pillar, and dies still making it.',
+    descriptionZh:
+      '杲卿與長史袁履謙謀,斬賊將李欽湊,執高邈、何千年,'
+      + '傳首京師,河北十七郡同日歸朝廷。\n\n'
+      + '祿山遣史思明急攻常山。城中兵少,又乏水,'
+      + '晝夜拒戰,六日而陷,杲卿、履謙皆被執送洛陽。\n\n'
+      + '祿山責之曰:「汝昔為范陽戶曹,我奏汝為判官,'
+      + '不數年超至太守,何負於汝而反乎?」'
+      + '杲卿瞋目罵曰:「汝營州牧羊羯奴耳,竊荷恩寵,天子負汝何事而乃反乎!'
+      + '我世為唐臣,常守忠義,縱受汝奏署,復合從汝反耶!'
+      + '我為國討賊,恨不斬汝,何謂反也!臊羯狗,何不速殺我!」\n\n'
+      + '祿山怒甚,縛於天津橋柱,節解之,'
+      + '比至氣絕,大罵不息。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-yan-gaoqing', status: 'dead' },
+      { kind: 'city-loyalty', cityId: 'ye', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'hist-yan-zhenqing', delta: 12 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-an-lushan', delta: -8 },
+      { kind: 'flag', key: 'anshi-changshan' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-st-anshi-7',
+    name: { en: 'One City Holding the Door to the South', zh: '睢陽·守一城捍天下' },
+    yearMin: 180,
+    yearMax: 188,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-alive', officerId: 'hist-zhang-xun' },
+      { kind: 'flag-set', key: 'anshi-lingbao' },
+      { kind: 'flag-unset', key: 'anshi-suiyang' },
+    ],
+    description:
+      'Suiyang is the door to the canal country and everything south of it. He holds it for ten months against a hundred and thirty thousand with under seven thousand, fights over four hundred engagements, and takes twelve thousand of them. When the grain runs out they eat tea and paper, then the horses, then the birds and rats, then worse: the record says thirty thousand people, and that everyone in the city knew and nobody left. When it falls there are four hundred men alive in it. Asked afterwards whether the cost was defensible, the answer in the histories is one sentence: while Suiyang stood, the Yangtze and the Huai were never touched, and the revenue that paid for the recovery came from there.',
+    descriptionZh:
+      '尹子奇以兵十三萬圍睢陽。巡與許遠共守,兵不滿七千,'
+      + '晝夜苦戰,或一日至二十合,凡四百餘戰,'
+      + '殺賊卒十二萬 —— 而外無蚍蜉蟻子之援。\n\n'
+      + '糧盡,茶紙既盡,遂食馬;馬盡,羅雀掘鼠;雀鼠又盡。'
+      + '……城陷,存者四百人而已。\n\n'
+      + '議者或罪巡以食人,而韓愈曰:'
+      + '「守一城,捍天下,以千百就盡之卒,戰百萬日滋之師,'
+      + '蔽遮江淮,沮遏其勢 —— 天下之不亡,其誰之功也!」',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-zhang-xun', status: 'dead' },
+      { kind: 'city-defense', cityId: 'pengcheng', delta: 25 },
+      { kind: 'city-loyalty', cityId: 'jianye', delta: 18 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-heng', delta: 12 },
+      { kind: 'flag', key: 'anshi-suiyang' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-st-anshi-8',
+    name: { en: 'Shi Siming Rebels Again', zh: '史思明復叛' },
+    yearMin: 181,
+    yearMax: 189,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-active', officerId: 'hist-shi-siming' },
+      { kind: 'flag-set', key: 'anshi-suiyang' },
+      { kind: 'flag-unset', key: 'anshi-shisiming' },
+    ],
+    description:
+      'He surrenders with thirteen commanderies and eighty thousand men and is made a prince and given a command, which is the cheapest way to end a war and the most expensive way to keep one ended. The court, unable to leave it alone, sends an officer to arrange his assassination through his own subordinates; the subordinates tell him. He revolts again, takes Wei prefecture, and at Xiangzhou breaks nine imperial armies at once — sixty commanders with no supreme commander over them, because the throne would not appoint one for fear of what a man with that much army might become. The rebellion that had been nearly finished goes on for another four years.',
+    descriptionZh:
+      '思明以所部十三郡及兵八萬來降,詔以為歸義王、范陽節度使。'
+      + '上以其終不可信,密詔烏承恩圖之。'
+      + '承恩夜入其帳,說其子曰:「吾受命除逆胡。」'
+      + '思明伏人於床下,盡得其語,執而數之,殺之,遂復反。\n\n'
+      + '……官軍九節度使圍安慶緒於相州,不置元帥,'
+      + '但以宦者魚朝恩為觀軍容宣慰處置使 ——'
+      + '六十萬眾而無所統一,進退無所稟。\n\n'
+      + '思明引兵來援,會大風,吹沙拔木,天地晝晦,'
+      + '兩軍大驚,官軍潰而南,賊亦潰而北。'
+      + '……幾平之亂,自此復延四年。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-shi-siming', delta: 15 },
+      { kind: 'city-loyalty', cityId: 'ye', delta: -20 },
+      { kind: 'city-defense', cityId: 'luoyang', delta: -15 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-heng', delta: -10 },
+      { kind: 'flag', key: 'anshi-shisiming' },
+    ],
+    mood: 'ominous',
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(
