@@ -7405,6 +7405,60 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-lubu-xuzhou': {
+    /* 下邳沒陷的那個世界 —— 而其餘幾家的下場,史書上寫得比呂布還清楚。 */
+    'yuan-shu': {
+      defeat: {
+        titleZh: '問廚下,尚有麥屑三十斛',
+        titleEn: 'Thirty Bushels of Wheat Chaff',
+        textZh:
+          '術自敗於陳,稍困,遂大慵懶。'
+          + '後宮數百皆服綺縠,餘粱肉,而士卒凍餒。\n\n'
+          + '欲往青州從袁譚,為劉備所遮,復走壽春。'
+          + '問廚下,尚有麥屑三十斛。時盛暑,欲得蜜漿,又無蜜。\n\n'
+          + '坐櫺床上,嘆息良久,乃大咤曰:「袁術至於此乎!」'
+          + '因頓伏床下,嘔血斗餘而死。',
+        textEn:
+          'After the defeat at Chen he grew straitened, and then simply idle. Several hundred women in the palace in patterned silk with meat and fine grain left over, and the soldiers outside cold and hungry.\n\n'
+          + 'He set out for Qing province to join Yuan Tan, was cut off by Liu Bei, and turned back toward Shouchun. He asked the kitchen what there was. Thirty bushels of wheat chaff. It was the height of summer and he wanted honey water, and there was no honey.\n\n'
+          + 'He sat a long time on the slatted couch, sighing, and then cried out: has Yuan Shu come to this. He fell forward off the couch and vomited more than a pint of blood, and died.',
+      },
+      verdictZh:
+        '論曰:術之亡,不亡於兵,亡於**僭號**。\n'
+        + '四世三公之家,天下所望;而一朝稱帝,'
+        + '則孫策絕之,呂布斷婚,部曲自守於灊山 ——'
+        + '所失者非一城一地,是那個「望」字。\n'
+        + '故曰:名器不可假人,亦不可自取。',
+      verdictEn:
+        'The historian says: he was not destroyed by armies but by the title. His house had produced Three Excellencies in four generations and the realm looked to it; the morning he called himself emperor, Sun Ce broke with him, Lü Bu broke the marriage, and his own officers sat down in the Qian hills and would not come. What he lost was not a city. It was being looked to. A regalia cannot be lent to another man, and it cannot be helped oneself to either.',
+    },
+    gongsun: {
+      defeat: {
+        titleZh: '易京樓',
+        titleEn: 'The Tower at Yijing',
+        textZh:
+          '瓚遂徙居易京,為圍塹十重,'
+          + '塹裡築京,皆高五六丈,為樓其上;'
+          + '中塹為京,特高十丈,自居焉。'
+          + '積穀三百萬斛。\n\n'
+          + '謂左右曰:「昔謂天下事可指麾而定,'
+          + '今日視之,非我所決,不如休兵力田,'
+          + '積穀三百萬斛,食此足以待天下之變。」\n\n'
+          + '—— 及圍成,乃悉殺其妻子,自焚而死。'
+          + '那三百萬斛,一斛也沒吃到那一天。',
+        textEn:
+          'He moved to Yijing and dug ten rings of moat, and inside each ring raised a mound five or six fathoms high with a tower on top; the innermost mound was ten fathoms and he lived on it. Three million bushels of grain went in.\n\n'
+          + 'He told his staff: I used to think the affairs of the realm could be settled with a wave of the hand. Looking at it now, it is not mine to settle. Better to rest the troops and farm, and put by three million bushels, and eat while the realm changes around me.\n\n'
+          + 'When the ring closed he killed his wives and children and burned himself alive. Not one bushel of the three million was eaten on that day.',
+      },
+      verdictZh:
+        '論曰:瓚之白馬義從,嘗馳突於幽并之間,'
+        + '烏桓聞之避走;而其終也,死於自築之樓。\n'
+        + '夫恃險者失險,恃眾者失眾 ——'
+        + '瓚所恃者塹與粟,而塹深則援絕,粟多則志墮。\n'
+        + '待天下之變者,天下不為之變。',
+      verdictEn:
+        'The historian says: his White Horse Volunteers once rode where they pleased between You and Bing, and the Wuhuan turned aside at the sound of them; and he died on a tower he built himself. Whoever trusts to a strong position loses it, and whoever trusts to numbers loses them. What he trusted to was ditches and grain — and a deep ditch cuts off relief, while a full granary rots the will. He waited for the realm to change. The realm did not change for him.',
+    },
     lubu: {
       defeat: {
         titleZh: '泗水未潰',
