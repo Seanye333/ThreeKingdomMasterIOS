@@ -9680,6 +9680,8 @@ export const SCENARIO_WS_GUILING: Scenario = {
     'Wei stands at its zenith under King Hui, first hegemon of the age. Pang Juan has stormed the Zhao capital of Handan and the house of Zhao reels back to Jinyang. But Zhao\'s cry for help has reached Linzi, and in the war-chariot of Qi sits Pang Juan\'s old schoolmate — Sun Bin, crippled and disgraced by him years ago, now waiting with a cold patience. Strike not at the relieving army but at undefended Daliang, and the Wei host must race home into the ambush. The road runs to Guiling, and one day to Maling, where Pang Juan will read his own name carved on a tree by torchlight.',
   descriptionZh: "魏當極盛，惠王為一世之雄。龐涓既拔趙都邯鄲，趙氏退保晉陽。然趙之求救已達臨淄——齊之戎車上，正坐著龐涓的同窗：孫臏，昔年為其所刖、所辱，今以冷酷之耐心待之。不擊救兵而擊空虛之大梁，魏師必回師自投伏中。其路通桂陵，他日通馬陵——龐涓將於火光下，讀到刻於樹上的自己之名。",
   startDate: { year: 178, season: 'spring' },
+  // 這張盤自己那一戰的鏈(同線的盤共用人物池,只能靠旗標分辨)。
+  eventFlags: ['chain-guiling'],
   /*
    * 開局外交 —— 圍魏救趙:魏伐趙而齊救之,孫臏引兵疾走大梁 ——
      「批亢搗虛,形格勢禁,則自為解耳。」
@@ -9951,6 +9953,8 @@ export const SCENARIO_WS_YANYING: Scenario = {
     'The God of War turns south. Bai Qi drives into Chu, dams a river to drown the city of Yan with hundreds of thousands within, and storms Ying, the ancient capital, putting the royal tombs to the torch. The court of King Qingxiang flees east in ruin to Shouchun and will never reclaim the Jianghan heartland it loses here; the poet-minister Qu Yuan, watching his world end, fills his robes with stones and walks into the Miluo. Vast Chu, the largest realm under heaven, is broken in a single campaign — and Qin\'s shadow lengthens over all the south.',
   descriptionZh: "戰神南向。白起深入楚境，壅水以灌鄢城，溺數十萬於其中，又拔故都郢，焚其先王之陵。頃襄王之朝廷崩潰東奔壽春，自此永失江漢腹心；三閭大夫屈原，目睹其世之傾覆，懷石自沉於汨羅。煌煌大楚，天下之最廣者，一役而折——秦之陰影，自此長籠南天。",
   startDate: { year: 178, season: 'summer' },
+  // 這張盤自己那一戰的鏈(同線的盤共用人物池,只能靠旗標分辨)。
+  eventFlags: ['chain-yanying'],
   /*
    * 開局外交 —— 鄢郢之戰:白起引夷水灌鄢,而後拔郢,燒夷陵 ——
      楚自此東徙於陳,雖存而非復大國。
@@ -10120,6 +10124,8 @@ export const SCENARIO_WS_YUYU: Scenario = {
     'Before Changping, before the burying, there was a day when Zhao could still beat Qin in open field. The Qin army has driven deep into the Shangdang hills and seized Yuyu, and the council at Handan calls the road too far and too narrow to save it. Only Zhao She says otherwise: "On a road this cramped, two rats fighting in a hole — the braver wins." He marches in secret, feigns timidity to lull the enemy, then covers fifty li in a day and a night, seizes the heights, and shatters the Qin host. For this King Huiwen makes him Lord Mafu — while his son Zhao Kuo, who reads every book of war, watches and learns all the wrong lessons.',
   descriptionZh: "在長平之前，在坑殺之前，曾有一日趙尚能於野戰勝秦。秦軍已深入上黨山中，取閼與；邯鄲之廷皆言道遠險狹、不可救。獨趙奢曰：『其道甚狹，譬兩鼠鬥於穴中，將勇者勝。』乃潛師急進，先示怯以驕敵，後一日一夜行五十里，據北山而大破秦軍。惠文王為此封其馬服君——而其子趙括，讀盡兵書，旁觀此役，所學盡是錯處。",
   startDate: { year: 178, season: 'autumn' },
+  // 這張盤自己那一戰的鏈(同線的盤共用人物池,只能靠旗標分辨)。
+  eventFlags: ['chain-yuyu'],
   /*
    * 開局外交 —— 閼與之戰:趙奢曰「其道遠險狹,譬之猶兩鼠鬥於穴中,
      將勇者勝」—— 秦人不意趙師至此。
@@ -10328,6 +10334,8 @@ export const SCENARIO_WS_QIMIN: Scenario = {
     'Qi at the noon of its power, and its pride. King Min has swallowed the rich state of Song, humbled Chu and battered Qin, and now takes the title Di — Emperor of the East — to stand level with Qin\'s Emperor of the West. Linzi is the wealthiest city under heaven and its Jixia academy the brightest gathering of minds in the age. But at his court sits the persuader Su Qin, secretly an agent of Yan, forever urging him into one more war to bleed Qi white; and beyond the horizon five kingdoms are quietly agreeing that the East has grown too proud to be borne. This is the high noon before the avalanche of Yue Yi.',
   descriptionZh: "齊之日中，與其驕。湣王既吞富宋，辱楚摧秦，遂取帝號，稱東帝，以與秦之西帝並立。臨淄為天下最富之城，稷下學宮為當世最盛之士林。然其朝中坐著說客蘇秦，實為燕之間者，日誘之於再一場兵戈以疲齊；而天際之外，五國正悄然議定：東方已驕橫得不可復容。此乃樂毅之雪崩前，最盛的正午。",
   startDate: { year: 178, season: 'summer' },
+  // 這張盤自己那一戰的鏈(同線的盤共用人物池,只能靠旗標分辨)。
+  eventFlags: ['chain-qimin'],
   /*
    * 開局外交 —— 齊湣王稱東帝,秦昭王稱西帝 —— 而蘇代說湣王去帝號,
      天下遂共惡秦。齊之盛極,亦其禍始。
@@ -11012,6 +11020,8 @@ export const SCENARIO_ST_QIANSHUI: Scenario = {
     'The young commander\'s first great campaign — and his first lesson in defeat. Xue Ju\'s Western Qin cavalry, the finest horse in the realm, drives east out of the Long passes straight for Chang\'an. Li Shimin\'s plan is to wait behind walls until their supply fails; but while he lies ill in camp, his deputies are goaded into the open at Qianshuiyuan and shattered. He will have to come a second time — and the second time, run Xue Rengao\'s army to exhaustion and take it whole, the first of the rivals he will swallow on his road to the throne.',
   descriptionZh: "少年統帥之初戰——亦其敗績之初課。薛舉西秦之騎，天下之精，東出隴關，直趨長安。李世民之策，乃堅壁以待其糧盡；然當其臥病軍中，部將為敵所激，出戰於淺水原而大敗。他將再來——第二次，他將拖垮薛仁杲之軍而全取之，此乃其登基之路上所吞群雄之第一個。",
   startDate: { year: 178, season: 'summer' },
+  // 這張盤自己那一戰的鏈(同線的盤共用人物池,只能靠旗標分辨)。
+  eventFlags: ['chain-qianshui'],
   /*
    * 開局外交 —— 淺水原:秦王世民初戰失利,而後堅壁六十餘日 ——
      待其糧盡,一戰而滅薛仁杲。
@@ -11055,6 +11065,8 @@ export const SCENARIO_ST_BOBI: Scenario = {
     'Liu Wuzhou, backed by the Turks and led by the fierce Song Jingang, has stormed down out of Mayi and taken Taiyuan — the very cradle of the Tang rising — and the court cries to abandon all the land east of the passes. Li Shimin refuses. He digs in at Bobi through the winter, refusing battle, letting the enemy\'s supply rot; then, when they break and run, he pursues two days and a night without rest and destroys them at Que\'shu Valley. And out of the wreck of the beaten army comes the greatest prize of the war: the unstoppable Yuchi Gong, who kneels to Tang.',
   descriptionZh: "劉武周恃突厥，以驍將宋金剛為鋒，自馬邑南下，拔太原——唐興之搖籃——朝廷皆議棄關以東之地。李世民不可。乃深壁柏壁，經冬不戰，坐視敵糧自潰；及其敗走，晝夜兼程追之二日一夜，殲之於雀鼠谷。而自敗軍之中，得此役最大之獲：萬人不當的尉遲恭，跪降於唐。",
   startDate: { year: 178, season: 'winter' },
+  // 這張盤自己那一戰的鏈(同線的盤共用人物池,只能靠旗標分辨)。
+  eventFlags: ['chain-bobi'],
   /*
    * 開局外交 —— 柏壁之戰:劉武周據太原,唐之根本幾失 ——
      世民堅壁不出,而後追宋金剛一日八戰。

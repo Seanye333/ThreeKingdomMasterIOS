@@ -9313,6 +9313,222 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'ominous',
   },
+
+  /* ── 圍魏救趙(chain-guiling)── */
+  {
+    id: 'evt-ws-guiling-1',
+    name: { en: 'Relieve Zhao by Besieging Wei', zh: '圍魏救趙' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-guiling' },
+      { kind: 'officer-alive', officerId: 'hist-sun-bin' },
+      { kind: 'officer-alive', officerId: 'hist-tian-ji' },
+      { kind: 'flag-unset', key: 'gl-weiwei' },
+    ],
+    description:
+      'Tian Ji wants to march straight to Handan. Sun Bin says: to untangle a knot you do not pull at it, and to separate two men fighting you do not join in. Strike where it is empty and hold what they must come back for, and the thing unties itself. Every good soldier Wei has is outside Handan, and what is left at home is the old and the weak. Go and sit on Daliang, hold the road, and hit their capital while it is thin — Handan lifts itself and Wei is beaten in the open on the way home.',
+    descriptionZh:
+      '田忌欲引兵之趙。孫子曰:'
+      + '「夫解雜亂紛糾者不控捲,救鬥者不搏撠,'
+      + '批亢擣虛,形格勢禁,則自為解耳。\n'
+      + '今梁趙相攻,輕兵銳卒必竭於外,老弱罷於內。'
+      + '君不若引兵疾走大梁,據其街路,衝其方虛,'
+      + '彼必釋趙而自救。是我一舉解趙之圍而收獘於魏也。」\n\n'
+      + '田忌從之,魏果去邯鄲,與齊戰於桂陵,大破梁軍。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-sun-bin', delta: 20 },
+      { kind: 'officer-loyalty', officerId: 'hist-tian-ji', delta: 15 },
+      { kind: 'city-defense', cityId: 'chenliu', delta: -25 },
+      { kind: 'city-troops-multiplier', cityId: 'chenliu', multiplier: 0.85 },
+      { kind: 'city-defense', cityId: 'ye', delta: 15 },
+      { kind: 'flag', key: 'gl-weiwei' },
+    ],
+    mood: 'martial',
+  },
+
+  /* ── 鄢郢(chain-yanying)── */
+  {
+    id: 'evt-ws-yanying-1',
+    name: { en: 'The River Turned Into the City', zh: '水灌鄢城' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-yanying' },
+      { kind: 'officer-active', officerId: 'hist-bai-qi' },
+      { kind: 'flag-unset', key: 'yy-yancheng' },
+    ],
+    description:
+      'Yan will not fall to assault, so Bai Qi dams the Yi a hundred li upstream, cuts a channel east into the city, and opens it. The northeast corner of the wall gives way and the water goes through the streets; the people who drown in the eastern quarter alone are counted in the hundreds of thousands, and the smell is such that the place is afterwards called the Stink Pool. Then he goes on to the capital, burns the royal tombs at Yiling, and Chu moves its court east to Chen and never comes back west.',
+    descriptionZh:
+      '白起攻楚,拔鄢。鄢城堅不可拔,乃引西山長谷水,'
+      + '以水灌城,決其堤,水潰城東北角,百姓隨水流,'
+      + '死於城東者數十萬,城東皆臭,因名其陂為臭池。\n\n'
+      + '明年,拔郢,燒夷陵先王之墓,東至竟陵。'
+      + '楚王亡走,徙陳。\n\n'
+      + '——屈原聞郢破,作《哀郢》。是歲五月,懷石自沉汨羅。',
+    effects: [
+      { kind: 'city-troops-multiplier', cityId: 'jiangling', multiplier: 0.5 },
+      { kind: 'city-defense', cityId: 'jiangling', delta: -30 },
+      { kind: 'city-loyalty', cityId: 'jiangling', delta: -25 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'officer-loyalty', officerId: 'hist-bai-qi', delta: 15 },
+      { kind: 'flag', key: 'yy-yancheng' },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 閼與(chain-yuyu)── */
+  {
+    id: 'evt-ws-yuyu-1',
+    name: { en: 'Two Rats Fighting in a Hole', zh: '兩鼠鬥於穴中' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-yuyu' },
+      { kind: 'officer-active', officerId: 'hist-zhao-she' },
+      { kind: 'flag-unset', key: 'yy-yuyu' },
+    ],
+    description:
+      'Asked whether Yuyu can be relieved, Lian Po says the road is far and narrow and difficult, and it cannot. Yue Cheng says the same. Zhao She says: the road is far and narrow and difficult — which makes it two rats fighting in a hole, and the braver rat wins. He then marches thirty li out of Handan, stops, fortifies, and stays there twenty-eight days building more walls, until the Qin spy has seen enough and been sent home with a good meal. Then he takes the army to Yuyu in two days and one night, gets the high ground north of the mountain first, and comes down on them.',
+    descriptionZh:
+      '秦伐韓,軍於閼與。王召廉頗而問曰:「可救不?」'
+      + '對曰:「道遠險狹,難救。」又召樂乘而問焉,樂乘對如廉頗言。'
+      + '又召趙奢問焉,奢對曰:「其道遠險狹,譬之猶兩鼠鬥於穴中,將勇者勝。」\n\n'
+      + '王乃令趙奢將,救之。兵去邯鄲三十里,而令軍中曰:'
+      + '「有以軍事諫者死。」……堅壁,留二十八日不行,復益增壘。'
+      + '秦間來入,趙奢善食而遣之。間以報秦將,秦將大喜曰:'
+      + '「夫去國三十里而軍不行,乃增壘,閼與非趙地也。」\n\n'
+      + '趙奢既已遣秦間,卷甲而趨之,二日一夜至,'
+      + '令善射者去閼與五十里而軍。……先據北山上者勝。'
+      + '趙奢縱兵擊之,大破秦軍,秦軍解而走,遂解閼與之圍而歸。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-zhao-she', delta: 22 },
+      { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 1.2 },
+      { kind: 'city-defense', cityId: 'shangdang', delta: 20 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.88 },
+      { kind: 'flag', key: 'yy-yuyu' },
+    ],
+    mood: 'martial',
+  },
+
+  /* ── 齊湣王稱帝(chain-qimin)── */
+  {
+    id: 'evt-ws-qimin-1',
+    name: { en: 'Take the Title and Then Put It Down', zh: '東帝西帝' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-qimin' },
+      { kind: 'officer-alive', officerId: 'hist-qi-minwang' },
+      { kind: 'officer-alive', officerId: 'hist-su-dai' },
+      { kind: 'flag-unset', key: 'qm-didi' },
+    ],
+    description:
+      'Qin proposes that the two of them take the imperial title together: Qin as Emperor of the West, Qi as Emperor of the East. Su Dai asks the king what he would get out of it. If Qi declines and Qin takes it alone, the realm will hate Qin and not Qi; if both take it, nobody can tell them apart and Qi gains nothing. Take the title so as not to offend Qin, then put it down quietly and let the realm see who kept it. And while everyone is looking at Qin, take Song — Song is worth more than either title.',
+    descriptionZh:
+      '秦昭王使魏冉致帝於齊,約與齊並稱帝:秦為西帝,齊為東帝。\n\n'
+      + '蘇代自燕來,齊王問之曰:'
+      + '「秦使魏冉致帝,子以為何如?」對曰:'
+      + '「願王受之而勿稱也。秦稱之,天下安之,王乃稱之,無後也。'
+      + '且伐桀宋之利,與尊秦為帝孰便?」\n\n'
+      + '……齊王從之,稱帝二日而復歸王號。'
+      + '其後果南舉楚淮北,西侵三晉,欲并二周而為天子,'
+      + '滅宋而地益廣 —— 而諸侯之怨,亦自此始。',
+    effects: [],
+    chooserRulerId: 'hist-qi-minwang',
+    choices: [
+      {
+        id: 'take-and-drop',
+        label: { zh: '受之而勿稱,轉伐桀宋', en: 'Accept it, do not use it, and take Song instead' },
+        effects: [
+          { kind: 'city-troops-multiplier', cityId: 'linzi', multiplier: 1.2 },
+          { kind: 'city-troops-multiplier', cityId: 'pengcheng', multiplier: 1.15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-qi-minwang', delta: 8 },
+          { kind: 'flag', key: 'qm-didi' },
+        ],
+      },
+      {
+        id: 'keep-title',
+        label: { zh: '稱東帝,與秦並尊', en: 'Style yourself Emperor of the East' },
+        effects: [
+          { kind: 'mandate-ruler', rulerOfficerId: 'hist-qi-minwang', delta: 14 },
+          { kind: 'city-defense', cityId: 'linzi', delta: -15 },
+          { kind: 'officer-loyalty', officerId: 'hist-yue-yi', delta: -12 },
+          { kind: 'flag', key: 'qm-didi' },
+          { kind: 'flag', key: 'qm-emperor' },
+        ],
+      },
+    ],
+    mood: 'auspicious',
+  },
+
+  /* ── 淺水原(chain-qianshui)與柏壁(chain-bobi)── */
+  {
+    id: 'evt-st-qianshui-1',
+    name: { en: 'The Eight Commanders All Lost', zh: '淺水原·八總管皆敗' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-qianshui' },
+      { kind: 'officer-active', officerId: 'hist-xue-ju' },
+      { kind: 'flag-unset', key: 'qs-first' },
+    ],
+    description:
+      'The prince is ill in camp and leaves standing orders that nobody is to fight; his staff officers, thinking a sick commander is an excuse rather than an order, go out anyway. Eight commanders are beaten on the same field and half or more of the army is lost; Liu Hongji is taken. Xue Ju, whose men have been eating what they could take, asks his court whether any Son of Heaven in history has ever surrendered — meaning to march on Chang-an and finish it. And then dies, suddenly, in camp, before he can.',
+    descriptionZh:
+      '太宗有疾,委軍於劉文靜,誡之曰:'
+      + '「薛舉懸軍深入,食少兵疲,若來挑戰,慎勿與決。'
+      + '待吾疾愈,為君等破之。」\n\n'
+      + '文靜等以太宗有疾,遂不設備,為舉所乘,'
+      + '八總管咸敗,士卒死者什五六,大將軍慕容羅睺、李安遠、劉弘基並沒。\n\n'
+      + '舉遂拔高墌,收唐兵死者為京觀。'
+      + '……舉問群臣曰:「自古天子有降事乎?」'
+      + '黃門侍郎褚亮曰:「昔趙佗歸漢,蜀主劉禪亦仕於晉。」'
+      + '——而未及進兵,舉暴卒於軍。',
+    effects: [
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.75 },
+      { kind: 'city-defense', cityId: 'changan', delta: -20 },
+      { kind: 'officer-status', officerId: 'hist-xue-ju', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-xue-rengao', delta: 15 },
+      { kind: 'flag', key: 'qs-first' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-st-bobi-1',
+    name: { en: 'Wait Until the Grain Is Gone', zh: '柏壁·待其糧盡' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-bobi' },
+      { kind: 'officer-active', officerId: 'hist-song-jingang' },
+      { kind: 'officer-alive', officerId: 'hist-tang-taizong' },
+      { kind: 'flag-unset', key: 'bb-hold' },
+    ],
+    description:
+      'Song Jingang has taken Bing province and stands at Jiangzhou with a deep column and no supply line behind it — everything he eats he has to take. The prince fortifies at Boqi and refuses battle for five months while sending light horse round to cut what comes up from the rear. When the grain finally runs out and the column turns north, he goes after it: eight engagements in one day, two days and one night without eating, three days in the same armour, and at Queshu he goes through the line eight times and comes out the far side.',
+    descriptionZh:
+      '宋金剛據并州,兵鋒甚銳,而懸軍千里,深入吾地,精兵驍將皆在於此。'
+      + '太宗曰:「金剛無蓄積,以虜掠為資,利在速戰。'
+      + '我閉營養銳以挫其鋒,分兵汾、隰,衝其心腹,'
+      + '彼糧盡計窮,自當遁走,當待此機,未宜速戰。」\n\n'
+      + '相持者久之,軍中乏食。……金剛食盡,北走。'
+      + '太宗追之,一日八戰,皆破之,俘斬數萬。\n\n'
+      + '至高壁嶺,總管劉弘基執轡諫曰:'
+      + '「糧盡且疲,願且駐軍,俟兵糧畢集,而後復進,未晚也。」'
+      + '太宗曰:「金剛計窮而走,眾心離沮;功難成而易敗,機難得而易失,必乘此勢取之。'
+      + '若更淹留,使之計立備成,不可復攻矣!」遂策馬而進,'
+      + '將士不敢復言飢。二日不食,三日不解甲,軍中止有一羊,太宗與將士分而食之。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-tang-taizong', delta: 20 },
+      { kind: 'city-troops-multiplier', cityId: 'taiyuan', multiplier: 0.7 },
+      { kind: 'city-defense', cityId: 'taiyuan', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'flag', key: 'bb-hold' },
+    ],
+    mood: 'martial',
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(
