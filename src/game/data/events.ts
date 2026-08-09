@@ -1441,8 +1441,14 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
   {
     id: 'evt-huainan-three-rebellions',
     name: { en: 'Three Rebellions of Huainan', zh: '淮南三叛' },
-    yearMin: 251,
-    yearMax: 258,
+    yearMin: 258,
+    yearMax: 262,
+    // 這條原本是「一句話概括三場叛亂」,窗口 251–258 —— 而三場現在各自有了具體
+    // 的一節(evt-wangling-plot / evt-wenyang-raid / evt-zhuge-dan-shouchun)。
+    // 第一版只給它加 flag-unset 讓它別重複,結果是**誰先搖到誰演**:六輪裡
+    // 概括條搶走四輪,具體的王淩只演到兩輪。改成往後挪、並要求三叛的最後一場
+    // 已經發生 —— 它於是從「三選一的替身」變成三叛之後的收束。
+    requires: [{ kind: 'flag-set', key: 'zhuge-dan-revolt' }],
     description:
       'In Shouchun, Wang Ling, then Guanqiu Jian, then Zhuge Dan rise in turn against the Sima clan. Each rebellion ends in slaughter; the Sima grip on Wei tightens with every uprising.',
     descriptionZh: "壽春之地,王凌、毋丘儉、諸葛誕先後舉兵反司馬。三叛皆以屠戮告終,司馬氏對魏的掌控,每經一叛便愈發牢固。",
@@ -4565,6 +4571,8 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
           { kind: 'officer-status', officerId: 'gongsun-yuan', status: 'dead' },
           { kind: 'force-cities-revolt-ruler', rulerOfficerId: 'gongsun-yuan', fraction: 0.6 },
           { kind: 'flag', key: 'xiangping-ended' },
+          // 城**破**了才有下一節的京觀 —— 另一個選項是嬰城不出,城還在。
+          { kind: 'flag', key: 'xiangping-stormed' },
         ],
       },
       {
@@ -6345,6 +6353,817 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
         ],
       },
     ],
+  },
+
+  /* ════════════════════════════════════════════════════════════════════
+     後三國 · 魏晉:權柄是怎麼一級一級交出去的(239–262)
+
+     為什麼補這一批:全庫 230 條事件裡,234 年之後只有 44 條,而 190–220 那
+     三十年有一百八十餘條。後果是「事件薄」的八張盤全在這一段 —— 晉滅吳整盤
+     十年只有四條可演。而這些盤自己的專屬鏈都寫過了,缺的是**這個時代的共享
+     名場面**:司馬師的名字在全庫事件裡出現 0 次,毌丘儉 0 次,嵇康 0 次。
+
+     這一批刻意**不綁 chain-xxx 旗標** —— 綁了就只有一張盤演得到。條件只問
+     「那個人還在不在」,於是 238/241/244/249/252/253/255/257 每一張跨過那個
+     年份的盤都演得到,一批下去七八張盤同時變厚。
+
+     抉擇歸屬:寫 chooserRulerId 之前先查過那個 id 在這幾張盤上真的是君主 ——
+     曹芳是 241/244/252/253 的魏主,曹叡是 238 與「諸葛亮活到八十」的魏主,
+     司馬昭是 257/263/264 的魏主。**曹髦不是任何一張盤的君主**,所以他那一段
+     (詔昭留鎮許昌)只能寫進敘事,不能當選項。
+     ════════════════════════════════════════════════════════════════════ */
+  {
+    id: 'evt-caorui-tuogu',
+    name: { en: 'Cao Rui Names His Regents', zh: '明帝托孤' },
+    yearMin: 239,
+    yearMax: 241,
+    requires: [
+      { kind: 'officer-alive', officerId: 'cao-rui' },
+      { kind: 'officer-alive', officerId: 'sima-yi' },
+    ],
+    description:
+      'The emperor is dying at thirty-four with an adopted boy of seven for an heir. The first edict named his uncle Cao Yu regent, with Xiahou Xian and Cao Zhao beside him — the clan keeping the clan. Then Liu Fang and Sun Zi, who hated Cao Zhao, got the sickroom to themselves for the length of one conversation, and the edict was rewritten: Cao Shuang, and Sima Yi recalled from the frontier. The emperor changed his mind twice. What he signed at the end decided the next thirty years.',
+    descriptionZh:
+      '景初三年正月,帝疾篤。初詔以燕王曹宇為大將軍,與夏侯獻、曹肇、秦朗共輔政 —— 宗室輔宗室。中書監劉放、中書令孫資素與曹肇不睦,乘間言宇等非社稷之計,勸帝以曹爽代之,并召司馬懿。帝從之,既而復悔,放、資固請,帝乃執放手,強起作詔。\n\n懿至,帝執其手,目太子曰:「以後事相托。死乃復可忍,朕忍死待君,得相見,無所復恨矣。」',
+    effects: [],
+    chooserRulerId: 'cao-rui',
+    choices: [
+      {
+        id: 'shuang-yi',
+        label: { zh: '從劉放孫資之言:曹爽、司馬懿共輔', en: 'Cao Shuang and Sima Yi together' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'sima-yi', delta: 6 },
+          { kind: 'officer-loyalty', officerId: 'cao-shuang', delta: 10 },
+          { kind: 'flag', key: 'tuogu-shuang-yi' },
+        ],
+      },
+      {
+        id: 'yi-alone',
+        label: { zh: '獨以後事屬司馬懿', en: 'Sima Yi alone' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'sima-yi', delta: 16 },
+          { kind: 'city-defense', cityId: 'luoyang', delta: 10 },
+          { kind: 'flag', key: 'tuogu-yi-alone' },
+        ],
+      },
+      {
+        id: 'zongshi',
+        label: { zh: '守初詔:燕王曹宇、夏侯獻、曹肇輔政', en: 'Keep the first edict: the clan holds it' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'cao-yu', delta: 14 },
+          { kind: 'officer-loyalty', officerId: 'sima-yi', delta: -18 },
+          { kind: 'city-loyalty', cityId: 'luoyang', delta: 8 },
+          { kind: 'flag', key: 'tuogu-zongshi' },
+        ],
+      },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-wangling-plot',
+    name: { en: 'Wang Ling Calls on the Ghost of Jia Kui', zh: '王淩之謀' },
+    yearMin: 251,
+    yearMax: 252,
+    requires: [
+      { kind: 'officer-alive', officerId: 'wang-ling' },
+      { kind: 'officer-alive', officerId: 'sima-yi' },
+      { kind: 'flag-unset', key: 'huainan-rebellions' },
+    ],
+    description:
+      'The first of the three Huainan risings, and the quietest. Wang Ling, Grand Commandant, holds the southeast and thinks the boy on the throne is a boy on a leash; he means to raise Cao Biao, prince of Chu, and move the capital to Xuchang. Sima Yi, seventy-two and two years past the coup, comes down the river himself before the plan is a week old. Wang Ling binds his own hands and meets him at the water. He is sent back to Luoyang under guard, and at Xiang, passing the shrine of Jia Kui, he calls out to the dead man that he was a loyal servant of Wei — and then takes poison.',
+    descriptionZh:
+      '太尉王淩督淮南,與外甥令狐愚謀立楚王曹彪,都許昌 —— 以為天子幼弱,制於強臣。事洩,宣王自將中軍,泛舟沿流,九日而至甘城。淩自知勢窮,面縛水次。遣步騎六百送還洛陽,行至項,過賈逵廟,大呼曰:「賈梁道!王淩是大魏之忠臣,惟爾有神知之!」遂飲藥死。夷三族,發令狐愚冢,剖棺暴屍。\n\n淮南第一叛,起得無聲,滅得也無聲。',
+    effects: [
+      { kind: 'officer-status', officerId: 'wang-ling', status: 'dead' },
+      { kind: 'city-loyalty', cityId: 'shouchun', delta: -22 },
+      { kind: 'officer-loyalty', officerId: 'sima-yi', delta: 8 },
+      { kind: 'flag', key: 'wangling-purged' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-lifeng-plot',
+    name: { en: 'The Plot of the Palace Secretariat', zh: '中書之謀' },
+    yearMin: 254,
+    yearMax: 255,
+    requires: [
+      { kind: 'officer-alive', officerId: 'cao-fang' },
+      { kind: 'officer-alive', officerId: 'li-feng' },
+      { kind: 'officer-alive', officerId: 'sima-shi' },
+    ],
+    description:
+      'Li Feng runs the Secretariat and is the last man in the palace the Sima do not own. With the empress father Zhang Ji he plans to put Xiahou Xuan in the regency in place of Sima Shi. The plan leaks before it moves. Sima Shi summons him; Li Feng knows what the summons is and goes anyway, because refusing would be the same answer with less dignity. Asked what he meant by it, he says: your house harbours treason and will bring down the altars of the state — I regret only that I lacked the strength to take you. Sima Shi has him beaten to death with the hilt-ring of a sword. Three clans are wiped out; in the ninth month the emperor himself is deposed.',
+    descriptionZh:
+      '中書令李豐與后父光祿大夫張緝、黃門監蘇鑠等謀以太常夏侯玄代司馬師輔政。事未發而洩。師召豐,豐知禍至而不敢不往。師詰之,豐知不免,乃曰:「卿父子懷姦,將傾社稷,惜吾力不能相禽殺耳!」師怒,使勇士以刀鐶築殺之。玄、緝皆夷三族 —— 夏侯玄臨斬東市,顏色不變,舉動自若。\n\n是歲九月,師以太后令廢帝為齊王。',
+    effects: [],
+    chooserRulerId: 'cao-fang',
+    choices: [
+      {
+        id: 'stay-out',
+        label: { zh: '不與聞,坐觀成敗', en: 'Know nothing of it' },
+        effects: [
+          { kind: 'officer-status', officerId: 'li-feng', status: 'dead' },
+          { kind: 'officer-status', officerId: 'xiahou-xuan', status: 'dead' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-fang', delta: -7 },
+          { kind: 'flag', key: 'lifeng-purged' },
+        ],
+      },
+      {
+        id: 'back-them',
+        label: { zh: '下密詔,以夏侯玄代司馬師輔政', en: 'Sign the edict: Xiahou Xuan for the regency' },
+        effects: [
+          { kind: 'officer-status', officerId: 'li-feng', status: 'dead' },
+          { kind: 'officer-loyalty', officerId: 'xiahou-xuan', delta: 15 },
+          { kind: 'city-loyalty', cityId: 'luoyang', delta: -15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-fang', delta: 6 },
+          { kind: 'flag', key: 'lifeng-imperial-backing' },
+        ],
+      },
+      {
+        id: 'betray',
+        label: { zh: '執李豐以獻,自保天位', en: 'Hand Li Feng over and keep the throne' },
+        effects: [
+          { kind: 'officer-status', officerId: 'li-feng', status: 'dead' },
+          { kind: 'officer-loyalty', officerId: 'sima-shi', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-fang', delta: -12 },
+          { kind: 'flag', key: 'lifeng-betrayed' },
+        ],
+      },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-wenyang-raid',
+    name: { en: 'Wen Yang Rides Into the Camp', zh: '文鴦夜斫營' },
+    yearMin: 255,
+    yearMax: 256,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sima-shi' },
+      { kind: 'officer-active', officerId: 'wen-qin' },
+      { kind: 'officer-active', officerId: 'guanqiu-jian' },
+    ],
+    description:
+      'Guanqiu Jian and Wen Qin raise Huainan against the Sima — the second rising, and the one that nearly worked. Wen Qin son Yang is eighteen. He tells his father the enemy camp is not yet settled and can be broken tonight, splits the horse into two wings, and gets there first, riding through the lines shouting for Sima Shi to come out and show himself. The camp comes apart in the dark. Sima Shi had a tumour cut from his eye a few days before; lying in his tent he presses the bedding over his face so no one will hear him, and bites through it.',
+    descriptionZh:
+      '毌丘儉、文欽舉兵壽春,移檄郡國,數司馬師之罪十一。欽子鴦,年十八,力冠三軍,謂欽曰:「及其未定,擊之可破也。」乃分為二隊,夜夾攻。鴦率壯士先至,鼓譟大呼曰:「司馬師安在!」一軍皆擾。\n\n師新割目瘤,創甚,聞之驚駭,目睛迸出,以被蒙頭,痛甚,齧被,被皆破碎 —— 而左右不知也。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'wen-qin', delta: 12 },
+      { kind: 'city-loyalty', cityId: 'shouchun', delta: -10 },
+      { kind: 'flag', key: 'wenyang-raid' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-sima-shi-dies',
+    name: { en: 'The Eye Bursts at Xuchang', zh: '目決於許昌' },
+    yearMin: 255,
+    yearMax: 257,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sima-shi' },
+      { kind: 'flag-set', key: 'wenyang-raid' },
+    ],
+    description:
+      'The rising is put down and its author does not outlive it. Sima Shi dies at Xuchang at forty-eight, having handed the army to his brother in a back room. In Luoyang the boy emperor Cao Mao sees what the moment is worth and orders Sima Zhao to stay at Xuchang and hold the southeast, with Fu Jia to bring the six armies home — the throne reaching for its own soldiers, once, while the reaching is possible. Fu Jia and Zhong Hui advise otherwise. Sima Zhao marches to Luoyang with the army behind him, and the edict is not mentioned again.',
+    descriptionZh:
+      '儉、欽既敗,師目遂出,還許昌,病篤,召昭付以後事,卒,年四十八。\n\n洛中知之,詔昭留鎮許昌,以尚書傅嘏率六軍還京師 —— 少帝曹髦十四歲,伸了一次手。嘏與鍾會謀之,昭乃徑還洛陽,屯於雒水之南,詔遂不行。天下之勢,自此無問焉。',
+    effects: [
+      { kind: 'officer-status', officerId: 'sima-shi', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'sima-zhao', delta: 12 },
+      { kind: 'city-loyalty', cityId: 'luoyang', delta: -8 },
+      { kind: 'flag', key: 'sima-shi-gone' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-jikang-guangling',
+    name: { en: 'The Guangling Melody Ends Here', zh: '廣陵散於今絕矣' },
+    yearMin: 262,
+    yearMax: 263,
+    requires: [
+      { kind: 'officer-alive', officerId: 'ji-kang' },
+      { kind: 'officer-alive', officerId: 'sima-zhao' },
+    ],
+    description:
+      'Ji Kang is arrested over another man affair and Zhong Hui, who once came to his forge and was not spoken to, tells the regent: this one is a sleeping dragon, and cannot be allowed to wake. Three thousand students of the Imperial Academy petition to have him as their master. He is taken to the eastern market instead. He looks at where the shadow has got to, asks for his zither, and plays — then says that Yuan Xiaoni once asked to learn this piece and he refused him, and that the Guangling melody ends here.',
+    descriptionZh:
+      '嵇康以呂安事下獄。鍾會構之於文王曰:「嵇康,臥龍也,不可起。公無憂天下,顧以康為慮耳。」太學生三千人請以為師,不許。\n\n康將刑東市,顧視日影,索琴彈之,曰:「昔袁孝尼嘗從吾學廣陵散,吾每靳固之,廣陵散於今絕矣!」時年四十。海內之士,莫不痛之。',
+    effects: [],
+    chooserRulerId: 'sima-zhao',
+    choices: [
+      {
+        id: 'execute',
+        label: { zh: '從鍾會之言,棄市', en: 'Take Zhong Hui advice: the eastern market' },
+        effects: [
+          { kind: 'officer-status', officerId: 'ji-kang', status: 'dead' },
+          { kind: 'officer-loyalty', officerId: 'zhong-hui', delta: 8 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sima-zhao', delta: -6 },
+          { kind: 'flag', key: 'jikang-slain' },
+        ],
+      },
+      {
+        id: 'spare',
+        label: { zh: '赦之,聽其還山陽鍛鐵', en: 'Let him go back to his forge at Shanyang' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'zhong-hui', delta: -10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sima-zhao', delta: 7 },
+          { kind: 'city-loyalty', cityId: 'luoyang', delta: 10 },
+          { kind: 'flag', key: 'jikang-spared' },
+        ],
+      },
+    ],
+    mood: 'somber',
+  },
+
+  /* ════════════════════════════════════════════════════════════════════
+     後三國 · 吳:建業宮裡的四十年(241–280)
+
+     吳國不是被晉滅的,是先在自己的宮裡爛掉的 —— 太子登一死,二宮之爭;
+     諸葛恪一敗,孫峻的刀;孫綝廢立;然後是孫皓。這一段全庫一條事件都沒有:
+     孫登 0 次、孫綝 0 次、丁奉 0 次、孫皓 0 次。
+
+     ⚠ 年份窗口要蓋住盤的**開局年之後** —— 西陵(272)與晉滅吳(280)這兩張
+     最薄的盤,補 264 年的事件對它們一點用都沒有。所以底下拆成兩組:
+     241–266 那組給 241/244/249/252/253/255/257/263/264/265,
+     273–284 那組專給 272 與 280。
+     ════════════════════════════════════════════════════════════════════ */
+  {
+    id: 'evt-sun-deng-dies',
+    name: { en: 'The Death of the Heir Sun Deng', zh: '太子登之薨' },
+    yearMin: 241,
+    yearMax: 243,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sun-deng' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+    ],
+    description:
+      'Sun Deng has been heir for twenty years and is the one thing about the succession nobody in Wu argues about. He dies at thirty-three. His last memorial names the men fit to be trusted with the state, asks for lighter corvee and fewer levies, and asks his father to settle the succession early so the realm knows where it stands. Sun Quan reads it and cannot stop weeping. He then names Sun He heir and goes on favouring Sun Ba exactly as before, and the court spends the next eight years choosing sides.',
+    descriptionZh:
+      '赤烏四年五月,太子登卒,年三十三。臨終上疏,言諸葛瑾、步騭、朱然、全琮、朱據、呂岱、吾粲、闞澤、嚴畯、張承皆通達治體,可付大任;又願寬息賦役,以順民望。末言:「皇子和仁孝聰哲,德行清茂,宜早建置,以繫民望。」\n\n權省書悲感,不能自勝。—— 二宮之爭,自此一步之遙。',
+    effects: [
+      { kind: 'officer-status', officerId: 'sun-deng', status: 'dead' },
+      { kind: 'flag', key: 'sun-deng-gone' },
+    ],
+    chooserRulerId: 'sun-quan',
+    choices: [
+      {
+        id: 'he-and-ba',
+        label: { zh: '立和為嗣,而寵霸如故', en: 'Sun He as heir — and Sun Ba favoured as before' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'jianye', delta: -12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -6 },
+          { kind: 'flag', key: 'ergong-seeds' },
+        ],
+      },
+      {
+        id: 'he-only',
+        label: { zh: '立和為嗣,黜霸出鎮,絕兩宮之嫌', en: 'Sun He alone; send Sun Ba out to a garrison' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'jianye', delta: 10 },
+          { kind: 'officer-loyalty', officerId: 'lu-xun', delta: 12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 6 },
+          { kind: 'flag', key: 'ergong-averted' },
+        ],
+      },
+      {
+        id: 'wait',
+        label: { zh: '虛儲位,待諸子之長', en: 'Leave the seat empty and see how the sons grow' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'jianye', delta: -6 },
+          { kind: 'officer-loyalty', officerId: 'sun-ba', delta: 10 },
+          { kind: 'officer-loyalty', officerId: 'sun-he', delta: 10 },
+          { kind: 'flag', key: 'ergong-deferred' },
+        ],
+      },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-dongxing-dike',
+    name: { en: 'Short Blades on the Dongxing Dike', zh: '東興堤上雪' },
+    yearMin: 252,
+    yearMax: 254,
+    requires: [
+      { kind: 'officer-active', officerId: 'ding-feng' },
+      { kind: 'officer-active', officerId: 'zhuge-ke' },
+    ],
+    description:
+      'Wei sends seventy thousand against the new dike at Dongxing. Zhuge Ke comes up with forty thousand; Ding Feng tells him the other columns are too slow and takes three thousand of his own down the water instead, sails two days on a north wind, and is standing at Xutang before anyone expects him. It is snowing and the Wei officers are at their wine. Seeing how few men are in the forward camp, Ding Feng tells his troops that rank and fief are being handed out today — and has them strip off their armour and go up the dike in helmets with short blades. The Wei men laugh at the sight and do not stand to. The pontoon breaks under the rout; tens of thousands drown.',
+    descriptionZh:
+      '恪作大堤於東興,左右結山,夾築兩城。魏遣胡遵、諸葛誕等率眾七萬攻圍兩塢。恪興軍四萬,晨夜赴救。丁奉曰:「今諸軍行緩,若敵據便地,則難與爭鋒矣。」乃辟諸軍使下道,自率麾下三千人徑進。時北風,舉帆二日至,遂據徐塘。\n\n天寒雪,敵諸將方會飲。奉見其前部兵少,謂左右曰:「取封侯爵賞,正在今日!」乃使兵解鎧著冑,持短兵。敵人望而笑之,不為設備。奉縱兵斫之,大破前屯,浮橋絕,爭渡墮水,死者數萬。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'ding-feng', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'zhuge-ke', delta: 10 },
+      { kind: 'city-troops-multiplier', cityId: 'hefei', multiplier: 0.85 },
+      { kind: 'city-defense', cityId: 'ruxu', delta: 12 },
+      { kind: 'flag', key: 'dongxing-victory' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-sun-lin-deposes',
+    name: { en: 'Sun Lin Unmakes an Emperor', zh: '孫綝廢立' },
+    yearMin: 258,
+    yearMax: 260,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sun-lin' },
+      { kind: 'officer-alive', officerId: 'sun-liang' },
+    ],
+    description:
+      'Sun Lin is twenty-seven and has killed two regents to get where he is. The emperor Sun Liang is sixteen and has started asking, out loud, why the granary records do not match. He plans with his sister and Liu Cheng to have Sun Lin taken; the plan leaks; Sun Lin deposes him and sends him out as marquis of Kuaiji, and brings in his elder brother Sun Xiu instead. Which is where it turns: at the winter feast Sun Xiu has Ding Feng and Zhang Bu take Sun Lin from behind. He asks to be sent to Jiaozhou; the emperor asks him why he did not send Teng Yin and Lu Ju to Jiaozhou. He asks to be made a slave of the state; the emperor asks the same question again. Then his head goes round the camps with a herald saying that everyone he misled is pardoned.',
+    descriptionZh:
+      '綝以宗室秉政,連誅滕胤、呂據,兵威震主。帝亮年十六,始親覽政事,數詰責綝。亮與全公主、將軍劉承謀誅之,事洩。太平三年九月,綝以太后令廢帝為會稽王,迎琅琊王休立之。\n\n永安元年臘會,綝稱疾不入,休彊起之。酒數行,張布目丁奉,左右縛綝。綝叩首曰:「願徙交州。」休曰:「卿何以不徙滕胤、呂據於交州?」綝曰:「願沒為官奴。」休曰:「何不以胤、據為奴乎?」遂斬之,以其首徇軍曰:「諸為綝所詿誤者,皆赦之。」',
+    effects: [],
+    chooserRulerId: 'sun-liang',
+    choices: [
+      {
+        id: 'deposed',
+        label: { zh: '謀洩,受廢為會稽王', en: 'The plan leaks; go out as marquis of Kuaiji' },
+        effects: [
+          { kind: 'officer-status', officerId: 'sun-lin', status: 'dead' },
+          { kind: 'city-loyalty', cityId: 'jianye', delta: -14 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-liang', delta: -10 },
+          { kind: 'flag', key: 'sunlin-deposes' },
+        ],
+      },
+      {
+        id: 'strike-first',
+        label: { zh: '先發,伏兵於殿,誅孫綝', en: 'Strike first: swordsmen behind the screens' },
+        effects: [
+          { kind: 'officer-status', officerId: 'sun-lin', status: 'dead' },
+          { kind: 'officer-loyalty', officerId: 'ding-feng', delta: 12 },
+          { kind: 'city-loyalty', cityId: 'jianye', delta: -8 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-liang', delta: 12 },
+          { kind: 'flag', key: 'sunlin-slain-early' },
+        ],
+      },
+      {
+        id: 'endure',
+        label: { zh: '隱忍,委政於綝以待其斃', en: 'Endure; hand him the government and wait' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'sun-lin', delta: 12 },
+          { kind: 'city-loyalty', cityId: 'jianye', delta: -6 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-liang', delta: -5 },
+          { kind: 'flag', key: 'sunlin-endured' },
+        ],
+      },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-sun-hao-first',
+    name: { en: 'Sun Hao Begins Well', zh: '粗有令稱' },
+    yearMin: 264,
+    yearMax: 267,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sun-hao' },
+      { kind: 'flag-unset', key: 'sunhao-tyrant' },
+    ],
+    description:
+      'The new sovereign opens with everything a good reign is supposed to open with: relief edicts, granaries unsealed for the poor, palace women sent out to be married to men who have none, the beasts of the royal park turned loose. For a season the realm calls him an enlightened ruler. Then, having got what he wanted, he becomes coarse, violent, swollen with himself, thick with taboos, and fond of wine and women — and the men who put him there begin, quietly, to regret it. Puyang Xing and Zhang Bu regret it out loud enough to be reported, and are dead by the eleventh month.',
+    descriptionZh:
+      '皓初立,發優詔,恤士民,開倉廩,振貧乏,科出宮女以配無妻者,禽獸養於苑者皆放之。當時翕然稱為明主。\n\n及既得志,粗暴驕盈,多忌諱,好酒色,大小失望。濮陽興、張布竊悔之 —— 或以譖皓,十一月誅興、布,夷三族。',
+    effects: [],
+    chooserRulerId: 'sun-hao',
+    choices: [
+      {
+        id: 'turn',
+        label: { zh: '既得志,粗暴驕盈', en: 'Having got it, let the mask come off' },
+        effects: [
+          { kind: 'officer-status', officerId: 'zhang-bu', status: 'dead' },
+          { kind: 'city-loyalty', cityId: 'jianye', delta: -18 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: -8 },
+          { kind: 'flag', key: 'sunhao-tyrant' },
+        ],
+      },
+      {
+        id: 'keep',
+        label: { zh: '守初政,終始如一', en: 'Keep the opening reign to the end' },
+        effects: [
+          { kind: 'city-loyalty', cityId: 'jianye', delta: 15 },
+          { kind: 'city-loyalty', cityId: 'wuchang', delta: 10 },
+          { kind: 'officer-loyalty', officerId: 'lu-kai', delta: 12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: 10 },
+          { kind: 'flag', key: 'sunhao-restrained' },
+        ],
+      },
+    ],
+    mood: 'auspicious',
+  },
+
+  /* ── 吳晉末路(273–284):西陵與晉滅吳兩張盤能演到的,只有這一組 ── */
+  {
+    id: 'evt-sunhao-cruelty',
+    name: { en: 'The Saw and the Flaying Knife', zh: '剝面鑿眼' },
+    yearMin: 273,
+    yearMax: 279,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sun-hao' },
+      { kind: 'flag-unset', key: 'sunhao-restrained' },
+    ],
+    description:
+      'He Ding, a former stable clerk, is running the court by informing on it. The sovereign holds banquets where every guest must drink seven measures and appointed censors write down what is said and how it is looked; those who displease him have their faces peeled or their eyes bored out. He Shao is beaten to death, Lou Xuan sent to the sea and made to kill himself. Lu Kai memorialises that the state has three calamities and not one blessing left, and dies before the reply comes. The frontier commanders keep asking for men; the men are in Jianye, building palaces.',
+    descriptionZh:
+      '皓使何定典兵,定本孫權給使小人,而皓委以耳目,群臣側足。皓每饗宴,無不竟日,坐席無能否率以七升為限;又置黃門郎十人為司過之官,宴罷各奏其闕失,或剝人面,或鑿人眼。\n\n中書令賀邵坐口不能言,收付酒藏,掠考千所,竟殺之。宮下鎮驃騎將軍樓玄流徙廣州,追賜死。左丞相陸凱上疏極諫,言國有三不祥,而無一善政 —— 疏入,不報。',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'jianye', delta: -16 },
+      { kind: 'city-loyalty', cityId: 'wuchang', delta: -12 },
+      { kind: 'city-loyalty', cityId: 'wu', delta: -10 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: -10 },
+      { kind: 'flag', key: 'sunhao-tyrant' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-lu-kang-dies',
+    name: { en: 'The Last Memorial of Lu Kang', zh: '陸抗之薨' },
+    // 窗口從 273 起而不是史實的 274:陸抗庫裡 deathYear 274,aging 會在那一年
+    // 自己把他收走 —— 第一版寫 274–276,六輪只演到三輪,另外三輪他先老死了,
+    // 那封「西陵建平,國之藩表」的遺疏就永遠看不到。提前一年給事件搶身位。
+    yearMin: 273,
+    yearMax: 276,
+    requires: [
+      { kind: 'officer-alive', officerId: 'lu-kang' },
+      { kind: 'officer-alive', officerId: 'sun-hao' },
+    ],
+    description:
+      'Lu Kang has held the western gate of Wu with fewer men than the job needs for twelve years, and has said so in writing every year. His last memorial says it once more: Xiling and Jianping are the outer wall of the state, and they are upstream — if either goes, the whole southern bank goes with it, and no defence downstream can be improvised in time. He asks for thirty thousand more men for the west. He gets no reply and dies in the summer. Yang Hu, across the line, reads the news and starts drafting the plan for the invasion.',
+    descriptionZh:
+      '抗疾病,上疏曰:「西陵、建平,國之藩表,既處上流,受敵二境。若敵汎舟順流,舳艫千里,星奔電邁,俄然行至 —— 此乃社稷安危之機,非徒封疆侵陵小害也。臣父遜昔在西垂陳言,以為西陵國之西門,雖云易守,亦復易失。臣往在西陵,得涉遜跡,前乞精兵三萬,而至者循常,未肯差赴。」\n\n疏入,不報。秋七月,抗卒。吳之西門,自是無人。',
+    effects: [
+      { kind: 'officer-status', officerId: 'lu-kang', status: 'dead' },
+      { kind: 'city-defense', cityId: 'jiangling', delta: -18 },
+      { kind: 'city-defense', cityId: 'wuchang', delta: -10 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: -6 },
+      { kind: 'flag', key: 'lu-kang-gone' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-atong-song',
+    name: { en: 'A Tong Comes Down the River', zh: '阿童復阿童' },
+    yearMin: 275,
+    yearMax: 280,
+    requires: [
+      { kind: 'officer-alive', officerId: 'wang-jun' },
+      { kind: 'officer-alive', officerId: 'yang-hu' },
+    ],
+    description:
+      'A children rhyme goes round the Jing province villages: A Tong, A Tong again, with a blade at his belt he floats across the river; he fears not the horse on the bank, he fears the boat astern. Yang Hu hears it and says the man in it must be a naval commander — and A Tong happens to be the milk-name of Wang Jun, who is governor of Yizhou. Yang Hu keeps him on upstream instead of promoting him away, and Wang Jun spends the next five years building ships in Shu: decks a hundred and twenty paces long, painted beasts at the prows, room for two thousand men. The shavings come down the Yangtze in drifts, and Wu, seeing them go past, does nothing.',
+    descriptionZh:
+      '荊州童謠曰:「阿童復阿童,銜刀浮渡江。不畏岸上獸,但畏水中龍。」羊祜聞之曰:「此必水軍有功。」而王濬小字阿童,時為益州刺史 —— 祜表留監益州諸軍事,使治水軍。\n\n濬乃作大船連舫,方百二十步,受二千餘人,以木為城,起樓櫓,開四出門,其上皆得馳馬來往。舟楫之盛,自古未有。作船木柹蔽江而下,吳建平太守吾彥取以白皓曰:「晉必有攻吳之計,宜增建平兵。」皓不從。',
+    effects: [
+      { kind: 'city-troops-multiplier', cityId: 'chengdu', multiplier: 1.12 },
+      { kind: 'officer-loyalty', officerId: 'wang-jun', delta: 12 },
+      { kind: 'city-loyalty', cityId: 'jiangling', delta: -8 },
+      { kind: 'flag', key: 'atong-ships' },
+    ],
+    mood: 'mystic',
+  },
+  {
+    id: 'evt-yanghu-tears',
+    name: { en: 'The Stone That Makes Them Weep', zh: '墮淚碑' },
+    yearMin: 278,
+    yearMax: 281,
+    requires: [
+      { kind: 'officer-alive', officerId: 'yang-hu' },
+      { kind: 'officer-alive', officerId: 'sima-yan' },
+    ],
+    description:
+      'Ten years on the Xiangyang line, and Yang Hu fought it by not fighting it: fields farmed until the granaries held ten years of grain, prisoners sent home, game shot on the far bank returned to the hunters who wounded it first, Lu Kang sent wine and Lu Kang drank it. He asks, dying, for the invasion to go ahead, and names Du Yu to take his place. The emperor sends Zhang Hua to hear the last of it. When Xiangyang learns he is gone the markets close; the people of Jing raise a stone on Mount Xian where he liked to sit, and no one who reads it can keep from crying, so Du Yu gives it the name it still has.',
+    descriptionZh:
+      '祜鎮襄陽十年,務修德信以懷吳人:每交兵,克日方戰,不為掩襲;獲吳二將之子,送還其家;吳人有來降者,欲去皆聽之。與陸抗對境,使命交通,抗遺祜酒,祜飲之不疑;抗嘗病,祜饋之藥,抗服之無難色。軍無私財,墾田八百餘頃,積糧十年之儲。\n\n疾篤,舉杜預自代,曰:「吳平則蜀漢之弊自解,願陛下勿失此機。」卒,南州人罷市巷哭,吳守邊將士亦為之泣。襄陽百姓於峴山祜平生遊憩之所建碑立廟,歲時饗祭,望其碑者莫不流涕 —— 杜預因名之曰墮淚碑。',
+    effects: [
+      { kind: 'officer-status', officerId: 'yang-hu', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'du-yu', delta: 15 },
+      { kind: 'city-food', cityId: 'xiangyang', delta: 40000 },
+      { kind: 'city-loyalty', cityId: 'xiangyang', delta: 12 },
+      { kind: 'flag', key: 'yanghu-gone' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-wangjun-no-orders',
+    name: { en: 'The Wind Is Good and We Cannot Moor', zh: '不受節度' },
+    yearMin: 280,
+    yearMax: 283,
+    requires: [
+      { kind: 'officer-alive', officerId: 'wang-jun' },
+      { kind: 'flag-unset', key: 'jinunite-ended' },
+    ],
+    description:
+      'Six columns are moving on Wu and the one on the water is moving fastest. Wang Hun, whose army is stalled north of the river, sends word for Wang Jun to put in and confer — which would hand the surrender of Jianye, and the credit for the reunification, to a man standing on the wrong bank. Wang Jun replies that the wind is good and he cannot moor, and goes past under full sail with eighty thousand men and a river of banners. Du Yu, who could have made the same claim, writes to him instead: take the whole thing, and let the arguing wait.',
+    descriptionZh:
+      '濬自巴丘東下,克西陵、夷道、樂鄉,兵不血刃,攻無堅城。王渾軍屯於江北,遣信要濬暫過議事 —— 濬舉帆直指建業,報曰:「風利,不得泊也。」\n\n杜預與濬書曰:「足下既摧其西藩,便當徑取秣陵,討累世之逋寇,釋吳人於塗炭 —— 自江入淮,逾於泗汴,溯河而上,振旅還都,亦曠世一事也!」濬大悅,以其書表上之。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'wang-jun', delta: 10 },
+      { kind: 'city-loyalty', cityId: 'jianye', delta: -12 },
+      { kind: 'city-defense', cityId: 'jianye', delta: -10 },
+      { kind: 'flag', key: 'wangjun-full-sail' },
+    ],
+    mood: 'martial',
+  },
+
+  /* ── 遼東:出兵之前與破城之後(既有的鏈從「大雨」開始,兩頭都缺一節)── */
+  {
+    id: 'evt-sima-yi-one-year',
+    name: { en: 'A Year Will Be Enough', zh: '一年足矣' },
+    yearMin: 238,
+    yearMax: 239,
+    requires: [
+      { kind: 'officer-alive', officerId: 'cao-rui' },
+      { kind: 'officer-alive', officerId: 'sima-yi' },
+      { kind: 'officer-alive', officerId: 'gongsun-yuan' },
+      { kind: 'flag-unset', key: 'xiangping-ring' },
+    ],
+    description:
+      'Gongsun Yuan has declared himself king of Yan and taken a title from Wu. Some at court say four myriad men is too many for a march of four thousand li and the transport will ruin the treasury. The emperor says that when you campaign four thousand li, cleverness is not enough, you also need weight, and this is not the moment to be counting carts. Then he asks Sima Yi how long it will take. A hundred days to go, a hundred days to take it, a hundred days to come back, sixty to rest: a year will be enough.',
+    descriptionZh:
+      '淵自立為燕王,置百官,南結孫權,北誘鮮卑。帝召司馬懿於長安,使將四萬眾討之。議臣或以為四萬兵多,役費難供。帝曰:「四千里征伐,雖云用奇,亦當任力,不當稍計役費。」\n\n帝問懿:「往還幾時?」對曰:「往百日,攻百日,還百日,以六十日為休息,一年足矣。」又問:「淵何計?」對曰:「棄城預走,上計也;據遼水以距大軍,次計也;坐守襄平,此成擒耳。」帝曰:「其計將安出?」對曰:「惟明者能深度彼己,豫有所棄 —— 此非淵所及也。」',
+    effects: [],
+    chooserRulerId: 'cao-rui',
+    choices: [
+      {
+        id: 'four-myriad',
+        label: { zh: '與兵四萬,不計役費', en: 'Four myriad men, and stop counting carts' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'sima-yi', delta: 10 },
+          { kind: 'city-defense', cityId: 'xiangping', delta: -10 },
+          { kind: 'flag', key: 'liaodong-full-army' },
+        ],
+      },
+      {
+        id: 'frugal',
+        label: { zh: '減為萬人,省關中之役', en: 'Ten thousand: Guanzhong cannot carry more' },
+        effects: [
+          { kind: 'force-gold-ruler', rulerOfficerId: 'cao-rui', delta: 3000 },
+          { kind: 'city-defense', cityId: 'xiangping', delta: 18 },
+          { kind: 'officer-loyalty', officerId: 'sima-yi', delta: -6 },
+          { kind: 'flag', key: 'liaodong-small-army' },
+        ],
+      },
+      {
+        id: 'no-campaign',
+        label: { zh: '不征,以幽州刺史羈縻之', en: 'Do not march; hold him with the Youzhou office' },
+        effects: [
+          { kind: 'city-troops-multiplier', cityId: 'xiangping', multiplier: 1.25 },
+          { kind: 'officer-loyalty', officerId: 'gongsun-yuan', delta: 12 },
+          { kind: 'force-gold-ruler', rulerOfficerId: 'cao-rui', delta: 6000 },
+          { kind: 'flag', key: 'liaodong-no-campaign' },
+        ],
+      },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-xiangping-jingguan',
+    name: { en: 'The Mound at Xiangping', zh: '京觀' },
+    yearMin: 238,
+    yearMax: 242,
+    requires: [
+      { kind: 'flag-set', key: 'xiangping-stormed' },
+      { kind: 'officer-alive', officerId: 'sima-yi' },
+    ],
+    description:
+      'The wall came down on the壬午 day. Gongsun Yuan and his son broke out southeast with a few hundred horse and were run down where the meteor had fallen; their heads went to Luoyang. Inside, the chancellor and everyone of rank below him were beheaded by the thousand, and every male of fifteen years and over — some seven thousand of them — was killed and the bodies piled into a mound, so that anyone coming up the road afterwards would understand what had been decided here. Liaodong, Daifang, Lelang and Xuantu were all pacified. Sima Yi then opened the granaries to the starving and sent the old soldiers home, and the four commanderies were quiet for thirty years.',
+    descriptionZh:
+      '壬午,城潰。淵與子脩將數百騎突圍東南走,大兵急擊之,當流星所墜處,斬淵父子,傳首洛陽。城中斬相國以下首級以千數,男子年十五已上七千餘人皆殺之,以為京觀 —— 遼東、帶方、樂浪、玄菟悉平。\n\n既而開倉廩,恤饑者,遣舊將吏還鄉里。時有兵士寒凍,乞襦,宣王弗與,或曰:「幸多故襦,可以賜之。」宣王曰:「襦者官物,人臣無私施也。」四郡自是三十年不聞兵革。',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'xiangping', delta: -30 },
+      { kind: 'city-troops-multiplier', cityId: 'xiangping', multiplier: 0.5 },
+      { kind: 'officer-loyalty', officerId: 'sima-yi', delta: 12 },
+      { kind: 'flag', key: 'xiangping-jingguan' },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 晉初(265–273):鍾會之亂/司馬炎篡魏/西陵三張盤能演到的那幾年 ── */
+  {
+    id: 'evt-sima-zhao-dies',
+    name: { en: 'The Prince of Jin Does Not Take the Last Step', zh: '文王之薨' },
+    yearMin: 265,
+    yearMax: 267,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sima-zhao' },
+      { kind: 'officer-alive', officerId: 'sima-yan' },
+    ],
+    description:
+      'Shu is taken, the Nine Bestowals are accepted, the title of King of Jin is accepted, and the last step is not taken. Asked why, he says what his father would have said: if heaven has kept this seat for me, then let me be King Wen — meaning the man who did the work and let his son take the crown for it. In the eighth month he has a stroke and cannot speak; he takes his son by the hand and points at him, and dies. Sima Yan buries him, keeps the mourning short, and by the twelfth month the abdication is written.',
+    descriptionZh:
+      '蜀既平,昭封晉公,加九錫,進爵為王。或勸受禪,昭曰:「若天命在吾,吾其為周文王矣。」\n\n咸熙二年八月辛卯,王疾篤,不能言,執太子炎手而指之,遂崩,年五十五。炎襲位為相國、晉王。十二月,魏帝奐禪位於晉。',
+    effects: [
+      { kind: 'officer-status', officerId: 'sima-zhao', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'sima-yan', delta: 14 },
+      { kind: 'officer-loyalty', officerId: 'jia-chong', delta: 8 },
+      { kind: 'city-loyalty', cityId: 'luoyang', delta: -6 },
+      { kind: 'flag', key: 'sima-zhao-gone' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-jin-taishi',
+    name: { en: 'The Taishi Ordinances', zh: '泰始之政' },
+    yearMin: 266,
+    yearMax: 271,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sima-yan' },
+      { kind: 'officer-rules-cities-min', officerId: 'sima-yan', count: 30 },
+    ],
+    description:
+      'The new dynasty spends its first years undoing things. The agricultural-garrison offices, which had made the state a landlord to its own soldiers for sixty years, are abolished and the land handed to the counties. The proscription on the Cao clan is lifted. Twenty-seven kinsmen are enfeoffed as kings with their own troops, which will look like foresight for exactly twenty-five years. And the Taishi code goes out: the old law had over twenty thousand articles and seven hundred and seventy-three thousand words, and the new one has six hundred and twenty articles and a hundred and twenty-six thousand — the first Chinese code short enough that the people who had to obey it could be told what it said.',
+    descriptionZh:
+      '泰始元年,詔罷屯田官,以屯田民歸郡縣;除魏宗室禁錮,聽其仕進;封宗室二十七人為王,各以戶邑大小置軍。\n\n四年,頒《泰始律》於天下。漢律科條無限,凡二萬六千餘條,七百七十三萬言,覽者益難。新律但為二十篇,六百二十條,二萬七千六百五十七言 —— 詔曰:「律令既就,班之天下,將以簡直,寡而易從。」是為後世律令之祖。',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'luoyang', delta: 14 },
+      { kind: 'city-loyalty', cityId: 'changan', delta: 10 },
+      { kind: 'city-loyalty', cityId: 'chengdu', delta: 10 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sima-yan', delta: 10 },
+      { kind: 'flag', key: 'jin-taishi-code' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-sunhao-huali',
+    name: { en: 'The Emperor Rides North to Hua Li', zh: '皓出華里' },
+    yearMin: 271,
+    yearMax: 275,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sun-hao' },
+      { kind: 'flag-unset', key: 'sunhao-restrained' },
+    ],
+    description:
+      'A diviner tells the sovereign that the blue canopy of the imperial carriage ought to enter Luoyang. So he sets out north in the first month with his mother, his consorts and the whole harem, in snow, on roads where the soldiers carry their armour and their weapons and one dead man in every hundred paces. The troops say among themselves that if they meet the enemy they will change sides. His mother tells him to turn round before something happens that cannot be undone. He turns round at Hua Li. Wu spends the rest of the reign paying for the trip.',
+    descriptionZh:
+      '皓聞歷陽山石文理成字,曰「楚九州渚,吳九州都,揚州士,作天子,四世治,太平始」,又望氣者云荊州有王氣破揚州而建業宮不利 —— 遂徙都武昌。揚土百姓溯流供給,以為患苦。左丞相陸凱上疏,引童謠曰:「寧飲建業水,不食武昌魚;寧還建業死,不止武昌居。」\n\n建衡三年正月,皓又以望氣者言「青蓋當入洛陽」,大舉北出,載其母妻子及後宮數千人,從牛渚陸道西上。時大雪,道塗陷壞,兵士被甲持仗,百人共引一車,寒凍殆死。兵人皆曰:「若遇敵,便當倒戈耳。」皓聞之,乃還。',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'jianye', delta: -12 },
+      { kind: 'city-loyalty', cityId: 'wuchang', delta: -16 },
+      { kind: 'city-food', cityId: 'wuchang', delta: -20000 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-hao', delta: -8 },
+      { kind: 'flag', key: 'sunhao-huali' },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 太康(280–286):晉滅吳那張盤開局在 280,能演到的只有這之後的事 ──
+       它原本全盤只有四條事件,而那四條全是滅吳本身;吳一降,剩下的十年空著。 */
+  {
+    id: 'evt-wangjun-wanghun-feud',
+    name: { en: 'Two Men Claim the Same River', zh: '爭功' },
+    yearMin: 280,
+    yearMax: 284,
+    requires: [
+      { kind: 'officer-alive', officerId: 'wang-jun' },
+      { kind: 'officer-alive', officerId: 'wang-hun' },
+      { kind: 'flag-set', key: 'jinunite-ended' },
+    ],
+    description:
+      'Wang Hun beat the last Wu field army north of the river and then watched Wang Jun sail past him and take the surrender. He memorialises that Wang Jun disobeyed orders and should be brought back in a cage-cart; the law officers agree that it was gross disrespect. Wang Jun, for his part, cannot get through an audience without relating both his campaign and his grievance, and sometimes walks out without taking leave. The emperor knows exactly what he has on his hands — the man who ended a three-hundred-year division, and the man whose family is the most powerful in the north — and declines to decide between them.',
+    descriptionZh:
+      '渾以濬不從節度,表上其事,並奏濬違詔不受節度,請檻車徵。有司奏濬違詔大不敬,請付廷尉。帝弗許,但以詔書責濬曰:「將軍功勳茂著,而恃功肆意,朕以功掩過,勿復多言。」\n\n濬自以功大,而為渾父子及其黨與所挫抑,每進見,陳其攻伐之勞,及見枉之狀,或不勝忿憤,徑出不辭。帝終不問。范通謂濬曰:「卿功則美矣,然恨所以居美者未盡善也。」濬曰:「吾始懼鄧艾之事,勢不得默 —— 意猶不能自忘,是吾之短也。」',
+    effects: [],
+    chooserRulerId: 'sima-yan',
+    choices: [
+      {
+        id: 'pardon',
+        label: { zh: '以功掩過,兩皆封賞', en: 'The merit covers the fault; reward both' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'wang-jun', delta: 8 },
+          { kind: 'officer-loyalty', officerId: 'wang-hun', delta: 6 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sima-yan', delta: 5 },
+          { kind: 'flag', key: 'wangjun-pardoned' },
+        ],
+      },
+      {
+        id: 'cage-cart',
+        label: { zh: '檻車徵濬,以正詔命', en: 'The cage-cart: orders are orders' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'wang-jun', delta: -30 },
+          { kind: 'officer-loyalty', officerId: 'wang-hun', delta: 12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sima-yan', delta: -6 },
+          { kind: 'flag', key: 'wangjun-caged' },
+        ],
+      },
+      {
+        id: 'reward-jun',
+        label: { zh: '專賞濬,抑渾之黨', en: 'Reward Wang Jun alone and check the Wang clan' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'wang-jun', delta: 20 },
+          { kind: 'officer-loyalty', officerId: 'wang-hun', delta: -25 },
+          { kind: 'city-loyalty', cityId: 'luoyang', delta: -10 },
+          { kind: 'flag', key: 'wangjun-favoured' },
+        ],
+      },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-sunhao-at-luoyang',
+    name: { en: 'This Seat Has Been Waiting For You', zh: '設此座以待卿久矣' },
+    yearMin: 280,
+    yearMax: 284,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sun-hao' },
+      { kind: 'officer-alive', officerId: 'jia-chong' },
+      { kind: 'flag-set', key: 'jinunite-ended' },
+    ],
+    description:
+      'The last sovereign of Wu is brought up to Luoyang and given a seat at court. The emperor says: I have kept this seat waiting a long while for you. Sun Hao says: in the south your servant also kept a seat, waiting for Your Majesty. Later Jia Chong — who arranged the killing of one emperor and stood by while it was blamed on the man who held the halberd — asks him whether it is true that in the south he bored out eyes and peeled off faces, and what sort of punishment that was supposed to be. Sun Hao says: for a subject who murders his sovereign, or who is crooked and disloyal, that punishment. Jia Chong says nothing at all, and is deeply ashamed; Sun Hao is not embarrassed in the least.',
+    descriptionZh:
+      '皓至洛陽,帝引見,賜坐曰:「朕設此座以待卿久矣。」皓曰:「臣於南方,亦設此座以待陛下。」\n\n賈充問皓曰:「聞君在南方鑿人目,剝人面皮,此何等刑也?」皓曰:「人臣有弒其君及姦回不忠者,則加此刑耳。」充默然大慚,而皓顏色無怍。',
+    effects: [
+      { kind: 'mandate-ruler', rulerOfficerId: 'sima-yan', delta: -4 },
+      { kind: 'officer-loyalty', officerId: 'jia-chong', delta: -8 },
+      { kind: 'flag', key: 'sunhao-at-luoyang' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-taikang-disarm',
+    name: { en: 'Put Up the Weapons', zh: '罷州郡兵' },
+    yearMin: 281,
+    yearMax: 286,
+    requires: [
+      { kind: 'officer-alive', officerId: 'sima-yan' },
+      { kind: 'flag-set', key: 'jinunite-ended' },
+    ],
+    description:
+      'With the realm one again the court decides the provinces do not need soldiers: the commandery garrisons are stood down, a hundred constables left in a large commandery and fifty in a small one, and the men sent back to the fields. Shan Tao argues against it — that the frontier is quiet is not a reason to have no frontier — and is not heeded. For ten years it looks like the right call: taxes even, granaries full, cattle loose in the open country, surplus grain left standing in the fields, travellers sleeping in the grass and doors not barred at night. Then the princes who were given their own troops in 265 discover that nobody else has any.',
+    descriptionZh:
+      '太康元年,詔罷州郡兵,大郡置武吏百人,小郡五十人。尚書僕射山濤諫曰:「不宜去州郡武備,其言深切。」帝雖善之,而不能用。\n\n是時天下無事,賦稅平均,人咸安其業而樂其事。牛馬被野,餘糧棲畝,行旅草舍,外閭不閉,民相遇者如親 —— 而宗室二十七王之兵,獨在。',
+    effects: [],
+    chooserRulerId: 'sima-yan',
+    choices: [
+      {
+        id: 'disarm',
+        label: { zh: '罷之,示天下以無事', en: 'Stand them down; show the realm there is no war' },
+        effects: [
+          { kind: 'force-gold-ruler', rulerOfficerId: 'sima-yan', delta: 12000 },
+          { kind: 'city-loyalty', cityId: 'luoyang', delta: 12 },
+          { kind: 'city-loyalty', cityId: 'jianye', delta: 12 },
+          { kind: 'city-defense', cityId: 'changan', delta: -14 },
+          { kind: 'city-defense', cityId: 'ye', delta: -14 },
+          { kind: 'flag', key: 'jin-disarmed' },
+        ],
+      },
+      {
+        id: 'keep-arms',
+        label: { zh: '從山濤之言,州郡武備如故', en: 'Heed Shan Tao: keep the garrisons' },
+        effects: [
+          { kind: 'force-gold-ruler', rulerOfficerId: 'sima-yan', delta: -8000 },
+          { kind: 'city-defense', cityId: 'changan', delta: 14 },
+          { kind: 'city-defense', cityId: 'ye', delta: 14 },
+          { kind: 'city-defense', cityId: 'luoyang', delta: 10 },
+          { kind: 'flag', key: 'jin-armed' },
+        ],
+      },
+    ],
+    mood: 'auspicious',
+  },
+
+  /* ── 240 年代中段:芍陂那張盤十年窗口裡唯一還空著的一段 ── */
+  {
+    id: 'evt-lu-xun-dies',
+    name: { en: 'Lu Xun Is Questioned to Death', zh: '陸遜之死' },
+    yearMin: 244,
+    yearMax: 246,
+    requires: [
+      { kind: 'officer-alive', officerId: 'lu-xun' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'flag-unset', key: 'ergong-averted' },
+    ],
+    description:
+      'The heir and the second son have divided the court, and the chancellor — who won Yiling, who has held the west for twenty years, who is the only man in Wu everyone still listens to — writes to say that a son is a son and a subject is a subject and the ranks must be kept distinct. He asks to come up to the capital and say it in person. What comes back instead is a series of palace messengers, each carrying the same set of accusations, each requiring an answer. His nephews are exiled, one of his kinsmen flogged in the court. He answers every letter and dies of it in the second month, sixty-three years old, with nothing in the house worth listing.',
+    descriptionZh:
+      '二宮構爭,中外官僚將軍大臣舉國中分。遜上疏陳:「太子正統,宜有磐石之固;魯王藩臣,當使寵秩有差,彼此得所,上下獲安。」書三四上,又求詣都,欲口論適庶之分,以匡得失。\n\n權不聽,而遣中使責讓遜,前後數輩。遜外甥顧譚、顧承、姚信並流徙,族子陸胤下獄,太子太傅吾粲坐數與遜交書賜死。遜憤恚致卒,時年六十三,家無餘財。—— 火燒連營的那個人,死在建業送來的一封封問責裡。',
+    effects: [
+      { kind: 'officer-status', officerId: 'lu-xun', status: 'dead' },
+      { kind: 'city-loyalty', cityId: 'wu', delta: -14 },
+      { kind: 'city-loyalty', cityId: 'jianye', delta: -10 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -8 },
+      { kind: 'flag', key: 'lu-xun-gone' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-guanqiu-goguryeo',
+    name: { en: 'The Stone at Wandu', zh: '毌丘儉東征' },
+    yearMin: 245,
+    yearMax: 249,
+    requires: [
+      { kind: 'officer-active', officerId: 'guanqiu-jian' },
+      { kind: 'flag-unset', key: 'wangling-purged' },
+    ],
+    description:
+      'Goguryeo had raided the Liaodong border while Wei was busy elsewhere; now Wei is not busy. Guanqiu Jian goes out from Xuantu with ten thousand, breaks the Goguryeo king twice, storms his capital at Wandu and burns it, then splits his force and runs the king down through Okjeo a thousand li further, to where the officers report that the land stops and there is only sea. He has the campaign cut into a stone on the spot and comes home. The frontier is quiet for forty years — and the general who made it quiet is the same man who will raise Huainan against the Sima ten years later, and lose.',
+    descriptionZh:
+      '正始五年,幽州刺史毌丘儉以高句麗數侵叛,督步騎萬人出玄菟,從諸道討之。句麗王宮將步騎二萬人進軍沸流水上,大戰梁口,宮連破走。儉遂束馬懸車,以登丸都,屠其所都,斬獲首虜以千數。\n\n六年復征之,宮遂奔買溝。儉遣玄菟太守王頎追之,過沃沮千有餘里,至肅慎氏南界,刻石紀功,刊丸都之山,銘不耐之城 —— 東垂四十年不聞兵革。而十年之後,舉淮南之兵反司馬者,亦此人也。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'guanqiu-jian', delta: 14 },
+      { kind: 'city-loyalty', cityId: 'xiangping', delta: 12 },
+      { kind: 'city-defense', cityId: 'xiangping', delta: 10 },
+      { kind: 'flag', key: 'goguryeo-broken' },
+    ],
+    mood: 'martial',
   },
 ];
 
