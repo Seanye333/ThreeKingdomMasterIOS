@@ -8658,6 +8658,137 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'ominous',
   },
+
+  /* ── 230–235:三帝鼎立與鹵城兩張盤只有 9 條,而今天補的後三國那批是 238 起,
+       對它們一點用都沒有。這四條填的正是那一段。 ── */
+  {
+    id: 'evt-ziwu-rain',
+    name: { en: 'Thirty Days of Rain in the Ziwu Valley', zh: '子午谷之雨' },
+    yearMin: 230,
+    yearMax: 233,
+    requires: [
+      { kind: 'officer-active', officerId: 'cao-zhen' },
+      { kind: 'officer-alive', officerId: 'zhuge-liang' },
+    ],
+    description:
+      'Cao Zhen argues that being invaded every year and only ever defending is not a policy, and gets permission for a four-column invasion of Shu: himself down the Ziwu, Sima Yi up the Han, and two more by the Xie valley and Wuwei. Then it rains for thirty days and more; the plank roads come apart, the columns cannot make a mile a day, and the court memorials start arriving — Wang Su writes that a thousand li of transport in this weather means the enemy does not have to fight at all. They are recalled having reached nobody. Cao Zhen falls ill on the road home and dies the next year.',
+    descriptionZh:
+      '曹真以「蜀連出侵邊境,宜遂伐之,數道並入,可大克也」表請伐蜀。'
+      + '帝從其計。真當發西討,帝親臨送。\n\n'
+      + '真以八月發長安,從子午道南入;司馬宣王泝漢水,當會南鄭;'
+      + '諸軍或從斜谷道,或從武威入。\n\n'
+      + '會大霖雨三十餘日,或棧道斷絕,詔真等班師。'
+      + '王肅上疏曰:「今又加之以霖雨,山阪峻滑,眾逼而不展,糧懸而難繼,'
+      + '實行軍者之大忌也。……前志有之曰『千里饋糧,士有饑色;'
+      + '樵蘇後爨,師不宿飽』,此謂平塗之行軍者也,'
+      + '又況於深入阻險,鑿路而前,則其為勞必相百也。」\n\n'
+      + '真還京,病篤,明年薨。',
+    effects: [
+      { kind: 'officer-status', officerId: 'cao-zhen', status: 'dead' },
+      { kind: 'city-food', cityId: 'changan', delta: -25000 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.9 },
+      { kind: 'city-defense', cityId: 'hanzhong', delta: 12 },
+      { kind: 'flag', key: 'ziwu-rain' },
+    ],
+    mood: 'somber',
+  },
+  {
+    id: 'evt-liyan-grain',
+    name: { en: 'Li Yan and the Grain That Did Not Arrive', zh: '李嚴運糧失期' },
+    yearMin: 231,
+    yearMax: 234,
+    requires: [
+      { kind: 'officer-active', officerId: 'li-yan' },
+      { kind: 'officer-alive', officerId: 'zhuge-liang' },
+      { kind: 'flag-unset', key: 'liyan-fall' },
+    ],
+    description:
+      'Li Yan is running the rear and the autumn rains make the transport impossible, so he sends word that the army should come back. It comes back. Then he says, in apparent astonishment, that the granaries were full and why on earth did it withdraw — meaning to shift the blame — and separately memorialises the throne that the withdrawal was a ruse to lure the enemy. Zhuge Liang produces the letters he wrote, in his own hand, one after another, and the account closes itself. He is stripped of rank and sent to Zitong as a commoner. When Zhuge Liang dies three years later he weeps himself into a fatal illness, because the one man who might ever have used him again is gone.',
+    descriptionZh:
+      '九年春,亮復出祁山,以木牛運,李平(嚴)督運事。'
+      + '會夏秋之際,值天霖雨,運糧不繼,平遣參軍狐忠、督軍成藩喻旨,'
+      + '呼亮來還;亮承以退軍。\n\n'
+      + '平聞軍退,乃更陽驚,說「軍糧饒足,何以便歸」!'
+      + '欲以解己不辦之責,顯亮不進之愆也。'
+      + '又表後主,說「軍偽退,欲以誘賊與戰」。\n\n'
+      + '亮具出其前後手筆書疏本末,平違錯章灼。平辭窮情竭,首謝罪負。'
+      + '於是廢平為民,徙梓潼郡。\n\n'
+      + '十二年,平聞亮卒,發病死。平常冀亮復收己,'
+      + '策後人不能,故以激憤也。',
+    effects: [
+      { kind: 'officer-status', officerId: 'li-yan', status: 'idle' },
+      { kind: 'officer-loyalty', officerId: 'li-yan', delta: -30 },
+      { kind: 'city-loyalty', cityId: 'chengdu', delta: -10 },
+      { kind: 'city-food', cityId: 'hanzhong', delta: -20000 },
+      { kind: 'flag', key: 'liyan-fall' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-manchong-burn',
+    name: { en: 'Man Chong Burns the Siege Engines', zh: '滿寵燒攻具' },
+    yearMin: 233,
+    yearMax: 237,
+    requires: [
+      { kind: 'officer-active', officerId: 'man-chong' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'flag-unset', key: 'manchong-burn' },
+    ],
+    description:
+      'Sun Quan comes to Hefei New City with a hundred thousand and starts building. Man Chong asks for a few dozen picked men with pine torches and hemp soaked in oil, sends them downwind in the night, and burns the assault towers and the storming gear; his own nephew is killed doing it. Earlier he had moved the town thirty li inland precisely so that a fleet arriving would have to leave its ships and walk, which Sun Quan had spent twenty days not daring to do. This is the same wall Zhang Te will hold twenty years later with three thousand men and a forged surrender letter.',
+    descriptionZh:
+      '寵以合肥城南臨江湖,北遠壽春,'
+      + '賊攻圍之,得據水為勢,官兵救之,當先破賊大輩,然後圍乃得解。'
+      + '乃表徙城內之三十里,有奇險可依,更立城以固之 —— 是為合肥新城。\n\n'
+      + '權自出,欲圍新城,以其遠水,積二十日不敢下船。'
+      + '寵謂諸將曰:「權得吾移城,必於其眾中有自大之言,'
+      + '今大舉來欲要一切之功,雖不敢至,必當上岸耀兵以示有餘。」\n\n'
+      + '乃潛遣步騎六千,伏肥城隱處以待之。權果上岸耀兵,'
+      + '寵伏軍卒起,斬首數百,或有赴水死者。\n\n'
+      + '……明年,權自將號十萬眾至合肥新城。'
+      + '寵馳往赴,募壯士數十人,折松為炬,灌以麻油,'
+      + '從上風放火,燒賊攻具,射殺權弟子孫泰。賊於是引退。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'man-chong', delta: 15 },
+      { kind: 'city-defense', cityId: 'hefei', delta: 20 },
+      { kind: 'city-troops-multiplier', cityId: 'jianye', multiplier: 0.9 },
+      { kind: 'flag', key: 'manchong-burn' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-gongsun-beheads-envoy',
+    name: { en: 'Gongsun Yuan Beheads the Envoys From Wu', zh: '公孫淵斬吳使' },
+    yearMin: 233,
+    yearMax: 237,
+    requires: [
+      { kind: 'officer-active', officerId: 'gongsun-yuan' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'flag-unset', key: 'gongsun-beheads' },
+    ],
+    description:
+      'Sun Quan, delighted at the prospect of an ally behind Wei, sends ten thousand men and a fleet of treasure to invest Gongsun Yuan as king of Yan. Zhang Zhao says to his face that the man is submitting because he fears Wei, not because he means it, and that if he changes his mind the envoys will be killed and the realm will laugh; when contradicted he stops attending court, and Sun Quan has his door bricked up, and Zhang Zhao bricks it up again from the inside. Gongsun Yuan, on reflection, decides that being a Wei subject is safer, beheads both envoys and sends the heads to Luoyang. Sun Quan says he will not be able to eat until he has cut that rat head off himself, and is talked out of the expedition.',
+    descriptionZh:
+      '孫權遣使浮海與淵相結,權遣太常張彌、執金吾許晏等,'
+      + '將兵萬人,金寶珍貨,九錫備物,乘海授淵。\n\n'
+      + '張昭諫曰:「淵背魏懼討,遠來求援,非本志也。'
+      + '若淵改圖,欲自明於魏,兩使不反,不亦取笑於天下乎?」'
+      + '權與相反覆,昭意彌切。權不能堪,案刀而怒曰:'
+      + '「吳國士人入宮則拜孤,出宮則拜君,孤之敬君,亦為至矣,'
+      + '而數於眾中折孤,孤嘗恐失計。」\n\n'
+      + '淵果斬彌、晏等,送其首於魏,沒其兵資。'
+      + '權大怒,欲自征淵,曰:「朕年六十,世事難易,靡所不嘗,'
+      + '近為鼠子所前卻,令人氣涌如山!不自截鼠子頭以擲於海,'
+      + '無顏復臨萬國。」——群臣切諫,乃止。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'gongsun-yuan', delta: 10 },
+      { kind: 'city-troops-multiplier', cityId: 'xiangping', multiplier: 1.15 },
+      { kind: 'force-gold-ruler', rulerOfficerId: 'sun-quan', delta: -6000 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -6 },
+      { kind: 'flag', key: 'gongsun-beheads' },
+    ],
+    mood: 'ominous',
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(
