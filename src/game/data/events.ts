@@ -8778,7 +8778,7 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       + '而數於眾中折孤,孤嘗恐失計。」\n\n'
       + '淵果斬彌、晏等,送其首於魏,沒其兵資。'
       + '權大怒,欲自征淵,曰:「朕年六十,世事難易,靡所不嘗,'
-      + '近為鼠子所前卻,令人氣涌如山!不自截鼠子頭以擲於海,'
+      + '近為鼠子所前卻,令人氣湧如山!不自截鼠子頭以擲於海,'
       + '無顏復臨萬國。」——群臣切諫,乃止。',
     effects: [
       { kind: 'officer-loyalty', officerId: 'gongsun-yuan', delta: 10 },
