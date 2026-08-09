@@ -50,6 +50,22 @@ describe('時代漏法 — 外傳三線不吃漢末專屬內容', () => {
    * 忘了寫就會在赤壁盤上演「徙木立信」,而那不會有任何測試自然地紅 ——
    * 所以在這裡明寫。
    */
+  /*
+   * 守衛之所以有效,靠的是這一條:**三國盤的人物池裡一個 `hist-` 都沒有。**
+   * 沒有這一條,上面那條「帶了守衛就安全」只是一半的論證 —— 而風險是真的:
+   * 184/189/190/192 這幾張早期盤的十年窗口(184–194)正好蓋住外傳線的
+   * 178–192,靜態列表裡戰國楚漢隋唐那四十幾條全在。實測零污染,原因就在這裡。
+   */
+  it('三國盤的人物池裡沒有外傳人物(這才是守衛有效的理由)', () => {
+    for (const sid of ['scn-184-yellow-turban', 'scn-190-anti-dong-zhuo', 'scn-208-chibi']) {
+      const s = SCENARIOS.find((x) => x.id === sid)!;
+      const hist = (s.officers ?? [])
+        .map((o) => (typeof o === 'string' ? o : o.id))
+        .filter((id) => String(id).startsWith('hist-'));
+      expect(hist, `${sid} 混進了外傳人物`).toEqual([]);
+    }
+  });
+
   it('外傳事件一定帶得動它自己的時代守衛', () => {
     const alt = HISTORICAL_EVENTS.filter((e) => /^evt-(ws|ch|st)-/.test(e.id));
     expect(alt.length, '外傳事件一條都沒有?判準或 id 命名變了').toBeGreaterThan(10);
