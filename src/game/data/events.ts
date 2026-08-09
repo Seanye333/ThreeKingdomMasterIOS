@@ -8974,6 +8974,345 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'martial',
   },
+
+  /* ════════════════════════════════════════════════════════════════════
+     戰國 · 五張盤自己那一戰的鏈(2026-08-09)
+
+     通用場面(徙木立信、胡服騎射……)十四張盤共享,靠人物守衛就夠。
+     而「這一戰」必須靠旗標分辨 —— 十四張盤的人物池一模一樣,
+     長平盤上有白起,邯鄲盤上也有白起。
+     ════════════════════════════════════════════════════════════════════ */
+
+  /* ── 長平(chain-changping)── */
+  {
+    id: 'evt-ws-changping-1',
+    name: { en: 'Lian Po Will Not Come Out', zh: '廉頗堅壁三年' },
+    yearMin: 178,
+    yearMax: 184,
+    requires: [
+      { kind: 'flag-set', key: 'chain-changping' },
+      { kind: 'officer-active', officerId: 'hist-lian-po' },
+      { kind: 'flag-unset', key: 'cp-jianbi' },
+    ],
+    description:
+      'Three years of walls. Lian Po lost the first engagements, pulled back behind the Dan river, fortified, and would not come out again whatever Qin did to provoke him — because Qin is far from home and cannot stay forever, and Zhao is at home and can. The king of Zhao is furious about it repeatedly. Qin, meanwhile, has people in Handan spending gold on the following opinion: the only man Qin is actually afraid of is the son of Zhao She. Lian Po is easy to handle and about to surrender anyway.',
+    descriptionZh:
+      '趙使廉頗將攻秦。秦數敗趙軍,趙軍固壁不戰,秦數挑戰,廉頗不肯。'
+      + '趙王數以為讓。\n\n'
+      + '而秦相應侯又使人行千金於趙為反間,曰:'
+      + '「秦之所惡,獨畏馬服君趙奢之子趙括為將耳;'
+      + '廉頗易與,且降矣。」\n\n'
+      + '——堅壁三年,是趙唯一守得住的打法:'
+      + '秦遠而趙近,拖下去先撐不住的不是趙。'
+      + '而拖著的那三年,朝廷每一天都在問「為什麼還不打」。',
+    effects: [],
+    chooserRulerId: 'hist-zhao-xiaocheng',
+    /* ⚠ choices[0] **必須是史實線** —— 非玩家勢力自動走第一項(見本檔的
+       choices 約定)。第一版把「仍用廉頗」放在前面,於是 AI 永遠留廉頗,
+       後兩節(紙上談兵、坑四十萬)一次也演不到,這張盤只剩 15 條。
+       長平的史實正是趙王換將。 */
+    choices: [
+      {
+        id: 'replace',
+        label: { zh: '以趙括代廉頗', en: 'Replace him with Zhao Kuo' },
+        effects: [
+          { kind: 'officer-loyalty', officerId: 'hist-lian-po', delta: -25 },
+          { kind: 'officer-loyalty', officerId: 'hist-zhao-kuo', delta: 15 },
+          { kind: 'city-defense', cityId: 'shangdang', delta: -20 },
+          { kind: 'flag', key: 'cp-jianbi' },
+        ],
+      },
+      {
+        id: 'hold',
+        label: { zh: '仍用廉頗,堅壁勿戰', en: 'Keep Lian Po behind the walls' },
+        effects: [
+          { kind: 'city-defense', cityId: 'shangdang', delta: 25 },
+          { kind: 'city-defense', cityId: 'ye', delta: 15 },
+          { kind: 'city-food', cityId: 'ye', delta: -25000 },
+          { kind: 'officer-loyalty', officerId: 'hist-lian-po', delta: 12 },
+          { kind: 'flag', key: 'cp-jianbi' },
+          { kind: 'flag', key: 'cp-lianpo-kept' },
+        ],
+      },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ws-changping-2',
+    name: { en: 'Paper Soldiering', zh: '紙上談兵' },
+    yearMin: 178,
+    yearMax: 185,
+    requires: [
+      { kind: 'flag-set', key: 'chain-changping' },
+      { kind: 'flag-set', key: 'cp-jianbi' },
+      { kind: 'flag-unset', key: 'cp-lianpo-kept' },
+      { kind: 'officer-active', officerId: 'hist-zhao-kuo' },
+      { kind: 'flag-unset', key: 'cp-kuo' },
+    ],
+    description:
+      'Zhao Kuo read the military books from boyhood and could out-argue anyone on war, including his own father, who was not impressed: war is where men die, and he talks about it lightly; if Zhao ever makes him a general he is the man who will destroy the Zhao army. His mother petitions the throne not to appoint him, and asks that if he is appointed and fails, she not be held responsible with him — which is granted. He arrives, replaces every officer, changes every standing order, and comes out to fight. Qin has quietly replaced its own commander too, and has forbidden on pain of death any mention of who it now is.',
+    descriptionZh:
+      '趙括自少時學兵法,言兵事,以天下莫能當。嘗與其父奢言兵事,'
+      + '奢不能難,然不謂善。括母問其故,奢曰:'
+      + '「兵,死地也,而括易言之。使趙不將括即已,若必將之,破趙軍者必括也。」\n\n'
+      + '及括將行,其母上書言於王曰:「括不可使將。」王曰:「何以?」'
+      + '對曰:「始妾事其父,時為將,身所奉飯飲而進食者以十數,'
+      + '所友者以百數,大王及宗室所賞賜者盡以予軍吏士大夫……'
+      + '今括一旦為將,東向而朝,軍吏無敢仰視之者,'
+      + '王所賜金帛,歸藏於家,而日視便利田宅可買者買之。'
+      + '王以為何如其父?父子異心,願王勿遣。」\n\n'
+      + '括至,則悉更約束,易置軍吏。'
+      + '秦聞馬服子將,乃陰使武安君白起為上將軍,'
+      + '而王齕為尉裨將,令軍中有敢泄武安君將者斬。',
+    effects: [
+      { kind: 'city-troops-multiplier', cityId: 'shangdang', multiplier: 1.15 },
+      { kind: 'city-defense', cityId: 'shangdang', delta: -25 },
+      { kind: 'officer-loyalty', officerId: 'hist-bai-qi', delta: 12 },
+      { kind: 'flag', key: 'cp-kuo' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-ws-changping-3',
+    name: { en: 'Four Hundred Thousand', zh: '坑四十萬' },
+    yearMin: 179,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-changping' },
+      { kind: 'flag-set', key: 'cp-kuo' },
+      { kind: 'officer-active', officerId: 'hist-bai-qi' },
+      { kind: 'flag-unset', key: 'cp-keng' },
+    ],
+    description:
+      'Bai Qi feigns a rout, lets the Zhao army chase him to the fortified line, then puts twenty-five thousand across their rear and five thousand horse between them and their camp, and the army is in two pieces and cut off from its food. Forty-six days without supply, the men killing each other to eat. Zhao Kuo comes out at the head of picked troops in person and is shot down. The rest surrender. Bai Qi says: Zhao soldiers change sides and change back; if they are not all dealt with there will be trouble later. He has them buried, and sends the two hundred and forty youngest home to tell Zhao about it.',
+    descriptionZh:
+      '武安君佯敗而走,張二奇兵以劫之。趙軍逐勝,追造秦壁。'
+      + '壁堅拒不得入,而秦奇兵二萬五千人絕趙軍後,'
+      + '又一軍五千騎絕趙壁間,趙軍分而為二,糧道絕。\n\n'
+      + '至九月,趙卒不得食四十六日,皆內陰相殺食。'
+      + '趙括出銳卒自搏戰,秦軍射殺趙括。括軍敗,卒四十萬人降武安君。\n\n'
+      + '武安君計曰:「前秦已拔上黨,上黨民不樂為秦而歸趙。'
+      + '趙卒反覆,非盡殺之,恐為亂。」乃挾詐而盡阬殺之,'
+      + '遺其小者二百四十人歸趙。前後斬首虜四十五萬人,趙人大震。',
+    effects: [
+      { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 0.45 },
+      { kind: 'city-troops-multiplier', cityId: 'taiyuan', multiplier: 0.6 },
+      { kind: 'city-defense', cityId: 'ye', delta: -25 },
+      { kind: 'city-loyalty', cityId: 'ye', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'flag', key: 'cp-keng' },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 邯鄲(chain-handan)── */
+  {
+    id: 'evt-ws-handan-1',
+    name: { en: 'Mao Sui Puts Himself Forward', zh: '毛遂自薦' },
+    yearMin: 178,
+    yearMax: 185,
+    requires: [
+      { kind: 'flag-set', key: 'chain-handan' },
+      { kind: 'officer-alive', officerId: 'hist-mao-sui' },
+      { kind: 'officer-alive', officerId: 'hist-pingyuan-jun' },
+      { kind: 'flag-unset', key: 'hd-maosui' },
+    ],
+    description:
+      'The lord of Pingyuan needs twenty men to go to Chu and can only find nineteen worth taking. A retainer named Mao Sui offers himself. How long have you been in my house? Three years. A worthy man in the world is like an awl in a bag — the point comes through at once; you have been here three years and nobody has said anything about you. Mao Sui says: I am asking to be put in the bag today. In Chu the talks run from dawn to noon with no result, so he goes up the steps with his hand on his sword. The king asks who this is. He says: the fate of your kingdom is being decided in front of your own men, and Your Majesty is ten paces from me, and your life is in my hands.',
+    descriptionZh:
+      '平原君約與食客門下有勇力文武備具者二十人偕,得十九人,餘無可取者。'
+      + '門下有毛遂者,前,自贊於平原君曰:「遂聞君將合從於楚,'
+      + '約與食客門下二十人偕,不外索。今少一人,願君即以遂備員而行矣。」\n\n'
+      + '平原君曰:「先生處勝之門下幾年於此矣?」曰:「三年於此矣。」'
+      + '平原君曰:「夫賢士之處世也,譬若錐之處囊中,其末立見。'
+      + '今先生處勝之門下三年於此矣,左右未有所稱誦,勝未有所聞,'
+      + '是先生無所有也。先生不能,先生留!」'
+      + '毛遂曰:「臣乃今日請處囊中耳。使遂蚤得處囊中,乃穎脫而出,非特其末見而已。」\n\n'
+      + '……日出而言之,日中不決。毛遂按劍歷階而上,'
+      + '曰:「今十步之內,王不得恃楚國之眾也,王之命懸於遂手。」'
+      + '……楚王曰:「唯唯,誠若先生之言,謹奉社稷而以從。」',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-mao-sui', delta: 25 },
+      { kind: 'officer-loyalty', officerId: 'hist-pingyuan-jun', delta: 12 },
+      { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 1.15 },
+      { kind: 'city-defense', cityId: 'ye', delta: 15 },
+      { kind: 'flag', key: 'hd-maosui' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-handan-2',
+    name: { en: 'The Stolen Tally', zh: '竊符救趙' },
+    yearMin: 179,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-handan' },
+      { kind: 'officer-alive', officerId: 'hist-xinling-jun' },
+      { kind: 'officer-alive', officerId: 'hist-hou-ying' },
+      { kind: 'flag-set', key: 'hd-maosui' },
+      { kind: 'flag-unset', key: 'hd-qiefu' },
+    ],
+    description:
+      'Wei sent an army and then told it to stop and watch. The lord of Xinling, having failed to move the king, sets out with a hundred and some carriages of his own retainers to die outside Handan on principle. His gatekeeper Hou Ying, a seventy-year-old who tends the Yi gate, points out that this is throwing meat to a tiger, and proposes instead: the king favourite consort owes you her father life; have her steal the other half of the tiger tally from the king bedchamber. And take Zhu Hai, because Jin Bi may not hand over an army of a hundred thousand on a piece of matched bronze. He does not. Zhu Hai kills him with a forty-catty iron mallet in his sleeve.',
+    descriptionZh:
+      '秦圍邯鄲,魏使將軍晉鄙將十萬眾救趙。秦王使使者告魏王曰:'
+      + '「吾攻趙旦暮且下,而諸侯敢救者,已拔趙,必移兵先擊之。」'
+      + '魏王恐,使人止晉鄙,留軍壁鄴,名為救趙,實持兩端以觀望。\n\n'
+      + '公子自度終不能得之於王,計不獨生而令趙亡,'
+      + '乃請賓客,約車騎百餘乘,欲以客往赴秦軍,與趙俱死。'
+      + '行過夷門,見侯生,具告所以欲死秦軍狀。侯生曰:'
+      + '「公子勉之矣,老臣不能從。」……行數里,心不快,復引車還問侯生。\n\n'
+      + '侯生笑曰:「臣固知公子之還也。公子喜士,名聞天下。'
+      + '今有難,無他端而欲赴秦軍,譬若以肉投餒虎,何功之有哉?'
+      + '……嬴聞晉鄙之兵符常在王臥內,而如姬最幸,出入王臥內,力能竊之。'
+      + '嬴聞如姬父為人所殺,如姬資之三年,自王以下欲求報其父仇,莫能得。'
+      + '公子使客斬其仇頭,敬進如姬。如姬之欲為公子死,無所辭。」\n\n'
+      + '……朱亥袖四十斤鐵椎,椎殺晉鄙,公子遂將晉鄙軍。'
+      + '勒兵下令軍中曰:「父子俱在軍中,父歸;兄弟俱在軍中,兄歸;'
+      + '獨子無兄弟,歸養。」得選兵八萬人,進兵擊秦軍,秦軍解去,遂救邯鄲,存趙。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-xinling-jun', delta: 25 },
+      { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 1.3 },
+      { kind: 'city-troops-multiplier', cityId: 'chenliu', multiplier: 0.8 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.85 },
+      { kind: 'city-defense', cityId: 'ye', delta: 20 },
+      { kind: 'flag', key: 'hd-qiefu' },
+    ],
+    mood: 'martial',
+  },
+
+  /* ── 樂毅伐齊(chain-yueyi)與田單復國(chain-tiandan)── */
+  {
+    id: 'evt-ws-yueyi-1',
+    name: { en: 'Seventy Cities in Six Months', zh: '下齊七十餘城' },
+    yearMin: 178,
+    yearMax: 185,
+    requires: [
+      { kind: 'flag-set', key: 'chain-yueyi' },
+      { kind: 'officer-active', officerId: 'hist-yue-yi' },
+      { kind: 'flag-unset', key: 'yy-seventy' },
+    ],
+    description:
+      'Five states move at once and Yue Yi commands all of them. He breaks the Qi field army on the Ji river, sends the allied contingents home with their thanks, and goes into Qi alone with the Yan army. Linzi falls; the treasures and the ritual vessels of the Qi ancestral temple go north to Yan. Then, instead of storming the rest, he spends six months reducing taxes, confirming local officials in their posts, honouring the descendants of Qi worthies and forbidding looting — and more than seventy cities become Yan commanderies. Two do not: Ju and Jimo.',
+    descriptionZh:
+      '樂毅并護趙、楚、韓、魏、燕之兵以伐齊,破之濟西。'
+      + '諸侯兵罷歸,而燕師樂毅獨追,至於臨菑。'
+      + '齊湣王之敗濟西,亡走,保於莒。\n\n'
+      + '樂毅修整燕軍,禁止侵掠,求齊之逸民,顯而禮之。'
+      + '寬其賦斂,除其暴令,修其舊政,齊民喜悅。'
+      + '……六月之間,下齊七十餘城,皆為郡縣以屬燕,唯獨莒、即墨未服。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-yue-yi', delta: 22 },
+      { kind: 'city-troops-multiplier', cityId: 'linzi', multiplier: 0.5 },
+      { kind: 'city-defense', cityId: 'linzi', delta: -30 },
+      { kind: 'city-troops-multiplier', cityId: 'ji', multiplier: 1.25 },
+      { kind: 'city-loyalty', cityId: 'ji', delta: 15 },
+      { kind: 'flag', key: 'yy-seventy' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ws-tiandan-1',
+    name: { en: 'Qi Jie Takes the Command', zh: '反間騎劫' },
+    yearMin: 178,
+    yearMax: 185,
+    requires: [
+      { kind: 'flag-set', key: 'chain-tiandan' },
+      { kind: 'officer-alive', officerId: 'hist-tian-dan' },
+      { kind: 'officer-alive', officerId: 'hist-yue-yi' },
+      { kind: 'flag-unset', key: 'td-fanjian' },
+    ],
+    description:
+      'King Zhao of Yan is dead and his son never liked Yue Yi. Tian Dan, holding Jimo, sends the following out into Yan: the two cities have not fallen because Yue Yi wants time to make himself king of Qi, and Qi is afraid of nothing except a different general being sent. Qi Jie is sent. Yue Yi, understanding what returning would mean, goes to Zhao instead. Then Tian Dan says the Qi troops fear only one thing: having their noses cut off and being put in the front rank. Qi Jie does exactly that, and Jimo watches from the walls and decides to die there rather than be taken.',
+    descriptionZh:
+      '燕昭王卒,惠王立,與樂毅有隙。田單聞之,乃縱反間於燕,曰:'
+      + '「齊王已死,城之不拔者二耳。樂毅畏誅而不敢歸,以伐齊為名,'
+      + '實欲連兵南面而王齊。齊人未附,故且緩攻即墨以待其事。'
+      + '齊人所懼,唯恐他將之來,即墨殘矣。」'
+      + '燕王以為然,使騎劫代樂毅。樂毅因歸趙,燕人士卒忿。\n\n'
+      + '田單又令城中人食必祭其先祖於庭,飛鳥悉翔舞城中下食。'
+      + '燕人怪之。田單因宣言曰:「神來下教我。」\n\n'
+      + '又縱反間曰:「吾唯懼燕軍之劓所得齊卒,置之前行,即墨敗矣。」'
+      + '燕人聞之,如其言。城中人見齊諸降者盡劓,皆怒,'
+      + '堅守,唯恐見得。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-yue-yi', status: 'idle' },
+      { kind: 'officer-loyalty', officerId: 'hist-yue-yi', delta: -30 },
+      { kind: 'officer-loyalty', officerId: 'hist-tian-dan', delta: 18 },
+      { kind: 'city-defense', cityId: 'beihai', delta: 25 },
+      { kind: 'city-loyalty', cityId: 'beihai', delta: 20 },
+      { kind: 'flag', key: 'td-fanjian' },
+    ],
+    mood: 'mystic',
+  },
+  {
+    id: 'evt-ws-tiandan-2',
+    name: { en: 'The Fire Oxen', zh: '火牛陣' },
+    yearMin: 179,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-tiandan' },
+      { kind: 'flag-set', key: 'td-fanjian' },
+      { kind: 'officer-active', officerId: 'hist-tian-dan' },
+      { kind: 'flag-unset', key: 'td-huoniu' },
+    ],
+    description:
+      'A thousand oxen, dressed in red silk with dragons painted on it, blades bound to their horns and oiled reeds tied to their tails; five thousand picked men following behind with their faces painted. The walls are breached in dozens of places in the night and the tails are lit. What comes into the Yan camp in the dark is enormous and burning and gores whatever it touches, and the five thousand come in silently behind it while the old men and women of the city beat every bronze vessel they own. Qi Jie is killed in the rout. The seventy cities go back to Qi as fast as they were lost.',
+    descriptionZh:
+      '田單乃收城中得千餘牛,為絳繒衣,畫以五彩龍文,'
+      + '束兵刃於其角,而灌脂束葦於尾,燒其端。'
+      + '鑿城數十穴,夜縱牛,壯士五千人隨其後。\n\n'
+      + '牛尾熱,怒而奔燕軍,燕軍夜大驚。'
+      + '牛尾炬火光明炫燿,燕軍視之皆龍文,所觸盡死傷。'
+      + '五千人因銜枚擊之,而城中鼓譟從之,老弱皆擊銅器為聲,聲動天地。'
+      + '燕軍大駭,敗走,齊人遂夷殺其將騎劫。\n\n'
+      + '燕軍擾亂奔走,齊人追亡逐北,所過城邑皆畔燕而歸田單,'
+      + '兵日益多,乘勝,燕日敗亡,卒至河上,而齊七十餘城皆復為齊。',
+    effects: [
+      { kind: 'city-troops-multiplier', cityId: 'linzi', multiplier: 1.6 },
+      { kind: 'city-troops-multiplier', cityId: 'beihai', multiplier: 1.4 },
+      { kind: 'city-troops-multiplier', cityId: 'ji', multiplier: 0.6 },
+      { kind: 'city-defense', cityId: 'ji', delta: -20 },
+      { kind: 'officer-loyalty', officerId: 'hist-tian-dan', delta: 25 },
+      { kind: 'flag', key: 'td-huoniu' },
+    ],
+    mood: 'martial',
+  },
+
+  /* ── 秦滅六國(chain-qinunify)── */
+  {
+    id: 'evt-ws-jingke',
+    name: { en: 'The Map Unrolls to the End', zh: '圖窮匕見' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-qinunify' },
+      { kind: 'officer-alive', officerId: 'hist-jing-ke' },
+      { kind: 'officer-alive', officerId: 'hist-qin-shihuang' },
+      { kind: 'flag-unset', key: 'qu-jingke' },
+    ],
+    description:
+      'They see him off at the Yi river in white mourning clothes. Gao Jianli strikes the zhu and Jing Ke sings: the wind sighs, the Yi water is cold, the brave man goes and does not come back. Everyone present has their hair standing up under their caps. In the Qin court he presents the head of a defector and a map of Dukang; the map unrolls and the dagger is at the end of it. He grabs the king sleeve, the sleeve tears, and the king cannot get his court sword out of its scabbard because it is too long, and runs round a pillar with the whole court unarmed by law and unable to help, until the physician throws his medicine bag and someone shouts to push the scabbard behind him.',
+    descriptionZh:
+      '太子及賓客知其事者,皆白衣冠以送之。'
+      + '至易水之上,既祖,取道,高漸離擊筑,荊軻和而歌,為變徵之聲,士皆垂淚涕泣。'
+      + '又前而為歌曰:「風蕭蕭兮易水寒,壯士一去兮不復還!」'
+      + '復為羽聲慷慨,士皆瞋目,髮盡上指冠。\n\n'
+      + '……秦王發圖,圖窮而匕首見。因左手把秦王之袖,而右手持匕首揕之。'
+      + '未至身,秦王驚,自引而起,袖絕。拔劍,劍長,操其室。'
+      + '時惶急,劍堅,故不可立拔。\n\n'
+      + '荊軻逐秦王,秦王環柱而走。群臣皆愕,卒起不意,盡失其度。'
+      + '而秦法,群臣侍殿上者不得持尺兵……侍醫夏無且以其所奉藥囊提荊軻。'
+      + '左右乃曰:「王負劍!」負劍,遂拔以擊荊軻,斷其左股。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-jing-ke', status: 'dead' },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'city-defense', cityId: 'ji', delta: -25 },
+      { kind: 'city-loyalty', cityId: 'ji', delta: -15 },
+      { kind: 'flag', key: 'qu-jingke' },
+    ],
+    mood: 'ominous',
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(

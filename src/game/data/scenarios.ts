@@ -9534,6 +9534,9 @@ export const SCENARIO_WS_CHANGPING: Scenario = {
     'The great bloodletting. Qin has seized the Shangdang plateau and Bai Qi\'s army stands upon it; across the line the aged Lian Po digs in behind deep walls and will not be drawn, trading ground for time. In Handan the impatient King Xiaocheng listens to slander and to Zhao Kuo — son of Zhao She, who has read every book of war and fought no battle. Replace Lian Po and march out, and Bai Qi waits to encircle four hundred thousand men and bury them in the earth. The other five kingdoms watch, and do not move.',
   descriptionZh: "長平之殤。秦已取上黨高地，白起之軍臨之；隔陣相望，老將廉頗深溝高壘、堅守不出，以地易時。邯鄲城中，性急的孝成王聽信讒言，又信趙奢之子趙括——此人讀盡兵書而未嘗一戰。若以括代頗、出壘決戰，白起正待圍而坑之，四十萬眾將埋骨於此。其餘五國，作壁上觀，按兵不動。",
   startDate: { year: 178, season: 'autumn' },
+  // 這張盤自己那一戰的鏈 —— 十四張戰國盤共用同一個人物池,
+  // 所以通用場面靠人物守衛就夠,而「這一戰」必須靠旗標分辨。
+  eventFlags: ['chain-changping'],
   /*
    * 開局外交 —— 長平之戰:趙括代廉頗,而白起坑降卒四十萬 ——
      此後山東六國,無一能獨當秦者。
@@ -9603,6 +9606,9 @@ export const SCENARIO_WS_YUEYI: Scenario = {
     'The avenger has come. King Zhao of Yan, who raised a golden terrace to gather the talent of the realm, has unleashed Yue Yi at the head of a five-kingdom host; in half a year they have taken seventy cities of Qi and burned Linzi to the ground. The mighty east is reduced to two towns — Ju, where King Xiang hides, and Jimo, where Tian Dan readies a thousand oxen with blades lashed to their horns and fire to their tails. Whoever holds this last line decides whether Qi dies, or rises from the ash to reclaim it all.',
   descriptionZh: "復仇者已至。燕昭王築黃金台以攬天下之士，遂遣樂毅統五國之師伐齊；半歲之間，下齊七十餘城，焚臨淄為墟。煌煌東方之強齊，僅餘二城——莒，齊襄王潛匿之地；即墨，田單束千牛、縛刃於角、繫火於尾以待。守得此最後一線者，將決齊之亡，抑或自灰燼中復起而盡復其地。",
   startDate: { year: 178, season: 'summer' },
+  // 這張盤自己那一戰的鏈 —— 十四張戰國盤共用同一個人物池,
+  // 所以通用場面靠人物守衛就夠,而「這一戰」必須靠旗標分辨。
+  eventFlags: ['chain-yueyi'],
   /*
    * 開局外交 —— 樂毅伐齊:燕秦趙魏韓五國之師,半年下齊七十餘城 ——
      唯莒與即墨不下。
@@ -9739,6 +9745,9 @@ export const SCENARIO_WS_HANDAN: Scenario = {
     'The year after Changping, where four hundred thousand of Zhao were buried, Qin comes for the kill: its army grinds down from Shangdang to ring the Zhao capital of Handan. Within, Lord Pingyuan strips his household to man the walls and sends his desperate plea across the realm. The answer is the vertical alliance made flesh — Lord Xinling of Wei murders the general Jin Bi with Zhu Hai\'s forty-pound hammer to seize his army by a stolen tally, and Lord Chunshen marches the men of Chu north. If the three armies hold, Qin\'s tide breaks on Handan\'s walls; if not, the first empire comes a generation early.',
   descriptionZh: "長平坑趙四十萬之次年，秦來取命：其軍自上黨碾壓而下，環圍趙都邯鄲。城中，平原君散盡家財以守，遣使泣血求援於天下。而回應者，乃合縱之化身——魏公子信陵君以朱亥四十斤鐵椎擊殺晉鄙，竊符奪其軍；楚春申君亦提江東之眾北上。三軍若能拒守，秦之大潮將碎於邯鄲城下；若其不能，天下第一帝國，將早一世而至。",
   startDate: { year: 178, season: 'winter' },
+  // 這張盤自己那一戰的鏈 —— 十四張戰國盤共用同一個人物池,
+  // 所以通用場面靠人物守衛就夠,而「這一戰」必須靠旗標分辨。
+  eventFlags: ['chain-handan'],
   /*
    * 開局外交 —— 邯鄲之戰:信陵君竊符救趙,春申君以楚兵至 ——
      秦圍邯鄲三年而解,是六國最後一次真正的合力。
@@ -9810,6 +9819,9 @@ export const SCENARIO_WS_QIN_UNIFY: Scenario = {
     'The endgame. Ying Zheng, King of Qin, sits behind the laws of Shang Yang and the cabinet of Li Si and Wei Liao, and his generals — old Wang Jian, his son Wang Ben, the bold Li Xin, Meng Tian of the frontier — are loosed to swallow all under heaven one kingdom at a time. The six hold only their hearts now: Zhao behind Li Mu, the last great shield of the north; Chu behind Xiang Yan; and in Yan, Crown Prince Dan whispers with Jing Ke over a map of Dukang with a poisoned dagger rolled inside. Within a decade the realm is one, or the dagger finds the king first.',
   descriptionZh: "終局。秦王嬴政恃商鞅之法、李斯尉繚之謀，縱其諸將——老將王翦、其子王賁、驍勇李信、戍邊蒙恬——以逐一吞滅天下。六國今所守者，唯其腹心：趙有李牧，北方最後之盾；楚有項燕；而燕之太子丹，正與荊軻密語於督亢之圖前，圖窮而匕首藏焉。十年之內，天下歸一——或匕首先尋上秦王。",
   startDate: { year: 178, season: 'autumn' },
+  // 這張盤自己那一戰的鏈 —— 十四張戰國盤共用同一個人物池,
+  // 所以通用場面靠人物守衛就夠,而「這一戰」必須靠旗標分辨。
+  eventFlags: ['chain-qinunify'],
   /*
    * 開局外交 —— 秦滅六國:十年之內,韓趙魏楚燕齊次第而亡 ——
      而六國之亡,先亡於不能相救。
@@ -10180,6 +10192,9 @@ export const SCENARIO_WS_TIANDAN: Scenario = {
     'The ash stirs. King Hui, new on the throne of Yan, mistrusts the brilliant Yue Yi who has all but ended Qi, and recalls him — replacing the conqueror with the lesser Qi Jie before the last two towns of the east. In Jimo, Tian Dan has been waiting for exactly this. He has spread the rumor that drove Yue Yi out; he feigns surrender to make the Yan army careless; and now he lashes blades to the horns of a thousand oxen and fire to their tails, and waits for the night to drive them into the Yan camp. From two cities, in a single season, Qi will reclaim seventy.',
   descriptionZh: "灰燼復動。燕新君惠王，疑那幾乎滅齊的天才樂毅，召之還——以庸劣的騎劫代此征服者於齊最後之二城前。即墨城中，田單正等的便是此刻。他已縱反間以去樂毅；他詐降以驕燕師；今束刃於千牛之角、繫火於其尾，只待夜色，驅之衝燕營。自二城之地，一季之間，齊將盡復七十城。",
   startDate: { year: 178, season: 'winter' },
+  // 這張盤自己那一戰的鏈 —— 十四張戰國盤共用同一個人物池,
+  // 所以通用場面靠人物守衛就夠,而「這一戰」必須靠旗標分辨。
+  eventFlags: ['chain-tiandan'],
   /*
    * 開局外交 —— 田單復國:火牛陣夜出即墨,燕師大潰 ——
      七十餘城,一夕而復。
