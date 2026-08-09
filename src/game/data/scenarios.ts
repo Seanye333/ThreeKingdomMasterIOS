@@ -7970,6 +7970,7 @@ const DEAD_BY_WOMEN: string[] = [];
 
 export const SCENARIO_WHATIF_WOMEN: Scenario = {
   id: 'scn-whatif-women',
+  eventFlags: ['chain-women'],
   openingRelations: [
     { a: 'diaochan-han', b: 'caiyan-ye', score: -60, status: 'neutral' },  // 長安與鄴,關西關東之爭
     { a: 'lady-sun', b: 'yueying', score: -45, status: 'neutral' },  // 江東與荊州,大江上下之爭

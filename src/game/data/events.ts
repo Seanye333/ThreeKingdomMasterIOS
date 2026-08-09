@@ -6095,6 +6095,93 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:女傑時代(chain-women)-------------------------------------
+   * 這一張不是史實的反事實,是平行之世 —— 七家女傑各執兵符。所以鏈也不能
+   * 照史書寫,而要照**她們各自留下來的那件東西**寫:蔡琰的十八拍、
+   * 黃月英的機巧、祝融的飛刀、二喬的銅雀之讖。
+   */
+  {
+    id: 'evt-women-alt-1',
+    name: { en: 'Eighteen Stanzas for the Nomad Flute', zh: '胡笳十八拍' },
+    yearMin: 200,
+    yearMax: 205,
+    requires: [
+      { kind: 'flag-set', key: 'chain-women' },
+      { kind: 'officer-active', officerId: 'cai-yan' },
+      { kind: 'flag-unset', key: 'women-alt-hujia' },
+    ],
+    description:
+      "From Ye, Cai Yan sends the eighteen stanzas out along the post roads. In the histories they were the record of a woman taken north and ransomed back; here they arrive as a proclamation, and every garrison between the rivers can recite them within the season.",
+    descriptionZh: '琰於鄴城作《胡笳十八拍》,傳之驛路。史書上那是一個被掠而復贖之人的紀事;在這裡,它是一紙檄 —— 一季之內,河北戍卒無不能誦。',
+    effects: [],
+    chooserRulerId: 'cai-yan',
+    choices: [
+      {
+        id: 'proclaim',
+        label: { zh: '傳之四方 —— 以文取天下之心', en: 'Send it everywhere — take the realm by writing' },
+        effects: [
+          { kind: 'flag', key: 'women-alt-hujia' },
+          { kind: 'city-loyalty', cityId: 'ye', delta: 20 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cai-yan', delta: 12 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cai-yan', multiplier: 0.95 },
+        ],
+      },
+      {
+        id: 'keep',
+        label: { zh: '藏之 —— 此我一人之痛', en: 'Keep it — this grief is mine' },
+        effects: [
+          { kind: 'flag', key: 'women-alt-hujia' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cai-yan', multiplier: 1.1 },
+          { kind: 'officer-loyalty', officerId: 'cai-yan', delta: 12 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 黃月英那一節 —— 她在史書上只留下一句「黃承彥有女,黃頭黑色,而才堪
+     * 相配」,和後世附會給她的木牛流馬。這張盤把那份機巧交到她自己手上。
+     */
+    id: 'evt-women-alt-2',
+    /* ⚠ 原本叫「木牛流馬」,而 `eventExclusivity.test.ts` 當場擋下 ——
+       全庫已經有一條 `evt-muniu-liuma` 同名。那條是丞相的,這條是黃月英的
+       工坊,兩個不同的場面,所以改名而不是加旗標互斥。 */
+    name: { en: 'The Workshop Drawings', zh: '工坊圖成' },
+    yearMin: 200,
+    yearMax: 206,
+    requires: [
+      { kind: 'flag-set', key: 'chain-women' },
+      { kind: 'officer-active', officerId: 'lady-huang' },
+      { kind: 'flag-unset', key: 'women-alt-oxen' },
+    ],
+    description:
+      "The workshops at Xiangyang have the drawings finished: carriages that walk, mills that need no ox, crossbows that loose ten bolts. Build the transport and the army eats; build the crossbows and it kills. There is not enough seasoned timber for both.",
+    descriptionZh: '襄陽工坊圖成:木牛流馬、連弩十矢俱發。作轉運之器則軍食足,作連弩則軍威張 —— 而堪用之材,只夠做一樣。',
+    effects: [],
+    chooserRulerId: 'lady-huang',
+    choices: [
+      {
+        id: 'transport',
+        label: { zh: '作木牛流馬 —— 軍食自足', en: 'Build the transport' },
+        effects: [
+          { kind: 'flag', key: 'women-alt-oxen' },
+          { kind: 'city-food', cityId: 'xiangyang', delta: 45000 },
+          { kind: 'city-food', cityId: 'jiangling', delta: 30000 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'lady-huang', delta: 6 },
+        ],
+      },
+      {
+        id: 'crossbow',
+        label: { zh: '作連弩 —— 十矢俱發', en: 'Build the repeating crossbows' },
+        effects: [
+          { kind: 'flag', key: 'women-alt-oxen' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'lady-huang', multiplier: 1.16 },
+          { kind: 'city-defense', cityId: 'xiangyang', delta: 14 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
