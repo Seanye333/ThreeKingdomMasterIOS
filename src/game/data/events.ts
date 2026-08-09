@@ -9512,11 +9512,19 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       + '明年,拔郢,燒夷陵先王之墓,東至竟陵。'
       + '楚王亡走,徙陳。\n\n'
       + '——屈原聞郢破,作《哀郢》。是歲五月,懷石自沉汨羅。',
+    /*
+     * ⚠ 效果的收件人要跟**盤上的歸屬**對得起來。這一條第一版把江陵砍成
+     * 五成兵、防 -30 —— 而鄢郢盤開局就把江漢給了秦(郢已破、楚已東遷壽春,
+     * 那是這張盤的前提)。等於白起淹了自己的城。
+     * 現在:秦拿到的是一座泡在水裡的廢城(忠誠掉),而崩的是東遷之後的楚。
+     */
     effects: [
-      { kind: 'city-troops-multiplier', cityId: 'jiangling', multiplier: 0.5 },
-      { kind: 'city-defense', cityId: 'jiangling', delta: -30 },
       { kind: 'city-loyalty', cityId: 'jiangling', delta: -25 },
-      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'city-loyalty', cityId: 'yiling', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'shouchun', multiplier: 0.7 },
+      { kind: 'city-defense', cityId: 'shouchun', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'jiangxia', multiplier: 0.85 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.1 },
       { kind: 'officer-loyalty', officerId: 'hist-bai-qi', delta: 15 },
       { kind: 'flag', key: 'yy-yancheng' },
     ],

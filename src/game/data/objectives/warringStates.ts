@@ -576,8 +576,8 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       primary: {
         title: { zh: '伊闕斬首', en: 'The Slaughter at Yique' },
         description: 'Take Luoyang and Xuchang by 183 — Bai Qi against two armies that will not fight together.',
-        descriptionZh: "於183年前取洛陽、許昌 —— 白起以寡擊眾,韓魏各自為戰。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 183 },
+        descriptionZh: "於186年前取洛陽、許昌 —— 白起以寡擊眾,韓魏各自為戰。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 186 },
       },
       secondary: [
         {
@@ -593,9 +593,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'han',
       primary: {
         title: { zh: '韓魏合軍', en: 'Han and Wei Must Fight as One' },
-        description: 'Still hold Luoyang and Xuchang in 184 — the defeat came from each waiting for the other.',
-        descriptionZh: "至184年仍保洛陽、許昌 —— 伊闕之敗,敗在兩軍互相觀望。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 184 },
+        description: 'Still hold Xuchang and Runan in 184 — the defeat came from each waiting for the other.',
+        descriptionZh: "至184年仍保許昌、汝南 —— 伊闕之敗,敗在兩軍互相觀望。",
+        /*
+         * 原本寫的是「保洛陽、許昌」,而**洛陽開局就在秦手裡** ——
+         * 這張盤的城池歸屬是伊闕之後的樣子(宜陽與周室腹地已入秦),
+         * 目標卻是照戰前寫的。韓只有三座城,要他從四十二城的秦手上奪回洛陽,
+         * 是死目標。改成守他真正還握著的那兩座。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'runan'], byYear: 184 },
       },
     },
     {
@@ -603,20 +609,36 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '不作壁上觀', en: 'Do Not Stand and Watch' },
-        description: 'Still hold Chenliu and Puyang in 184, and hold Luoyang too.',
-        descriptionZh: "至184年仍保陳留、濮陽,並據洛陽 —— 這一次不要讓韓軍獨當秦鋒。",
-        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang', 'luoyang'], byYear: 184 },
+        description: 'Still hold Chenliu and Puyang in 184 — and see to it that Han is still standing.',
+        descriptionZh: "至184年仍保陳留、濮陽 —— 而這一次,不要讓韓軍獨當秦鋒。",
+        goal: { kind: 'hold-cities', cityIds: ['chenliu', 'puyang'], byYear: 184 },
       },
+      secondary: [
+        {
+          title: { zh: '韓不可亡', en: 'Han Must Not Fall' },
+          description: 'Han must still hold two cities in 184 — Wei is next in the line either way.',
+          descriptionZh: "至184年韓猶有二城 —— 伊闕之敗,敗在兩軍互相觀望;而韓亡之後,當秦鋒的就是魏。",
+          goal: { kind: 'protect-force', forceId: 'han', minCities: 2, byYear: 184 },
+        },
+      ],
     },
     {
       id: 'obj-wsyq-zhao',
       forceId: 'zhao',
       primary: {
         title: { zh: '趙不可獨存', en: 'Zhao Cannot Stand Alone Either' },
-        description: 'Take Shangdang and Luoyang by 186.',
-        descriptionZh: "於186年前取上黨、洛陽 —— 韓魏若亡,趙即當秦鋒。",
-        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'luoyang'], byYear: 186 },
+        description: 'Still hold Shangdang and Taiyuan in 186 — Han and Wei are bleeding, and the road after them is yours.',
+        descriptionZh: "至186年仍據上黨、太原 —— 韓魏若亡,趙即當秦鋒;而這一年,趙什麼也沒有做。",
+        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'taiyuan'], byYear: 186 },
       },
+      secondary: [
+        {
+          title: { zh: '西向爭洛', en: 'Contest Luoyang' },
+          description: 'Take Luoyang by 188 — the thing Zhao never tried.',
+          descriptionZh: "於188年前取洛陽 —— 趙從來沒有試過的那條路。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 188 },
+        },
+      ],
     },
     {
       id: 'obj-ws-yique-chu',
@@ -656,10 +678,16 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wsyy-qin',
       forceId: 'qin',
       primary: {
-        title: { zh: '水灌鄢城', en: 'Flood Yan' },
-        description: 'Take Xiangyang and Jiangling by 183 — Bai Qi dammed the river and drowned a city.',
-        descriptionZh: "於183年前取襄陽、江陵 —— 白起決夷水以灌鄢城,再拔郢都。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 183 },
+        title: { zh: '拔巫、黔中', en: 'On to Wu and Qianzhong' },
+        description: 'Hold Jiangling and take Wuling by 185 — after Ying, Bai Qi kept going south.',
+        /*
+         * 原本寫「取襄陽、江陵」,而這張盤**開局就把江漢給了秦** ——
+         * 郢已破、楚已東遷壽春(盤面的前提就是戰後)。那條主目標在第 0 旬
+         * 就是成立的,等於沒有題目。改成他接下來真正做的那一步:
+         * 昭王三十年,蜀守張若伐楚,取巫郡及江南為黔中郡。
+         */
+        descriptionZh: "至185年仍據江陵並取武陵 —— 拔郢之後,秦兵未止:蜀守張若伐楚,取巫郡及江南為黔中郡。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'wuling'], byYear: 185 },
       },
       secondary: [
         {
@@ -674,12 +702,23 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wsyy-chu',
       forceId: 'chu',
       primary: {
-        title: { zh: '郢都不失', en: 'Ying Shall Not Fall' },
-        description: 'Still hold Jiangling and Yiling in 186 — after this, Chu never came back west.',
-        descriptionZh: "至186年仍保江陵、夷陵 —— 郢都一失,楚就再也沒有回到過西邊。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'yiling'], byYear: 186 },
+        title: { zh: '亡羊補牢', en: 'Mend the Fold' },
+        description: 'Still hold Shouchun and Jiangxia in 186 — the court has already fled east; what is left is the east.',
+        /*
+         * 原本寫「保江陵、夷陵」—— 而那兩座開局就是秦的。郢都已失是這張盤的
+         * 前提(楚都已遷壽春、屈原已在壽春絕望),不是它的題目。莊辛的原話
+         * 正好就是題目:亡羊而補牢,未為遲也。
+         */
+        descriptionZh: "至186年仍據壽春、江夏 —— 見兔而顧犬,未為晚也;亡羊而補牢,未為遲也。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'jiangxia'], byYear: 186 },
       },
       secondary: [
+        {
+          title: { zh: '復郢', en: 'Take Ying Back' },
+          description: 'Take Jiangling back by 188 — Chu never did.',
+          descriptionZh: "於188年前復取江陵 —— 郢都一失,楚就再也沒有回到過西邊。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 188 },
+        },
         {
           title: { zh: '亡秦必楚', en: 'Chu Will Be the End of Qin' },
           description: 'Destroy the Qin force.',
@@ -792,10 +831,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       id: 'obj-wsyu-han',
       forceId: 'han',
       primary: {
-        title: { zh: '上黨之歸', en: 'Where Shangdang Goes' },
-        description: 'Take Shangdang by 185 — whoever holds it decides the next war.',
-        descriptionZh: "於185年前取上黨 —— 上黨歸誰,下一場大戰就在哪裡打。",
-        goal: { kind: 'hold-cities', cityIds: ['shangdang'], byYear: 185 },
+        title: { zh: '求救於趙', en: 'Ask Zhao for a Rescue' },
+        description: 'Still hold Xuchang and Luoyang in 185 — hold out until the relief comes up the narrow road.',
+        /*
+         * 原本寫「取上黨」,而上黨開局在秦手裡,**趙的主目標也指著它** ——
+         * 兩家搶同一座城,四城的韓搶不過十三城的趙,三輪皆 0。
+         * 閼與之戰本來就是韓求救、趙來救,韓自己那一份是撐住。
+         */
+        descriptionZh: "至185年仍據許昌、洛陽 —— 秦伐韓,軍於閼與;韓所能做的,是撐到趙奢的援軍走完那條又遠又窄的路。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 185 },
       },
     },
     {
@@ -855,10 +899,24 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '去帝號以孤齊', en: 'Drop the Title, Isolate Qi' },
-        description: 'Destroy the Qi force by 189 — Qin gave up the western title so Qi would stand alone.',
-        descriptionZh: "於189年前擊滅齊國 —— 秦自去帝號,正為使齊獨當眾怒。",
-        goal: { kind: 'defeat-force', forceId: 'qi', byYear: 189 },
+        description: "Still hold Chang'an, Tongguan and Hanzhong in 186 — Qin gave up the western title so that Qi would stand alone and be torn apart by everyone else.",
+        /*
+         * 原本寫的是「滅齊」,而**秦從來沒有滅過齊** —— 蘇代說昭王去帝號,
+         * 正是為了讓別人去打齊(五國伐齊是樂毅那張盤)。這一條犯的是
+         * 「主目標寫成他史書上沒做到的事」,而秦要滅七城的齊,三輪皆 0。
+         * 去帝號的收穫是坐視、是白得,所以主目標寫「不動而不失」。
+         */
+        descriptionZh: "至186年仍據長安、潼關、漢中 —— 秦自去帝號,正為使齊獨當眾怒;此後五國伐齊,而秦一兵不折。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanzhong'], byYear: 186 },
       },
+      secondary: [
+        {
+          title: { zh: '坐收其敝', en: 'Take the Spoils' },
+          description: 'Destroy the Qi force by 189 — what Qin never actually did.',
+          descriptionZh: "於189年前擊滅齊國 —— 秦從來沒有做到的那一步。",
+          goal: { kind: 'defeat-force', forceId: 'qi', byYear: 189 },
+        },
+      ],
     },
     {
       id: 'obj-wsqm-yan',
@@ -925,16 +983,27 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'yan',
       primary: {
         title: { zh: '下齊七十餘城', en: 'Seventy Cities in Six Months' },
-        description: 'Take Linzi, Beihai and Langya by 183 — five states marched; only Yue Yi kept going.',
-        descriptionZh: "於183年前取臨淄、北海、琅琊 —— 五國之師既還,獨樂毅引燕軍深入。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai', 'langya'], byYear: 183 },
+        description: 'Still hold Linzi and Ji in 185 — Yue Yi held down Qi for five years, and that was the achievement.',
+        /*
+         * 原本要求「取臨淄、北海、琅琊」—— 而**北海與琅琊正是莒與即墨**,
+         * 史書上樂毅圍了五年沒有拿下的那兩座。把他失敗的那一半寫進主目標,
+         * 等於保證 0。全庫的尺是:主目標寫他真正做到的,次要寫他沒做到的。
+         */
+        descriptionZh: "至185年仍據臨淄、薊 —— 下齊七十餘城,而後守之五年,這才是樂毅做到的事。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'ji'], byYear: 185 },
       },
       secondary: [
         {
+          title: { zh: '莒與即墨', en: 'Ju and Jimo' },
+          description: 'Take Beihai and Langya by 186 — the two Yue Yi besieged for five years and never took.',
+          descriptionZh: "於186年前取北海、琅琊 —— 莒與即墨守了五年,燕功敗垂成。",
+          goal: { kind: 'hold-cities', cityIds: ['beihai', 'langya'], byYear: 186 },
+        },
+        {
           title: { zh: '滅齊', en: 'End Qi' },
-          description: 'Destroy the Qi force by 186 — two cities held out for five years in history.',
-          descriptionZh: "於186年前滅齊 —— 史書上,莒與即墨守了五年,燕功敗垂成。",
-          goal: { kind: 'defeat-force', forceId: 'qi', byYear: 186 },
+          description: 'Destroy the Qi force by 188.',
+          descriptionZh: "於188年前滅齊。",
+          goal: { kind: 'defeat-force', forceId: 'qi', byYear: 188 },
         },
       ],
     },
@@ -1233,9 +1302,10 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'yan',
       primary: {
         title: { zh: '毋易樂毅', en: 'Do Not Recall Yue Yi' },
-        description: 'Still hold Linzi and Langya in 185 — the reversal began with a change of general.',
-        descriptionZh: "至185年仍保臨淄、琅琊 —— 敗局起於騎劫代將。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi', 'langya'], byYear: 185 },
+        description: 'Still hold Linzi and Ji in 185 — the reversal began with a change of general.',
+        /* 同樂毅盤:琅琊(莒)開局就在齊手裡,燕從來沒拿下過它。守住已下之地才是題目。 */
+        descriptionZh: "至185年仍保臨淄、薊 —— 敗局起於騎劫代將,而不是起於莒未下。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'ji'], byYear: 185 },
       },
     },
     {
