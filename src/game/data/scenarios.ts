@@ -9130,6 +9130,7 @@ const CITY_OWNERSHIP_WHATIF_GUANYU_NORTH: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_GUANYU_NORTH: Scenario = {
   id: 'scn-whatif-guanyu-north',
+  eventFlags: ['chain-gynorth'],
   openingRelations: [
     { a: 'cao', b: 'liu-bei', score: -95, status: 'neutral' },  // 威震華夏,朝議遷都以避其鋒
     { a: 'cao', b: 'sun', score: 25, status: 'non-aggression' },  // 孫曹密約既通,而書未至江陵

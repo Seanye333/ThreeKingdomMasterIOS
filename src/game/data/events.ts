@@ -5236,6 +5236,93 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:若關羽威震華夏(chain-gynorth)-----------------------------
+   * 開局就是水淹七軍之後那一刻,旌旗距許昌不過百里。兩節分別給兩邊:
+   * 曹操那一邊真的議過遷都,而關羽這一邊真正的問題從來在後方。
+   */
+  {
+    id: 'evt-gynorth-1',
+    name: { en: 'Move the Capital', zh: '議徙許都' },
+    yearMin: 219,
+    yearMax: 221,
+    requires: [
+      { kind: 'flag-set', key: 'chain-gynorth' },
+      { kind: 'officer-alive', officerId: 'guan-yu' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'flag-unset', key: 'gynorth-capital' },
+    ],
+    description:
+      "Cao Cao proposes moving the court north out of Guan Yu's reach. Sima Yi and Jiang Ji tell him not to: Yu Jin's army was lost to water, not to battle; and Sun Quan will not enjoy watching Guan Yu win. Send someone east instead.",
+    descriptionZh: '羽威震華夏,曹公議徙許都以避其銳。司馬宣王、蔣濟諫曰:「于禁等為水所沒,非戰攻之失,於國家大計未足有損。劉備、孫權,外親內疏,關羽得志,權必不願也。可遣人勸權躡其後。」',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    choices: [
+      {
+        id: 'east',
+        label: { zh: '納其言 —— 遣使勸權躡其後', en: 'Take the counsel — send east to Sun Quan' },
+        effects: [
+          { kind: 'flag', key: 'gynorth-capital' },
+          { kind: 'flag', key: 'gynorth-envoy' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 6 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: -5 },
+        ],
+      },
+      {
+        id: 'move',
+        label: { zh: '徙都河北 —— 避其鋒', en: 'Move the court north, out of reach' },
+        effects: [
+          { kind: 'flag', key: 'gynorth-capital' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -12 },
+          { kind: 'city-loyalty', cityId: 'xuchang', delta: -18 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 8 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 這一邊的問題從來不在樊城 —— 是江陵與公安那兩個人。
+     * 「南郡太守糜芳在江陵,將軍傅士仁屯公安,素皆嫌羽自輕己。」
+     */
+    id: 'evt-gynorth-2',
+    name: { en: 'The Two Men Behind Him', zh: '江陵公安' },
+    yearMin: 219,
+    yearMax: 222,
+    requires: [
+      { kind: 'flag-set', key: 'chain-gynorth' },
+      { kind: 'officer-active', officerId: 'guan-yu' },
+      { kind: 'city-owner-ruler', cityId: 'jiangling', rulerOfficerId: 'liu-bei' },
+      { kind: 'flag-unset', key: 'gynorth-rear' },
+    ],
+    description:
+      "Mi Fang holds Jiangling and Fu Shiren holds Gong'an, and both of them have been made to feel small by Guan Yu for years. Supplies for the northern army are late again. He can send word that he will deal with them when he gets back — or he can go back now.",
+    descriptionZh: '南郡太守糜芳在江陵,將軍傅士仁屯公安,素皆嫌羽自輕己。羽之出軍,芳、仁供給軍資不悉相救,羽言「還當治之」—— 芳、仁咸懷懼不安。而北軍之資,又遲了一旬。',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    choices: [
+      {
+        id: 'reassure',
+        label: { zh: '緩其辭 —— 遣使慰撫,許以不問', en: 'Soften it — send word that nothing will be held against them' },
+        effects: [
+          { kind: 'flag', key: 'gynorth-rear' },
+          { kind: 'city-loyalty', cityId: 'jiangling', delta: 20 },
+          { kind: 'city-loyalty', cityId: 'gongan', delta: 20 },
+          { kind: 'officer-loyalty', officerId: 'guan-yu', delta: -8 },
+        ],
+      },
+      {
+        id: 'punish',
+        label: { zh: '還當治之 —— 軍法無私', en: '"I will deal with them when I return"' },
+        effects: [
+          { kind: 'flag', key: 'gynorth-rear' },
+          { kind: 'city-loyalty', cityId: 'jiangling', delta: -22 },
+          { kind: 'city-loyalty', cityId: 'gongan', delta: -22 },
+          { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 10 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
