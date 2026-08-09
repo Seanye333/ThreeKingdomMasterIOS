@@ -40,7 +40,13 @@ if (!g.localStorage) {
 }
 
 const PREFIX = process.argv[2] ?? '';
-const TURNS = Number(process.argv[3] ?? 260);
+/*
+ * ⚠ 回合數要夠長,否則量到的是「跑得不夠遠」而不是「盤上沒戲」。
+ * 36 回合 = 1 年,所以 360 ≈ 10 年 —— 跟六格規格裡「開局 +10 年窗口」對齊。
+ * 第一版預設 260(≈7.2 年)量出來 265 司馬炎篡魏只有 3 條,拉到 500 回合
+ * 之後是 9 條;238 遼東同樣 7 → 13。差的那幾條是窗口跨度大的事件。
+ */
+const TURNS = Number(process.argv[3] ?? 360);
 
 async function main() {
   const { useGameStore } = await import('../src/game/state/store');
