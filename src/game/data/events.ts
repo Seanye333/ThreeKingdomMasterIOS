@@ -5493,6 +5493,94 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:若呂布割據徐州(chain-lubu)--------------------------------
+   * 前提是泗水未潰下邳之牆、陳宮之謀得行。而史書上他敗的兩個真原因都不是
+   * 城牆:一個是那條沒有採用的犄角之計,一個是陳登。
+   */
+  {
+    id: 'evt-lubu-alt-1',
+    name: { en: "Chen Gong's Two Camps", zh: '掎角之計' },
+    yearMin: 198,
+    yearMax: 201,
+    requires: [
+      { kind: 'flag-set', key: 'chain-lubu' },
+      { kind: 'officer-active', officerId: 'lu-bu' },
+      { kind: 'officer-active', officerId: 'chen-gong' },
+      { kind: 'flag-unset', key: 'lubu-alt-horns' },
+    ],
+    description:
+      "Chen Gong's plan: you take the horse outside and camp, I hold the walls. If they come at you I hit their backs; if they besiege me you relieve me from outside. Ten days and their grain is gone. Lü Bu agreed — and then went in and talked to his wife.",
+    descriptionZh: '宮曰:「將軍以步騎出屯於外,宮將餘眾閉守於內。若向將軍,宮引兵擊其背;若來攻城,將軍為救於外。不過旬日,操軍食盡。」布然之 —— 而後入謂妻嚴氏,嚴氏曰:「宮、順素不和,將軍一出,豈得定乎?」布乃止。',
+    effects: [],
+    chooserRulerId: 'lu-bu',
+    choices: [
+      {
+        id: 'horns',
+        label: { zh: '從之 —— 出屯於外,內外相應', en: 'Do it — camp outside, hold within' },
+        effects: [
+          { kind: 'flag', key: 'lubu-alt-horns' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'lu-bu', multiplier: 1.18 },
+          { kind: 'officer-loyalty', officerId: 'chen-gong', delta: 18 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'lu-bu', delta: 6 },
+        ],
+      },
+      {
+        id: 'wife',
+        label: { zh: '止 —— 宮、順素不和,一出豈得定乎', en: 'Stay — Gong and Shun do not get on' },
+        effects: [
+          { kind: 'flag', key: 'lubu-alt-horns' },
+          { kind: 'city-defense', cityId: 'xiapi', delta: 14 },
+          { kind: 'officer-loyalty', officerId: 'chen-gong', delta: -20 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'lu-bu', delta: -5 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 陳登 —— 布使登詣曹操求徐州牧,而登「陰欲圖布」,還則勸操早圖之。
+     * 布怒,拔戟斫几,而登一席話就把他哄過去了(「養虎當飽其肉」那一段
+     * 是登說給操聽的,布聽到的是另一版)。
+     */
+    id: 'evt-lubu-alt-2',
+    name: { en: 'What Chen Deng Told Cao Cao', zh: '陳登之心' },
+    yearMin: 198,
+    yearMax: 202,
+    requires: [
+      { kind: 'flag-set', key: 'chain-lubu' },
+      { kind: 'officer-active', officerId: 'lu-bu' },
+      { kind: 'officer-alive', officerId: 'chen-deng' },
+      { kind: 'flag-unset', key: 'lubu-alt-deng' },
+    ],
+    description:
+      "Lü Bu sent Chen Deng to Cao Cao to ask for the governorship of Xu. Chen Deng asked Cao Cao to destroy Lü Bu instead — \"a tiger should be kept hungry, not fed\" — and came home with a promotion for himself and nothing for Lü Bu.",
+    descriptionZh: '布使登詣操求徐州牧,而登陰言於操曰:「布,豺狼也,勇而無計,輕於去就,宜早圖之。」操曰:「布狼子野心,誠難久養,非卿莫能究其情偽。」登還,布怒,拔戟斫几 —— 而登一席話又哄過去了。',
+    effects: [],
+    chooserRulerId: 'lu-bu',
+    choices: [
+      {
+        id: 'see',
+        label: { zh: '察其偽 —— 收登下獄', en: 'See through him — arrest Chen Deng' },
+        effects: [
+          { kind: 'flag', key: 'lubu-alt-deng' },
+          { kind: 'officer-status', officerId: 'chen-deng', status: 'imprisoned' },
+          { kind: 'city-loyalty', cityId: 'xiapi', delta: -14 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'lu-bu', delta: 5 },
+        ],
+      },
+      {
+        id: 'trust',
+        label: { zh: '信之 —— 登言在理', en: 'Believe him — he talks well' },
+        effects: [
+          { kind: 'flag', key: 'lubu-alt-deng' },
+          { kind: 'city-loyalty', cityId: 'xiapi', delta: 10 },
+          { kind: 'officer-loyalty', officerId: 'chen-deng', delta: -15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'lu-bu', delta: -6 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',

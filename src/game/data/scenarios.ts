@@ -8087,6 +8087,7 @@ const CITY_OWNERSHIP_LUBU_XUZHOU: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_LUBU_XUZHOU: Scenario = {
   id: 'scn-whatif-lubu-xuzhou',
+  eventFlags: ['chain-lubu'],
   openingRelations: [
     { a: 'lubu', b: 'cao', score: -95, status: 'neutral' },  // 下邳未陷,曹操疲師而退
     { a: 'lubu', b: 'yuan-shu', score: -40, status: 'neutral' },  // 轅門射戟之後,婚約既絕
