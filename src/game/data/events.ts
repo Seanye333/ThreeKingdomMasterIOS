@@ -8936,6 +8936,44 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'martial',
   },
+
+  /* ── 楚漢補一條給項羽:同戰國那個毛病 —— 上一批十條裡漢佔了六條
+       (約法三章/蕭何追韓信/暗度陳倉/背水一陣/紀信/彭越),而彭城之戰
+       這個「三萬破五十六萬」的名場面反而沒寫。 ── */
+  {
+    id: 'evt-ch-pengcheng-battle',
+    name: { en: 'Thirty Thousand Against Five Hundred and Sixty', zh: '彭城·三萬破五十六萬' },
+    yearMin: 181,
+    yearMax: 188,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'officer-alive', officerId: 'hist-liu-bang' },
+      { kind: 'flag-set', key: 'ch-chencang' },
+      { kind: 'flag-unset', key: 'ch-pengcheng-battle' },
+    ],
+    description:
+      'Five hundred and sixty thousand men of Han and the allied lords walk into Pengcheng while its owner is in Qi, and settle down to the treasure, the women and a daily banquet. Xiang Yu leaves his main army where it is, takes thirty thousand west through Xiao, and is on them at dawn. By noon it is over. The rout goes into the Gu and the Si and a hundred thousand are killed; the survivors run south into the hills and are caught again on the Sui, and a hundred thousand more go into the river until it stops flowing. The ring closes three deep around Liu Bang — and then a gale comes out of the northwest, breaking trees and taking roofs off, and blows sand into the faces of the Chu army, and in the dark he gets out with a few dozen horse.',
+    descriptionZh:
+      '漢王部五諸侯兵,凡五十六萬人,東伐楚。'
+      + '……遂入彭城,收其貨寶美人,日置酒高會。\n\n'
+      + '項王聞之,令諸將擊齊,而自以精兵三萬人南從魯出胡陵,'
+      + '至蕭,晨擊漢軍而東,至彭城,日中,大破漢軍。'
+      + '漢軍皆走,相隨入穀、泗水,殺漢卒十餘萬人。'
+      + '漢卒皆南走山,楚又追擊至靈壁東睢水上。'
+      + '漢軍卻,為楚所擠,多殺,漢卒十餘萬人皆入睢水,睢水為之不流。\n\n'
+      + '圍漢王三匝。於是大風從西北而起,折木發屋,揚沙石,窈冥晝晦,'
+      + '逢迎楚軍,楚軍大亂,壞散,而漢王乃得與數十騎遁去。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-xiang-yu', delta: 15 },
+      { kind: 'city-troops-multiplier', cityId: 'pengcheng', multiplier: 1.25 },
+      { kind: 'city-troops-multiplier', cityId: 'xiapi', multiplier: 1.2 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.75 },
+      { kind: 'city-troops-multiplier', cityId: 'luoyang', multiplier: 0.8 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-liu-bang', delta: -8 },
+      { kind: 'flag', key: 'ch-pengcheng-battle' },
+    ],
+    mood: 'martial',
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(
