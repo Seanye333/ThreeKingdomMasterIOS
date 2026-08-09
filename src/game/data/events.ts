@@ -4928,6 +4928,75 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     mood: 'somber',
   },
 
+  /* ---- 假想:關羽守住荊州(chain-guanyu-jing)---------------------------
+   * 前提是白衣渡江功敗垂成、呂蒙憂憤而歿。那麼接下來要回答的是:
+   * **孫劉之盟還剩什麼**,以及雲長那把刀往哪裡指。
+   */
+  {
+    id: 'evt-gyjing-1',
+    name: { en: 'The Alliance After the Knife', zh: '盟好之餘' },
+    yearMin: 220,
+    yearMax: 223,
+    requires: [
+      { kind: 'flag-set', key: 'chain-guanyu-jing' },
+      { kind: 'officer-alive', officerId: 'guan-yu' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'flag-unset', key: 'gyjing-alliance' },
+    ],
+    description:
+      "Lü Meng's boats turned back and Lü Meng is dead of it. Sun Quan sends an envoy to Jiangling with gifts and no explanation. Guan Yu has the letter read out in front of the man who brought it.",
+    descriptionZh: '白衣之舟既還,呂蒙憂憤而歿。權遣使至江陵,厚幣而無一語及前事。羽命當使者之面讀其書 —— 讀畢,問左右:「此盟,還算不算?」',
+    effects: [],
+    chooserRulerId: 'liu-bei',
+    choices: [
+      {
+        id: 'keep',
+        label: { zh: '算 —— 北向者曹,不在江東', en: 'It holds — the enemy is north, not east' },
+        effects: [
+          { kind: 'flag', key: 'gyjing-alliance' },
+          { kind: 'flag', key: 'gyjing-allied' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 6 },
+          { kind: 'officer-loyalty', officerId: 'guan-yu', delta: -6 },
+        ],
+      },
+      {
+        id: 'break',
+        label: { zh: '不算 —— 東吳鼠子,終為腹心之患', en: 'It does not — the east will try again' },
+        effects: [
+          { kind: 'flag', key: 'gyjing-alliance' },
+          { kind: 'city-defense', cityId: 'jiangling', delta: 12 },
+          { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -5 },
+        ],
+      },
+    ],
+  },
+  {
+    /* 只在「盟好還算」之後演 —— 荊州不必回頭看,那把刀就指得出去。 */
+    id: 'evt-gyjing-2',
+    name: { en: 'Northward Again', zh: '再出襄樊' },
+    yearMin: 221,
+    yearMax: 225,
+    requires: [
+      { kind: 'flag-set', key: 'chain-guanyu-jing' },
+      { kind: 'flag-set', key: 'gyjing-allied' },
+      { kind: 'officer-active', officerId: 'guan-yu' },
+      { kind: 'city-owner-ruler', cityId: 'jiangling', rulerOfficerId: 'liu-bei' },
+      { kind: 'flag-unset', key: 'gyjing-north' },
+    ],
+    description:
+      "With the river behind him secure for the first time, Guan Yu goes up the Han again — and this time nobody is coming across it while his back is turned.",
+    descriptionZh: '後路既固,羽復北向。前歲水淹七軍、威震華夏而終於功敗者,敗在江陵一夕易主;今江陵在手,而樊城之圍,可以圍到底。',
+    effects: [
+      { kind: 'flag', key: 'gyjing-north' },
+      { kind: 'city-defense', cityId: 'fancheng', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'fancheng', multiplier: 0.75 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 8 },
+      { kind: 'officer-loyalty', officerId: 'guan-yu', delta: 8 },
+    ],
+    mood: 'martial',
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',

@@ -7279,6 +7279,7 @@ const DEAD_BY_GUANYU_JING: string[] = [
 
 export const SCENARIO_WHATIF_GUANYU_JING: Scenario = {
   id: 'scn-whatif-guanyu-jing',
+  eventFlags: ['chain-guanyu-jing'],
   openingRelations: [
     { a: 'cao', b: 'liu-bei', score: -90, status: 'neutral' },  // 漢賊不兩立
     { a: 'cao', b: 'sun', score: -45, status: 'neutral' },
