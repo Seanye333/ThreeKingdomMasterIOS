@@ -8042,6 +8042,7 @@ const FORCES_YUAN_GUANDU: Force[] = FORCES_200.map((f) =>
 );
 export const SCENARIO_WHATIF_YUAN_GUANDU: Scenario = {
   id: 'scn-whatif-yuan-guandu',
+  eventFlags: ['chain-yuanguandu'],
   openingRelations: [
     { a: 'yuan-shao', b: 'cao', score: -95, status: 'neutral' },  // 官渡既勝,許昌已下,只餘宛城一隅
     { a: 'yuan-shao', b: 'liu-biao', score: 40, status: 'neutral' }, // 袁紹既得官渡,荊州北出宛洛便是與他爭  // 南北相結以夾曹

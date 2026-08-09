@@ -5323,6 +5323,91 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:若袁紹勝官渡(chain-yuanguandu)----------------------------
+   * 他贏了外面。而史書給袁紹的評語是「外寬雅有局度,憂喜不形於色,而內多
+   * 忌害」—— 這張盤真正的題目在河北自己家裡:那個諫臣,和那三個兒子。
+   */
+  {
+    id: 'evt-yuanguandu-1',
+    name: { en: 'Tian Feng, Out of the Cell', zh: '田豐出獄' },
+    yearMin: 201,
+    yearMax: 204,
+    requires: [
+      { kind: 'flag-set', key: 'chain-yuanguandu' },
+      { kind: 'officer-alive', officerId: 'yuan-shao' },
+      { kind: 'officer-alive', officerId: 'tian-feng' },
+      { kind: 'flag-unset', key: 'yuanguandu-tianfeng' },
+    ],
+    description:
+      "Tian Feng told him to grind Cao Cao down instead of gambling on one battle, and went to prison for saying it. This time the advice worked. The man is still in the cell.",
+    descriptionZh: '田豐諫持重以耗,言「曹公善用兵,變化無方,眾雖少,未可輕也」—— 而以此下獄。這一回那條計成了,而說話的人還在牢裡。',
+    effects: [],
+    chooserRulerId: 'yuan-shao',
+    choices: [
+      {
+        id: 'release',
+        label: { zh: '釋而謝之 —— 用其謀者當用其人', en: 'Release him and apologise' },
+        effects: [
+          { kind: 'flag', key: 'yuanguandu-tianfeng' },
+          { kind: 'officer-loyalty', officerId: 'tian-feng', delta: 25 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shao', delta: 8 },
+        ],
+      },
+      {
+        id: 'keep',
+        label: { zh: '仍囚之 —— 勝不由諫', en: 'Leave him there — the victory was not his' },
+        effects: [
+          { kind: 'flag', key: 'yuanguandu-tianfeng' },
+          { kind: 'officer-loyalty', officerId: 'tian-feng', delta: -30 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shao', delta: -10 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 河北真正的裂縫 —— 「紹有三子,譚長而惠,尚少而美。紹妻劉氏愛尚,
+     * 數稱其才,紹亦奇其貌,欲以為後,未顯而紹死。」而後兄弟相攻,曹操
+     * 坐收之。這張盤把那個「未顯」交回給玩家。
+     */
+    id: 'evt-yuanguandu-2',
+    name: { en: 'Which Son', zh: '三子之議' },
+    yearMin: 202,
+    yearMax: 206,
+    requires: [
+      { kind: 'flag-set', key: 'chain-yuanguandu' },
+      { kind: 'officer-alive', officerId: 'yuan-shao' },
+      { kind: 'flag-unset', key: 'yuanguandu-heir' },
+    ],
+    description:
+      "Three sons: Tan is the eldest and able, Shang is the youngest and beautiful, and their mother has been praising Shang for years. Yuan Shao never settled it in his lifetime, and after him they went at each other until Cao Cao picked up the pieces.",
+    descriptionZh: '紹有三子,譚長而惠,尚少而美。紹妻劉氏愛尚,數稱其才,紹亦奇其貌,欲以為後,未顯而紹死 —— 於是兄弟相攻,而曹操坐收河北。這一回,那個「未顯」交在你手上。',
+    effects: [],
+    chooserRulerId: 'yuan-shao',
+    choices: [
+      {
+        id: 'eldest',
+        label: { zh: '立長 —— 譚長而惠', en: 'The eldest — Tan' },
+        effects: [
+          { kind: 'flag', key: 'yuanguandu-heir' },
+          { kind: 'officer-loyalty', officerId: 'yuan-tan', delta: 22 },
+          { kind: 'officer-loyalty', officerId: 'yuan-shang', delta: -12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shao', delta: 7 },
+        ],
+      },
+      {
+        id: 'youngest',
+        label: { zh: '立少 —— 尚少而美', en: 'The youngest — Shang' },
+        effects: [
+          { kind: 'flag', key: 'yuanguandu-heir' },
+          { kind: 'officer-loyalty', officerId: 'yuan-shang', delta: 22 },
+          { kind: 'officer-loyalty', officerId: 'yuan-tan', delta: -25 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'yuan-shao', delta: -6 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
