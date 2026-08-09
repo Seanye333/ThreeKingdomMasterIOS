@@ -8661,7 +8661,6 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'ominous',
   },
-
   /* ── 230–235:三帝鼎立與鹵城兩張盤只有 9 條,而今天補的後三國那批是 238 起,
        對它們一點用都沒有。這四條填的正是那一段。 ── */
   {
@@ -9529,6 +9528,447 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
     mood: 'martial',
   },
+
+  /*
+   * ── 楚漢四張盤自己那一戰 ──
+   *
+   * 這四張盤原本靠**通用的楚漢長鏈**過日子(追韓信 → 暗度陳倉 → 背水一陣 →
+   * 彭城 → 紀信 → 一杯羹),而那條鏈是線性的:每一節都要等前一節先擲中。
+   * 於是「彭城之戰」那張盤實測**演不到彭城之戰** —— 它的題眼排在鏈的第四節,
+   * 十年跑完還沒輪到。修法有兩半:
+   *
+   *  1. 盤上把「開局時它已經發生」的前置旗標**預先種下**(見 scenarios.ts 的
+   *     `eventFlags`) —— 還定三秦那一天韓信早就拜過大將了,不該再等它擲一次。
+   *  2. 這裡補每張盤**自己**那一幕(通用鏈演的是別人的戲)。
+   */
+
+  /* ── 鉅鹿(chain-julu)── 破釜沉舟是通用的,這裡補它的前後兩幕 */
+  {
+    id: 'evt-ch-julu-1',
+    name: { en: 'Fierce as a Tiger, Ruthless as a Ram', zh: '猛如虎,狠如羊' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-julu' },
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'officer-alive', officerId: 'hist-song-yi' },
+      { kind: 'flag-unset', key: 'jl-songyi' },
+    ],
+    description:
+      'The relief army halts at Anyang and sits there forty-six days while Julu starves. Song Yi sends his own son off to a chancellorship in Qi and holds a farewell drinking party in freezing rain, with the rank and file down to taro and beans. Let Qin and Zhao wear each other out first, he says: in armour you are the better man, but seated over a map, I am. Then he posts an order through the camp — any man fierce as a tiger, ruthless as a ram, greedy as a wolf, or too strong to take orders, is to be beheaded. Xiang Yu comes to the morning audience, walks into the commanding tent, and takes his head off there.',
+    descriptionZh:
+      '宋義行至安陽,留四十六日不進。項羽曰:'
+      + '「吾聞秦軍圍趙王鉅鹿,疾引兵渡河,楚擊其外,趙應其內,破秦軍必矣。」\n\n'
+      + '宋義曰:「不然。夫搏牛之蝱不可以破蟣蝨。今秦攻趙,戰勝則兵罷,我承其敝;'
+      + '不勝,則我引兵鼓行而西,必舉秦矣。故不如先鬥秦趙。'
+      + '夫被堅執銳,義不如公;坐而運策,公不如義。」\n\n'
+      + '因下令軍中曰:「猛如虎,很如羊,貪如狼,彊不可使者,皆斬之。」\n\n'
+      + '乃遣其子宋襄相齊,身送之至無鹽,飲酒高會。天寒大雨,士卒凍飢。\n\n'
+      + '項羽晨朝上將軍宋義,即其帳中斬宋義頭,出令軍中曰:'
+      + '「宋義與齊謀反楚,楚王陰令羽誅之。」',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-song-yi', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-xiang-yu', delta: 25 },
+      { kind: 'city-troops-multiplier', cityId: 'pengcheng', multiplier: 1.1 },
+      { kind: 'flag', key: 'jl-songyi' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-ch-julu-2',
+    name: { en: 'They Came Forward on Their Knees', zh: '膝行而前,莫敢仰視' },
+    yearMin: 178,
+    yearMax: 187,
+    requires: [
+      { kind: 'flag-set', key: 'chain-julu' },
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'flag-set', key: 'ch-pofu' },
+      { kind: 'flag-unset', key: 'jl-yuanmen' },
+    ],
+    description:
+      'A dozen allied camps stand around Julu and not one of them will send a man out. When Chu goes in, the other lords watch from their own ramparts: every Chu soldier is worth ten, the shouting shakes the sky, and in the watching camps nobody can stop trembling. Nine engagements cut the walled supply road, Su Jiao is killed, Wang Li is taken alive, and She Jian, who will not surrender, burns himself in his tent. Then Xiang Yu summons the allied commanders — and they come through the gate of his camp forward on their knees, not one of them daring to look up.',
+    descriptionZh:
+      '諸侯軍救鉅鹿下者十餘壁,莫敢縱兵。及楚擊秦,諸將皆從壁上觀。'
+      + '楚戰士無不一以當十,楚兵呼聲動天,諸侯軍無不人人惴恐。\n\n'
+      + '項羽乃悉引兵渡河,……與秦軍遇,九戰,絕其甬道,大破之。'
+      + '殺蘇角,虜王離;涉間不降楚,自燒殺。\n\n'
+      + '於是已破秦軍,項羽召見諸侯將。入轅門,無不膝行而前,莫敢仰視。'
+      + '項羽由是始為諸侯上將軍,諸侯皆屬焉。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-su-jiao', status: 'dead' },
+      { kind: 'officer-status', officerId: 'hist-she-jian', status: 'dead' },
+      { kind: 'officer-status', officerId: 'hist-wang-li', status: 'imprisoned' },
+      { kind: 'city-troops-multiplier', cityId: 'luoyang', multiplier: 0.7 },
+      { kind: 'city-defense', cityId: 'luoyang', delta: -25 },
+      { kind: 'city-troops-multiplier', cityId: 'shangdang', multiplier: 0.8 },
+      { kind: 'city-defense', cityId: 'xindu', delta: 20 },
+      { kind: 'officer-loyalty', officerId: 'hist-xiang-yu', delta: 20 },
+      { kind: 'city-troops-multiplier', cityId: 'pengcheng', multiplier: 1.15 },
+      { kind: 'flag', key: 'jl-yuanmen' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ch-julu-3',
+    name: { en: 'Two Hundred Thousand South of Xin-an', zh: '新安·夜擊坑秦卒二十餘萬' },
+    yearMin: 179,
+    yearMax: 188,
+    requires: [
+      { kind: 'flag-set', key: 'chain-julu' },
+      { kind: 'officer-alive', officerId: 'hist-xiang-yu' },
+      { kind: 'officer-alive', officerId: 'hist-zhang-han' },
+      { kind: 'flag-set', key: 'jl-yuanmen' },
+      { kind: 'flag-unset', key: 'jl-xinan' },
+    ],
+    description:
+      'Zhang Han sends his chief secretary back to court to explain himself and Zhao Gao keeps the man waiting three days outside the palace gate without an audience. Chen Yu writes to him: Bai Qi took Yan and Ying in the south and buried the Zhao army in the north, and was handed a sword; Meng Tian opened a thousand li of new frontier, and was executed at Yangzhou. Too much success, and the law is used to kill you. Zhang Han comes over, and weeps when he meets Xiang Yu — but his two hundred thousand surrendered men mutter in the dark that if this goes badly their families at home will be put to the sword. So the Chu army goes through them at night, south of the wall at Xin-an.',
+    descriptionZh:
+      '章邯軍棘原,項羽軍漳南,相持未戰。趙高用事,'
+      + '章邯使長史欣請事,留司馬門三日,趙高不見,有不信之心。\n\n'
+      + '陳餘遺章邯書曰:「白起為秦將,南征鄢郢,北阬馬服,'
+      + '攻城略地,不可勝計,而竟賜死。蒙恬為秦將,北逐戎人,'
+      + '開榆中地數千里,竟斬陽周。何者?功多,秦不能盡封,因以法誅之。……'
+      + '今將軍內不能直諫,外為亡國將,孤特獨立而欲常存,豈不哀哉!」\n\n'
+      + '章邯狐疑,……已盟,章邯見項羽而流涕,為言趙高。項羽乃立章邯為雍王。\n\n'
+      + '秦吏卒多竊言曰:「章將軍等詐吾屬降諸侯,今能入關破秦,大善;'
+      + '即不能,諸侯虜吾屬而東,秦必盡誅吾父母妻子。」\n\n'
+      + '於是楚軍夜擊阬秦卒二十餘萬人新安城南。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-zhang-han', delta: -35 },
+      { kind: 'city-troops-multiplier', cityId: 'luoyang', multiplier: 0.6 },
+      { kind: 'city-defense', cityId: 'luoyang', delta: -20 },
+      { kind: 'city-loyalty', cityId: 'luoyang', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.8 },
+      { kind: 'city-troops-multiplier', cityId: 'pengcheng', multiplier: 1.1 },
+      { kind: 'flag', key: 'jl-xinan' },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 還定三秦(chain-sanqin)── 暗度陳倉之後,還有一座城不下 */
+  {
+    id: 'evt-ch-sanqin-1',
+    name: { en: 'The Last City in Guanzhong', zh: '引水灌廢丘' },
+    yearMin: 178,
+    yearMax: 187,
+    requires: [
+      { kind: 'flag-set', key: 'chain-sanqin' },
+      { kind: 'officer-alive', officerId: 'hist-han-xin' },
+      { kind: 'officer-alive', officerId: 'hist-zhang-han' },
+      { kind: 'flag-set', key: 'ch-chencang' },
+      { kind: 'flag-unset', key: 'sq-feiqiu' },
+    ],
+    description:
+      'Out of Chencang the King of Han beats Zhang Han twice and pens him in Feiqiu. Sima Xin and Dong Yi, the other two of the Three Qin, hand over their kingdoms without much of a fight and Guanzhong is settled to the Wei river — except that one town, which holds. It holds for ten months, through a whole campaigning season, while the war moves east without it. In the sixth month of the second year the Han army turns the river into the streets, and Zhang Han, the last general the Qin ever had, cuts his own throat rather than come out.',
+    descriptionZh:
+      '漢王之出陳倉也,雍王章邯迎擊漢陳倉,雍兵敗,還走;'
+      + '止戰好畤,又復敗,走廢丘。\n\n'
+      + '漢王遂定雍地,東至咸陽,引兵圍雍王廢丘,而遣諸將略地。'
+      + '塞王欣、翟王翳皆降,以其地為渭南、河上、上郡。\n\n'
+      + '獨廢丘不下。……漢二年六月,引水灌廢丘,廢丘降,章邯自殺。\n\n'
+      + '——秦之名將,至此而盡。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-zhang-han', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-sima-xin', delta: -30 },
+      { kind: 'officer-loyalty', officerId: 'hist-dong-yi', delta: -30 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.65 },
+      { kind: 'city-defense', cityId: 'changan', delta: -25 },
+      { kind: 'city-troops-multiplier', cityId: 'chencang', multiplier: 1.2 },
+      { kind: 'officer-loyalty', officerId: 'hist-han-xin', delta: 15 },
+      { kind: 'flag', key: 'sq-feiqiu' },
+    ],
+    mood: 'martial',
+  },
+
+  /* ── 彭城(chain-pengcheng)── 通用鏈演那一敗,這裡演他怎麼活下來的 */
+  {
+    id: 'evt-ch-pengcheng-1',
+    name: { en: 'Must Two Good Men Corner Each Other', zh: '兩賢豈相戹哉' },
+    yearMin: 178,
+    yearMax: 187,
+    requires: [
+      { kind: 'flag-set', key: 'chain-pengcheng' },
+      { kind: 'officer-alive', officerId: 'hist-liu-bang' },
+      { kind: 'officer-alive', officerId: 'hist-ding-gong' },
+      { kind: 'flag-set', key: 'ch-pengcheng-battle' },
+      { kind: 'flag-unset', key: 'pc-dinggong' },
+    ],
+    description:
+      'Running from Pengcheng with Chu cavalry on him, the King of Han shoves his own son and daughter off the cart to lighten it, and Xiahou Ying gets down and picks them up again — three times. You may be in a hurry, says the driver, but you cannot drive that fast anyway, so what is the point of leaving them. West of the city the Chu officer Ding Gong runs him down until the blades are short: and the King of Han turns in the saddle and says, must two good men corner each other like this. Ding Gong wheels his troop around and lets him go. Years later, with Xiang Yu dead, Ding Gong comes to court expecting thanks, and is paraded through the army and beheaded — so that no one hereafter serves a lord the way Ding Gong did.',
+    descriptionZh:
+      '楚騎追漢王,漢王急,推墮孝惠、魯元車下,滕公常下收載之,如是者三。'
+      + '曰:「雖急,不可以驅,柰何棄之?」於是遂得脫。\n\n'
+      + '季布母弟丁公,為楚將。丁公為項羽逐窘高祖彭城西,短兵接,'
+      + '高祖急,顧謂丁公曰:「兩賢豈相戹哉!」丁公引兵而還,漢王遂解去。\n\n'
+      + '及項王滅,丁公謁見高祖。高祖以丁公徇軍中,曰:'
+      + '「丁公為項王臣不忠,使項王失天下者,乃丁公也。」'
+      + '遂斬丁公,曰:「使後世為人臣者無效丁公!」',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-liu-bang', delta: 12 },
+      { kind: 'officer-loyalty', officerId: 'hist-ding-gong', delta: -25 },
+      { kind: 'officer-loyalty', officerId: 'hist-xiahou-ying', delta: 20 },
+      { kind: 'city-defense', cityId: 'pengcheng', delta: -15 },
+      { kind: 'flag', key: 'pc-dinggong' },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 井陘(chain-jingxing)── 背水是通用的,而那一戰真正的收穫是一個俘虜 */
+  {
+    id: 'evt-ch-jingxing-1',
+    name: { en: 'He Untied Him and Sat Him Facing East', zh: '解其縛,東鄉坐,師事之' },
+    yearMin: 178,
+    yearMax: 187,
+    requires: [
+      { kind: 'flag-set', key: 'chain-jingxing' },
+      { kind: 'officer-alive', officerId: 'hist-han-xin' },
+      { kind: 'officer-alive', officerId: 'hist-li-zuoche' },
+      { kind: 'flag-set', key: 'ch-beishui' },
+      { kind: 'flag-unset', key: 'jx-guangwu' },
+    ],
+    description:
+      'Before the battle Li Zuoche told Chen Yu to give him thirty thousand men to cut the baggage in the defile while the main body simply refused battle behind the walls, and Chen Yu, who liked to call himself a righteous army that used no tricks, said no. So Han Xin, who had sent spies to find out whether the plan had been taken and was delighted to hear it had not, offers a thousand pieces of gold for Li Zuoche alive. When they bring him in bound, Han Xin unties him himself, seats him facing east in the place of the teacher, takes the west himself in the place of the student, and asks him how one goes about taking Yan and Qi. The answer wins him the north without another siege.',
+    descriptionZh:
+      '廣武君李左車說成安君曰:「願足下假臣奇兵三萬人,從間道絕其輜重;'
+      + '足下深溝高壘,堅營勿與戰。……野無所掠,不至十日,而兩將之頭可致於麾下。」\n\n'
+      + '成安君,儒者也,常稱義兵不用詐謀奇計,曰:'
+      + '「兵法十則圍之,倍則戰。今韓信兵號數萬,其實不過數千,'
+      + '能千里而襲我,亦已罷極。今如此避而不擊,後有大者,何以加之!」不聽。\n\n'
+      + '韓信使人閒視,知其不用,還報,則大喜,乃敢引兵遂下。……'
+      + '信乃令軍中毋殺廣武君,有能生得者購千金。\n\n'
+      + '於是有縛廣武君而致戲下者,信解其縛,東鄉坐,西鄉對,師事之。\n\n'
+      + '——問以燕、齊之計,廣武君曰:「方今為將軍計,莫如案甲休兵,'
+      + '北首燕路,而後遣辯士奉咫尺之書……燕必不敢不聽。」信從其策,燕從風而靡。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-li-zuoche', delta: 35 },
+      { kind: 'officer-join-ruler', officerId: 'hist-li-zuoche', rulerOfficerId: 'hist-liu-bang' },
+      { kind: 'officer-loyalty', officerId: 'hist-han-xin', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'hist-chen-yu', delta: -25 },
+      { kind: 'city-defense', cityId: 'changshan', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'changshan', multiplier: 0.8 },
+      { kind: 'flag', key: 'jx-guangwu' },
+    ],
+    mood: 'auspicious',
+  },
+
+  /*
+   * ── 戰國最後四張沒有自己那一戰的盤 ──
+   *
+   * 魏文侯/商鞅/五國攻秦/伊闕。七雄逐鹿那一張刻意不給旗標:它的題眼**就是
+   * 整個時代**,通用那二十條演的正是它要的東西 —— 給它專屬鏈反而是把
+   * 別的盤的戲搬過去。
+   */
+
+  /* ── 魏文侯首霸(chain-weiwen)── 西門豹治鄴是通用的,這裡是另外兩位 */
+  {
+    id: 'evt-ws-weiwen-1',
+    name: { en: 'Wring the Last Measure From the Earth', zh: '盡地力之教' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-weiwen' },
+      { kind: 'officer-alive', officerId: 'hist-li-kui-ws' },
+      { kind: 'officer-alive', officerId: 'hist-wei-wenhou' },
+      { kind: 'flag-unset', key: 'ww-likui' },
+    ],
+    description:
+      'Li Kui puts numbers to the thing nobody had counted. A hundred li square is nine million mu of registered land; take a third off for hills, marsh and dwellings and six million mu are left; farmed diligently, each mu yields three sheng more, and slackly, three sheng less — so diligence or sloth across one hundred li is a swing of one million eight hundred thousand piculs of grain. Then the other half: grain too dear starves the townsman, grain too cheap ruins the farmer; hurt the townsman and they scatter, hurt the farmer and the state goes poor. So he reads each harvest as high, middling or low, buys the surplus in at a fixed price and sells it back in the lean year — and Wei never has a famine while the rest of the age does.',
+    descriptionZh:
+      '李悝為魏文侯作盡地力之教。以為地方百里,提封九萬頃,'
+      + '除山澤邑居參分去一,為田六百萬畝。'
+      + '治田勤謹則畝益三升,不勤則損亦如之。'
+      + '地方百里之增減,輒為粟百八十萬石矣。\n\n'
+      + '又曰:糴甚貴傷民,甚賤傷農;民傷則離散,農傷則國貧。'
+      + '故甚貴與甚賤,其傷一也。善為國者,使民毋傷而農益勸。\n\n'
+      + '是故善平糴者,必謹觀歲有上中下孰。……故雖遇饑饉水旱,'
+      + '糴不貴而民不散,取有餘以補不足也。行之魏國,國以富彊。\n\n'
+      + '——又撰次諸國法,著《法經》六篇。商君受之以相秦。',
+    effects: [
+      { kind: 'city-food', cityId: 'ye', delta: 3000 },
+      { kind: 'city-food', cityId: 'chenliu', delta: 2500 },
+      { kind: 'city-loyalty', cityId: 'ye', delta: 15 },
+      { kind: 'city-loyalty', cityId: 'chenliu', delta: 12 },
+      { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 1.15 },
+      { kind: 'officer-loyalty', officerId: 'hist-li-kui-ws', delta: 20 },
+      { kind: 'flag', key: 'ww-likui' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-weiwen-2',
+    name: { en: 'A Basketful of Letters Against Him', zh: '謗書一篋' },
+    yearMin: 178,
+    yearMax: 187,
+    requires: [
+      { kind: 'flag-set', key: 'chain-weiwen' },
+      { kind: 'officer-alive', officerId: 'hist-yue-yang' },
+      { kind: 'officer-alive', officerId: 'hist-wei-wenhou' },
+      { kind: 'flag-set', key: 'ww-likui' },
+      { kind: 'flag-unset', key: 'yy-yueyang' },
+    ],
+    description:
+      'Yue Yang is three years outside Zhongshan and his own son is inside it. The lord of Zhongshan boils the boy and sends the broth out to the siege lines; Yue Yang sits down under his awning and drinks a cup of it. He ate his own son for my sake, says Marquis Wen afterwards. A man who will eat his own son, answers his adviser, will eat anyone. So when Zhongshan falls and Yue Yang comes home expecting a fief, the marquis rewards the service and quietly keeps the man at arms length — and shows him one thing: a box, full of the letters that came in for three years demanding his recall.',
+    descriptionZh:
+      '樂羊為魏將而攻中山。其子在中山,中山之君烹其子而遺之羹,'
+      + '樂羊坐於幕下而啜之,盡一杯。\n\n'
+      + '文侯謂堵師贊曰:「樂羊以我故而食其子之肉。」'
+      + '答曰:「其子而食之,且誰不食?」\n\n'
+      + '樂羊罷中山,文侯賞其功而疑其心。\n\n'
+      + '——樂羊反,論功,文侯示之謗書一篋。樂羊再拜稽首曰:'
+      + '「此非臣之功也,主君之力也。」',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'zhongshan', delta: 18 },
+      { kind: 'city-defense', cityId: 'zhongshan', delta: 20 },
+      { kind: 'city-troops-multiplier', cityId: 'zhongshan', multiplier: 1.2 },
+      { kind: 'officer-loyalty', officerId: 'hist-yue-yang', delta: -15 },
+      { kind: 'officer-loyalty', officerId: 'hist-wei-wenhou', delta: 12 },
+      { kind: 'flag', key: 'yy-yueyang' },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 商鞅變法(chain-shangyang)── 徙木立信是通用的,這裡是代價那一半 */
+  {
+    id: 'evt-ws-shangyang-1',
+    name: { en: 'The Law Broke at the Top', zh: '刑其傅,黥其師' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-shangyang' },
+      { kind: 'officer-active', officerId: 'hist-shang-yang' },
+      { kind: 'officer-alive', officerId: 'hist-qin-xiaogong' },
+      { kind: 'flag-unset', key: 'sy-taizi' },
+    ],
+    description:
+      'A year in, and the people coming to the capital to complain that the new statutes are unworkable are counted in the thousands. Then the heir apparent breaks the law. The law does not run, says Shang Yang, because those above break it — and since one cannot put a knife to the lord to be, he takes it to the men responsible for him instead: the guardian Prince Qian is sentenced, the tutor Gongsun Jia is branded on the face. The next morning every man in Qin does exactly as the statutes say. Ten years on there is nothing left lying in the roads to pick up, no bandits in the hills, every household is fed — and the people are brave in the quarrels of the state and cowardly in their own.',
+    descriptionZh:
+      '令行於民期年,秦民之國都言初令之不便者以千數。'
+      + '於是太子犯法。衛鞅曰:「法之不行,自上犯之。」將法太子。'
+      + '太子,君嗣也,不可施刑,刑其傅公子虔,黥其師公孫賈。'
+      + '明日,秦人皆趨令。\n\n'
+      + '行之十年,秦民大說,道不拾遺,山無盜賊,家給人足。'
+      + '民勇於公戰,怯於私鬥,鄉邑大治。\n\n'
+      + '秦民初言令不便者有來言令便者,衛鞅曰:「此皆亂化之民也。」'
+      + '盡遷之於邊城。其後民莫敢議令。',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'changan', delta: 12 },
+      { kind: 'city-defense', cityId: 'changan', delta: 18 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'city-troops-multiplier', cityId: 'mei', multiplier: 1.12 },
+      { kind: 'city-troops-multiplier', cityId: 'chencang', multiplier: 1.12 },
+      { kind: 'city-food', cityId: 'changan', delta: 2500 },
+      { kind: 'officer-loyalty', officerId: 'hist-shang-yang', delta: 15 },
+      { kind: 'flag', key: 'sy-taizi' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-ws-shangyang-2',
+    name: { en: 'Undone by His Own Statute', zh: '作法自斃' },
+    yearMin: 179,
+    yearMax: 188,
+    requires: [
+      { kind: 'flag-set', key: 'chain-shangyang' },
+      { kind: 'officer-active', officerId: 'hist-shang-yang' },
+      { kind: 'flag-set', key: 'sy-taizi' },
+      { kind: 'flag-unset', key: 'sy-chelie' },
+    ],
+    description:
+      'Duke Xiao dies and the branded heir takes the throne. Prince Qian and his party lay an accusation of treason and officers are sent to take him. Running for the border he tries to put up at an inn, and the innkeeper, who does not know his face, says he cannot take a guest without papers — by the law of Lord Shang, the house would be liable. So this, he says, is where making law gets you. Wei will not have him either, remembering how he took their army by inviting its commander to a parley. Qin catches him, and the new king has him torn apart between chariots and paraded, saying, let no one rebel as Shang Yang did. The family is wiped out. Every statute he wrote stays in force for the next hundred and fifty years.',
+    descriptionZh:
+      '孝公卒,太子立。公子虔之徒告商君欲反,發吏捕商君。\n\n'
+      + '商君亡至關下,欲舍客舍。客人不知其是商君也,曰:'
+      + '「商君之法,舍人無驗者坐之。」'
+      + '商君喟然歎曰:「嗟乎,為法之敝一至此哉!」\n\n'
+      + '去之魏。魏人怨其欺公子卬而破魏師,弗受。……'
+      + '秦發兵攻商君,殺之於鄭黽池。'
+      + '秦惠王車裂商君以徇,曰:「莫如商鞅反者!」遂滅商君之家。\n\n'
+      + '——而秦法未嘗一日廢。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-shang-yang', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-qin-huiwen', delta: 15 },
+      { kind: 'city-loyalty', cityId: 'changan', delta: -10 },
+      { kind: 'city-defense', cityId: 'changan', delta: 12 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.08 },
+      { kind: 'flag', key: 'sy-chelie' },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 五國攻秦(chain-hangu)── 合縱是通用的,而合縱真正的樣子是它自己散掉 */
+  {
+    id: 'evt-ws-hangu-1',
+    name: { en: 'The Alliance Went Home', zh: '至函谷關,六國兵皆引而歸' },
+    yearMin: 178,
+    yearMax: 187,
+    requires: [
+      { kind: 'flag-set', key: 'chain-hangu' },
+      { kind: 'officer-alive', officerId: 'hist-su-qin' },
+      { kind: 'officer-alive', officerId: 'hist-gongsun-yan' },
+      { kind: 'flag-unset', key: 'hg-bafang' },
+    ],
+    description:
+      'The vertical alliance reaches the only door into Guanzhong with the King of Chu at its head, and there it stops. Qin comes out of the pass and fights, and the armies of six kingdoms turn around and go home — Qi last of all, and only because it started furthest away. Nobody wants to be the one whose men die opening the gate for someone else to walk through. Two years later, at Xiuyu, Qin takes the head of Shen Cha, breaks the sons of Zhao and the heir of Han and counts eighty-two thousand heads; the states that could not stand together for one afternoon are beaten one after another for the next eighty years.',
+    descriptionZh:
+      '蘇秦約從山東六國共攻秦,楚懷王為從長。\n\n'
+      + '至函谷關,秦出兵擊六國,六國兵皆引而歸,齊獨後。\n\n'
+      + '——五國之師,名為合縱,而各懷其私:'
+      + '皆欲人之先出,而己收其後功。'
+      + '故兵至而不敢攻,攻而不敢盡力,一戰而罷。\n\n'
+      + '其後二年,秦使庶長疾與戰修魚,虜其將申差,'
+      + '敗趙公子渴、韓太子奐,斬首八萬二千。',
+    effects: [
+      { kind: 'city-defense', cityId: 'hanguguan', delta: 25 },
+      { kind: 'city-troops-multiplier', cityId: 'hanguguan', multiplier: 1.25 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.1 },
+      { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 0.9 },
+      { kind: 'city-troops-multiplier', cityId: 'xuchang', multiplier: 0.85 },
+      { kind: 'city-troops-multiplier', cityId: 'chenliu', multiplier: 0.88 },
+      { kind: 'city-troops-multiplier', cityId: 'jiangling', multiplier: 0.9 },
+      { kind: 'city-troops-multiplier', cityId: 'linzi', multiplier: 0.92 },
+      { kind: 'officer-loyalty', officerId: 'hist-su-qin', delta: -20 },
+      { kind: 'flag', key: 'hg-bafang' },
+    ],
+    mood: 'ominous',
+  },
+
+  /* ── 伊闕(chain-yique)── */
+  {
+    id: 'evt-ws-yique-1',
+    name: { en: 'Neither Would Go First', zh: '伊闕·一日斬首二十四萬' },
+    yearMin: 178,
+    yearMax: 186,
+    requires: [
+      { kind: 'flag-set', key: 'chain-yique' },
+      { kind: 'officer-active', officerId: 'hist-bai-qi' },
+      { kind: 'officer-alive', officerId: 'hist-gongsun-xi' },
+      { kind: 'flag-unset', key: 'yq-battle' },
+    ],
+    description:
+      'Han and Wei put a joint army in the gorges of the Yi to bar the road east, and it is a joint army only on paper: Han is the smaller and keeps glancing at Wei, unwilling to spend its own men first; Wei is counting on the Han veterans to be the point of the spear. Neither will lead. Bai Qi, in his first independent command and outnumbered better than two to one, sets up dummy formations facing the Han line to hold it in place and takes everything he has into the Wei camp instead. Wei breaks; Han, watching its ally destroyed with its own troops still standing, dissolves on its own. Two hundred and forty thousand heads in a day, five cities, and the Wei commander taken alive.',
+    descriptionZh:
+      '昭王十四年,白起為左更,攻韓、魏於伊闕,斬首二十四萬,'
+      + '又虜其將公孫喜,拔五城。\n\n'
+      + '——是時,韓孤顧魏,不欲先用其眾;'
+      + '魏恃韓之銳,欲推以為鋒。二軍爭便之力不同。\n\n'
+      + '白起乃張疑兵以待韓陣,而以精銳襲魏軍。'
+      + '魏軍既敗,韓軍自潰,遂大破二國之師,流血漂鹵。\n\n'
+      + '自是之後,韓、魏不能支,而秦之東門開矣。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-gongsun-xi', status: 'imprisoned' },
+      { kind: 'officer-loyalty', officerId: 'hist-bao-yuan', delta: -25 },
+      { kind: 'city-troops-multiplier', cityId: 'xuchang', multiplier: 0.6 },
+      { kind: 'city-defense', cityId: 'xuchang', delta: -25 },
+      { kind: 'city-troops-multiplier', cityId: 'chenliu', multiplier: 0.6 },
+      { kind: 'city-defense', cityId: 'chenliu', delta: -25 },
+      { kind: 'city-troops-multiplier', cityId: 'luoyang', multiplier: 1.2 },
+      { kind: 'city-defense', cityId: 'luoyang', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'hist-bai-qi', delta: 20 },
+      { kind: 'flag', key: 'yq-battle' },
+    ],
+    mood: 'martial',
+  },
+
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(

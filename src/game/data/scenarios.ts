@@ -9888,6 +9888,7 @@ export const SCENARIO_WS_SHANGYANG: Scenario = {
     'The west, before it was a wolf. Qin is a backward marcher state, mocked at the conferences of the central plain, holding only the Guanzhong basin — Ba-Shu is still its own kingdoms, the Long corridor and the Hexi lands beyond Qin\'s reach, while in the east Wei stands first among the powers. Duke Xiao, burning to lift his house, gives the Wey exile Shang Yang an absolutely free hand: to abolish the old aristocracy of blood, reward only farming and war, and forge from cold law the most terrible military machine the age will know. The reforms will cost Shang Yang his life and remake the world.',
   descriptionZh: "西陲未為狼時。秦乃僻處邊鄙之國，為中原會盟所輕，僅守關中盆地——巴蜀尚為其國，隴右、河西之地皆非秦有，而東方魏為諸侯之首。孝公切於振作其室，授衛人商鞅以全權：廢世卿世祿之舊貴，獎耕戰，以冷酷之法，鑄就此世所未見之可怖戰爭機器。此變法將以商鞅之命為代價，而重塑天下。",
   startDate: { year: 178, season: 'spring' },
+  eventFlags: ['chain-shangyang'],
   /*
    * 開局外交 —— 商鞅變法:秦欲東出而魏據河西 ——
      此後二十年,秦魏之爭只有一個題目,就是那一片河西之地。
@@ -10008,6 +10009,7 @@ export const SCENARIO_WS_HANGU: Scenario = {
     'The vertical alliance made manifest. Su Qin, a starving scholar who once could not borrow a coin from his own family, has talked his way into the chancellorships of all six kingdoms at once and wears their six seals on one sash, binding them north-to-south against the wolf of the west. Now the armies of the alliance roll toward the great gate of Hangu, the only road into Guanzhong. But inside, Su Qin\'s fellow-student Zhang Yi sells Qin the counter — the horizontal: buy off one ally, frighten another, and the great coalition rots from within before it can force the pass.',
   descriptionZh: "合縱之成形。蘇秦，昔日向親族借錢而不得的窮士，竟一舌而並佩六國相印於一身，合天下南北之眾以抗西方之狼。今合縱之師滾滾西向函谷大關——入關中之唯一通道。然關內，蘇秦之同門張儀，正為秦售其反制之策連橫：賂一國、懼一國，使這龐大的聯盟未及叩關，先自內潰。",
   startDate: { year: 178, season: 'autumn' },
+  eventFlags: ['chain-hangu'],
   /*
    * 開局外交 —— 五國攻秦:公孫衍倡合縱,楚齊趙魏韓並兵臨函谷 ——
      而縱者,各懷其私,故五國之師終於自罷。
@@ -10065,6 +10067,7 @@ export const SCENARIO_WS_YIQUE: Scenario = {
     'The God of War\'s first masterpiece. Han and Wei, the two heirs of Jin, throw a joint army across the Yi River gorges to bar Qin\'s road east — but their commanders distrust each other and neither will lead. Bai Qi, reading the seam between them, feints at one and falls upon the other, then wheels and destroys the first: two hundred and forty thousand heads taken in a day. The gate to the central plain stands open, Yiyang and the Zhou heartland are in Qin\'s hand, and a young general has announced his name to history.',
   descriptionZh: "戰神之初篇傑作。韓魏二晉之裔，合師於伊水之闕以拒秦東出——然二帥相疑，莫肯先進。白起察其罅隙，佯攻其一而襲其一，復回師滅其先者：一日之間，斬首二十四萬。中原之門洞開，宜陽與周室腹地入於秦手，而一位年輕的將軍，自此向歷史報出了自己的名姓。",
   startDate: { year: 178, season: 'spring' },
+  eventFlags: ['chain-yique'],
   /*
    * 開局外交 —— 伊闕之戰:白起破韓魏聯軍二十四萬 ——
      自此韓魏折,而秦之東門開矣。
@@ -10277,6 +10280,7 @@ export const SCENARIO_WS_WEIWEN: Scenario = {
     'The dawn of the warring age. The house of Jin has been carved in three, and of the three heirs Wei rises first and fastest. Marquis Wen, the model lord of the era, gathers a court no rival can match: Li Kui writes the first code of Legalist reform and "wrings the earth dry" to fill the granaries; Wu Qi forges the armoured foot-soldiers of Wei who do not lose; Ximen Bao tames the Zhang River and breaks the witch-cult of Ye; Yue Yang marches out and swallows the kingdom of Zhongshan. For one generation Wei is the first power under heaven, and a still-feudal Qin cowers behind the passes — before Wei\'s heirs throw the whole inheritance away.',
   descriptionZh: "大爭之世的黎明。晉室既三分，三晉之中魏興最先、最速。文侯，一世之賢君，聚天下無雙之朝：李悝著法家變法之首典，盡地力之教以實倉廩；吳起鑄魏之重甲武卒，戰而不敗；西門豹治漳水、破鄴之巫風；樂羊出師，吞中山之國。魏為天下首強者，凡一世，而尚行封建之秦瑟縮於關隘之後——直至文侯之子孫，將此基業盡棄。",
   startDate: { year: 178, season: 'spring' },
+  eventFlags: ['chain-weiwen'],
   /*
    * 開局外交 —— 魏文侯用李悝、吳起,三晉之盟猶在 ——
      魏趙韓同出於晉,故相親;而秦弱於河西,魏之西鄙也。
@@ -10513,6 +10517,12 @@ export const SCENARIO_CH_SANQIN: Scenario = {
   descriptionZh: "贏得天下的疑兵。劉邦入漢中時，燒絕棧道於身後，使項羽信其永不復出——今其新拜大將韓信，化此灰燼為詭計。遣人佯作『修復』棧道，而大軍暗出陳倉故道，驟入關中，趁三秦章邯未及反應而擊之。得渭水盆地，漢王便終有爭天下之基。",
   startDate: { year: 178, season: 'autumn' },
   /*
+   * `ch-zhuihan` 是**預先種下的前置** —— 開幕那一天韓信已經拜過大將了
+   * (盤面文案自己寫著「其新拜大將韓信」),不該再讓「蕭何月下追韓信」擲一次
+   * 才解鎖暗度陳倉。不種的話,這張盤的題眼要排到通用長鏈的第二節。
+   */
+  eventFlags: ['chain-sanqin', 'ch-zhuihan'],
+  /*
    * 開局外交 —— 還定三秦:明修棧道,暗度陳倉 ——
      韓信之計,一月而定關中。
    */
@@ -10557,6 +10567,12 @@ export const SCENARIO_CH_PENGCHENG: Scenario = {
     'The high tide of folly. While Xiang Yu is away in the north crushing Qi\'s revolt, Liu Bang gathers a grand coalition of five kingdoms — five hundred and sixty thousand men — and walks into Pengcheng, the Hegemon\'s own capital, to feast in his halls. Then Xiang Yu turns. Leaving the siege of Qi, he takes thirty thousand cavalry, rides through the night, and falls on the drunken coalition at dawn; by dusk the Si and Sui rivers run choked with Han dead and Liu Bang flees for his life. It is the most crushing defeat of his career — and he will still, somehow, win the war.',
   descriptionZh: "得意之巔，亦愚妄之巔。當項羽北上平齊之叛，劉邦糾合五國之眾——五十六萬——徑入彭城，霸王之都，宴於其殿。然後項羽回師。棄平齊之圍，提三萬精騎，連夜奔襲，黎明掩殺沉醉之聯軍；至暮，泗水睢水為漢屍所塞，劉邦亡命而逃。此其生涯最慘之敗——而他終將，竟然，贏得此戰爭。",
   startDate: { year: 178, season: 'summer' },
+  /*
+   * 追韓信、暗度陳倉在這張盤開幕前都已經發生(漢王正坐在彭城裡)。
+   * 不預先種下的話,「彭城·三萬破五十六萬」排在通用長鏈第四節 ——
+   * 實測十年跑完**這張盤演不到彭城之戰**。
+   */
+  eventFlags: ['chain-pengcheng', 'ch-zhuihan', 'ch-chencang'],
   /*
    * 開局外交 —— 彭城之戰:漢王將五諸侯兵五十六萬入彭城,
      而項羽以三萬騎晨擊之,漢卒十餘萬人皆入睢水,水為之不流。
@@ -10657,6 +10673,8 @@ export const SCENARIO_CH_JINGXING: Scenario = {
     'Han Xin\'s impossible victory. Sent north with a few tens of thousands of raw troops to open a second front, he has already swallowed Wei; now he faces Chen Yu\'s two hundred thousand at the mouth of the Jingxing pass. He does the thing every manual forbids — drawing up his men with a river at their backs and no line of retreat — so that, with nowhere to run, they fight like cornered demons; meanwhile two thousand light horse slip round and tear the Zhao banners from their emptied camp. Chen Yu, who scorned Li Zuoche\'s plea to simply hold the pass, dies in the rout. "Throw them onto dead ground, and they live."',
   descriptionZh: "韓信不可能之勝。受命北出，將數萬新卒以開第二戰場，他已並魏；今於井陘口面對陳餘二十萬之眾。他行兵家所禁——背水列陣、無退路可走——使士卒無所逃而人人死戰；同時遣輕騎二千繞出，拔趙幟於空壁。陳餘輕李左車守關之策，死於亂軍。「陷之死地而後生。」",
   startDate: { year: 178, season: 'autumn' },
+  /* 同彭城:韓信此時已定三秦、已並魏,背水才是這張盤的第一幕。 */
+  eventFlags: ['chain-jingxing', 'ch-zhuihan', 'ch-chencang'],
   /*
    * 開局外交 —— 井陘之戰:背水一陣,置之死地而後生 ——
      而趙有廣武君之策而不用。
@@ -10748,6 +10766,7 @@ export const SCENARIO_CH_JULU: Scenario = {
     'Break the cauldrons, sink the boats. The Qin empire\'s last great armies have the rebellion by the throat: Wang Li\'s Great Wall corps rings the King of Zhao inside Julu while Zhang Han\'s host guards the supply road, and Zhang Er within the walls screams for a rescue no one dares give — Chen Yu sits outside with his whole army and will not move. Then Xiang Yu murders the dithering Song Yi, seizes command, crosses the river, and orders every cauldron smashed and every boat sunk: three days\' rations and no way back, win or die. In nine furious charges he annihilates the Qin host before a dozen frozen lords too afraid to leave their walls — and walks out, at twenty-six, the master of them all.',
   descriptionZh: "破釜沉舟。秦帝國最後之大軍扼住了起義之咽喉：王離之長城軍圍趙王於鉅鹿，章邯之眾守其甬道糧路，城中張耳呼救而無人敢應——陳餘擁兵於外，按兵不動。於是項羽斬猶豫之宋義，奪其軍，渡河，下令盡破釜甑、盡沉舟船：持三日糧、無還之路，非勝即死。九戰之間，他於十餘壁上諸侯目瞪口呆之注視下，殲秦軍主力——而後步出轅門，年方二十六，諸侯膝行，莫敢仰視。",
   startDate: { year: 178, season: 'winter' },
+  eventFlags: ['chain-julu'],
   /*
    * 開局外交 —— 鉅鹿之戰:項羽破釜沉舟,九戰九捷 ——
      諸侯將入轅門,無不膝行而前,莫敢仰視。
