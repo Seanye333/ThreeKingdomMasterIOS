@@ -7497,6 +7497,85 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-dong-lives': {
+    /*
+     * 這張盤上董卓沒死,而關東群雄各自的敗法反而更清楚 —— 他們本來就不是
+     * 被董卓打散的,是自己散的。
+     */
+    cao: {
+      defeat: {
+        titleZh: '滎陽之敗,再一次',
+        titleEn: 'Xingyang, Again',
+        textZh:
+          '諸侯屯酸棗,日置酒高會,不圖進取。'
+          + '公獨引兵西,遇徐榮於滎陽,大敗,流矢中公,所乘馬被創。\n\n'
+          + '這一回沒有曹洪讓馬。\n\n'
+          + '—— 「諸君北面,我自西向」那句話,他說過一次;'
+          + '而聽的人,一次也沒有動。',
+        textEn:
+          'The lords camped at Suanzao and held drinking parties day after day, and none of them moved.\n\n'
+          + 'He went west alone, met Xu Rong at Xingyang, and was broken; a stray arrow found him and his horse went down under him.\n\n'
+          + 'This time Cao Hong did not give him a mount.\n\n'
+          + 'He had said it once: you gentlemen face north, and I will go west by myself. Nobody who heard it ever moved.',
+      },
+      verdictZh:
+        '論曰:關東之兵十餘萬,而卓終不能為所破者,'
+        + '非卓強也 —— **諸君各懷去就** ,而兵之在人,'
+        + '不在多。\n'
+        + '操之孤軍西向,敗於滎陽而聲名益著;'
+        + '此其所以終為雄也。而使無人繼之,則亦一滎陽而已。',
+      verdictEn:
+        'The historian says: the eastern coalition put more than a hundred thousand men in the field and never broke Dong Zhuo, and that was not because Dong Zhuo was strong. Every one of those lords was calculating his own exit. An army is worth what the men leading it are worth, not what it numbers. Cao Cao went west alone and was beaten at Xingyang, and his name stood higher afterwards for it — which is why he ended as one of the great ones. With nobody to carry it on, it is just Xingyang.',
+    },
+    'yuan-shao': {
+      defeat: {
+        titleZh: '盟主',
+        titleEn: 'Chief of the Alliance',
+        textZh:
+          '關東推紹為盟主。而盟主之令出於帳中,不出於帳外。\n\n'
+          + '議立劉虞,虞不敢受;議進兵,則諸將互推;'
+          + '議糧,則冀州之粟不出境。\n\n'
+          + '及軍散之日,紹坐帳中,案上尚有未發之檄十餘道 ——'
+          + '皆已寫好,無人可發。',
+        textEn:
+          'The east made him chief of the alliance. The chief gave orders inside his own tent and they did not travel past the flap.\n\n'
+          + 'A proposal to enthrone Liu Yu, who would not have it. A proposal to advance, with every commander deferring to the next. A proposal about grain, and the grain of Ji province did not cross the border.\n\n'
+          + 'On the day the army dispersed he sat in the tent with a dozen dispatches on the table, all written out, and nobody left to send them to.',
+      },
+      verdictZh:
+        '論曰:紹之為盟主,有其名而無其實。'
+        + '夫盟者,合眾人之力以為一;'
+        + '而眾人之力,非可以名合也。\n'
+        + '故曰:天下之患,不在無盟,在**盟而不能令**。',
+      verdictEn:
+        'The historian says: he was chief of the alliance in name and not in substance. An alliance exists to make many strengths into one, and many strengths are not joined by a title. The danger is never the absence of an alliance. It is an alliance that cannot give an order.',
+    },
+    'kong-rong': {
+      defeat: {
+        titleZh: '座上客常滿',
+        titleEn: 'The Seats Were Always Full',
+        textZh:
+          '融在北海,立學校,表顯儒術,'
+          + '每嘆曰:「座上客常滿,樽中酒不空,吾無憂矣。」\n\n'
+          + '及黃巾至,城中無守具;'
+          + '及袁氏至,士皆散走。\n\n'
+          + '—— 城破之日,融猶談笑自若。'
+          + '妻子見執,而二子方對坐弈棋,不起。'
+          + '左右曰:「父執而不起,何也?」對曰:「安有巢毀而卵不破乎?」',
+        textEn:
+          'At Beihai he founded schools and made the classics honoured, and liked to say: the seats are always full and the cup is never empty, so what have I to worry about.\n\n'
+          + 'When the Yellow Turbans came the city had no siege stores. When the Yuan came, the gentlemen scattered.\n\n'
+          + 'On the day the walls broke he was still talking and laughing. His wife and children were seized; his two sons went on with their game of go and did not rise. Someone asked why they did not get up when their father was taken. One of them answered: where a nest has been destroyed, do the eggs stay whole?',
+      },
+      verdictZh:
+        '論曰:融之才,在文不在武;'
+        + '其守北海,所恃者名而已。\n'
+        + '亂世之名,可以致客,不可以致兵;'
+        + '可以傳於後,不可以守於今。\n'
+        + '然其二子對弈之答,千載之下讀之,'
+        + '猶知孔氏之教未嘗虛設。',
+      verdictEn:
+        'The historian says: his gift was letters, not arms, and what he held Beihai with was a reputation. In a broken age a reputation brings guests and not soldiers; it carries to later ages and does not hold the present one. Yet the answer his two sons gave over the go board, read a thousand years later, still shows that what the Kong family taught was not taught for nothing.',
+    },
     dong: {
       defeat: {
         titleZh: '鳳儀亭之計不成',
