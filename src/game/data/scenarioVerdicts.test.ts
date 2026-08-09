@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SCENARIO_VERDICTS, scenarioVerdict } from './scenarioVerdicts';
+import { SCENARIO_VERDICTS, SHARED_DEFEATS, scenarioVerdict } from './scenarioVerdicts';
 import { SCENARIOS } from './scenarios';
 import { checkEndings } from '../systems/endings';
 import type { City, Force, Officer, EntityId } from '../types';
@@ -78,8 +78,56 @@ describe('戰役落幕文本(敗亡變體 / 史官論曰)', () => {
     expect(ending?.textZh).not.toContain('劉備');
   });
 
+  /* ── 共享敗亡層(2026-08-09)────────────────────────────────────────── */
+
+  it('周邊勢力吃得到共享敗亡 —— 沒逐盤寫也有自己的輓歌', () => {
+    // 馬騰在 15 張盤上都沒有逐盤的敗亡變體
+    const v = scenarioVerdict('scn-198-xiapi', 'ma-teng');
+    expect(v?.defeat?.titleZh).toBe(SHARED_DEFEATS['sg:ma-teng'].titleZh);
+  });
+
+  it('盤上寫過的專屬敗亡永遠優先於共享層', () => {
+    // 挑一個既在共享層裡、又在某張盤上逐盤寫過的家
+    const pair = Object.entries(SCENARIO_VERDICTS).flatMap(([sid, byForce]) =>
+      Object.entries(byForce)
+        .filter(([fid, v]) => v.defeat && SHARED_DEFEATS[`${sid.startsWith('scn-ws-') ? 'ws' : sid.startsWith('scn-ch-') ? 'ch' : sid.startsWith('scn-st-') ? 'st' : 'sg'}:${fid}`])
+        .map(([fid, v]) => ({ sid, fid, own: v.defeat! })),
+    )[0];
+    expect(pair, '沒有任何一家同時有專屬與共享敗亡 —— 這條測試就測不到東西了').toBeTruthy();
+    const got = scenarioVerdict(pair.sid, pair.fid);
+    expect(got?.defeat?.titleZh).toBe(pair.own.titleZh);
+  });
+
+  /*
+   * ⚠ 分路線是這一層的必要條件,不是裝飾:`qi`/`zhao`/`wei`/`chu` 這四個
+   * forceId **戰國與楚漢兩條線都在用**,而戰國的齊(田氏之齊)跟楚漢的齊
+   * (田榮田橫)不是同一個國家。只按 forceId 共享會把田橫五百人蹈海貼到
+   * 齊王建身上。
+   */
+  it('同一個 forceId 在不同路線上拿到不同的敗亡', () => {
+    const ws = scenarioVerdict('scn-ws-changping', 'qi')?.defeat?.titleZh;
+    const ch = scenarioVerdict('scn-ch-chuhan', 'qi')?.defeat?.titleZh;
+    expect(ws).toBeTruthy();
+    expect(ch).toBeTruthy();
+    expect(ws).not.toBe(ch);
+  });
+
+  it('共享的只有敗亡,論曰不跨盤搬', () => {
+    for (const d of Object.values(SHARED_DEFEATS)) {
+      expect(d.titleZh && d.titleEn && d.textZh && d.textEn).toBeTruthy();
+    }
+    // 一個只吃共享層的家:有 defeat,但不該憑空多出論曰
+    const v = scenarioVerdict('scn-198-xiapi', 'ma-teng');
+    expect(v?.defeat).toBeTruthy();
+    expect(v?.verdictZh).toBeUndefined();
+    expect(v?.verdictLostZh).toBeUndefined();
+  });
+
   /*
    * 沒寫過的盤照舊走通用結局 —— 這是刻意的,別讓它變成空白。
+   *
+   * (2026-08-09 加了共享層之後這條仍然成立,因為 `cao` 是**主要勢力**,
+   *  刻意沒放進 SHARED_DEFEATS —— 曹操軍在不同盤上的敗法真的不一樣。)
    *
    * scenarioId 用一個**不存在的假 id**,不是隨手挑一張真盤:原本這裡寫的是
    * scn-190-anti-dong-zhuo,而 190 一寫上落幕文本,這條測試就紅了 ——

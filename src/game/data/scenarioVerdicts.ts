@@ -8270,11 +8270,524 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   },
 };
 
+/* ════════════════════════════════════════════════════════════════════════
+   共享敗亡 —— 有些家在哪一張盤上敗亡,故事其實是同一個
+
+   逐盤逐家清點下來,540 段裡缺 299 段,而缺口高度集中:馬騰軍缺 15 張盤、
+   劉璋軍 14、劉表軍 13、士燮軍 16、張魯軍 12、鮮卑 12、南蠻 10 —— 全是
+   **周邊勢力**。而周邊勢力的敗亡在哪一張盤上都是同一件事:士燮亡於交州
+   自治的終結,不管那一年是 204 還是 220;馬騰亡於「西涼的兵是部曲不是國家
+   的兵」,不管誰來收。逐盤重寫十四遍不會寫得更準,只會寫得更淡。
+
+   所以這一層按 **(路線, 勢力)** 索引,而不是按盤:
+     - `ws:` 戰國、`ch:` 楚漢、`st:` 隋唐、`sg:` 三國(含假想盤)
+     - ⚠ 分路線是必須的 —— `qi`/`zhao`/`wei`/`chu` 這幾個 id **戰國與楚漢
+       兩條線都在用**,而戰國的齊(田氏)跟楚漢的齊(田榮)不是同一個國家。
+       只按 forceId 共享會張冠李戴。
+
+   盤上寫過的專屬 `defeat` 永遠優先 —— 這一層只補沒寫過的那些。主要勢力
+   (曹/孫/劉備/袁紹/袁術/司馬)刻意**不放進來**:他們在不同盤上的敗法真的
+   不一樣,那些仍然要逐盤寫。
+   ════════════════════════════════════════════════════════════════════════ */
+
+type DefeatText = NonNullable<ScenarioVerdict['defeat']>;
+
+function lineOf(scenarioId: string): 'ws' | 'ch' | 'st' | 'sg' {
+  if (scenarioId.startsWith('scn-ws-')) return 'ws';
+  if (scenarioId.startsWith('scn-ch-')) return 'ch';
+  if (scenarioId.startsWith('scn-st-')) return 'st';
+  return 'sg';
+}
+
+export const SHARED_DEFEATS: Record<string, DefeatText> = {
+  /* ── 三國 · 周邊勢力 ─────────────────────────────────────────────── */
+  'sg:ma-teng': {
+    titleZh: '西涼的兵,從來不是國家的兵',
+    titleEn: 'The Liang Horse Never Belonged to a State',
+    textZh:
+      '關西兵強,習長矛 —— 而八郡之地,沒有一座坐得住的城。羌胡騎士隨主而聚,主亡則散;'
+      + '所謂十部,今日盟於一帳,明日各歸各的谷。\n\n'
+      + '徵入朝為衛尉,是把韁繩交出去的那一步。一族二百餘口,誅於許都之市。'
+      + '從此涼州仍有戰馬,仍有長矛,而再無姓馬的旗。',
+    textEn:
+      'The men of the west are strong and know the long spear — and in eight commanderies there is not one city a man can sit still in. Qiang and Hu riders gather to a chief and scatter when he falls; the ten confederate captains swear in one tent tonight and ride back to ten separate valleys tomorrow.\n\n'
+      + 'Being summoned to court as Commandant of the Guard is the step where the reins change hands. Two hundred and some of the clan are executed in the market at Xu. Liang province still has horses after that, and still has spears. It no longer has a banner with that name on it.',
+  },
+  'sg:liu-zhang': {
+    titleZh: '父子在益州二十餘年,無恩德以加百姓',
+    titleEn: 'Twenty Years in Yi, and No Kindness Done',
+    textZh:
+      '劍閣之險不是防線,是牢籠 —— 關得住敵人,也關得住人心。張松所賣的不是地圖,'
+      + '法正所獻的不是城池,是他們對舊主僅剩的那點耐性。\n\n'
+      + '出降之日,群下莫不流涕。璋曰:「吾父子在益州二十餘年,無恩德以加百姓;'
+      + '百姓攻戰三年,肌膏草野者,以璋故也 —— 何心能安!」\n\n'
+      + '這句話比任何一場敗仗都準:他不是輸給了誰,他是從來沒有贏得過。',
+    textEn:
+      'The passes of Jiange are not a defence line, they are a cage: they keep the enemy out and they keep loyalty in, until it goes bad. What Zhang Song sold was not a map and what Fa Zheng handed over was not a city — it was the last of their patience with the man they served.\n\n'
+      + 'On the day of the surrender everyone around him wept. He said: my father and I have been in Yi province twenty years and have done its people no kindness; they have fought three years and their fat has greased the grass, and it is because of me. How can my heart be easy?\n\n'
+      + 'That sentence is more exact than any account of the battles. He did not lose to someone. He had simply never won anything.',
+  },
+  'sg:liu-biao': {
+    titleZh: '帶甲十餘萬,而一紙可降',
+    titleEn: 'A Hundred Thousand Under Arms, and One Sheet of Paper',
+    textZh:
+      '荊州沃野千里,士民殷富,學者關西、兗、豫之士歸者以千數 —— 八年之間,'
+      + '這裡是天下唯一還在讀書的地方。而那十餘萬甲,一次也沒有用過。\n\n'
+      + '曹公南征,琮舉州降,不告劉備。傅巽說琮曰:「以人臣而拒人主,逆也;'
+      + '以新造之楚而禦中國,必不當也。」左右皆稱善。\n\n'
+      + '論者謂表坐談客耳 —— 而坐談之所以能坐八年,正因為四鄰皆在互相消耗。'
+      + '等到不必再耗的那一天,八年攢下的東西,一天之內就不是他的了。',
+    textEn:
+      'A thousand li of good land, a rich and settled population, scholars arriving by the thousand from Guanxi and Yan and Yu — for eight years this was the one place in the realm where anyone was still reading. And the hundred thousand men under arms were never once used.\n\n'
+      + 'When Cao came south, Cong surrendered the province and did not tell Liu Bei. Fu Xun told him: for a subject to resist his sovereign is treason, and for a newly-made Chu to hold off the central state is not possible. Everyone present agreed.\n\n'
+      + 'They called him a man who sat and talked. What made eight years of sitting and talking possible was that all four neighbours were busy grinding each other down. On the day one of them stopped needing to, everything gathered in those eight years stopped being his inside of a single day.',
+  },
+  'sg:shi-xie': {
+    titleZh: '四十年的太平,身後半年就沒了',
+    titleEn: 'Forty Years of Quiet, Gone in Six Months',
+    textZh:
+      '交趾七郡,中國喪亂而此地獨全。士燮兄弟並為列郡,雄長一州四十餘年;'
+      + '出入鳴鐘磬,笳簫鼓吹,車騎滿道,胡人夾轂焚香者常有數十 —— 而歲貢不絕於江東,'
+      + '未嘗以兵相見。這是三國唯一一個**用歲貢買下來的自治**。\n\n'
+      + '燮卒,子徽自署交趾太守。呂岱表分海南三郡,將兵三千,晨夜浮海而至。'
+      + '徽率兄弟六人肉袒迎,岱悉斬之。四十年之經營,終於一個「不必再買」的判斷。',
+    textEn:
+      'Seven commanderies in the far south: the middle kingdom fell apart and this place alone stayed whole. The Shi brothers held the whole province between them for over forty years. He went out to bells and chimes, pipes and drums, the road full of horse, and dozens of foreigners walking beside the wheels burning incense — and the tribute went to the Southland every year without fail, and no army ever came. It is the one autonomy of the age that was bought rather than defended.\n\n'
+      + 'When he died his son took the seal himself. Lu Dai sailed at night with three thousand men and arrived before the news did. Six brothers came out bare-shouldered to meet him and he executed all of them. Forty years of arrangement ended the moment someone decided the tribute was no longer worth taking.',
+  },
+  'sg:zhang-lu': {
+    titleZh: '寧為曹公作奴,不為劉備上客',
+    titleEn: 'Rather a Slave in Cao Household Than a Guest in Liu',
+    textZh:
+      '以鬼道教民,自號師君。諸祭酒各領部眾,不置長吏,皆以祭酒為治;'
+      + '作義舍,置義米肉,行路者量腹取足;犯法者三原,然後乃行刑 —— 民夷便樂之,'
+      + '雄據巴、漢垂三十年。\n\n'
+      + '曹公至,左右欲悉燒寶貨倉庫,魯曰:「本欲歸命國家,而意未達。今之走,'
+      + '避銳鋒,非有惡意。寶貨倉庫,國家之有。」乃封藏而去。公嘉之,拜鎮南將軍,'
+      + '封閬中侯,邑萬戶。\n\n'
+      + '五斗米道亡了政權,卻沒有亡 —— 天師之教自此北行,而漢中的城牆,'
+      + '本來就不是它靠著的東西。',
+    textEn:
+      'He taught by the way of the spirits and called himself Lord Instructor. His libationers held their districts with no magistrates over them; charity lodges stood on the roads with rice and meat in them and travellers took what their stomachs held; an offender was forgiven three times before the law was applied. Han and Ba were content under it for nearly thirty years.\n\n'
+      + 'When Cao arrived his people wanted to burn the treasuries. He said: I meant to submit to the state and the message did not get through. Withdrawing now is avoiding the edge of the sword, not defiance. The treasuries belong to the state. So he sealed them and left. He was made General Who Guards the South, marquis of Langzhong, ten thousand households.\n\n'
+      + 'The Five Pecks of Rice lost its government and did not lose anything else. The teaching went north from there. The walls of Hanzhong were never what it stood on.',
+  },
+  'sg:xianbei': {
+    titleZh: '草原上沒有城可以丟',
+    titleEn: 'On the Steppe There Is No City to Lose',
+    textZh:
+      '檀石槐立庭於彈汗山,南鈔緣邊,北拒丁零,東卻夫餘,西擊烏孫,盡據匈奴故地,'
+      + '東西萬四千餘里 —— 而他一死,「諸部大人遂各分爭」。\n\n'
+      + '軻比能復制群狄,盡收匈奴故地,自云中、五原以東抵遼水,皆為鮮卑庭。'
+      + '幽州刺史王雄遣勇士韓龍刺殺之。「種落離散,互相侵伐,強者遠遁,弱者請服。」\n\n'
+      + '塞外之強,長不過一個人的壽命。沒有城,便沒有可以繼承的東西。',
+    textEn:
+      'Tanshihuai set his court at Mount Danhan, raided the border in the south, held off the Dingling in the north, drove back the Buyeo in the east and struck the Wusun in the west, taking all the old Xiongnu ground, fourteen thousand li across. And when he died the chiefs of the divisions immediately fell to fighting each other.\n\n'
+      + 'Kebineng put it back together, and everything from Yunzhong and Wuyuan east to the Liao was Xianbei court again. The inspector of You province sent a brave man named Han Long to knife him. Then: the tribes came apart and raided one another, the strong ones went far away, the weak ones asked to submit.\n\n'
+      + 'Strength beyond the wall lasts exactly one lifetime. With no city, there is nothing that can be inherited.',
+  },
+  'sg:nanman': {
+    titleZh: '漢人的官,進了寨子',
+    titleEn: 'The Magistrates Come Into the Stockades',
+    textZh:
+      '南中之地,山高林密,瘴癘所鍾,漢家郡縣雖設而令不行者百年 —— 賦不上、'
+      + '兵不徵,夷帥各以其部自守。\n\n'
+      + '既敗之後,「即其渠率而用之」;綱紀粗定,夷漢粗安。南人自此出兵、出賦,'
+      + '金銀丹漆、耕牛戰馬給軍國之用。\n\n'
+      + '所失者不是一場仗,是那一百年 —— 山還是那些山,而山裡的事,從此要向外面報。',
+    textEn:
+      'High mountains, thick forest, fever country: the imperial commanderies had been drawn on maps here for a century without their orders being obeyed. No taxes went out, no levies came in, and each chief held his own people.\n\n'
+      + 'After the defeat the policy was to appoint the same chiefs and govern through them. The framework was roughly established and Yi and Han were roughly at peace. From then on the south sent soldiers and sent taxes: gold and silver, cinnabar and lacquer, plough oxen and war horses, for the use of the state.\n\n'
+      + 'What was lost was not a battle. It was the century. The mountains are the same mountains; what happens in them now has to be reported to somewhere else.',
+  },
+  'sg:gongsun': {
+    titleZh: '他把自己關進了自己造的城',
+    titleEn: 'He Shut Himself Into the Fort He Built',
+    textZh:
+      '為圍塹十重,於塹裏築京,皆高五六丈,為樓其上;中塹為京,特高十丈,'
+      + '自居焉,積穀三百萬斛。瓚曰:「兵法百樓不攻。今吾樓櫓千重,食盡此穀,'
+      + '足知天下之事矣。」\n\n'
+      + '——「足知天下之事」的意思是:不再出去了。舊將被圍而不救,曰'
+      + '「救一人,使後將皆恃救不肯力戰」;於是後來的人真的都不力戰了。\n\n'
+      + '地道穿至樓下,火起。瓚知必敗,盡殺其妻子,乃自殺。'
+      + '白馬義從天下名騎,終於死在自家的樓上。',
+    textEn:
+      'Ten rings of ditch, and inside the ditches mounds five or six zhang high with towers on them; the middle mound ten zhang, where he lived, with three million bushels of grain under it. He said: the art of war says a hundred towers cannot be stormed. I have a thousand tiers of tower. When I have eaten this grain I will know how the realm has turned out.\n\n'
+      + 'Knowing how it turns out meant not going outside again. When an old officer was surrounded he did not relieve him, on the grounds that relieving one man teaches the rest to expect relief instead of fighting. After which none of them fought.\n\n'
+      + 'They mined under the towers and set the props alight. Knowing it was finished, he killed his own family and then himself. The White Horse Volunteers were the most famous cavalry in the realm, and they died at home, on a tower.',
+  },
+  'sg:liu-yan': {
+    titleZh: '造乘輿千餘乘,而死於背瘡',
+    titleEn: 'A Thousand Imperial Carriages, and a Boil on the Back',
+    textZh:
+      '「益州分野有天子氣」—— 他求的是交趾,改求的是益州,而益州是唯一一個'
+      + '關起門來可以自己稱天子的地方。至則托米賊斷道,不通章表,殺州中豪強以立威,'
+      + '造作乘輿車重千餘乘。\n\n'
+      + '天火燒城,車具蕩盡,延及民居。既痛諸子之死,又感祅災,遂發背瘡卒。\n\n'
+      + '一個把準備做到了乘輿的人,連一次僭號都沒來得及。',
+    textEn:
+      'There is an emperor aura over Yi province — he had asked for Jiaozhi first and changed the request to Yi, because Yi is the one place where a man can shut the door and call himself Son of Heaven. Once there he blamed the rice-thieves for cutting the road and stopped sending memorials, killed the powerful families of the province to establish himself, and had over a thousand imperial carriages built.\n\n'
+      + 'Heaven-fire took the city and the whole carriage park with it, and spread into the houses. Grieving for his sons and shaken by the omen, he died of a boil on his back.\n\n'
+      + 'A man who had got his preparations as far as the carriages, and never once got to use the title.',
+  },
+  'sg:han-sui': {
+    titleZh: '合則強,分則亡',
+    titleEn: 'Together They Were Strong; Apart They Were Nothing',
+    textZh:
+      '關中諸將十部,各不相下,而合兵則十萬。賈詡曰:「離之而已。」\n\n'
+      + '公與遂交馬語移時,不及軍事,但說京都舊故,拊手歡笑。既罷,超等問遂:'
+      + '「公何言?」遂曰:「無所言也。」超等疑之。他日,公又與遂書,多所點竄,'
+      + '如遂改定者;超等愈疑遂。\n\n'
+      + '一封抹改過的信,勝過十萬長矛。三十餘年據西州,年逾七十,終為部下所殺,'
+      + '傳首許都。',
+    textEn:
+      'Ten confederate captains in Guanzhong, none of them under any of the others, and a hundred thousand men between them. Jia Xu said: just divide them.\n\n'
+      + 'Cao rode out and talked with Sui for a long time, nothing about the war, only old acquaintances in the capital, clapping hands and laughing. Afterwards Ma Chao asked what had been said. Nothing, said Sui. They suspected him. Then Cao sent Sui a letter with many passages crossed out and written over, as though Sui had edited it himself. After that they suspected him completely.\n\n'
+      + 'One doctored letter beat a hundred thousand spears. Thirty years holding the west, past seventy years old, killed in the end by his own officers, his head sent to Xu.',
+  },
+  'sg:wuhuan': {
+    titleZh: '亡國之後,他們的馬還在打仗',
+    titleEn: 'After the End, the Horses Went On Fighting',
+    textZh:
+      '烏丸突騎,天下名騎。蹋頓有武略,袁紹皆立其酋豪為單于,'
+      + '以家人子為己女妻之 —— 河北之敗,其眾北奔者十餘萬戶。\n\n'
+      + '白狼山卒與虜遇,眾甚盛。公登高,望虜陣不整,乃縱兵擊之,'
+      + '使張遼為先鋒,虜眾大崩,斬蹋頓及名王已下,胡、漢降者二十餘萬口。\n\n'
+      + '其後:「由是三郡烏丸為天下名騎。」—— 部落沒了,騎兵還在,'
+      + '只是旗換了一面,從此為別人衝陣。',
+    textEn:
+      'The Wuhuan shock cavalry were the most famous horse in the realm. Tadun had a soldier head on him, and Yuan Shao had made all their chiefs khans and married household daughters to them as his own. After the collapse in Hebei more than a hundred thousand households went north to them.\n\n'
+      + 'At White Wolf Mountain the armies met unexpectedly and the enemy was very numerous. Cao went up the high ground, saw their line was not properly formed, and sent everything in with Zhang Liao at the front. Tadun and the chief kings were killed; over two hundred thousand Hu and Han surrendered.\n\n'
+      + 'And afterwards: from this the Wuhuan of the three commanderies became the most famous cavalry in the realm. The people were finished; the cavalry was not. Only the banner over it changed, and they charged for somebody else.',
+  },
+
+  /* ── 戰國七雄 ───────────────────────────────────────────────────────
+     十三張戰國盤共用這七段。七國之亡各有各的形狀,而那個形狀在哪一張盤上
+     都一樣 —— 韓亡於它的位置,趙亡於它殺自己的將,魏亡於人才留不住,
+     齊亡於四十年不修戰備,燕亡於一次換將,楚亡於它從來沒能主持成一次合縱。 */
+  'ws:han': {
+    titleZh: '天下之咽喉,誰都要從這裡過',
+    titleEn: 'The Throat of the Realm, and Everyone Walks Through It',
+    textZh:
+      '韓地方九百里,最小,而當天下之衝 —— 秦欲東出必先韓,山東欲攻秦必假道於韓。'
+      + '申不害相韓十五年,國治兵彊,無侵韓者;申子一死,術亡而國如故弱。\n\n'
+      + '秦拔野王,上黨道絕。守馮亭不欲降秦,以十七城獻趙 —— 禍水東引,'
+      + '而長平四十萬既坑,韓亦不能獨完。\n\n'
+      + '內史騰引兵渡河,虜王安,盡納其地為潁川郡。七雄之中,它第一個亡,'
+      + '而理由從立國那天起就寫在地圖上。',
+    textEn:
+      'Han was nine hundred li across, the smallest of the seven, and it sat on the crossroads: Qin could not go east without going through it and the eastern states could not attack Qin without borrowing its roads. Shen Buhai was its chancellor for fifteen years and while he lived the state was well run and nobody invaded it. When he died the technique died with him and the weakness was exactly where it had been.\n\n'
+      + 'Qin took Yewang and cut the road to Shangdang. The commandant there would not surrender to Qin and handed his seventeen cities to Zhao instead — passing the flood east. Four hundred thousand went into the ground at Changping, and Han was not going to survive alone after that.\n\n'
+      + 'Neishi Teng crossed the river, took King An prisoner, and the land became Yingchuan commandery. It fell first of the seven, for a reason that was written on the map the day it was founded.',
+  },
+  'ws:chu': {
+    titleZh: '地方五千里,而沒有主持成過一次合縱',
+    titleEn: 'Five Thousand Li, and Never Once Held an Alliance Together',
+    textZh:
+      '楚地方五千里,帶甲百萬,車千乘,騎萬匹,粟支十年 —— 此霸王之資也。'
+      + '而懷王入秦不返,張儀以六百里商於之地欺之,三戰三北。\n\n'
+      + '白起拔郢,燒夷陵先王之墓,楚東徙於陳。屈原懷石自沉汨羅之日,'
+      + '楚已經不是那個「篳路藍縷,以啟山林」的楚了。\n\n'
+      + '論者謂楚大而不強:貴族世官,封君擅地,令不出郢;'
+      + '合縱之長四為楚王,而四次皆散。亡楚者非秦也,是那五千里裡沒有一個能發號的中心。',
+    textEn:
+      'Five thousand li, a million under arms, a thousand chariots, ten thousand horse, ten years of grain in store: the material of a hegemon. And then King Huai went into Qin and did not come out, having been cheated of six hundred li of Shangyu by Zhang Yi, and lost three campaigns running.\n\n'
+      + 'Bai Qi took the capital and burned the tombs of the former kings at Yiling, and Chu moved east to Chen. On the day Qu Yuan put a stone in his robe and went into the Miluo, Chu had already stopped being the state that had opened the forests with brushwood carts.\n\n'
+      + 'They said of Chu that it was large without being strong: hereditary offices, enfeoffed lords holding their own land, orders that did not travel past the capital. Four times a king of Chu was made head of the north-south alliance, and four times it came apart. What killed Chu was not Qin. It was that in five thousand li there was no one place that could give an order.',
+  },
+  'ws:yan': {
+    titleZh: '五年之功,換一個將就沒了',
+    titleEn: 'Five Years of Work, Undone by One Change of Command',
+    textZh:
+      '燕最北最弱,而昭王築黃金臺,師事郭隗,樂毅自魏往,鄒衍自齊往,劇辛自趙往。'
+      + '五國之兵,樂毅下齊七十餘城,唯莒、即墨不下 —— 燕之強,自有國以來未之有也。\n\n'
+      + '昭王薨,惠王立。齊人縱反間曰:「樂毅與燕新王有隙,欲連兵王齊。」'
+      + '王使騎劫代將。田單火牛夜出,七十餘城一朝復歸於齊。\n\n'
+      + '其後易水送別,壯士一去;而燕王喜殺太子丹以獻秦,秦不為解。'
+      + '太史公曰:「燕雖小國而後亡,此亦用兵之效也。」—— 這句話裡有惋惜。',
+    textEn:
+      'Yan was the northernmost and the weakest, and King Zhao built a terrace of gold and studied under Guo Wei, and Yue Yi came from Wei, Zou Yan from Qi, Ju Xin from Zhao. With the armies of five states Yue Yi took over seventy cities of Qi; only Ju and Jimo held out. Yan had never been that strong in its history.\n\n'
+      + 'King Zhao died and his son took the throne. Qi put it about that Yue Yi had fallen out with the new king and meant to make himself king of Qi. Qi Jie was sent to replace him. Tian Dan drove oxen with fire on their tails out of the gates at night, and seventy cities went back to Qi in a season.\n\n'
+      + 'Later came the parting at the Yi river and the man who went and did not return; and King Xi killed his own heir and sent the head to Qin, and Qin did not stop. The Grand Historian wrote: Yan was a small state and fell late, and that too is what the use of soldiers can do. There is regret in the sentence.',
+  },
+  'ws:zhao': {
+    titleZh: '李牧死,三月而趙亡',
+    titleEn: 'Li Mu Died, and Zhao Lasted Three Months',
+    textZh:
+      '武靈王胡服騎射,略中山,拓雲中、雁門 —— 七雄之中,唯趙可以與秦爭鋒於野戰。'
+      + '李牧守代、雁門,大破匈奴十餘萬騎,單于奔走,其後十餘歲不敢近趙邊城。\n\n'
+      + '長平既坑四十萬,國本已折;而尚有李牧,秦數攻不能下。'
+      + '王翦乃多與趙王寵臣郭開金,為反間,言牧欲反。趙王使趙蔥及顏聚代之,'
+      + '牧不受命,趙人捕而殺之。\n\n'
+      + '後三月,王翦擊趙軍,大破之,虜王遷。'
+      + '一個國家可以輸掉四十萬人而不亡,輸掉一個將就亡了 —— 因為殺他的是自己。',
+    textEn:
+      'King Wuling put his men in nomad trousers and on horseback, took Zhongshan, opened Yunzhong and Yanmen: alone of the seven, Zhao could meet Qin in the open field. Li Mu held Dai and Yanmen and broke over a hundred thousand Xiongnu horse in one day; the khan ran, and for more than ten years they did not come near a Zhao border town.\n\n'
+      + 'Four hundred thousand went into the pits at Changping and the spine of the state went with them — and Li Mu was still there, and Qin attacked repeatedly and could not get through. So Wang Jian sent a great deal of gold to Guo Kai, the Zhao king favourite, to say that Li Mu meant to revolt. The king sent men to replace him; he refused the order; his own people arrested him and killed him.\n\n'
+      + 'Three months later Wang Jian broke the Zhao army and took King Qian prisoner. A state can lose four hundred thousand men and survive. It loses one general and does not — because the hand that took him was its own.',
+  },
+  'ws:wei': {
+    titleZh: '人才盡出於魏,而無一用於魏',
+    titleEn: 'Every Talent Came Out of Wei, and None of Them Served It',
+    textZh:
+      '文侯用李悝盡地力之教,用吳起為西河守,秦人不敢東鄉 —— 戰國之首霸,魏也。\n\n'
+      + '而後:商鞅去魏而相秦,孫臏去魏而佐齊,張儀去魏而連橫,范雎去魏而遠交近攻,'
+      + '尉繚去魏而佐秦滅六國。公叔痤臨死薦鞅,曰「王即不聽用鞅,必殺之,無令出境」,'
+      + '惠王兩不從。\n\n'
+      + '王賁引河溝灌大梁,三月城壞,王假出降。'
+      + '——魏不是亡於秦兵,是亡於它送出去的那幾個人。',
+    textEn:
+      'Marquis Wen used Li Kui to get everything the soil would give and put Wu Qi on the western river, and Qin did not dare face east. The first hegemon of the Warring States was Wei.\n\n'
+      + 'And afterwards: Shang Yang left Wei and became chancellor of Qin; Sun Bin left Wei and served Qi; Zhang Yi left Wei and built the east-west axis; Fan Ju left Wei and gave Qin the doctrine of befriending the far and attacking the near; Wei Liao left Wei and helped Qin take the six states. Gongshu Cuo on his deathbed recommended Shang Yang and added: if you will not use him, kill him, and do not let him cross the border. King Hui did neither.\n\n'
+      + 'Wang Ben turned the river into the ditches around Daliang; in three months the walls came apart and King Jia surrendered.\n\n'
+      + 'Wei did not fall to Qin soldiers. It fell to the men it let walk out.',
+  },
+  'ws:qi': {
+    titleZh: '四十餘年不受兵,也四十餘年不修備',
+    titleEn: 'Forty Years Untouched, and Forty Years Unready',
+    textZh:
+      '齊有魚鹽之利,臨淄之途車轂擊,人肩摩;稷下先生千有餘人,'
+      + '不治而議論 —— 天下之學術,半在此城。\n\n'
+      + '田單既復七十餘城,而其後「王建立四十餘年不受兵」。'
+      + '相國后勝多受秦間金玉,勸王朝秦,不修攻戰之備,不助五國攻秦。'
+      + '五國既亡,秦兵自燕南下,入臨淄,民莫敢格者。\n\n'
+      + '王建降,遷之共,處松柏之間,餓而死。齊人怨之,歌曰:'
+      + '「松耶?柏耶?住建共者客耶?」—— 怨的不是他降,是他四十年什麼都沒做。',
+    textEn:
+      'Qi had the profit of fish and salt, and in the streets of Linzi the hubs of the carts struck one another and shoulders rubbed; a thousand and more scholars at the Jixia academy held no office and argued. Half the learning of the age was in that one city.\n\n'
+      + 'After Tian Dan recovered the seventy cities, King Jian reigned over forty years and no army touched Qi. The chancellor Hou Sheng took a great deal of Qin gold, advised the king to attend the Qin court, kept no war preparations, and sent no help to the other five.\n\n'
+      + 'With the five gone, Qin came down from Yan into Linzi and nobody offered any resistance. The king surrendered and was moved to Gong, and set down among the pines and cypresses, and starved. The people of Qi made a song about it: pines? cypresses? and who was it that brought Jian to Gong? — the anger is not about the surrender. It is about the forty years.',
+  },
+  'ws:qin': {
+    titleZh: '耕戰之法,可以取天下,不可以守關',
+    titleEn: 'A Law for Farming and Fighting, Not for Holding a Pass',
+    textZh:
+      '商君之法:僇力本業耕織致粟帛多者復其身,事末利及怠而貧者舉以為收孥;'
+      + '有軍功者各以率受上爵。故秦人富強,諸侯畏之。\n\n'
+      + '然此法之所養者,一往無前之兵,非可久之國 ——'
+      + '賞在首級,則利在出關;一旦不能出,關中便是一個口袋。'
+      + '函谷既破,巴蜀之粟不至,隴右之馬不出,而六國之師會於渭上。\n\n'
+      + '史遷曰:「秦之德義不如魯衛之暴戾者,兵力強也。」'
+      + '兵力所以強者,亦所以脆也 —— 它從來沒有第二條腿。',
+    textEn:
+      'The law of Lord Shang: those who put their strength into the root occupations, ploughing and weaving, and produce much grain and cloth are exempted from service; those who chase the secondary profits or who are idle and poor are taken with their households into bondage; and men with battle merit receive rank by a fixed scale. So Qin grew rich and strong and the other lords feared it.\n\n'
+      + 'But what that law raises is an army that only goes forward, not a state that lasts. When the reward is in heads taken, the profit is in marching out of the passes — and on the day it cannot march out, Guanzhong is a sack. With Hangu broken, the grain of Ba and Shu does not arrive, the horses of Longxi do not come out, and the armies of the six states meet on the Wei.\n\n'
+      + 'Sima Qian wrote that Qin was less virtuous than Lu or Wey and more violent, and that what it had was military strength. What made that strength also made it brittle: it never grew a second leg.',
+  },
+
+  /* ── 楚漢諸侯 ───────────────────────────────────────────────────────
+     ⚠ `ch:chu` 這一格寫的是**項羽**的西楚。大澤鄉那張盤的 chu 是項梁,
+     敗法完全不同(死於定陶,而不是烏江),所以那一張在盤級逐家寫,不吃這一段。 */
+  'ch:chu': {
+    titleZh: '天亡我,非戰之罪',
+    titleEn: 'Heaven Is Finishing Me; It Is Not a Fault of Arms',
+    textZh:
+      '力能扛鼎,才氣過人。破釜沉舟,九戰九捷,諸侯膝行而前,莫敢仰視 ——'
+      + '入關中,分天下,立十八王,號西楚霸王,年二十七。\n\n'
+      + '而後:背關懷楚,放逐義帝而自立;所過無不殘滅;'
+      + '有一范增而不能用;至垓下,兵少食盡,夜聞四面楚歌。\n\n'
+      + '謂其騎曰:「吾起兵至今八歲矣,身七十餘戰,所當者破,所擊者服,'
+      + '未嘗敗北,遂霸有天下。然今卒困於此,此天之亡我,非戰之罪也。」'
+      + '——太史公曰:「豈不謬哉!」謬的不是那場仗,是那句話。',
+    textEn:
+      'He could lift a cauldron; his gifts were beyond other men. He broke the pots and sank the boats and won nine engagements out of nine, and the assembled lords came forward to him on their knees and did not dare look up. He entered the passes, divided the realm, made eighteen kings, and called himself Hegemon-King of Western Chu, at twenty-seven.\n\n'
+      + 'And afterwards: he turned his back on the passes out of homesickness for Chu, exiled the Righteous Emperor and took the seat himself, and left nothing standing anywhere he passed. He had one Fan Zeng and could not use him. At Gaixia the men were few and the food was gone, and in the night the songs of Chu came from every side.\n\n'
+      + 'He said to his riders: I have been under arms eight years and fought seventy-odd actions, and whatever I faced I broke and whatever I struck submitted, and I never once retreated, and so I held the realm. And now I am finished here — this is heaven finishing me, it is not a fault of arms. The Grand Historian wrote: is that not absurd? What is absurd is not the battle. It is the sentence.',
+  },
+  'ch:qi': {
+    titleZh: '田氏三世,終於海島',
+    titleEn: 'Three Generations of Tian, and an Island',
+    textZh:
+      '陳勝既起,田儋自立為齊王 —— 田氏,故齊之王族也,兄弟宗強,能得人。'
+      + '儋戰死臨濟,弟榮收餘兵走東阿;榮不肯從楚救趙,'
+      + '項王由是怨齊,北擊之,榮走平原,平原民殺之。\n\n'
+      + '橫收散兵得數萬,復立城陽而拒楚。楚兵久不能下 ——'
+      + '而漢已定天下,橫與其徒屬五百餘人入海,居島中。\n\n'
+      + '高帝召之,行至尸鄉廄置,曰:「橫始與漢王俱南面稱孤,'
+      + '今漢王為天子,而橫乃為亡虜而北面事之,其恥固已甚矣。」'
+      + '自剄。島中五百人聞之,亦皆自殺。—— 齊之亡,亡在它從來不肯做第二。',
+    textEn:
+      'When Chen Sheng rose, Tian Dan made himself king of Qi — the Tian were the old royal house there, the clan was strong, and men came to them. Dan was killed at Linji; his brother Rong took what was left to Dong-e. Rong would not join Chu in relieving Zhao, and the Hegemon-King held it against Qi and came north; Rong fled to Pingyuan and the people of Pingyuan killed him.\n\n'
+      + 'Heng gathered tens of thousands of the scattered men, restored the state at Chengyang and held out against Chu, which could not finish it. Then Han settled the realm, and Heng went out to sea with five hundred followers and lived on an island.\n\n'
+      + 'Summoned by the emperor, he got as far as the post-station at Shixiang and said: Heng and the king of Han once faced south as sovereigns together; now the king of Han is Son of Heaven and Heng is a fugitive who must face north and serve him. The shame of it is already too much. And cut his own throat. The five hundred on the island heard of it and killed themselves too. Qi ended because it would never agree to be second.',
+  },
+  'ch:zhao': {
+    titleZh: '義兵不用詐謀奇計',
+    titleEn: 'A Righteous Army Does Not Use Tricks',
+    textZh:
+      '趙亡了兩次。第一次困於鉅鹿,城中食盡兵少,諸侯之師十餘壁莫敢縱兵 ——'
+      + '等來的是那個破釜沉舟的人。\n\n'
+      + '第二次死在自己嘴上。廣武君李左車說成安君曰:「井陘之道,車不得方軌,'
+      + '騎不得成列,行數百里,其勢糧食必在其後。願假臣奇兵三萬人,'
+      + '從間路絕其輜重。」成安君,儒者也,常稱義兵不用詐謀奇計,曰:'
+      + '「今如此避而不擊,則諸侯謂吾怯,而輕來伐我。」\n\n'
+      + '韓信使人間視,知其不用,則大喜,乃敢引兵遂下。'
+      + '——背水一陣之所以成,先成於對面那一句「義兵不用詐」。',
+    textEn:
+      'Zhao ended twice. The first time it was penned in Julu with the grain gone and the men few, and a dozen allied camps outside that did not dare put a soldier in the field — and what arrived was the man who had broken the pots.\n\n'
+      + 'The second time it talked itself to death. Li Zuoche told the chancellor: on the Jingxing road carts cannot go two abreast and horse cannot form a line; after several hundred li their supply must be at the back. Give me thirty thousand and a side road and I will cut their baggage off. The chancellor was a classicist and used to say that a righteous army does not use tricks and stratagems, and added: if we avoid them and do not strike, the other lords will call us cowards and come and attack us at their leisure.\n\n'
+      + 'Han Xin sent scouts, learned the advice had been refused, was delighted, and only then dared bring his army down. The battle with the river at its back worked because of a sentence spoken on the other side.',
+  },
+  'ch:wei': {
+    titleZh: '人生一世間,如白駒過隙耳',
+    titleEn: 'A Life Passes Like a White Colt Past a Crack',
+    textZh:
+      '魏豹,故魏諸公子也。下魏二十餘城,立為魏王。漢王之東,豹以國屬焉,'
+      + '從至彭城;漢敗,還至滎陽,豹請歸視親病,至國,即絕河津反為楚。\n\n'
+      + '漢王使酈生說之,豹謝曰:「人生一世間,如白駒過隙耳。'
+      + '今漢王慢而侮人,罵詈諸侯群臣如罵奴耳,非有上下禮節也,吾不忍復見也。」\n\n'
+      + '韓信乃益為疑兵,陳船欲渡臨晉,而伏兵從夏陽以木罌缻渡軍,'
+      + '襲安邑,虜魏王豹。—— 他看得很準,只是看準了不等於走得掉。',
+    textEn:
+      'Wei Bao was of the old ducal house of Wei. He took twenty-odd cities and was made king of Wei. When the king of Han went east he attached his state to him and went as far as Pengcheng; after the defeat, back at Xingyang, he asked leave to go home and see a sick parent, and the moment he was home he closed the river crossings and went over to Chu.\n\n'
+      + 'The king of Han sent Li Yiji to talk to him. Bao declined: a life passes like a white colt seen through a crack. The king of Han is offhand and insulting, and curses lords and ministers as though they were slaves, and there is no observance between high and low. I cannot stand to see him again.\n\n'
+      + 'So Han Xin made a great show of boats at Linjin and sent the real army across at Xiayang on rafts of sealed wooden jars, and took Anyi, and Wei Bao with it. He had judged the man correctly. Judging correctly is not the same as getting away.',
+  },
+  'ch:jiujiang': {
+    titleZh: '自致萬乘之主,而其計不為後',
+    titleEn: 'He Made Himself a Lord of Ten Thousand Chariots, and Planned No Further',
+    textZh:
+      '布者,故麗山之徒也。少時有人相之曰「當刑而王」,'
+      + '及壯,坐法黥,布欣然笑曰:「人相我當刑而王,幾是乎?」\n\n'
+      + '隨何說之叛楚,九江之兵遂為漢用;垓下之圍,布與焉。'
+      + '封淮南王,都六。而後韓信誅,彭越醢,布大恐,陰聚兵候伺旁郡警急。\n\n'
+      + '既反,上問薛公,薛公曰:「布必出下計。」何謂也?'
+      + '「布故麗山之徒也,自致萬乘之主,此皆為身,不顧後為百姓萬世慮者也,'
+      + '故曰出下計。」—— 果如其言。走江南,為番陽人所殺於茲鄉民田舍。',
+    textEn:
+      'Ying Bu had been a convict on the Lishan works. A physiognomist told him young that he would be branded and then made a king, and when as a grown man he was tattooed under the law he laughed and said: someone told me I would be branded and then be king. Perhaps this is it.\n\n'
+      + 'Sui He talked him out of Chu and the Jiujiang troops passed to Han; he was at the ring around Gaixia. He was made king of Huainan with his seat at Liu. Then Han Xin was executed and Peng Yue was minced, and Bo was very frightened, and quietly gathered troops and watched the neighbouring commanderies for alarms.\n\n'
+      + 'When he revolted the emperor asked Xue Gong what he would do. He will take the worst of the three courses, said Xue Gong. Why? Because he was a convict of Lishan who made himself a lord of ten thousand chariots, and everything he has done has been for himself, with no thought for the people or for what comes after. And so it went. He ran south of the river and was killed in a farmhouse at Ziciang by men of Poyang.',
+  },
+  'ch:yong': {
+    titleZh: '二十萬秦卒坑於新安,而他封的是秦地',
+    titleEn: 'Two Hundred Thousand Qin Men in the Pits, and They Gave Him Qin to Rule',
+    textZh:
+      '章邯以驪山之徒破陳勝、殺項梁,秦之最後一支能戰之軍,他帶的。'
+      + '而趙高用事,有功亦誅,無功亦誅 —— 進不能戰,退不得歸,乃約降於楚。\n\n'
+      + '楚軍夜擊,坑秦卒二十餘萬人新安城南。'
+      + '項王立邯為雍王,王咸陽以西 —— 而秦父兄怨此三人,痛入骨髓。\n\n'
+      + '漢王還定三秦,邯敗於陳倉、走廢丘。圍三月,引水灌之,城壞,自殺。'
+      + '——他之所以守不住關中,不是兵不夠,是關中的人不要他。',
+    textEn:
+      'Zhang Han took the convicts of Mount Li and broke Chen Sheng and killed Xiang Liang: the last army Qin had that could fight was the one he led. Then Zhao Gao was running the palace, and men were executed whether they had succeeded or failed — he could not advance and could not go home, and so he treated for surrender with Chu.\n\n'
+      + 'The Chu army attacked in the night and buried over two hundred thousand Qin soldiers south of Xin-an. The Hegemon-King made him king of Yong, ruling west of Xianyang — and the fathers and elder brothers of Qin hated the three of them into the marrow.\n\n'
+      + 'When Han came back to settle the passes he was beaten at Chencang and fell back on Feiqiu. Three months of siege, then the water was let in, the walls came apart, and he killed himself. He could not hold Guanzhong not for want of soldiers but because the people of Guanzhong did not want him.',
+  },
+
+  /* ── 隋末群雄 ─────────────────────────────────────────────────────── */
+  'st:zheng': {
+    titleZh: '洛陽城中,人相食',
+    titleEn: 'Inside Luoyang They Were Eating Each Other',
+    textZh:
+      '王世充,西域胡人之後,以佞巧進。破李密於邙山,盡收其眾,'
+      + '遂廢皇泰主而自立,國號鄭 —— 手裡是天下最堅的城和天下最好的倉。\n\n'
+      + '而唐兵四面圍之,四方城鎮相繼降。'
+      + '城中乏食,一匹絹易米三升,人相食,民初有三萬家,至是不滿三千。\n\n'
+      + '出降之日,面如死灰。高祖數之曰:「汝在洛陽,稱朕為賊,何也?」'
+      + '對曰:「臣今日之罪,誠當萬死。」赦之,徙蜀,未行,為仇人獨孤修德所殺。',
+    textEn:
+      'Wang Shichong, descended from Western Region merchants, rose by cleverness and flattery. He broke Li Mi at Mount Mang and absorbed his whole army, then deposed the boy emperor and took the seat himself under the dynastic name Zheng — holding the strongest city in the realm and the best granaries in it.\n\n'
+      + 'Then the Tang closed on all four sides and the towns around him surrendered one after another. Inside, a bolt of silk bought three pints of rice, people ate one another, and of thirty thousand households at the start fewer than three thousand were left.\n\n'
+      + 'He came out with a face like ash. The Tang emperor said: in Luoyang you called me a bandit — why? He answered: today my crimes deserve ten thousand deaths. He was pardoned and sent to Shu, and before he could set out a man with a blood claim on him, Dugu Xiude, killed him.',
+  },
+  'st:xia': {
+    titleZh: '所得資財,並散賞諸將,一無所取',
+    titleEn: 'Everything He Took, He Gave Away',
+    textZh:
+      '竇建德,貝州漳南人。每戰所得資財,並散賞諸將,一無所取;'
+      + '與士卒均勞逸,妻曹氏不衣紈綺,侍婢才十餘人 ——'
+      + '山東之民歸之如流,河北之地,幾為所有。\n\n'
+      + '王世充求救,群臣諫曰:「唐兵據險,鋒不可當;'
+      + '不如北取懷州、河陽,踰太行,入上黨,收河東之地。」凌敬之言,善而不用。\n\n'
+      + '虎牢之下,秦王三千五百騎出其不意,一戰而擒。至長安,斬於市。'
+      + '而山東豪傑不服,共立劉黑闥,復起於漳南 —— 人心不隨他的頭走。',
+    textEn:
+      'Dou Jiande came from Zhangnan in Bei province. Whatever he took in a campaign he handed out to his officers and kept none of it; he shared the work and the rest of his soldiers; his wife wore no fine silk and had a bare dozen women about her. The people of the east came to him like water running downhill, and Hebei was very nearly his.\n\n'
+      + 'When Wang Shichong asked for relief, Ling Jing advised: the Tang hold the defiles and cannot be met head-on; better to take Huaizhou and Heyang in the north, cross the Taihang into Shangdang and gather the Hedong country. The advice was good and was not taken.\n\n'
+      + 'Below Hulao, three and a half thousand Tang horse came at him from where he was not looking, and one action ended it. He was taken to Chang-an and executed in the market. The strong men of the east did not accept it: they raised Liu Heita and rose again at Zhangnan. Loyalty did not follow the head.',
+  },
+  'st:wagang': {
+    titleZh: '罄南山之竹,書罪未窮',
+    titleEn: 'All the Bamboo of the Southern Hills Would Not Hold the Charges',
+    textZh:
+      '李密,蒲山公之子,《漢書》掛牛角而讀者也。'
+      + '入瓦崗,取興洛倉,開倉恣民就食,老弱襁負,道路不絕,眾至數十萬 ——'
+      + '祖君彥為之檄曰:「罄南山之竹,書罪未窮;決東海之波,流惡難盡。」\n\n'
+      + '然翟讓既殺,眾心離貳;與王世充相持於洛口,'
+      + '兵疲食盡而不肯就倉,一敗於邙山,遂不可復振。\n\n'
+      + '降唐,不安其位,復叛,伏誅於熊耳山。'
+      + '——手裡有過天下最大的一座糧倉,而他最後是餓著跑的。',
+    textEn:
+      'Li Mi, son of the duke of Pushan, was the man who hung a copy of the Han History on an ox horn to read while riding. He joined the Wagang band, took the Xingluo granary, threw it open and let the people eat; the old and the weak came carrying children on their backs in an unbroken line along the roads, and his following grew into the hundreds of thousands. Zu Junyan wrote his proclamation: all the bamboo of the southern hills would not be enough to write his crimes on, and all the water of the eastern sea would not wash the evil away.\n\n'
+      + 'But he had killed Zhai Rang, and after that his people were divided. Facing Wang Shichong at Luokou, his troops worn out and the grain gone, he would not fall back on the granary; one defeat at Mount Mang and he never recovered.\n\n'
+      + 'He submitted to Tang, could not sit still in the place he was given, revolted again, and was killed at Mount Xionger. He had once held the largest granary in the realm, and at the end he was running on an empty stomach.',
+  },
+  'st:xiqin': {
+    titleZh: '淺水原勝了,而他死在勝的那一個月',
+    titleEn: 'He Won at Qianshuiyuan and Died That Month',
+    textZh:
+      '薛舉,河東汾陰人,家貲鉅萬,武力絕人 ——'
+      + '起於金城,盡有隴西之地,眾十三萬,將圖長安。\n\n'
+      + '淺水原之戰,唐八總管皆敗,士卒死者什五六。'
+      + '舉問群臣:「古來天子有降事否?」而未及進兵,暴卒於軍。\n\n'
+      + '子仁杲繼立,性暴虐,諸將皆懼;秦王堅壁不戰六十餘日,'
+      + '待其糧盡眾離,一擊而潰,仁杲降,斬於長安。'
+      + '——隴右之強,不足兩年;強在一個人身上的東西,'
+      + '本來就只有那個人那麼久。',
+    textEn:
+      'Xue Ju of Fenyin in Hedong was enormously rich and physically extraordinary. He rose at Jincheng, took all of Longxi, had a hundred and thirty thousand men, and meant to have Chang-an.\n\n'
+      + 'At Qianshuiyuan the eight Tang commanders were all beaten and half or more of their men were killed. He asked his court whether any Son of Heaven in history had ever surrendered — and then died suddenly in camp before he could march.\n\n'
+      + 'His son Rengao succeeded him, was savage, and frightened his own officers. The Tang prince held his fortifications and refused battle for sixty days, waited for the grain to run out and the army to come apart, broke him in one attack, and executed him at Chang-an. The power of the western marches lasted under two years. What rests in one man lasts exactly as long as the man.',
+  },
+  'st:dingyang': {
+    titleZh: '借突厥之兵,而突厥的價錢是他自己',
+    titleEn: 'He Borrowed Turkic Horse, and the Price Was Himself',
+    textZh:
+      '劉武周殺太守而起,附於突厥,受封定楊可汗。'
+      + '得宋金剛,盡有并州之地;唐之根本,幾為所奪 ——'
+      + '高祖至欲棄河東以守關西,秦王曰:「太原王業所基,國之根本,'
+      + '河東殷實,京邑所資,若舉而棄之,臣竊憤恨。」\n\n'
+      + '柏壁相持,堅壁不戰,以待其糧盡。'
+      + '金剛北走,一日八戰,追至介休,大破之。\n\n'
+      + '武周奔突厥,後謀歸馬邑,事洩,為突厥所殺。'
+      + '——借來的兵,最後總要用借兵的人來還。',
+    textEn:
+      'Liu Wuzhou killed his prefect and rose, attached himself to the Turks and was given the title Dingyang Qaghan. With Song Jingang he took the whole of Bing province, and the Tang heartland was very nearly gone — the founder wanted to abandon Hedong and hold the passes, and his son said: Taiyuan is the ground the enterprise was founded on and the root of the state, and Hedong is rich and supplies the capital; to give it up would be more than I can bear.\n\n'
+      + 'At Boqi the Tang sat behind their walls and refused battle and waited for the grain to go. When Song Jingang broke north they fought eight actions in one day chasing him and destroyed him at Jiexiu.\n\n'
+      + 'Liu Wuzhou fled to the Turks, later planned to slip back to Mayi, was found out, and was killed by them. Borrowed soldiers are always paid for eventually, and usually with the man who borrowed them.',
+  },
+  'st:wu': {
+    titleZh: '江淮之兵入朝,而反的是留下的那個',
+    titleEn: 'He Went to Court, and the Man He Left Behind Revolted',
+    textZh:
+      '杜伏威少落拓,與輔公祏為刎頸交,亡命為群盜。'
+      + '每破陣,所獲軍實皆散賞將士;有戰死者,以其妻妾殉葬 ——'
+      + '故人自為戰,江淮群盜莫之能抗。\n\n'
+      + '既降唐,拜太子太保,留公祏守丹陽,而陰使王雄誕製之。'
+      + '伏威入朝長安,公祏殺雄誕,詐稱伏威之命,舉兵反,國號宋。\n\n'
+      + '公祏既平,得偽造之書,朝廷以為伏威實使之,'
+      + '除名籍沒 —— 而伏威已暴卒於長安。'
+      + '貞觀元年,太宗知其冤,赦之,復其官爵。'
+      + '——他唯一一次相信一個人,是相信了三十年的那一個。',
+    textEn:
+      'Du Fuwei was a wild youth who swore the sworn-throats oath with Fu Gongshi and went outlaw with him. After every action he handed out what had been taken to his men, and when one of them died in battle his wives were buried with him — so every man fought as if for himself, and no bandit army in the Yangtze-Huai country could stand against them.\n\n'
+      + 'Having submitted to Tang and been made Grand Guardian of the Heir, he left Fu Gongshi holding Danyang, with Wang Xiongdan quietly instructed to keep him in check. Then he went to court at Chang-an; Fu Gongshi killed Wang Xiongdan, forged an order in his name, and revolted under the dynastic name Song.\n\n'
+      + 'When the rising was put down the forged letters were found, and the court took them at face value: Du Fuwei was struck off the registers and his property confiscated — by then he had already died suddenly at Chang-an. In the first year of Zhenguan, Taizong recognised the injustice and restored his name and rank. The one man he trusted was the one he had trusted for thirty years.',
+  },
+};
+
 /** 取某盤某家的落幕文本;沒寫過就回 null(走通用結局)。 */
 export function scenarioVerdict(
   scenarioId: string | null | undefined,
   forceId: EntityId | null | undefined,
 ): ScenarioVerdict | null {
   if (!scenarioId || !forceId) return null;
-  return SCENARIO_VERDICTS[scenarioId]?.[forceId] ?? null;
+  const own = SCENARIO_VERDICTS[scenarioId]?.[forceId] ?? null;
+  // 盤上專屬的敗亡永遠優先;共享層只補沒寫過的那些(論曰不共享 —— 那一段
+  // 是對「這一張盤的這一年」下判斷的,跨盤搬過去就不成立了)。
+  if (own?.defeat) return own;
+  const shared = SHARED_DEFEATS[`${lineOf(scenarioId)}:${forceId}`];
+  if (!shared) return own;
+  return { ...(own ?? {}), defeat: shared };
 }
