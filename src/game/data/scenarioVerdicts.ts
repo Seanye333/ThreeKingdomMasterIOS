@@ -7160,6 +7160,78 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   // 假想盤的「論曰」有一個歷史盤沒有的支點:**史書上這件事是那樣的,而這裡不是**。
   // 所以每一段都拿真實的結局來對照 —— 讀者知道原本會發生什麼,才知道自己改了什麼。
   'scn-gathering-of-heroes': {
+    sun: {
+      defeat: {
+        titleZh: '創甚,引鏡自照',
+        titleEn: 'He Called for a Mirror',
+        textZh:
+          '策好單騎出獵,所乘馬精駿,從騎絕不能及,'
+          + '為許貢客所射,傷頰。\n\n'
+          + '創甚,引鏡自照,謂左右曰:'
+          + '「面如此,尚可復建功立事乎?」'
+          + '推鏡大叫,創皆崩裂,其夜卒,時年二十六。\n\n'
+          + '—— 呼權佩以印綬,曰:'
+          + '「舉江東之眾,決機於兩陣之間,與天下爭衡,卿不如我;'
+          + '舉賢任能,各盡其心,以保江東,我不如卿。」',
+        textEn:
+          'He liked to ride out hunting alone on a horse so fast his escort could never keep up. Retainers of Xu Gong shot him and the arrow took him in the cheek.\n\n'
+          + 'With the wound at its worst he called for a mirror, looked at himself and said: with a face like this, can a man still found anything? He threw the mirror down and cried out, and every wound split open, and he died that night at twenty-six.\n\n'
+          + 'He called Quan and hung the seal on him: for taking the host of the east and deciding the issue between two battle lines, contending with the realm — you are not my equal. For raising the worthy and using the able so that each gives you his whole heart, and so holding the east — I am not yours.',
+      },
+      verdictZh:
+        '論曰:策以父之餘部千餘人渡江,五年而有六郡,其銳不可當;'
+        + '而所誅皆英豪雄傑,故其死也,死於一人之手。\n'
+        + '臨終付弟之言,卻是天下第一等的知人 ——'
+        + '知人者未必自知,自知者未必及身。',
+      verdictEn:
+        'The historian says: he crossed the river with a thousand-odd men left from his father and had six commanderies in five years, and nothing could stand in front of him; the men he executed were all people of standing, and so he died at the hands of one man. Yet what he said to his brother at the end is judgement of the first order — a man who can read others may not read himself, and one who reads himself may not do it in time.',
+    },
+    'liu-yan': {
+      defeat: {
+        titleZh: '米賊斷道',
+        titleEn: 'The Rice Bandits Cut the Road',
+        textZh:
+          '焉聞益州有天子氣,求為益州牧。既至,託疾閉境,'
+          + '使張魯斷絕谷閣,殺害漢使,'
+          + '上書言「米賊斷道,不得復通」。\n\n'
+          + '造作乘輿車重千餘乘。'
+          + '及城破,那千餘乘車,一乘也沒有出過劍閣。',
+        textEn:
+          'He heard there was an aura of Sons of Heaven over Yi province and asked to be its governor. Once there he pleaded illness and closed the borders, had Zhang Lu cut the gallery roads and kill the imperial envoys, and memorialised that the rice bandits had cut the road and communication was no longer possible.\n\n'
+          + 'He had more than a thousand imperial carriages built. When the walls fell, not one of them had ever gone out past Jiange.',
+      },
+      verdictZh:
+        '論曰:焉之閉境,始於自全,終於自囚。\n'
+        + '斷谷閣者,拒天下之兵,亦拒天下之勢;'
+        + '造乘輿者,望天下之器,而不出一步以取之。\n'
+        + '故曰:蜀道之險,守則有餘,而**險亦守人**。',
+      verdictEn:
+        'The historian says: closing the borders began as self-preservation and ended as self-imprisonment. Cutting the gallery roads kept out the armies of the realm and also kept out its currents; building imperial carriages meant coveting the realm insignia without taking one step to go and get it. The passes of Shu are more than enough to defend with — and a strong position holds its holder too.',
+    },
+    tao: {
+      defeat: {
+        titleZh: '三讓',
+        titleEn: 'Three Times He Offered It',
+        textZh:
+          '謙病篤,謂別駕麋竺曰:「非劉備不能安此州也。」\n\n'
+          + '謙死,竺率州人迎備,備未敢當。陳登曰:'
+          + '「今欲為使君合步騎十萬,上可以匡主濟民,成五霸之業;'
+          + '下可以割地守境,書功於竹帛。」\n\n'
+          + '—— 徐州殷實,戶口百萬,而三讓之後,'
+          + '仍舊是誰的兵多就歸誰。',
+        textEn:
+          'Gravely ill, he said to his aide Mi Zhu: nobody but Liu Bei can settle this province.\n\n'
+          + 'After he died Mi Zhu led the province in welcoming Liu Bei, who did not dare accept. Chen Deng said: I will raise a hundred thousand foot and horse for you; at best you may right the sovereign and save the people and achieve what the Five Hegemons achieved, and at worst hold your ground and have your deeds written on bamboo and silk.\n\n'
+          + 'Xuzhou was rich and had a million households. After all that offering, it still went to whoever had the most soldiers.',
+      },
+      verdictZh:
+        '論曰:謙之讓徐州,論者或以為長者。\n'
+        + '然徐州之所以三易其主,不在讓與不讓 ——'
+        + '在其地平曠而四通,無險可恃,而戶口殷實,人人欲得之。\n'
+        + '故曰:守土者先問其地,一州之興廢,有時不由其主。',
+      verdictEn:
+        'The historian says: some have taken his ceding of Xuzhou for the act of an honourable man. But Xuzhou changed hands three times for a reason that had nothing to do with ceding it — the ground is flat and open on every side, there is no strong position to hold, and it was rich and populous enough that everybody wanted it. Whoever would hold territory should first ask what the territory is. The rise and fall of a province is sometimes not up to whoever governs it.',
+    },
     /*
      * 十七路諸侯同在一時,而他們本來分屬三十年 —— 所以這張盤的敗亡文本
      * 都扣同一件事:**你敗的那一年,本來不是你該敗的那一年。**
