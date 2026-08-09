@@ -668,6 +668,7 @@ const CITY_OWNERSHIP_200: Record<string, string> = {
 };
 
 const OFFICER_ASSIGNMENTS_200: Record<string, OfficerAssignment> = {
+  'zhuge-liang': { forceId: null, cityId: 'xiangyang' }, // 躬耕於隆中,不在籍貫琅琊
   // Cao
   'cao-cao':     { forceId: 'cao',       cityId: 'xuchang' },
   'xiahou-dun':  { forceId: 'cao',       cityId: 'xuchang' },
@@ -2254,6 +2255,16 @@ const CITY_OWNERSHIP_197: Record<string, string> = {
 };
 
 const OFFICER_ASSIGNMENTS_197: Record<string, OfficerAssignment> = {
+  /*
+   * 臥龍不在琅琊。諸葛亮生於琅琊陽都,而父亡之後從叔父玄南下,
+   * 建安二年(197)起躬耕於南陽鄧縣之隆中 —— 隆中在襄陽城西二十里。
+   *
+   * 不寫這一行,他就會落在**籍貫**琅琊(`buildInitialOfficers` 的兜底),
+   * 而 197 之後琅琊一直在呂布/曹操/劉備手裡:`handleSearch` 的本地池優先,
+   * 於是那一家第 9–18 旬就把臥龍訪到並招走。實測三顧茅廬那張盤上,
+   * 諸葛亮第 18 旬進了曹操幕府,而劉表的主目標寫的正是「招得諸葛亮」。
+   */
+  'zhuge-liang': { forceId: null, cityId: 'xiangyang' },
   // Cao force
   'cao-cao':     { forceId: 'cao',       cityId: 'xuchang' },
   'xiahou-dun':  { forceId: 'cao',       cityId: 'xuchang' },
@@ -2772,6 +2783,7 @@ const CITY_OWNERSHIP_198: Record<string, string> = {
 };
 
 const OFFICER_ASSIGNMENTS_198: Record<string, OfficerAssignment> = {
+  'zhuge-liang': { forceId: null, cityId: 'xiangyang' }, // 躬耕於隆中,不在籍貫琅琊
   // ── Cao Cao (besieging Xiapi) ──
   'cao-cao':     { forceId: 'cao', cityId: 'xuchang' },
   'cao-ren':     { forceId: 'cao', cityId: 'pengcheng' },
@@ -2976,6 +2988,7 @@ const CITY_OWNERSHIP_207: Record<string, string> = {
 };
 
 const OFFICER_ASSIGNMENTS_207: Record<string, OfficerAssignment> = {
+  'zhuge-liang': { forceId: null, cityId: 'xiangyang' }, // 躬耕於隆中,不在籍貫琅琊
   // ── Cao Cao (returning south after White Wolf Mountain) ──
   'cao-cao':     { forceId: 'cao', cityId: 'xuchang' },
   'cao-pi':      { forceId: 'cao', cityId: 'xuchang' },
@@ -5254,6 +5267,7 @@ const CITY_OWNERSHIP_204: Record<string, string> = {
 };
 
 const OFFICER_ASSIGNMENTS_204: Record<string, OfficerAssignment> = {
+  'zhuge-liang': { forceId: null, cityId: 'xiangyang' }, // 躬耕於隆中,不在籍貫琅琊
   // ── Cao Cao (closing the trench at Ye) ──
   'cao-cao':     { forceId: 'cao', cityId: 'ye' }, // present at the siege
   'cao-pi':      { forceId: 'cao', cityId: 'xuchang' }, // about to claim Lady Zhen
@@ -8029,6 +8043,8 @@ function whatIfOfficers(
   for (const f of forces) capital[f.id] = f.capitalCityId;
   const out: Record<string, OfficerAssignment> = {};
   for (const [id, a] of Object.entries(base)) {
+    // 在野(forceId null)的人沒有「自家首都」可退,原地不動。
+    if (a.forceId === null) { out[id] = { forceId: null, cityId: a.cityId }; continue; }
     const held = ownership[a.cityId] === a.forceId;
     out[id] = { forceId: a.forceId, cityId: held ? a.cityId : (capital[a.forceId] ?? a.cityId) };
   }

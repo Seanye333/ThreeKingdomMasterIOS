@@ -2666,7 +2666,16 @@ const CANONICAL_ITEMS_SECONDARY: Record<string, string[]> = {
 
 /** 開局編制的一筆 —— `loyalty` 選填(不填 90),見 buildInitialOfficers。 */
 export interface OfficerAssignment {
-  forceId: string;
+  /**
+   * `null` = **在野,但指定落點**。
+   *
+   * 為什麼要能寫 null:不寫進 assignments 的人會落在**籍貫**
+   * (`hometownCityId`),而隱居之地不等於籍貫 —— 諸葛亮生於琅琊而躬耕於隆中。
+   * 三顧茅廬那張盤上,臥龍因此開局躺在曹操的琅琊,`handleSearch` 的
+   * 「本地池」優先,於是曹操第 9–18 旬就把他訪到並招走;
+   * 而劉表的主目標寫的正是「招得諸葛亮」。
+   */
+  forceId: string | null;
   cityId: string;
   loyalty?: number;
 }
@@ -2761,13 +2770,14 @@ export function buildInitialOfficers(
       deathYear: t.deathYear,
       hometownCityId: t.hometownCityId,
       stats: t.stats,
-      loyalty: a ? (a.loyalty ?? 90) : 0,
+      loyalty: a?.forceId ? (a.loyalty ?? 90) : 0,
       // If assigned in scenario → use that city. Otherwise plant the
       // unsearched officer at their historical hometown if known, so
       // "Search for Talent" only finds them in the right place.
+      // `forceId: null` = 在野但指定落點(隱居之地 ≠ 籍貫,見 OfficerAssignment)。
       locationCityId: a?.cityId ?? t.hometownCityId ?? null,
       forceId: a?.forceId ?? null,
-      status: (a ? 'idle' : 'unsearched') as Officer['status'],
+      status: (a?.forceId ? 'idle' : 'unsearched') as Officer['status'],
       task: null,
       equipment: resolveEquipment(t.id),
       skills,
@@ -2816,10 +2826,11 @@ export function buildInitialOfficers(
       deathYear: t.deathYear,
       hometownCityId: t.hometownCityId,
       stats: t.stats,
-      loyalty: a ? (a.loyalty ?? 90) : 0,
+      // 同上:`forceId: null` 的 assignment 是「在野但指定落點」,不是入仕。
+      loyalty: a?.forceId ? (a.loyalty ?? 90) : 0,
       locationCityId: a?.cityId ?? t.hometownCityId ?? null,
       forceId: a?.forceId ?? null,
-      status: a ? 'idle' : 'unsearched',
+      status: a?.forceId ? 'idle' : 'unsearched',
       task: null,
       equipment: resolveEquipment(t.id),
       skills,

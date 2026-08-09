@@ -125,6 +125,13 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
   { scenario: 'scn-195-jiangdong', force: 'yan-baihu',  why: '孫策原話:「虎等群盜,非有大志,此成禽耳。」建安元年為孫靜自查瀆間道所破。' },
   { scenario: 'scn-ch-sanqin',     force: 'sanqin',     why: '「還定三秦」就是他敗的那件事:韓信明修棧道暗度陳倉,章邯守廢丘十月而自剄,司馬欣、董翳皆降。' },
   { scenario: 'scn-192-wangyun',   force: 'lijue',      why: '「還都長安」—— 而李傕 195 年與郭汜相攻,劫天子出奔,長安遂空;198 年為段煨所滅,夷三族。' },
+  /*
+   * 2026-08-09:這一條是**先試著改題目、六輪仍然 0,才認定它屬於這裡**的。
+   * 原本要燕「保臨淄、琅琊」—— 琅琊(莒)開局在齊手裡,燕從來沒拿下過,那是題目寫錯;
+   * 改成「保臨淄、薊」之後仍然 0/6,而齊的「火牛陣」(取臨淄)是 5/6。
+   * 兩家指著同一座城,而這張盤的名字就是齊把它拿回去。
+   */
+  { scenario: 'scn-ws-tiandan',    force: 'yan',        why: '「毋易樂毅」—— 標題就是說別換將,而燕惠王正是用騎劫代樂毅;田單以火牛夜出,一夕之間七十餘城皆復為齊。' },
 ];
 const byDesign = (sid: string, fid: string) => BY_DESIGN.some((e) => e.scenario === sid && e.force === fid);
 

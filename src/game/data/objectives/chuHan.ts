@@ -81,16 +81,23 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '破釜沉舟', en: 'Break the Cauldrons' },
-        description: "Take Luoyang and Chang'an by 185 — sink the boats, smash the pots, carry three days' rations. Julu is Zhao's city; the road it opens runs west.",
-        descriptionZh: "於185年前取洛陽、長安 —— 沉船破釜,持三日糧。鉅鹿是趙的城,那一戰打開的路通向西邊。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 185 },
+        description: 'Zhao must still hold six cities in 182 — sink the boats, smash the pots, carry three days of rations, and get there before the pocket dies.',
+        /*
+         * 原本是「取洛陽、長安」,而**長安對楚是 0.00(完全不相鄰)**,
+         * 洛陽 0.11 —— 兩座都在六十五城的秦手裡,三年之內誰也拿不到。
+         * 鉅鹿之戰本來就不是取城之戰,是**救趙**:趙王被圍於鉅鹿,
+         * 十餘壁諸侯莫敢縱兵,而項羽渡河擊之。主目標就寫那件事。
+         * 入關中是後面的事,降為次要。
+         */
+        descriptionZh: "至182年趙猶有六城 —— 沉船破釜,持三日糧,以示士卒必死;而鉅鹿之圍,十餘壁諸侯莫敢縱兵。",
+        goal: { kind: 'protect-force', forceId: 'zhao', minCities: 6, byYear: 182 },
       },
       secondary: [
         {
-          title: { zh: '破釜沉舟', en: 'Break the Cauldrons, Sink the Boats' },
-          description: 'Take Ye by 182 — three days of rations, no way back across the river.',
-          descriptionZh: "於182年前攻取鉅鹿(鄴) —— 皆沉船,破釜甑,持三日糧,以示士卒必死。",
-          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 182 },
+          title: { zh: '先入關中', en: 'First Through the Passes' },
+          description: 'Take Luoyang by 186 — the road Julu opened runs west.',
+          descriptionZh: "於186年前取洛陽 —— 鉅鹿那一戰打開的路,通向西邊。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 186 },
         },
         {
           title: { zh: '諸侯膝行', en: 'The Lords Came in on Their Knees' },
@@ -300,11 +307,24 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       id: 'obj-chsq-yong',
       forceId: 'yong',
       primary: {
-        title: { zh: '塞漢中於巴蜀', en: 'Keep Them Bottled in Shu' },
-        description: "Still hold Chang'an and Chencang in 184 — that is the whole reason you were given this land.",
-        descriptionZh: "至184年仍保長安、陳倉 —— 項羽封你三秦,就是要你堵住漢中。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang'], byYear: 184 },
+        title: { zh: '廢丘十月', en: 'Ten Months in Feiqiu' },
+        description: "Still hold Chang'an and Mei in 182 — Zhang Han held Feiqiu ten months after everything else was gone.",
+        /*
+         * 原本是「保長安、陳倉」,而**陳倉開局就在漢手裡** ——
+         * 暗度陳倉正是這張盤的前提,不是它的題目。章邯真正做到的是
+         * 三秦盡失之後還守了廢丘十個月,直到漢引水灌城。
+         */
+        descriptionZh: "至182年仍保長安、郿 —— 三秦盡失,而廢丘獨守十月;漢引水灌之,乃降,章邯自殺。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'mei'], byYear: 182 },
       },
+      secondary: [
+        {
+          title: { zh: '復陳倉', en: 'Retake Chencang' },
+          description: 'Take Chencang back by 185 — shut the back road for good.',
+          descriptionZh: "於185年前復取陳倉 —— 把那條故道徹底堵死。",
+          goal: { kind: 'hold-cities', cityIds: ['chencang'], byYear: 185 },
+        },
+      ],
     },
     {
       id: 'obj-chsq-chu',
@@ -477,11 +497,22 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'han',
       primary: {
         title: { zh: '背水一戰', en: 'With the River at Our Backs' },
-        description: 'Take Ye and Changshan by 182 — put the men where they cannot run, and they will fight.',
-        descriptionZh: "於182年前取鄴城、常山 —— 陷之死地而後生,置之亡地而後存。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'changshan'], byYear: 182 },
+        description: 'Take Handan by 184 — put the men where they cannot run, and they will fight.',
+        /*
+         * 原本是「取鄴城、常山」,而**常山對漢是 0.00(完全不相鄰)** ——
+         * 兩座缺一不可,於是整條 0。井陘之戰的結果是滅趙、擒趙王歇、
+         * 斬陳餘於泜水,而那一件事在盤上就是拿下邯鄲(鄴)。
+         */
+        descriptionZh: "於184年前取邯鄲(鄴) —— 陷之死地而後生,置之亡地而後存;井陘一戰,斬成安君泜水上,禽趙王歇。",
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 184 },
       },
       secondary: [
+        {
+          title: { zh: '滅趙', en: 'End Zhao' },
+          description: 'Destroy the Zhao force by 186.',
+          descriptionZh: "於186年前滅趙。",
+          goal: { kind: 'defeat-force', forceId: 'zhao', byYear: 186 },
+        },
         {
           title: { zh: '再定燕齊', en: 'Then Yan and Qi' },
           description: 'Take Linzi and Ji by 185 — the northern half of the war, won by one man.',
