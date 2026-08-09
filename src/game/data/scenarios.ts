@@ -8135,6 +8135,7 @@ const FORCES_MACHAO_GUANZHONG: Force[] = FORCES_211.map((f) =>
 );
 export const SCENARIO_WHATIF_MACHAO_GUANZHONG: Scenario = {
   id: 'scn-whatif-machao-guanzhong',
+  eventFlags: ['chain-machao'],
   openingRelations: [
     { a: 'ma-chao', b: 'cao', score: -95, status: 'neutral' },  // 潼關既下,長安已入西涼之手
     { a: 'ma-chao', b: 'han-sui', score: 65, status: 'neutral' }, // 韓遂與馬超終於相攻,史實如此  // 離間之計未成,盟好不疑

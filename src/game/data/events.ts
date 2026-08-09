@@ -5664,6 +5664,92 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:若馬超盡得關中(chain-machao)------------------------------
+   * 前提是抹書離間未成、超遂盟好不疑而下潼關。那麼剩下兩件事:那封信的
+   * 種子,和許都的那一家人。
+   */
+  {
+    id: 'evt-machao-alt-1',
+    name: { en: 'The Letter with the Crossings-Out', zh: '抹書之疑' },
+    yearMin: 211,
+    yearMax: 214,
+    requires: [
+      { kind: 'flag-set', key: 'chain-machao' },
+      { kind: 'officer-active', officerId: 'ma-chao' },
+      { kind: 'officer-active', officerId: 'han-sui' },
+      { kind: 'flag-unset', key: 'machao-alt-letter' },
+    ],
+    description:
+      "The plan failed but the letter exists: Cao Cao wrote to Han Sui and scratched words out all over it, as if Han Sui had been the one editing. Ma Chao has now read it. Han Sui says he never touched it.",
+    descriptionZh: '賈詡之計:操與遂書,多所點竄,如遂改定者。計雖未成,而信是真的 —— 超已讀之。遂曰:「書來已如此,吾何嘗改。」超默然。',
+    effects: [],
+    chooserRulerId: 'ma-chao',
+    choices: [
+      {
+        id: 'burn',
+        label: { zh: '焚之於眾 —— 十部同心', en: 'Burn it in front of the camps' },
+        effects: [
+          { kind: 'flag', key: 'machao-alt-letter' },
+          { kind: 'officer-loyalty', officerId: 'han-sui', delta: 22 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'ma-chao', multiplier: 1.12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'ma-chao', delta: 6 },
+        ],
+      },
+      {
+        id: 'doubt',
+        label: { zh: '藏之 —— 而心已生芥蒂', en: 'Keep it — and keep the doubt' },
+        effects: [
+          { kind: 'flag', key: 'machao-alt-letter' },
+          { kind: 'officer-loyalty', officerId: 'han-sui', delta: -25 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'ma-chao', delta: -5 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 這一節是這張盤真正的重量 —— 他起兵的時候,馬騰一家在許都做質。
+     * 史書上的結果是「騰坐夷三族」,而超自己說的是「棄父」。
+     */
+    id: 'evt-machao-alt-2',
+    name: { en: 'His Family Is in Xu', zh: '父在許都' },
+    yearMin: 211,
+    yearMax: 215,
+    requires: [
+      { kind: 'flag-set', key: 'chain-machao' },
+      { kind: 'officer-active', officerId: 'ma-chao' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'flag-unset', key: 'machao-alt-father' },
+    ],
+    description:
+      "Ma Teng and the clan are hostages in Xuchang; Ma Chao raised the west anyway. Cao Cao sends word: come to terms and they live. In the histories, Ma Teng and three degrees of kin were put to death, and Ma Chao said afterwards that he had thrown his father away.",
+    descriptionZh: '超之起兵,騰與宗族皆在許為質。操遣使諭之:降則全其家。史書上的下場是「騰坐夷三族」,而超後來自言「闔門百口,一旦同命」—— 說這話那年他四十歲不到。',
+    effects: [],
+    chooserRulerId: 'ma-chao',
+    choices: [
+      {
+        id: 'plead',
+        label: { zh: '遣使請和 —— 求全父族', en: 'Send terms — try to save them' },
+        effects: [
+          { kind: 'flag', key: 'machao-alt-father' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'ma-chao', multiplier: 0.92 },
+          { kind: 'officer-loyalty', officerId: 'ma-chao', delta: 12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'ma-chao', delta: 8 },
+        ],
+      },
+      {
+        id: 'onward',
+        label: { zh: '不顧 —— 今棄父而取關中', en: 'March on regardless' },
+        effects: [
+          { kind: 'flag', key: 'machao-alt-father' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'ma-chao', multiplier: 1.14 },
+          { kind: 'officer-loyalty', officerId: 'ma-chao', delta: -14 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'ma-chao', delta: -10 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
