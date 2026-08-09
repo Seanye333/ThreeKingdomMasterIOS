@@ -7720,6 +7720,7 @@ const DEAD_BY_CHIBI_WIN: string[] = [
 
 export const SCENARIO_WHATIF_CAO_WINS_CHIBI: Scenario = {
   id: 'scn-whatif-cao-wins-chibi',
+  eventFlags: ['chain-caochibi'],
   openingRelations: [
     { a: 'cao', b: 'sun', score: -95, status: 'neutral' },  // 孫權已斬於江岸,殘部猶在
     { a: 'cao', b: 'liu-bei', score: -90, status: 'neutral' },

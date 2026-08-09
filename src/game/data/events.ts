@@ -5922,6 +5922,92 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:曹操贏赤壁(chain-caochibi)--------------------------------
+   * 前提是東南風不至、周郎殞於亂軍、孫權斬於江岸。贏了之後要面對的不是
+   * 敵人,是自己人:荀文若那一關,和江東那一片新地。
+   */
+  {
+    id: 'evt-caochibi-alt-1',
+    name: { en: "Xun Yu's Objection", zh: '文若之議' },
+    yearMin: 209,
+    yearMax: 213,
+    requires: [
+      { kind: 'flag-set', key: 'chain-caochibi' },
+      { kind: 'officer-active', officerId: 'cao-cao' },
+      { kind: 'officer-active', officerId: 'xun-yu' },
+      { kind: 'flag-unset', key: 'caochibi-alt-xunyu' },
+    ],
+    description:
+      "The realm is effectively his. The court proposes the Nine Bestowals and a dukedom. Xun Yu, who has run his government for twenty years, says: you raised the army to restore the Han, and a man who keeps faith does not do this. In the histories he was dead within the year.",
+    descriptionZh: '天下略定,董昭等議加九錫、進爵國公。彧曰:「本興義兵以匡朝寧國,秉忠貞之誠,守退讓之實;君子愛人以德,不宜如此。」—— 史書上他當年就死了,或云憂薨,或云飲藥。',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    choices: [
+      {
+        id: 'defer',
+        label: { zh: '從其言 —— 九錫且置', en: 'Take his advice — set the Bestowals aside' },
+        effects: [
+          { kind: 'flag', key: 'caochibi-alt-xunyu' },
+          { kind: 'officer-loyalty', officerId: 'xun-yu', delta: 25 },
+          { kind: 'officer-loyalty', officerId: 'xun-you', delta: 12 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -6 },
+        ],
+      },
+      {
+        id: 'accept',
+        label: { zh: '受之 —— 設使國家無有孤', en: 'Accept — "Were it not for me, how many would call themselves king?"' },
+        effects: [
+          { kind: 'flag', key: 'caochibi-alt-xunyu' },
+          { kind: 'officer-loyalty', officerId: 'xun-yu', delta: -35 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 12 },
+          { kind: 'city-loyalty', cityId: 'xuchang', delta: -10 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 江東那一片新地 —— 孫氏既滅,而江東士族還在。史書上曹操對新附之地
+     * 的兩手是「徙其民」與「用其人」,而赤壁那一敗讓他從沒機會用第二手。
+     */
+    id: 'evt-caochibi-alt-2',
+    name: { en: 'What to Do with Jiangdong', zh: '江東新附' },
+    yearMin: 209,
+    yearMax: 214,
+    requires: [
+      { kind: 'flag-set', key: 'chain-caochibi' },
+      { kind: 'officer-active', officerId: 'cao-cao' },
+      { kind: 'flag-unset', key: 'caochibi-alt-south' },
+    ],
+    description:
+      "The Sun house is finished but the Jiangdong gentry are not. Move them north where they can be watched, or leave them in place and use them — the same choice he faced in Jing province, and got wrong there.",
+    descriptionZh: '孫氏既滅,而顧、陸、朱、張猶在。北徙其豪族而置之腹地,或因其舊人而用之 —— 與他在荊州面對過的是同一道題,而那一次他選錯了。',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    choices: [
+      {
+        id: 'use',
+        label: { zh: '因其舊人 —— 各領本郡', en: 'Use them where they stand' },
+        effects: [
+          { kind: 'flag', key: 'caochibi-alt-south' },
+          { kind: 'city-loyalty', cityId: 'jianye', delta: 22 },
+          { kind: 'city-loyalty', cityId: 'wu', delta: 18 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 5 },
+        ],
+      },
+      {
+        id: 'move',
+        label: { zh: '北徙其豪族 —— 置之腹地', en: 'Move them north, where they can be watched' },
+        effects: [
+          { kind: 'flag', key: 'caochibi-alt-south' },
+          { kind: 'city-loyalty', cityId: 'jianye', delta: -20 },
+          { kind: 'city-loyalty', cityId: 'wu', delta: -18 },
+          { kind: 'force-gold-ruler', rulerOfficerId: 'cao-cao', delta: 800 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
