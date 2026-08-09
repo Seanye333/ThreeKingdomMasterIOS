@@ -8218,6 +8218,7 @@ const CITY_OWNERSHIP_DONG_LIVES: Record<string, string> = {
 };
 export const SCENARIO_WHATIF_DONG_LIVES: Scenario = {
   id: 'scn-whatif-dong-lives',
+  eventFlags: ['chain-dong'],
   openingRelations: [
     { a: 'dong', b: 'cao', score: -90, status: 'neutral' },
     { a: 'dong', b: 'yuan-shao', score: -90, status: 'neutral' },  // 關東盟主

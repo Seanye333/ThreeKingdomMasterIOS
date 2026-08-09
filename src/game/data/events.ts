@@ -5153,6 +5153,89 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:若董卓未亡(chain-dong)------------------------------------
+   * 前提是連環美人之計事泄而敗,飛將仍在側。那麼問題只剩兩個:
+   * 這個人拿天下要做什麼,以及那道裂縫還在不在。
+   */
+  {
+    id: 'evt-dong-alt-1',
+    name: { en: 'Thirty Years of Grain', zh: '郿塢三十年儲' },
+    yearMin: 192,
+    yearMax: 195,
+    requires: [
+      { kind: 'flag-set', key: 'chain-dong' },
+      { kind: 'officer-active', officerId: 'dong-zhuo' },
+      { kind: 'flag-unset', key: 'dong-alt-wu' },
+    ],
+    description:
+      "He builds Meiwu two hundred and fifty li from Chang'an, walls as high as the capital's, thirty years of grain inside. \"If it comes off, the realm. If not, I can grow old in here.\" The men who dug it understand exactly what that second half means.",
+    descriptionZh: '築塢於郿,高厚七丈,與長安城埒,積穀為三十年儲。自云:「事成,雄據天下;不成,守此足以畢老。」—— 掘土者皆知後半句是什麼意思。',
+    effects: [],
+    chooserRulerId: 'dong-zhuo',
+    choices: [
+      {
+        id: 'build',
+        label: { zh: '築之 —— 不成則守此畢老', en: 'Build it — a place to grow old' },
+        effects: [
+          { kind: 'flag', key: 'dong-alt-wu' },
+          { kind: 'city-defense', cityId: 'changan', delta: 18 },
+          { kind: 'city-food', cityId: 'changan', delta: 40000 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'dong-zhuo', delta: -8 },
+        ],
+      },
+      {
+        id: 'east',
+        label: { zh: '不築 —— 提兵東出,事在關東', en: 'Do not — the realm is east of the passes' },
+        effects: [
+          { kind: 'flag', key: 'dong-alt-wu' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'dong-zhuo', multiplier: 1.15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'dong-zhuo', delta: 5 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 那道裂縫 —— 連環計敗了,而它本來就不是憑空造出來的:
+     * 「卓性剛而褊,忿不思難,嘗小失意,拔手戟擲布。」貂蟬只是把它撬開。
+     */
+    id: 'evt-dong-alt-2',
+    name: { en: 'The Halberd Thrown', zh: '拔戟擲布' },
+    yearMin: 192,
+    yearMax: 196,
+    requires: [
+      { kind: 'flag-set', key: 'chain-dong' },
+      { kind: 'officer-active', officerId: 'dong-zhuo' },
+      { kind: 'officer-active', officerId: 'lu-bu' },
+      { kind: 'flag-unset', key: 'dong-alt-rift' },
+    ],
+    description:
+      "The plot failed, but the crack it was levering at was already there: Dong Zhuo throws a hand-halberd at Lü Bu over some small displeasure. Lü Bu dodges it, apologises, and is forgiven. Neither of them forgets.",
+    descriptionZh: '計雖不成,而所撬之縫本來就在:卓性剛而褊,忿不思難,嘗小失意,拔手戟擲布。布拳捷得免,而後謝之,卓意亦解 —— 兩個人都沒有忘。',
+    effects: [],
+    chooserRulerId: 'dong-zhuo',
+    choices: [
+      {
+        id: 'mend',
+        label: { zh: '厚遇之 —— 誓為父子', en: 'Make it good — swear the father-son oath again' },
+        effects: [
+          { kind: 'flag', key: 'dong-alt-rift' },
+          { kind: 'officer-loyalty', officerId: 'lu-bu', delta: 18 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'dong-zhuo', delta: -4 },
+        ],
+      },
+      {
+        id: 'ignore',
+        label: { zh: '不以為意 —— 一戟而已', en: 'Think nothing of it — it was one halberd' },
+        effects: [
+          { kind: 'flag', key: 'dong-alt-rift' },
+          { kind: 'officer-loyalty', officerId: 'lu-bu', delta: -20 },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'dong-zhuo', multiplier: 1.06 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',
