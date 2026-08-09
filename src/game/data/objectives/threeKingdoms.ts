@@ -2773,12 +2773,27 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-207tv-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '全據長江', en: 'The Whole Length of the River' },
-        description: 'Take Jiangxia and Jiangling by 213 — Lu Su\'s plan: hold the river entire.',
-        descriptionZh: "於213年前取江夏、江陵 —— 魯肅之策:竟長江所極而據守之。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangxia', 'jiangling'], byYear: 213 },
+        title: { zh: '梟黃祖之首', en: 'The Head of Huang Zu' },
+        description: 'Hold Jianye and take Jiangxia by 213 — three campaigns up the river for the man who killed his father.',
+        /*
+         * 原本是「取江夏、江陵」,六輪 0/6。江陵是**赤壁之後**周瑜打下來的
+         * (建安十四年),寫在 207 的窗口裡等於要求孫權先贏一場還沒發生的仗;
+         * 而 `reachability-audit` 給的是 jiangxia 0.56 / jiangling 0.51 ——
+         * 兩座都在門檻下,缺一不可就一起死。
+         *
+         * 他在這個窗口裡真正做到的是江夏:建安十三年春,權復征黃祖,
+         * 拔其城,梟其首。江陵降為次要 —— 那本來就是「你做得到而 AI 做不到」的事。
+         */
+        descriptionZh: "至213年仍據建業並取江夏 —— 建安十三年春,權復征黃祖,拔其城,梟其首。父讎三征,至是乃報。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'jiangxia'], byYear: 213 },
       },
       secondary: [
+        {
+          title: { zh: '竟長江所極', en: 'The Whole Length of the River' },
+          description: 'Take Jiangling by 215 — Lu Su\'s plan: hold the river entire.',
+          descriptionZh: "於215年前取江陵 —— 魯肅之策:竟長江所極而據守之。而史書上,那要等到赤壁之後。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 215 },
+        },
         {
           title: { zh: '盡有揚州', en: 'All of Yang' },
           description: 'Control Yang province by 213.',
