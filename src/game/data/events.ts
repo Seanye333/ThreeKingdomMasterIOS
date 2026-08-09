@@ -6182,6 +6182,75 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:英雄集結(chain-gathering)---------------------------------
+   * 十七路諸侯同立於一時,而他們本來分屬三十年。這張盤唯一能寫的鏈,
+   * 就是**這件事本身**:同時存在這回事,他們自己知不知道。
+   */
+  {
+    id: 'evt-gathering-alt-1',
+    name: { en: 'Out of Their Own Years', zh: '不在其時' },
+    yearMin: 200,
+    yearMax: 204,
+    requires: [
+      { kind: 'flag-set', key: 'chain-gathering' },
+      { kind: 'officer-active', officerId: 'cao-cao' },
+      { kind: 'flag-unset', key: 'gathering-alt-known' },
+    ],
+    description:
+      "The roster does not add up. Dong Zhuo holds Chang'an and Sun Ce holds the east in the same season; men who were thirty years apart are drawing pay from the same court. Whether to say so out loud is a decision.",
+    descriptionZh: '名籍對不上:董卓據長安,而孫策橫江東,同在一時;相隔三十年的人,在同一份俸祿冊上。這件事說不說破,是一個決定。',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    choices: [
+      {
+        id: 'speak',
+        label: { zh: '明言之 —— 天下皆知其異', en: 'Say it aloud — let everyone know' },
+        effects: [
+          { kind: 'flag', key: 'gathering-alt-known' },
+          { kind: 'flag', key: 'gathering-alt-open' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -8 },
+          { kind: 'city-loyalty', cityId: 'xuchang', delta: -10 },
+        ],
+      },
+      {
+        id: 'silent',
+        label: { zh: '不言 —— 各安其位', en: 'Say nothing — let each keep his place' },
+        effects: [
+          { kind: 'flag', key: 'gathering-alt-known' },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 6 },
+          { kind: 'city-loyalty', cityId: 'xuchang', delta: 8 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 說破之後 —— 十七家都知道自己不該在這裡,那麼結盟討伐最強的那一家
+     * 就有了一個誰都說得出口的理由。虎牢那一次是真的發生過的,只是換了年份。
+     */
+    id: 'evt-gathering-alt-2',
+    name: { en: 'The Gate Again', zh: '虎牢再會' },
+    yearMin: 201,
+    yearMax: 206,
+    requires: [
+      { kind: 'flag-set', key: 'chain-gathering' },
+      { kind: 'flag-set', key: 'gathering-alt-open' },
+      { kind: 'officer-active', officerId: 'cao-cao' },
+      { kind: 'flag-unset', key: 'gathering-alt-league' },
+    ],
+    description:
+      "Once it is common knowledge that none of them belongs in this year, an alliance against whoever is strongest needs no other justification. They did it once at Hulao already — different year, same gate.",
+    descriptionZh: '既知眾人皆不在其時,則合縱討最強者,不必再找別的理由。虎牢那一次本來就發生過 —— 換了年份,還是那道關。',
+    effects: [
+      { kind: 'flag', key: 'gathering-alt-league' },
+      { kind: 'city-defense', cityId: 'hulao', delta: 20 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -6 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'liu-bei', delta: 6 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-ce', delta: 6 },
+    ],
+    mood: 'martial',
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',

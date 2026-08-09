@@ -1151,6 +1151,7 @@ const OFFICER_ASSIGNMENTS_GATHERING: Record<string, OfficerAssignment> = {
 
 export const SCENARIO_GATHERING_OF_HEROES: Scenario = {
   id: 'scn-gathering-of-heroes',
+  eventFlags: ['chain-gathering'],
   openingRelations: [
     { a: 'dong', b: 'cao', score: -85, status: 'neutral' },  // 反董聯軍之首,誓不兩立
     { a: 'dong', b: 'yuan-shao', score: -90, status: 'neutral' },  // 盟主
