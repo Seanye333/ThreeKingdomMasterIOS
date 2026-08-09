@@ -8656,11 +8656,157 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
       { kind: 'officer-loyalty', officerId: 'hist-shi-siming', delta: 15 },
       { kind: 'city-loyalty', cityId: 'ye', delta: -20 },
       { kind: 'city-defense', cityId: 'luoyang', delta: -15 },
-      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-heng', delta: -10 },
+      /*
+       * 天命要掛在**盤上真正的君主**身上。這一條原本寫 `hist-li-heng`(肅宗),
+       * 而安史盤的唐主是玄宗 `hist-li-longji` —— `mandate-ruler` 找不到以他為主的
+       * 勢力,整條效果是空轉的。史書上肅宗此時確實已即位於靈武,
+       * 但盤面沒有模型表示那次移交,所以指向盤上的那一位。
+       */
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: -10 },
       { kind: 'flag', key: 'anshi-shisiming' },
     ],
     mood: 'ominous',
   },
+  /*
+   * 安史盤實測只演得到 8 條 —— 全庫最薄的一張,而原因很單純:
+   * 它只有兩家、窗口又短,通用事件一條也吃不到(唐籍守衛擋不住它,
+   * 但那批新事件掛的是**隋籍**人物,而安史盤沒有隋人)。所以它的厚度
+   * 只能自己長:下面四節把鏈從馬嵬驛接到亂事的結束。
+   */
+  {
+    id: 'evt-st-anshi-9',
+    name: { en: 'Enthroned at Lingwu', zh: '靈武即位' },
+    yearMin: 179,
+    yearMax: 188,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-alive', officerId: 'hist-li-heng' },
+      { kind: 'flag-set', key: 'anshi-mawei' },
+      { kind: 'flag-unset', key: 'anshi-lingwu' },
+    ],
+    description:
+      'At the parting of the roads the elders of the district block the crown prince from following his father into Shu: if the Son of Heaven will not stay, they say, at least leave us the heir, or who will there be in the north to lead the Central Plain back. He goes north instead with two thousand men, reaches Lingwu, and the Shuofang army puts him on the throne there — an emperor made in a frontier garrison, with no capital, no treasury, and no seal, who honours the man in Shu as Retired Emperor by proclamation and does not ask his permission first. It is a usurpation dressed as a rescue, and it is also the only thing that saves the dynasty.',
+    descriptionZh:
+      '至馬嵬,父老遮道請留太子曰:'
+      + '「至尊既不肯留,某等願率子弟從殿下東破賊,取長安。'
+      + '若殿下與至尊皆入蜀,使中原百姓誰為之主?」\n\n'
+      + '……太子北上至靈武。裴冕、杜鴻漸等勸進,凡五請,乃許。\n\n'
+      + '七月甲子,即皇帝位於靈武城南樓,尊玄宗為上皇天帝,改元至德。'
+      + '……時塞上精兵皆選入討賊,惟餘老弱守邊,'
+      + '文武官不滿三十人,披草萊,立朝廷,制度草創,武人驕慢。\n\n'
+      + '——而天下之心,自此有所繫。',
+    effects: [
+      { kind: 'city-troops-multiplier', cityId: 'shuofang', multiplier: 1.35 },
+      { kind: 'city-defense', cityId: 'shuofang', delta: 25 },
+      { kind: 'city-loyalty', cityId: 'shuofang', delta: 20 },
+      { kind: 'city-loyalty', cityId: 'changan', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'hist-li-heng', delta: 25 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: 12 },
+      { kind: 'flag', key: 'anshi-lingwu' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-st-anshi-10',
+    name: { en: 'Both Capitals Back in a Season', zh: '香積寺·兩京復' },
+    yearMin: 180,
+    yearMax: 189,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-active', officerId: 'hist-guo-ziyi' },
+      { kind: 'flag-set', key: 'anshi-lingwu' },
+      { kind: 'flag-unset', key: 'anshi-liangjing' },
+    ],
+    description:
+      'North of Xiangji temple the line runs thirty li end to end and neither side gives ground all afternoon. The Tang left is broken twice and reformed twice; Li Siye strips to the waist and goes in front of his own men with a long blade to stop the rout. Sixty thousand heads by evening, and the western capital falls the next day. The price is written into the agreement with the Uighurs beforehand and everyone signs it anyway: the land and the men of the two capitals are ours, the gold, silk and daughters are yours. Guangping talks them into waiting until Luoyang before collecting.',
+    descriptionZh:
+      '王師結陣橫亙三十里,賊亦列陣以待。……賊伏兵於陣東,'
+      + '將襲我後,朔方左廂兵馬使僕固懷恩引回紇擊之,盡殪。\n\n'
+      + '李嗣業袒身執長刀,立於陣前大呼,當其刀者,人馬俱碎。'
+      + '……自午及酉,斬首六萬級,填溝壑而死者甚眾,賊遂大潰。\n\n'
+      + '明日,入西京。……初,上欲速得京師,與回紇約曰:'
+      + '「克城之日,土地、士庶歸唐,金帛、子女皆歸回紇。」\n\n'
+      + '廣平王拜於葉護馬前曰:「今始得西京,若遽俘掠,則東京之人皆為賊固守,'
+      + '不可復取矣,願至東京乃如約。」葉護驚躍下馬答拜,曰:「當為殿下東向取洛陽。」',
+    effects: [
+      { kind: 'city-troops-multiplier', cityId: 'luoyang', multiplier: 0.65 },
+      { kind: 'city-defense', cityId: 'luoyang', delta: -30 },
+      { kind: 'city-loyalty', cityId: 'luoyang', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.2 },
+      { kind: 'city-defense', cityId: 'changan', delta: 20 },
+      { kind: 'officer-loyalty', officerId: 'hist-guo-ziyi', delta: 25 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: 15 },
+      { kind: 'flag', key: 'anshi-liangjing' },
+    ],
+    mood: 'martial',
+  },
+  {
+    id: 'evt-st-anshi-11',
+    name: { en: 'Nine Armies and No Commander', zh: '相州·九節度使無統帥' },
+    yearMin: 181,
+    yearMax: 190,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-active', officerId: 'hist-guo-ziyi' },
+      { kind: 'officer-active', officerId: 'hist-li-guangbi' },
+      { kind: 'flag-set', key: 'anshi-liangjing' },
+      { kind: 'flag-unset', key: 'anshi-xiangzhou' },
+    ],
+    description:
+      'Six hundred thousand men from nine commands ring Ye, and the court appoints no marshal over them because Guo Ziyi and Li Guangbi are both too senior to serve under the other — a eunuch is sent instead, with the title of observer and no authority to give an order. They dam the Zhang river into the city and sit there for four months. When Shi Siming finally comes down from the north and the two lines meet, a wind gets up that carries the sand and pulls up trees and turns day into night, and both armies run in opposite directions from the same storm. The nine commands go home, each to its own province, and never assemble again.',
+    descriptionZh:
+      '九節度之師圍相州,以郭子儀、李光弼皆元勳,難相統屬,'
+      + '故不置元帥,但以魚朝恩為觀軍容宣慰處置使。\n\n'
+      + '築壘再重,穿塹三重,壅漳水灌之,城中井泉皆溢。……相持數月不下。\n\n'
+      + '……官軍步騎十萬陳於安陽河北,思明自將精兵五萬敵之,……戰方酣,'
+      + '大風忽起,吹沙拔木,天地晝晦,咫尺不相辨。兩軍大驚,'
+      + '官軍潰而南,賊潰而北,委棄兵仗輜重,委積於路。\n\n'
+      + '——諸節度各潰歸本鎮,自是不復合。',
+    effects: [
+      { kind: 'city-defense', cityId: 'ye', delta: 25 },
+      { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 1.2 },
+      { kind: 'city-troops-multiplier', cityId: 'shuofang', multiplier: 0.85 },
+      { kind: 'city-troops-multiplier', cityId: 'tongguan', multiplier: 0.85 },
+      { kind: 'officer-loyalty', officerId: 'hist-guo-ziyi', delta: -12 },
+      { kind: 'officer-loyalty', officerId: 'hist-shi-siming', delta: 18 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: -12 },
+      { kind: 'flag', key: 'anshi-xiangzhou' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-st-anshi-12',
+    name: { en: 'He Took Off His Helmet and Rode Out Alone', zh: '免冑見回紇' },
+    yearMin: 182,
+    yearMax: 191,
+    requires: [
+      { kind: 'flag-set', key: 'chain-anshi' },
+      { kind: 'officer-active', officerId: 'hist-guo-ziyi' },
+      { kind: 'flag-set', key: 'anshi-xiangzhou' },
+      { kind: 'flag-unset', key: 'anshi-huihe' },
+    ],
+    description:
+      'Told that Guo Ziyi is dead and the Tang court finished, the Uighurs come south with the Tibetans, and Guo Ziyi has ten thousand men against them. He sends word that he is coming out to talk. His officers beg him to take five hundred horse; a few, he says, will not be enough, and going out with an army makes it a battle. So he takes off his helmet and his armour, throws down his lance, and rides into their camp with a handful of riders, calling out that it is him. The Uighur chiefs stare, get off their horses, and bow in a line — and that afternoon the two of them drink together and turn on the Tibetans instead.',
+    descriptionZh:
+      '回紇聞子儀已死,唐室無主,故從吐蕃入寇。'
+      + '……子儀所將不滿萬人,虜眾十倍,乃遣使諭之。\n\n'
+      + '子儀將出,諸將請以五百騎自從,子儀曰:「此適足以為害也。」'
+      + '乃使數十騎從之,傳呼曰:「令公來!」\n\n'
+      + '虜初疑不信,……子儀免冑釋甲投槍而進,回紇諸酋長相顧曰:「是也!」'
+      + '皆下馬羅拜曰:「果吾父也。」\n\n'
+      + '子儀召其酋長,各飲之酒,與之羅錦,歡言如平生。'
+      + '……遂共擊吐蕃,大破之於靈臺西原,斬首五萬級。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-guo-ziyi', delta: 35 },
+      { kind: 'city-defense', cityId: 'changan', delta: 25 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.15 },
+      { kind: 'city-loyalty', cityId: 'shuofang', delta: 20 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'hist-li-longji', delta: 15 },
+      { kind: 'flag', key: 'anshi-huihe' },
+    ],
+    mood: 'auspicious',
+  },
+
   /* ── 230–235:三帝鼎立與鹵城兩張盤只有 9 條,而今天補的後三國那批是 238 起,
        對它們一點用都沒有。這四條填的正是那一段。 ── */
   {
@@ -9969,6 +10115,302 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     mood: 'martial',
   },
 
+  /*
+   * ── 不綁旗標的一批:讓整條線一起變厚 ──
+   *
+   * 後三國那次學到的:**盤薄的真因常常是整個時代的共享事件太少**,
+   * 補一批不綁 chain 的下去,跨過那幾年的每一張盤都吃得到。隋唐線是現在
+   * 最薄的一條(五張盤中位 9 條),戰國七雄逐鹿那張刻意沒有專屬鏈,
+   * 靠的也是這裡。
+   *
+   * ⚠ 隋唐這幾條的守衛一律挑**隋籍**的人(宇文化及/李密/翟讓/張須陀/秦瓊)。
+   * 理由:安史盤的人物池是完整的 130 名唐人 —— 李世民與郭子儀同盤 ——
+   * 所以唐籍守衛擋不住它;隋籍的那 56 人只在隋末四張盤上。
+   */
+
+  /* ── 戰國通用 ── */
+  {
+    id: 'evt-ws-tianji-race',
+    name: { en: 'Race the Wrong Horses on Purpose', zh: '田忌賽馬' },
+    yearMin: 178,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-sun-bin' },
+      { kind: 'officer-alive', officerId: 'hist-tian-ji' },
+      { kind: 'officer-alive', officerId: 'hist-qi-weiwang' },
+      { kind: 'flag-unset', key: 'ws-tianji' },
+    ],
+    description:
+      'Tian Ji keeps losing money racing chariots against the king and the princes. Sun Bin watches a few heats and sees that the teams are not in fact very far apart — they are simply matched in three grades, best against best. Bet heavily, he says, and I will make you win. So at the meet: put your worst team against their best, your best against their middling, your middling against their worst. One loss and two wins, and a thousand in gold. Tian Ji then presents the man to King Wei, who asks him about war, and keeps him as a teacher.',
+    descriptionZh:
+      '忌數與齊諸公子馳逐重射。孫子見其馬足不甚相遠,馬有上、中、下輩。'
+      + '於是孫子謂田忌曰:「君弟重射,臣能令君勝。」\n\n'
+      + '田忌信然之,與王及諸公子逐射千金。及臨質,孫子曰:'
+      + '「今以君之下駟與彼上駟,取君上駟與彼中駟,取君中駟與彼下駟。」\n\n'
+      + '既馳三輩畢,而田忌一不勝而再勝,卒得王千金。\n\n'
+      + '於是忌進孫子於威王。威王問兵法,遂以為師。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-sun-bin', delta: 25 },
+      { kind: 'officer-loyalty', officerId: 'hist-tian-ji', delta: 15 },
+      { kind: 'city-troops-multiplier', cityId: 'linzi', multiplier: 1.12 },
+      { kind: 'city-defense', cityId: 'linzi', delta: 12 },
+      { kind: 'flag', key: 'ws-tianji' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-jiaotu',
+    name: { en: 'A Clever Hare Has Three Burrows', zh: '狡兔三窟' },
+    yearMin: 179,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-feng-xuan' },
+      { kind: 'officer-alive', officerId: 'hist-mengchang-jun' },
+      { kind: 'flag-unset', key: 'ws-jiaotu' },
+    ],
+    description:
+      'Sent to collect the debts of the fief at Xue, Feng Xuan calls in every tenant who owes, checks the tallies against them, then burns the lot in the marketplace and tells them the lord forgives the debt. Asked what he brought back, he says: you have gold and you have retainers, what your house is short of is goodwill, so I bought you some. Years later, out of office and sent back to Xue, the lord finds the whole district come a hundred li up the road to meet him, old and young together. Now I see what you bought, he says. A clever hare, says Feng Xuan, keeps three burrows, and even then only escapes death. You have one. Let me dig you the other two.',
+    descriptionZh:
+      '馮諼乃載券契而行,……悉來合券。券徧合,起矯命以責賜諸民,'
+      + '因燒其券,民稱萬歲。\n\n'
+      + '孟嘗君怪其疾也,曰:「責畢收乎?來何疾也!」'
+      + '曰:「收畢矣。」「以何市而反?」\n\n'
+      + '馮諼曰:「君云『視吾家所寡有者』。臣竊計,君宮中積珍寶,'
+      + '狗馬實外廄,美人充下陳。君家所寡有者,以義耳!竊以為君市義。」\n\n'
+      + '後期年,……孟嘗君就國於薛,未至百里,民扶老攜幼,迎君道中。'
+      + '孟嘗君顧謂馮諼:「先生所為文市義者,乃今日見之。」\n\n'
+      + '馮諼曰:「狡兔有三窟,僅得免其死耳。'
+      + '今君有一窟,未得高枕而臥也。請為君復鑿二窟。」',
+    effects: [
+      { kind: 'city-loyalty', cityId: 'pengcheng', delta: 22 },
+      { kind: 'city-loyalty', cityId: 'xiapi', delta: 15 },
+      { kind: 'city-food', cityId: 'pengcheng', delta: 2000 },
+      { kind: 'officer-loyalty', officerId: 'hist-mengchang-jun', delta: 15 },
+      { kind: 'officer-loyalty', officerId: 'hist-feng-xuan', delta: 20 },
+      { kind: 'flag', key: 'ws-jiaotu' },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    id: 'evt-ws-juding',
+    name: { en: 'He Lifted the Cauldron and Broke His Shin', zh: '舉鼎絕臏' },
+    yearMin: 180,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-active', officerId: 'hist-qin-wuwang' },
+      { kind: 'flag-unset', key: 'ws-juding' },
+    ],
+    description:
+      'The king is strong and likes contests of strength, and the strongmen he keeps around him hold real office. In the Zhou capital he goes to look at the Nine Cauldrons — the vessels that are the empire itself — and decides to lift one. The shinbone goes. In the eighth month he is dead, at twenty-three, with no son; the clan of the man who wagered with him is exterminated, and the succession passes sideways to a prince who has spent his youth as a hostage in Yan and who will reign for fifty-six years.',
+    descriptionZh:
+      '武王有力好戲,力士任鄙、烏獲、孟說皆至大官。\n\n'
+      + '四年,……與孟說舉鼎,絕臏。八月,武王死。族孟說。\n\n'
+      + '武王取魏女為后,無子。立異母弟,是為昭襄王。'
+      + '昭襄母楚人,姓羋氏,號宣太后。\n\n'
+      + '——武王之壯,不過欲窺周室之九鼎耳;'
+      + '而秦之併天下,乃自此昭襄五十六年始。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-qin-wuwang', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-qin-zhaoxiang', delta: 18 },
+      { kind: 'city-loyalty', cityId: 'changan', delta: -12 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 0.92 },
+      { kind: 'flag', key: 'ws-juding' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-ws-shaqiu',
+    name: { en: 'Three Months in the Sand Hill Palace', zh: '沙丘·探爵鷇而食之' },
+    yearMin: 180,
+    yearMax: 191,
+    requires: [
+      { kind: 'officer-active', officerId: 'hist-zhao-wuling' },
+      { kind: 'officer-alive', officerId: 'hist-zhao-huiwen' },
+      { kind: 'flag-unset', key: 'ws-shaqiu' },
+    ],
+    description:
+      'The man who put Zhao in trousers and on horseback, who abdicated at the height of his power to run the army as Father of the Ruler, then decided to split the kingdom between his two sons and gave the elder an opening. The elder rebels, loses, and runs to his father, who opens the door to him. So the ministers besiege the palace to get at the son, kill him, and then realise that if they lift the siege now they will be exterminated for having laid it. They order everyone inside out on pain of death, and leave the Father of the Ruler in there alone. He robs sparrow nests for fledglings to eat. It takes him three months to starve.',
+    descriptionZh:
+      '主父及王遊沙丘,異宮。公子章即以其徒與田不禮作亂,'
+      + '……公子章敗,往走主父,主父開之。\n\n'
+      + '成、兌因圍主父宮。公子章死,公子成、李兌謀曰:'
+      + '「以章故圍主父,即解兵,吾屬夷矣。」乃遂圍主父。\n\n'
+      + '令宮中人「後出者夷」,宮中人悉出。'
+      + '主父欲出不得,又不得食,探爵鷇而食之,三月餘而餓死沙丘宮。\n\n'
+      + '——胡服騎射之君,滅中山、闢雲中雁門者,其終如此。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-zhao-wuling', status: 'dead' },
+      { kind: 'city-loyalty', cityId: 'ye', delta: -18 },
+      { kind: 'city-troops-multiplier', cityId: 'ye', multiplier: 0.9 },
+      { kind: 'city-defense', cityId: 'ye', delta: -12 },
+      { kind: 'officer-loyalty', officerId: 'hist-zhao-huiwen', delta: -10 },
+      { kind: 'flag', key: 'ws-shaqiu' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-ws-ganluo',
+    name: { en: 'Twelve Years Old and a Minister of State', zh: '甘羅十二為上卿' },
+    yearMin: 182,
+    yearMax: 192,
+    requires: [
+      { kind: 'officer-alive', officerId: 'hist-gan-luo' },
+      { kind: 'officer-alive', officerId: 'hist-lu-buwei' },
+      { kind: 'flag-unset', key: 'ws-ganluo' },
+    ],
+    description:
+      'Zhang Tang refuses the posting to Yan because he once campaigned against Zhao and the Zhao have put a price on his head. The chancellor is furious and getting nowhere. A twelve-year-old in his household asks to try, goes to Zhang Tang and asks him two questions — whose achievements are greater, yours or Wu Qi, and who was more absolute in Qin, Lord Ying or the chancellor — and having established that a lesser man served a lesser master and still died for crossing him, Zhang Tang packs. Then the boy borrows five carriages, goes to Zhao first, explains what Qin and Yan together will mean for Zhao, and comes home with five cities ceded before the alliance has even been made.',
+    descriptionZh:
+      '文信侯欲攻趙以廣河間,使剛成君蔡澤事燕三年,燕太子丹入質於秦。'
+      + '……欲使張唐往相燕,張唐辭曰:「燕者必徑於趙,趙人得唐者,受百里之地。」\n\n'
+      + '甘羅曰:「君侯何不快之甚也?」……乃見張唐曰:'
+      + '「君之功孰與武安君?」曰:「武安君戰勝攻取不知其數,臣不如也。」'
+      + '「應侯之用於秦也,孰與文信侯專?」曰:「應侯不如文信侯專。」'
+      + '「……應侯欲攻趙,武安君難之,去咸陽七里而立死於杜郵。'
+      + '今文信侯自請卿相燕而不肯行,臣不知卿所死之處矣。」張唐曰:「請因孺子行。」\n\n'
+      + '……甘羅見趙王,趙王立自割五城以廣河間。\n\n'
+      + '甘羅還報秦,乃封甘羅以為上卿,復以始甘茂田宅賜之。',
+    effects: [
+      { kind: 'officer-loyalty', officerId: 'hist-gan-luo', delta: 30 },
+      { kind: 'officer-loyalty', officerId: 'hist-lu-buwei', delta: 15 },
+      { kind: 'city-loyalty', cityId: 'ye', delta: -12 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.08 },
+      { kind: 'city-defense', cityId: 'changan', delta: 10 },
+      { kind: 'flag', key: 'ws-ganluo' },
+    ],
+    mood: 'auspicious',
+  },
+
+  /* ── 隋唐通用(守衛一律用隋籍人物,見上面的註解)── */
+  {
+    id: 'evt-st-xutuo',
+    name: { en: 'He Rode Back In Four Times', zh: '須陀躍馬入救,來往數四' },
+    yearMin: 178,
+    yearMax: 188,
+    requires: [
+      { kind: 'officer-active', officerId: 'hist-zhang-xutuo' },
+      { kind: 'officer-alive', officerId: 'hist-li-mi-sui' },
+      { kind: 'flag-unset', key: 'st-xutuo' },
+    ],
+    description:
+      'The one Sui commander the rebels genuinely fear has beaten Zhai Rang some thirty times, and Li Mi builds a trap out of exactly that. Zhai Rang engages and runs; Zhang Xutuo, who has never had reason to respect him, goes after the rout and into an ambush laid in the woods north of Dahai temple. He cuts his way out — and then finds that part of his command has not, so he turns his horse round and goes back in for them, four times, until the fourth time he does not come out. His troops cry for him day and night for days on end, and no army the Sui puts in the field afterwards is worth anything at all.',
+    descriptionZh:
+      '須陀好以少擊眾,前後破賊三十餘陣,威振東夏。'
+      + '及是,密伏兵於大海寺北林間。\n\n'
+      + '須陀素輕讓,方逐北,遇伏發,四面亂射,'
+      + '……須陀潰圍而出,左右不能盡出,'
+      + '須陀躍馬入救之,來往數四,遂陷陣而死。\n\n'
+      + '所部兵晝夜號哭,數日不止。\n\n'
+      + '——自是,河南無復官軍。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-zhang-xutuo', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-li-mi-sui', delta: 22 },
+      { kind: 'city-defense', cityId: 'hulao', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'luoyang', multiplier: 0.88 },
+      { kind: 'city-troops-multiplier', cityId: 'guandu', multiplier: 1.12 },
+      { kind: 'flag', key: 'st-xutuo' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-st-jiangdu',
+    name: { en: 'A Fine Neck — Who Will Cut It', zh: '好頭頸,誰當斫之' },
+    yearMin: 179,
+    yearMax: 189,
+    requires: [
+      { kind: 'officer-active', officerId: 'hist-yuwen-huaji' },
+      { kind: 'officer-alive', officerId: 'hist-sui-yangdi' },
+      { kind: 'flag-set', key: 'st-jinyang' },
+      { kind: 'flag-unset', key: 'st-jiangdu' },
+    ],
+    description:
+      'The emperor will not go back north, and the Guanzhong men of his guard, who have been three years away from families they are not sure still exist, decide to go home with or without him. He knows something is coming: he takes to holding a mirror and remarking to the empress what a fine neck it is, and asking who is going to cut it. When the guards come through the palace at dawn he asks what his crime is, and the answer he gets is that the whole world resents him, so which crime does he want. He asks for poison, is refused, and takes off his own silk scarf so that they can strangle him with it.',
+    descriptionZh:
+      '帝在江都,……從駕驍果多關中人,久客羈旅,見帝無西意,謀欲叛歸。\n\n'
+      + '帝好自照鏡,顧謂蕭后曰:「好頭頸,誰當斫之?」'
+      + '后驚問故,帝笑曰:「貴賤苦樂,更迭為之,亦復何傷。」\n\n'
+      + '……司馬德戡、裴虔通等勒兵犯宮。帝曰:'
+      + '「我實負百姓。至於爾輩,榮祿兼盛,何乃如是!今日之事,孰為首邪?」'
+      + '馬文舉曰:「溥天同怨,何止一人!」\n\n'
+      + '帝曰:「天子死自有法,何得加以鋒刃!取鴆酒來。」文舉等不許,'
+      + '……帝自解練巾授之,遂縊於溫室。\n\n'
+      + '——隋亡。而天下之爭,自此始為爭天下。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-sui-yangdi', status: 'dead' },
+      { kind: 'city-loyalty', cityId: 'guangling', delta: -25 },
+      { kind: 'city-troops-multiplier', cityId: 'guangling', multiplier: 0.85 },
+      { kind: 'city-loyalty', cityId: 'luoyang', delta: -15 },
+      { kind: 'officer-loyalty', officerId: 'hist-yuwen-huaji', delta: -20 },
+      { kind: 'flag', key: 'st-jiangdu' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-st-zhairang',
+    name: { en: 'Armed Men Behind the Curtain', zh: '伏甲於幕下' },
+    yearMin: 179,
+    yearMax: 189,
+    requires: [
+      { kind: 'officer-active', officerId: 'hist-li-mi-sui' },
+      { kind: 'officer-alive', officerId: 'hist-zhai-rang' },
+      { kind: 'flag-set', key: 'st-xingluo' },
+      { kind: 'flag-unset', key: 'st-zhairang' },
+    ],
+    description:
+      'Zhai Rang founded the Wagang army and then handed it to Li Mi because Li Mi was better at it, which is a rarer thing than any battle in this war. His own people will not leave it alone: his marshal wants him to take the whole administration back, and his elder brother tells him outright that the throne is something you take, not something you give away, and that if he will not, the brother will. Zhai Rang laughs it off and says nothing. Li Mi does not laugh it off. There is a banquet, a fine bow passed round for everyone to admire, armed men behind the hangings, and Cai Jiande comes across the room with a blade while Zhai Rang is drawing it.',
+    descriptionZh:
+      '讓司馬王儒信勸讓為大冢宰,總統眾務,以奪密之權。'
+      + '讓兄寬復謂讓曰:「天子止可自作,安得與人?汝若不能為,我當為之。」'
+      + '讓笑而不應,密聞之,陰有圖讓之計。\n\n'
+      + '……密因宴會,……出良弓示讓,讓方引滿,'
+      + '蔡建德以刀斫讓,拉之而死。\n\n'
+      + '單雄信等叩頭求哀,密並釋而慰諭之。'
+      + '……然自是之後,將帥人人各有異心。',
+    effects: [
+      { kind: 'officer-status', officerId: 'hist-zhai-rang', status: 'dead' },
+      { kind: 'officer-loyalty', officerId: 'hist-shan-xiongxin', delta: -30 },
+      { kind: 'officer-loyalty', officerId: 'hist-li-ji', delta: -20 },
+      { kind: 'officer-loyalty', officerId: 'hist-wang-bodang', delta: -12 },
+      { kind: 'city-loyalty', cityId: 'guandu', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'xuchang', multiplier: 0.9 },
+      { kind: 'flag', key: 'st-zhairang' },
+    ],
+    mood: 'ominous',
+  },
+  {
+    id: 'evt-st-shuqi',
+    name: { en: 'Not the Lord I Can Serve', zh: '非僕託身之所' },
+    yearMin: 180,
+    yearMax: 190,
+    requires: [
+      { kind: 'officer-active', officerId: 'hist-qin-qiong' },
+      { kind: 'officer-alive', officerId: 'hist-cheng-yaojin' },
+      { kind: 'officer-alive', officerId: 'hist-wang-shichong' },
+      { kind: 'flag-unset', key: 'st-shuqi' },
+    ],
+    description:
+      'Wang Shichong is generous with titles and free with oaths, and Qin Shubao has taken his measure: a shallow, deceitful man who swears by heaven every other sentence, an old village sorceress, not somebody who is going to put an age back together. So at Jiuqu, with both armies drawn up, he and Cheng Yaojin ride out a hundred paces to the west, dismount, and bow to Wang Shichong across the ground. You gave us honours and we meant to repay them, but you are suspicious by nature and you like what flatterers tell you; this is not a house we can lodge in, and we take our leave here. Wang Shichong is afraid to send anyone after them.',
+    descriptionZh:
+      '世充善諛而多詐,……叔寶謂程咬金曰:'
+      + '「世充器度淺狹,而多妄語,好為咒誓,乃老巫嫗耳,豈撥亂之主乎!」\n\n'
+      + '及戰於九曲,叔寶與程咬金並上馬,西馳百許步,下馬拜世充曰:'
+      + '「荷公殊禮,深思報效,公性猜貳,喜信讒言,'
+      + '非僕託身之所,今不能仰事,請從此辭。」\n\n'
+      + '世充懼,不敢逼。於是來降。\n\n'
+      + '——高祖令事秦王。秦王素聞其勇,厚禮之,'
+      + '每敵有驍將銳士震耀出入以誇眾者,秦王輒命叔寶往取之。',
+    effects: [
+      { kind: 'officer-join-ruler', officerId: 'hist-qin-qiong', rulerOfficerId: 'hist-li-yuan' },
+      { kind: 'officer-join-ruler', officerId: 'hist-cheng-yaojin', rulerOfficerId: 'hist-li-yuan' },
+      { kind: 'officer-loyalty', officerId: 'hist-qin-qiong', delta: 25 },
+      { kind: 'officer-loyalty', officerId: 'hist-cheng-yaojin', delta: 25 },
+      { kind: 'officer-loyalty', officerId: 'hist-wang-shichong', delta: -20 },
+      { kind: 'city-troops-multiplier', cityId: 'changan', multiplier: 1.1 },
+      { kind: 'city-troops-multiplier', cityId: 'luoyang', multiplier: 0.9 },
+      { kind: 'flag', key: 'st-shuqi' },
+    ],
+    mood: 'auspicious',
+  },
 ];
 
 export const EVENTS_BY_ID: Record<string, HistoricalEvent> = Object.fromEntries(
