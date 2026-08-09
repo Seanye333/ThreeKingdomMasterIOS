@@ -7712,6 +7712,62 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-yuanshu-empire': {
+    /* 僭號守得住的那個世界 —— 而周邊幾家的敗法,史書上各有各的定格。 */
+    lubu: {
+      defeat: {
+        titleZh: '轅門射戟之後',
+        titleEn: 'After the Halberd at the Gate',
+        textZh:
+          '布使人請靈等百餘人共會飲食,'
+          + '布言:「玄德,布弟也。弟為諸君所困,故來救之。'
+          + '布性不喜合鬥,但喜解鬥耳。」\n\n'
+          + '乃令植戟於營門,曰:'
+          + '「諸君觀布射戟小支,一發中者,諸君當解去;'
+          + '不中,可留決鬥。」布舉弓射戟,正中小支。\n\n'
+          + '—— 那一箭救了劉備一次。'
+          + '而白門樓上,劉備說的是:'
+          + '「明公不見布之事丁建陽、董太師乎?」',
+        textEn:
+          'He had Ji Ling and a hundred others in to eat with him and said: Xuande is my younger brother. He is in difficulties because of you gentlemen, so I have come to get him out. It is not in my nature to enjoy a fight. I enjoy ending one.\n\n'
+          + 'He had a halberd set up at the camp gate: watch me shoot the small branch of it. If I hit it, you gentlemen withdraw; if I miss, stay and settle it by battle. He drew and hit the small branch.\n\n'
+          + 'That shot saved Liu Bei once. On the tower at Baimen, what Liu Bei said was: does Your Excellency not recall how he served Ding Jianyang and the Grand Preceptor Dong?',
+      },
+      verdictZh:
+        '論曰:布有虓虎之勇,而無**一言之信** ——\n'
+        + '事丁原而殺丁原,事董卓而殺董卓,'
+        + '救劉備而後奪其州。\n'
+        + '夫勇可以取一時,信乃可以取一世;'
+        + '故白門樓上一言而決,'
+        + '非曹公之忍,是天下無人肯為之言。',
+      verdictEn:
+        'The historian says: he had the courage of a roaring tiger and not one word anyone could rely on. He served Ding Yuan and killed Ding Yuan; served Dong Zhuo and killed Dong Zhuo; rescued Liu Bei and then took his province. Courage takes a season, but only being trusted takes an age. On the tower at Baimen one sentence decided him — and that was not cruelty on Lord Cao part. It was that there was nobody in the realm willing to speak for him.',
+    },
+    sun: {
+      defeat: {
+        titleZh: '江東斷仲家',
+        titleEn: 'The East Breaks with the House of Zhong',
+        textZh:
+          '術僭號,策以書責而絕之。\n\n'
+          + '書曰:「昔董卓無道,則有呂布之亂;'
+          + '今將軍受璽而號,亦猶是也。」\n\n'
+          + '—— 絕之易,而其後江東孤立於江表,'
+          + '北有仲家,西有劉表,'
+          + '所恃者惟一江與二三舊將而已。',
+        textEn:
+          'When Yuan Shu took the title, Sun Ce wrote to reproach him and broke off relations.\n\n'
+          + 'The letter said: when Dong Zhuo cast off the law there came the affair of Lü Bu; now that you have taken the seal and the style, it is the same thing.\n\n'
+          + 'Breaking with him was the easy part. Afterwards the east stood alone below the river with the House of Zhong to the north and Liu Biao to the west, holding one waterway and two or three old officers of his father.',
+      },
+      verdictZh:
+        '論曰:策以孤軍渡江,五年而定六郡,'
+        + '其鋒之銳,天下罕有。\n'
+        + '然所誅皆英豪雄傑,能得人死力者 ——'
+        + '故郭嘉料之曰:「若刺客伏起,一人之敵耳。」\n'
+        + '斷仲家是對的,而對的事做了,'
+        + '也還是要一個人站在江邊。',
+      verdictEn:
+        'The historian says: he crossed the river with a single force and settled six commanderies in five years, and there was hardly an edge like his in the realm. But the men he put to death were all people of standing, the kind others will die for — which is why Guo Jia read him and said: let one assassin rise up and he is a match for one man. Breaking with the House of Zhong was right. Doing the right thing still left him standing on the bank alone.',
+    },
     'yuan-shu': {
       defeat: {
         titleZh: '淮南未旱',
