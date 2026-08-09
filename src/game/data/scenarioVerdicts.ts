@@ -7215,6 +7215,89 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
       verdictEn:
         'The historian says: the ruin he brought began with an army entering the capital. He Jin called in outside troops to destroy the eunuchs, and the eunuchs died at Yuan Shao hands first; once the troops had arrived, the man who called them had no way to send them home. Bring one army you cannot command inside the gates, and the disaster is not that its leader is cruel. It is that from then on nobody can order it to leave.',
     },
+    'liu-biao': {
+      defeat: {
+        titleZh: '坐談客耳',
+        titleEn: 'A Man for Conversation',
+        textZh:
+          '表跨蹈漢南,地方數千里,帶甲十餘萬,'
+          + '而愛民養士,從容自保。\n\n'
+          + '曹公與袁紹相持於官渡,紹遣人求助,'
+          + '表許之而不至,亦不佐公,欲保江漢之間,'
+          + '觀天下之變。\n\n'
+          + '韓嵩、劉先諫曰:「豪傑並爭,兩雄相持,'
+          + '天下之重在於將軍。將軍若欲有為,起乘其弊可也;'
+          + '若不然,固將擇所從。」—— 表狐疑不斷。\n\n'
+          + '及城下之日,那十餘萬甲,一次也沒有用過。',
+        textEn:
+          'He straddled the south of the Han with several thousand li of territory and more than a hundred thousand under arms, and cared for the people, kept scholars, and defended himself at leisure.\n\n'
+          + 'While Cao Cao and Yuan Shao faced each other at Guandu, Shao sent to ask for help. He agreed and did not come, and did not help Cao Cao either, meaning to hold the country between the rivers and watch what the realm did.\n\n'
+          + 'Han Song and Liu Xian told him: the strong are all contending and two great men are locked together, so the weight of the realm rests with you. If you mean to act, rise and take them at their worst. If not, choose a side. He could not decide.\n\n'
+          + 'On the day they came to the walls, those hundred thousand had still never been used.',
+      },
+      verdictZh:
+        '論曰:表非無資也,無**斷**也。\n'
+        + '有其地、有其兵、有其士,而無一日之決;'
+        + '故郭嘉謂之「坐談客耳」,'
+        + '而其子舉州以降,不待一戰。\n'
+        + '守成之難,難在守到最後仍須有人替它作一次決定。',
+      verdictEn:
+        'The historian says: it was not resources he lacked but decision. He had the land, the troops and the men of talent, and never one day of resolve; Guo Jia called him a man for conversation, and his son handed the province over without waiting for a battle. The difficulty of holding what one has is that at the end somebody still has to decide something.',
+    },
+    'zhang-lu': {
+      defeat: {
+        titleZh: '封藏府庫而去',
+        titleEn: 'He Sealed the Storehouses Before Leaving',
+        textZh:
+          '魯欲舉漢中降,其弟衛不肯。'
+          + '及曹公至,魯奔巴中。\n\n'
+          + '左右欲悉燒寶貨倉庫,魯曰:'
+          + '「本欲歸命國家,而意未達。今之走,避銳鋒,'
+          + '非有惡意。寶貨倉庫,國家之有也。」'
+          + '遂封藏而去。\n\n'
+          + '—— 曹公入南鄭,聞之而喜,'
+          + '遣人慰喻;及魯降,拜鎮南將軍,封閬中侯,邑萬戶。',
+        textEn:
+          'He wanted to give up Hanzhong and surrender; his brother Wei would not. When Cao Cao arrived he fled to Bazhong.\n\n'
+          + 'His staff wanted to burn the treasuries and granaries. He said: my intention was always to submit to the state, and it was not understood. Running now is to avoid the sharp edge, not from ill will. The treasuries and granaries belong to the state. So he sealed them and left.\n\n'
+          + 'Cao Cao entered Nanzheng, heard of it and was pleased, and sent to reassure him; when he came in he was made General Who Guards the South, Marquis of Langzhong, with a fief of ten thousand households.',
+      },
+      verdictZh:
+        '論曰:魯以五斗米道教民,'
+        + '雄據巴漢垂三十年,民夷便樂之。\n'
+        + '其去也,不焚一倉 —— 此非怯,是'
+        + '**知道那些東西本來就不是他的**。\n'
+        + '亂世據地者眾,而知所有者有幾人?',
+      verdictEn:
+        'The historian says: he taught the people by the Way of the Five Pecks of Rice and held Ba and Han for close to thirty years, and Chinese and non-Chinese alike were content under him. When he left he did not burn a single granary — not out of timidity, but because he knew those things had never been his. Many men in a broken age hold ground. How many know what they actually own?',
+    },
+    'gongsun-du': {
+      defeat: {
+        titleZh: '海東之國',
+        titleEn: 'The State Beyond the Sea',
+        textZh:
+          '度自立為遼東侯、平州牧,'
+          + '立漢二祖廟,承制設壇墠於襄平城南,'
+          + '郊祀天地,籍田,治兵,乘鸞路,九旒,旄頭羽騎。\n\n'
+          + '謂左右曰:「漢祚將絕,當與諸卿圖王耳。」\n\n'
+          + '—— 三世據遼東五十年,'
+          + '而中原記得這一家,是因為襄平城破那一天。',
+        textEn:
+          'He made himself Marquis of Liaodong and Governor of Ping province, raised temples to the two founders of Han, set up an altar south of Xiangping on his own authority, sacrificed to heaven and earth, ploughed the ritual field, drilled his troops, and rode in a phoenix carriage with nine streamers and a mounted escort with plumes.\n\n'
+          + 'He told his staff: the fortune of Han is running out, and I mean to plan for kingship with you gentlemen.\n\n'
+          + 'Three generations held Liaodong for fifty years. What the central plains remember of the family is the day Xiangping fell.',
+      },
+      verdictZh:
+        '論曰:公孫氏之於遼東,三世五十年,'
+        + '東伐高句麗,西擊烏丸,越海取東萊諸縣,'
+        + '設營州刺史 —— 其業不可謂不立。\n'
+        + '然僻遠自王,不與中國通聲教;'
+        + '故一旦司馬懿以四萬之眾行四千里而至,'
+        + '無一人為之援。\n'
+        + '自守者可以久,不可以終。',
+      verdictEn:
+        'The historian says: the Gongsun house held Liaodong for three generations and fifty years, struck Goguryeo in the east and the Wuhuan in the west, took the Donglai counties across the sea and set up an inspector for Ying province. It cannot be said they founded nothing. But they made themselves kings in a far corner and kept no traffic of word or teaching with the middle realm — so when Sima Yi finally came four thousand li with forty thousand men, not one person came to their aid. Self-sufficiency can last a long time. It cannot last to the end.',
+    },
     'shi-xie': {
       defeat: {
         titleZh: '交趾四十年',
