@@ -7160,6 +7160,86 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
   // 假想盤的「論曰」有一個歷史盤沒有的支點:**史書上這件事是那樣的,而這裡不是**。
   // 所以每一段都拿真實的結局來對照 —— 讀者知道原本會發生什麼,才知道自己改了什麼。
   'scn-gathering-of-heroes': {
+    /*
+     * 十七路諸侯同在一時,而他們本來分屬三十年 —— 所以這張盤的敗亡文本
+     * 都扣同一件事:**你敗的那一年,本來不是你該敗的那一年。**
+     */
+    'liu-bei': {
+      defeat: {
+        titleZh: '髀肉復生',
+        titleEn: 'The Flesh Grown Back',
+        textZh:
+          '備住荊州數年,嘗於表坐起至廁,見髀裡肉生,慨然流涕。\n\n'
+          + '還坐,表怪問備,備曰:「吾常身不離鞍,髀肉皆消。'
+          + '今不復騎,髀裡肉生。日月若馳,老將至矣,'
+          + '而功業不建,是以悲耳。」\n\n'
+          + '—— 這一回連荊州也沒有。'
+          + '而那句話還是那句話。',
+        textEn:
+          'After some years at Jingzhou he got up from Liu Biao table to go out, saw the flesh grown back on his thighs, and wept.\n\n'
+          + 'Coming back in, asked what was wrong, he said: I used never to be out of the saddle and the flesh on my thighs was gone. Now I no longer ride and it has grown back. The days and months go by like a gallop, age is coming, and nothing has been founded. That is why I grieve.\n\n'
+          + 'This time there is not even a Jingzhou. And the sentence is still the same sentence.',
+      },
+      verdictZh:
+        '論曰:備之一生,失城郭者屢矣,而未嘗失眾。\n'
+        + '當陽之敗,棄妻子而走,從者十餘萬,'
+        + '日行十餘里 —— 或勸棄之,備曰:'
+        + '「夫濟大事必以人為本,今人歸吾,吾何忍棄去!」\n'
+        + '故曰:他所積者不在地,在此一句。',
+      verdictEn:
+        'The historian says: he lost cities again and again in his life and never lost the people. In the rout at Dangyang he abandoned wife and children and fled, and more than a hundred thousand followed him at ten li a day. Someone urged him to leave them. He said: to accomplish a great thing one must have people as the root. These people have come to me — how could I bear to abandon them? What he accumulated was never ground. It was that sentence.',
+    },
+    dong: {
+      defeat: {
+        titleZh: '塢中之燭',
+        titleEn: 'The Candle at Meiwu',
+        textZh:
+          '卓死,暴屍於市。天時始熱,卓素充肥,'
+          + '脂流於地。守屍吏然火置卓臍中,光明達曙,'
+          + '如是積日。\n\n'
+          + '長安士庶咸相慶賀,諸阿附卓者皆下獄死。'
+          + '塢中珍藏有金二三萬斤、銀八九萬斤,'
+          + '錦綺奇玩積如丘山。\n\n'
+          + '—— 三十年之儲,燒了幾天。',
+        textEn:
+          'He was killed and the body exposed in the market. The weather had just turned hot and he had always been fat, so the fat ran out onto the ground. The clerk guarding the corpse set a wick in his navel and lit it, and it burned bright until dawn, and did so for days.\n\n'
+          + "Everyone in Chang'an, gentry and commoners alike, congratulated one another; those who had attached themselves to him went to prison and died there. In the fort were twenty or thirty thousand catties of gold, eighty or ninety thousand of silver, and brocades and curiosities heaped like hills.\n\n"
+          + 'Thirty years of stores. It burned for a few days.',
+      },
+      verdictZh:
+        '論曰:卓之亂,起於**兵入京師**。\n'
+        + '何進召外兵以誅宦官,而宦官先死於袁紹之手;'
+        + '兵既至,則召之者無以遣之。\n'
+        + '故曰:引一支不受節制之兵入國門,'
+        + '其禍不在其人之暴,在**此後再無人能命之退**。',
+      verdictEn:
+        'The historian says: the ruin he brought began with an army entering the capital. He Jin called in outside troops to destroy the eunuchs, and the eunuchs died at Yuan Shao hands first; once the troops had arrived, the man who called them had no way to send them home. Bring one army you cannot command inside the gates, and the disaster is not that its leader is cruel. It is that from then on nobody can order it to leave.',
+    },
+    'shi-xie': {
+      defeat: {
+        titleZh: '交趾四十年',
+        titleEn: 'Forty Years in Jiaozhi',
+        textZh:
+          '燮在郡四十餘年,體器寬厚,謙虛下士,'
+          + '中國士人往依避難者以百數。\n\n'
+          + '出入鳴鐘磬,備具威儀,笳簫鼓吹,車騎滿道,'
+          + '胡人夾轂焚燒香者常有數十。\n\n'
+          + '—— 兵至之日,城中無一人執兵。'
+          + '南海之濱,原也不是靠兵守了四十年的。',
+        textEn:
+          'He governed the commandery more than forty years, broad and generous in temper, courteous to men of learning; refugees from the central provinces came to him by the hundred.\n\n'
+          + 'When he went out there were bells and chimes, full ceremonial, reed-pipes and drums, carriages filling the road, and dozens of foreigners walking beside the wheels burning incense.\n\n'
+          + 'On the day the soldiers came, nobody in the city picked up a weapon. The shore of the southern sea had not been held for forty years by soldiers in the first place.',
+      },
+      verdictZh:
+        '論曰:燮之守交趾,不以兵,以**不擾**。\n'
+        + '中原大亂數十年,而交州晏然,'
+        + '士人避難者得以全其身、成其學。\n'
+        + '亂世之功,不必皆在戰陣;'
+        + '使一方之民四十年不聞金鼓,亦功也。',
+      verdictEn:
+        'The historian says: he held Jiaozhi not with soldiers but by leaving people alone. The central plains were in chaos for decades and Jiao province stayed quiet, and the scholars who fled there kept their lives and finished their work. Merit in a broken age is not all won in the battle line. To keep one region from hearing the war-drums for forty years is also merit.',
+    },
     cao: {
       defeat: {
         titleZh: '群雄並起,而無一人能終',
