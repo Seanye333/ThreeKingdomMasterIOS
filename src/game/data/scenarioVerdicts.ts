@@ -7520,6 +7520,58 @@ export const SCENARIO_VERDICTS: Record<string, Record<EntityId, ScenarioVerdict>
     },
   },
   'scn-whatif-sunce-lives': {
+    /* 小霸王沒死的那個世界 —— 官渡照常在打,而北邊那兩家的下場照舊。 */
+    cao: {
+      defeat: {
+        titleZh: '兩面',
+        titleEn: 'Both Sides at Once',
+        textZh:
+          '官渡相持,糧且盡,而江東之兵北上。\n\n'
+          + '公坐帳中,得許都急書 —— 書至者三,'
+          + '皆言小霸王已過江。左右失色,公曰:'
+          + '「吾知之矣。」乃焚書,不復言。\n\n'
+          + '—— 一個人只能背對一個方向。'
+          + '烏巢那一夜他選了向北,而背後那條江,'
+          + '這一回真的來了人。',
+        textEn:
+          'Held at Guandu with the grain running out, and the eastern army coming north.\n\n'
+          + 'Three urgent dispatches reached him in the tent, all saying the young overlord had crossed the river. His officers went pale. He said: I know. Then he burned them and said nothing more.\n\n'
+          + 'A man can only turn his back on one direction. The night of Wuchao he chose to face north, and this time somebody really did come up the river behind him.',
+      },
+      verdictZh:
+        '論曰:官渡之勝,勝在**別人沒有動** ——\n'
+        + '劉表按兵,孫策方定江東而遇刺,'
+        + '關中諸將持兩端。使有一家動,則烏巢之火不足恃。\n'
+        + '故曰:天下事成於一時者,'
+        + '往往不在其人之能,而在他人之不能。',
+      verdictEn:
+        'The historian says: Guandu was won because nobody else moved. Liu Biao sat still; Sun Ce had just finished taking the east and then was killed; the commanders in Guanzhong hedged. Had any one of them moved, the fire at Wuchao would not have been enough. What is achieved in a single season is often less about what that man could do than about what the others could not.',
+    },
+    'yuan-shao': {
+      defeat: {
+        titleZh: '田豐在獄中笑',
+        titleEn: 'Tian Feng Laughed in His Cell',
+        textZh:
+          '軍敗於官渡。或謂田豐曰:「君必見重。」'
+          + '豐曰:「若軍有利,吾必全;今軍敗,吾其死矣。」\n\n'
+          + '紹還,謂左右曰:'
+          + '「吾不用田豐言,果為所笑。」遂殺之。\n\n'
+          + '—— 他不是不知道誰對。'
+          + '他是不能讓一個對的人活著看見他錯。',
+        textEn:
+          'The army broke at Guandu. Someone said to Tian Feng: now you will surely be valued. Tian Feng said: if the army had done well I would have lived; now that it is beaten, I shall die.\n\n'
+          + 'Shao came back and said to his staff: I did not take Tian Feng advice, and now I am laughed at by him. And had him killed.\n\n'
+          + 'He knew perfectly well who had been right. What he could not have was a man who had been right, alive, watching him be wrong.',
+      },
+      verdictZh:
+        '論曰:紹外寬雅有局度,憂喜不形於色,而內多忌害。\n'
+        + '夫忌害者,不忌其敵,忌其**諫者** ——'
+        + '敵在千里之外,而諫者在座。\n'
+        + '田豐死,沮授不降而歿,審配守鄴至死不屈:'
+        + '河北未嘗無人,而其君不能容。',
+      verdictEn:
+        'The historian says: outwardly he was broad and dignified and never let feeling show, and inwardly he was full of jealousy. A jealous man does not envy his enemy — he envies the one who advises him, because the enemy is a thousand li away and the adviser is sitting right there. Tian Feng was killed, Ju Shou would not surrender and died, Shen Pei held Ye to the end and would not bend. The north was never short of men. Their lord could not have them.',
+    },
     sun: {
       defeat: {
         titleZh: '許貢門客之刺未中',
