@@ -5835,6 +5835,93 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     ],
   },
 
+  /* ---- 假想:若陸遜不冤死(chain-luxun)---------------------------------
+   * 前提是他撐過了二宮之爭那場風暴。而那場風暴本身還在 —— 吳國真正的
+   * 那一戰不在江上,在建業的宮裡。
+   */
+  {
+    id: 'evt-luxun-alt-1',
+    name: { en: 'Two Palaces', zh: '二宮之爭' },
+    yearMin: 249,
+    yearMax: 252,
+    requires: [
+      { kind: 'flag-set', key: 'chain-luxun' },
+      { kind: 'officer-active', officerId: 'lu-xun' },
+      { kind: 'officer-alive', officerId: 'sun-quan' },
+      { kind: 'flag-unset', key: 'luxun-alt-palaces' },
+    ],
+    description:
+      "Lu Xun memorialises: the heir is the legitimate line and should stand on rock; the Prince of Lu is a vassal and his honours should be visibly less. Sun Quan did not act on it, and sent a messenger to interrogate the old man instead — who died of it, with no property in his house.",
+    descriptionZh: '遜上疏:「太子正統,宜有磐石之固;魯王藩臣,當使寵秩有差,彼此得所。」權不聽,而遣中使責問。史書上遜憤恚致卒,年六十三,家無餘財 —— 而這一回他還在。',
+    effects: [],
+    chooserRulerId: 'sun-quan',
+    choices: [
+      {
+        id: 'settle',
+        label: { zh: '定名分 —— 寵秩有差,彼此得所', en: 'Settle it — ranks visibly different' },
+        effects: [
+          { kind: 'flag', key: 'luxun-alt-palaces' },
+          { kind: 'flag', key: 'luxun-alt-settled' },
+          { kind: 'officer-loyalty', officerId: 'lu-xun', delta: 20 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 12 },
+        ],
+      },
+      {
+        id: 'both',
+        label: { zh: '兩存之 —— 手心手背', en: 'Keep both — they are both my sons' },
+        effects: [
+          { kind: 'flag', key: 'luxun-alt-palaces' },
+          { kind: 'officer-loyalty', officerId: 'lu-xun', delta: -15 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -14 },
+          { kind: 'city-loyalty', cityId: 'jianye', delta: -12 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 定了名分之後,那個老人還能做什麼 —— 這一節接的是這張盤的主目標
+     * 「社稷之臣」:上大將軍仍立於大江之上、吳軍之首。
+     */
+    id: 'evt-luxun-alt-2',
+    name: { en: 'The Pillar Still Standing', zh: '社稷之臣' },
+    yearMin: 250,
+    yearMax: 255,
+    requires: [
+      { kind: 'flag-set', key: 'chain-luxun' },
+      { kind: 'flag-set', key: 'luxun-alt-settled' },
+      { kind: 'officer-active', officerId: 'lu-xun' },
+      { kind: 'flag-unset', key: 'luxun-alt-post' },
+    ],
+    description:
+      "The man who burned Liu Bei's camps at Yiling and broke Cao Xiu at Shiting is sixty-eight and still standing. Where he stands is the decision: on the river at Wuchang, or in the capital at the Emperor's side.",
+    descriptionZh: '夷陵焚連營、石亭破曹休者,今年六十八而尚在。所餘一問:是留他在武昌當那條江的門,還是召還建業,置於御座之側。',
+    effects: [],
+    chooserRulerId: 'sun-quan',
+    choices: [
+      {
+        id: 'river',
+        label: { zh: '鎮武昌 —— 上流之重', en: 'Wuchang — the upper river' },
+        effects: [
+          { kind: 'flag', key: 'luxun-alt-post' },
+          { kind: 'city-defense', cityId: 'wuchang', delta: 18 },
+          { kind: 'city-defense', cityId: 'jiangling', delta: 12 },
+          { kind: 'officer-loyalty', officerId: 'lu-xun', delta: 8 },
+        ],
+      },
+      {
+        id: 'capital',
+        label: { zh: '召還建業 —— 錄尚書事', en: 'Recall him — let him run the government' },
+        effects: [
+          { kind: 'flag', key: 'luxun-alt-post' },
+          { kind: 'city-loyalty', cityId: 'jianye', delta: 18 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: 10 },
+          { kind: 'city-defense', cityId: 'wuchang', delta: -8 },
+        ],
+      },
+    ],
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',

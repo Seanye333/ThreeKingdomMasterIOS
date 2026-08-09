@@ -9237,6 +9237,7 @@ export const SCENARIO_WHATIF_GAOPINGLING: Scenario = {
 //    pillar of Wu into the age of the boy-emperor and the regents. ──
 export const SCENARIO_WHATIF_LUXUN_LIVES: Scenario = {
   id: 'scn-whatif-luxun-lives',
+  eventFlags: ['chain-luxun'],
   openingRelations: [
     { a: 'sima', b: 'cao', score: -95, status: 'neutral' },  // 高平陵之變
     { a: 'sima', b: 'liu-bei', score: -70, status: 'neutral' },
