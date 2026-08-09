@@ -9319,7 +9319,16 @@ const ST_POSTURE: Record<string, ForcePosture> = {
   tang:     { troops: 1.20, food: 1.25, gold: 1.15, defense: 8,  loyalty: 12 },  // 入關開倉,約法十二條
   zheng:    { troops: 1.05, food: 0.75, gold: 0.95, defense: 14, loyalty: -12 }, // 洛陽城堅而人相食
   xia:      { troops: 1.25, food: 1.10, gold: 0.90, defense: 0,  loyalty: 10 },  // 竇建德得河北之心
-  wagang:   { troops: 1.35, food: 1.30, gold: 0.85, defense: -6, loyalty: -6 },  // 據洛口倉,兵盛而內裂
+  /*
+   * 瓦崗(2026-08-08 改)—— 註解本來就寫著「兵盛而內裂」,而**內裂只值 −6**,
+   * 於是他在三張隋唐盤上一律暴漲:11 城 → 24 / 25 / 39。而史書上李密
+   * 617 年末殺翟讓,「由是人心不服,漸有離心」;618 年邙山一敗於王世充,
+   * 整個瓦崗當場散盡,他自己降唐,再叛而死於熊耳山。
+   *
+   * 形狀應該是**流寇**:糧最多(飽掠洛口倉,那是他真正的本錢)、兵仍盛,
+   * 而民忠與城防最低 —— 打得動,守不住。
+   */
+  wagang:   { troops: 1.25, food: 1.30, gold: 0.85, defense: -18, loyalty: -24 },
   xiqin:    { troops: 1.20, food: 0.80, gold: 0.85, defense: 0,  loyalty: -6 },  // 隴右悍騎,而地瘠
   dingyang: { troops: 1.15, food: 0.75, gold: 0.80, defense: 0,  loyalty: -8 },  // 借突厥之力,無根本
   wu:       { troops: 0.95, food: 1.05, gold: 1.00, defense: 0,  loyalty: 0 },
