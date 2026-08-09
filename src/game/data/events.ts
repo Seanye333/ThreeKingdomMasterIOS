@@ -4826,6 +4826,108 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     mood: 'martial',
   },
 
+  /* ---- 假想:若郭嘉不死(chain-guojia)----------------------------------
+   *
+   * 十七張假想盤此前**一條專屬事件鏈都沒有**(`eventFlags` 全空),於是
+   * 「前提成立之後會發生什麼」在盤上沒有著落 —— 郭嘉活著,而他活著這件事
+   * 不影響任何一個場面。這是第一條。
+   *
+   * 鏈的骨架照史書上曹操自己的話走:赤壁敗後他嘆「郭奉孝在,不使孤至此」。
+   * 那句話的意思很具體 —— 郭嘉諫的從來不是「別打」,是**別急**。
+   */
+  {
+    id: 'evt-guojia-alt-1',
+    name: { en: "Fengxiao's Caution", zh: '奉孝諫緩' },
+    yearMin: 208,
+    yearMax: 209,
+    requires: [
+      { kind: 'flag-set', key: 'chain-guojia' },
+      { kind: 'officer-alive', officerId: 'guo-jia' },
+      { kind: 'officer-alive', officerId: 'cao-cao' },
+      { kind: 'flag-unset', key: 'guojia-alt-advised' },
+    ],
+    description:
+      'Guo Jia does not say do not go. He says the northern men have not learned the water, the newly surrendered Jing fleet has not learned you, and both of those take a winter. Cao Cao has eighty thousand hulls and a following wind of victory.',
+    descriptionZh: '嘉不諫南征,諫的是「毋急」:北兵不習水土,荊州新附之眾不習主帥,二者皆須一冬。而公有舟八十萬斛、破荊州之威,諸將皆言乘勝可下江東。',
+    effects: [],
+    chooserRulerId: 'cao-cao',
+    choices: [
+      {
+        id: 'wait',
+        label: { zh: '納其謀 —— 屯江陵,俟明春', en: 'Take the counsel — winter at Jiangling' },
+        effects: [
+          { kind: 'flag', key: 'guojia-alt-advised' },
+          { kind: 'flag', key: 'guojia-alt-patient' },
+          { kind: 'city-troops-multiplier', cityId: 'jiangling', multiplier: 1.15 },
+          { kind: 'officer-loyalty', officerId: 'guo-jia', delta: 10 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: -3 },
+        ],
+      },
+      {
+        id: 'press',
+        label: { zh: '乘勝而東 —— 諸將所請', en: 'Press east on the tide of victory' },
+        effects: [
+          { kind: 'flag', key: 'guojia-alt-advised' },
+          { kind: 'force-troops-multiplier-ruler', rulerOfficerId: 'cao-cao', multiplier: 1.08 },
+          { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 4 },
+        ],
+      },
+    ],
+  },
+  {
+    /*
+     * 第二節只在「納其謀」之後演 —— 這正是這張盤要回答的那個問題:
+     * 鬼才在側,那條鐵索還連不連得起來。史書上曹操是**自己**燒船退的
+     * (「公燒其餘船引退」),而火是周瑜點的。
+     */
+    id: 'evt-guojia-alt-2',
+    name: { en: 'The Chain That Was Not Laid', zh: '連環未成' },
+    yearMin: 208,
+    yearMax: 210,
+    requires: [
+      { kind: 'flag-set', key: 'chain-guojia' },
+      { kind: 'flag-set', key: 'guojia-alt-patient' },
+      { kind: 'officer-alive', officerId: 'guo-jia' },
+      { kind: 'flag-unset', key: 'guojia-alt-chain' },
+    ],
+    description:
+      "Pang Tong comes with his advice about linking the hulls. Guo Jia asks one question — what does a man who links ships do when the wind turns? — and Cao Cao sends the visitor away with gifts and does not link them.",
+    descriptionZh: '龐士元來獻連環之策,言鎖船首尾則北兵不病。嘉問一句:「船既相聯,風轉則何如?」公乃厚遣之而不用其策。是冬東南風果至,而江上無可燃之陣。',
+    effects: [
+      { kind: 'flag', key: 'guojia-alt-chain' },
+      { kind: 'mandate-ruler', rulerOfficerId: 'cao-cao', delta: 8 },
+      { kind: 'mandate-ruler', rulerOfficerId: 'sun-quan', delta: -6 },
+      { kind: 'officer-loyalty', officerId: 'guo-jia', delta: 8 },
+    ],
+    mood: 'auspicious',
+  },
+  {
+    /*
+     * 第三節是代價那一面:急也好緩也好,郭嘉活著的代價是**荀彧那一邊的人
+     * 開始不安**。史書上郭嘉「不治行檢」,陳群數廷訴之,而太祖愈重之。
+     * 這一節讓那條裂縫在盤上有數字。
+     */
+    id: 'evt-guojia-alt-3',
+    name: { en: 'Chen Qun Lodges a Complaint', zh: '陳群廷訴' },
+    yearMin: 209,
+    yearMax: 212,
+    requires: [
+      { kind: 'flag-set', key: 'chain-guojia' },
+      { kind: 'officer-alive', officerId: 'guo-jia' },
+      { kind: 'officer-alive', officerId: 'chen-qun' },
+      { kind: 'flag-unset', key: 'guojia-alt-rift' },
+    ],
+    description:
+      "Chen Qun brings it up in open court again: Guo Jia keeps no decorum. Cao Cao commends Chen Qun for saying so and thinks more of Guo Jia than before — which settles nothing.",
+    descriptionZh: '嘉不治行檢,陳群數廷訴之。嘉意自若,而太祖愈重之 —— 一邊嘉其公,一邊重其能,兩邊都沒有話說,而事情也就沒有了結。',
+    effects: [
+      { kind: 'flag', key: 'guojia-alt-rift' },
+      { kind: 'officer-loyalty', officerId: 'chen-qun', delta: -8 },
+      { kind: 'officer-loyalty', officerId: 'guo-jia', delta: 6 },
+    ],
+    mood: 'somber',
+  },
+
   // ---- 晉滅吳 -----------------------------------------------------------
   {
     id: 'evt-jinunite-1',

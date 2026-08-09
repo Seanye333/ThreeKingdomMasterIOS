@@ -8310,6 +8310,8 @@ export const SCENARIO_WHATIF_YUANSHU_EMPIRE: Scenario = {
 //    sharpest mind still alive to read the river and the southern wind. ──
 export const SCENARIO_WHATIF_GUOJIA_LIVES: Scenario = {
   id: 'scn-whatif-guojia-lives',
+  /* 十七張假想盤此前一條專屬鏈都沒有 —— 這是第一條(見 events.ts 的 chain-guojia)。 */
+  eventFlags: ['chain-guojia'],
   openingRelations: [
     { a: 'cao', b: 'sun', score: -70, status: 'neutral' },  // 大軍南下,飲馬長江
     { a: 'cao', b: 'liu-bei', score: -85, status: 'neutral' },
