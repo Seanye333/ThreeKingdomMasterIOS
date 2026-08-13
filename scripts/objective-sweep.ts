@@ -25,8 +25,9 @@
  *    十一家有七家 0/6,而那全是窗口沒到期。這支自己從目標裡算窗口。
  *
  * Run:
- *   node --import tsx scripts/objective-sweep.ts [runs] [scenarioIdPrefix]
- *   node --import tsx scripts/objective-sweep.ts 3 scn-2      # 只掃三國中後期
+ *   node --import tsx scripts/objective-sweep.ts [runs] [scenarioIdPrefix] [--whatif|--only-whatif]
+ *   node --import tsx scripts/objective-sweep.ts 3 scn-2         # 只掃三國中後期
+ *   node --import tsx scripts/objective-sweep.ts 3 --only-whatif # 只掃 17 張假想盤
  */
 
 const g = globalThis as unknown as { localStorage?: unknown };
@@ -51,7 +52,21 @@ import { PROVINCE_BY_CITY } from '../src/game/data/provinces';
 type Goal = Parameters<typeof evaluateGoal>[0];
 
 const RUNS = Number(process.argv[2] ?? 3);
-const PREFIX = process.argv[3] ?? '';
+const PREFIX = process.argv.slice(3).find((a) => !a.startsWith('--')) ?? '';
+/**
+ * 假想盤預設不掃 —— 但那**不是**因為它們不用掃。
+ *
+ * 這支從第一天起就 `kind === 'whatif' → continue`,沒有留理由,於是
+ * 17 張假想盤的 129 條主目標**一次也沒有被量過**(全庫走勢表裡那個
+ * 「69 張盤 / 540 條」的分母,其實只涵蓋 411 條)。
+ *
+ * 默認值保留原樣是為了讓走勢表前後可比 —— 加 `--whatif` 就把它們一起掃。
+ * 讀數的時候記得假想盤的性質不同:它的題目寫的是**那個前提成立之後才做得到
+ * 的事**(臥龍鳳雛並在 → 取長安洛陽),本來就比歷史盤難,
+ * 0 不一定等於題目錯,但一條都沒量過更不行。
+ */
+const INCLUDE_WHATIF = process.argv.includes('--whatif');
+const ONLY_WHATIF = process.argv.includes('--only-whatif');
 /**
  * 一年三十六旬。窗口再長也就跑到這裡 —— 再長是體檢不是掃描。
  *
@@ -162,7 +177,9 @@ const dead: Array<{
 let boards = 0;
 
 for (const scenario of SCENARIOS) {
-  if ((scenario as { kind?: string }).kind === 'whatif') continue;
+  const isWhatIf = (scenario as { kind?: string }).kind === 'whatif';
+  if (isWhatIf && !INCLUDE_WHATIF && !ONLY_WHATIF) continue;
+  if (!isWhatIf && ONLY_WHATIF) continue;
   if (PREFIX && !scenario.id.startsWith(PREFIX)) continue;
   const objs = (SCENARIO_OBJECTIVES as Record<string, Array<{
     forceId: string; primary: { title: { zh: string }; goal: Goal };

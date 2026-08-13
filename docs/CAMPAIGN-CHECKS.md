@@ -25,6 +25,7 @@
 | 6 | 目標是否真的達得到(自走) | `node --import tsx scripts/objective-sweep.ts 3` | — | 見 §3(診斷,約一小時) |
 | 7 | 鄰近補位有沒有送錯城 | `node --import tsx scripts/fill-audit.ts` | `proximityFill.test.ts` | 224 可疑(診斷) |
 | 7b | 取得型目標 AI 構不構得著 | `node --import tsx scripts/reachability-audit.ts` | — | 134 條取得型:**25 條壓力 0** / 98 條低於門檻(診斷,一秒) |
+| 7c | 目標指的城/人開局在誰手上 | `node --import tsx scripts/objective-ownership-audit.ts` | `objectiveOwnership.test.ts` | 五類**硬性 0**;另 103 條提示(診斷,一秒) |
 | 8 | 單盤 AI 自走體檢 | `node --import tsx scripts/scenario-report.ts <id> 180 12` | — | 逐盤(診斷) |
 | 9 | 全 AI 觀察一整局 | `node --import tsx scripts/ai-watch.ts` | — | 診斷 |
 | 10 | 時代不外漏(外傳三線) | — | `eraLeaks.test.ts` / `altEraEventChains.test.ts` | **硬性** |
@@ -96,9 +97,16 @@ npm run docs:catalog   # 改過 src/game/data/*.ts 之後
 ## 3. 主目標掃描(第 6 條)——最重要的那個數字
 
 ```bash
-node --import tsx scripts/objective-sweep.ts 3            # 全庫,約 1–1.5 小時
-node --import tsx scripts/objective-sweep.ts 3 scn-2      # 只掃三國中後期
+node --import tsx scripts/objective-sweep.ts 3               # 全庫(69 張歷史盤),約 1–1.5 小時
+node --import tsx scripts/objective-sweep.ts 3 scn-2         # 只掃三國中後期
+node --import tsx scripts/objective-sweep.ts 3 --only-whatif # 17 張假想盤(2026-08-13 才接上)
 ```
+
+⚠ **這支從第一天起就 `kind === 'whatif' → continue`,而且沒有留理由**
+(2026-08-13 才發現)。後果是走勢表裡「540 條」那個分母是假的:
+**假想盤的 129 條主目標一次也沒有被量過**,真正掃過的只有 411 條。
+`--whatif` / `--only-whatif` 兩個旗標把它們接上;默認值保持原樣,
+是為了讓走勢表前後可比。
 
 輸出分三段:**設計如此**(具名例外,寫在腳本的 `BY_DESIGN`)、
 **期限外做得到 / 撐了一段**(調窗口或調 AI)、**多跑 6 年也從未達成**(題目要重寫)。
@@ -254,6 +262,14 @@ node --import tsx scripts/objective-sweep.ts 3 scn-2      # 只掃三國中後�
 
 9. **一整類死目標的真因是「題目跟盤面對不上」**(2026-08-09 完整重掃後才看清楚)。
    判準很簡單:**把主目標的城逐一標上開局歸屬**,一眼就看得出來。三種形狀:
+
+   > **2026-08-13:這個判準已經變成腳本了** —— `objective-ownership-audit.ts`,
+   > 一秒跑完 540 條。它把提示分成兩層:五類**無可辯解的錯**
+   > (城不在此盤 / 第 0 旬就成立 / 對象開局無城 / 救援門檻高於開局 / 人不在此盤)
+   > 由 `objectiveOwnership.test.ts` 釘成硬性 0;其餘 103 條(全取得 72、
+   > 全取得且與別家搶城 14、搶城 9、要滅比自己大的 6、整州要打 1、在野可招 1)
+   > 是**診斷**,因為赤壁的劉備本來就要去借江陵。
+   > 下面這三種形狀,第一、二種現在會自己跳出來,第三種仍然只有人看得出來。
 
    - **盤面是戰後,目標照戰前寫**。伊闕盤的城池歸屬是伊闕之後的樣子
      (洛陽已入秦),而韓「保洛陽、許昌」、魏「保陳留、濮陽、洛陽」、
