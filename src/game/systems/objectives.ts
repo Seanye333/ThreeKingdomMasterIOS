@@ -47,6 +47,21 @@ export function evaluateGoal(
   goal: ObjectiveGoal,
   ctx: ObjectiveContext,
 ): { status: 'success' | 'failure' | 'pending'; progress?: string } {
+  /*
+   * 一座城都不剩的人,什麼目標都不算達成。
+   *
+   * 這一條原本只寫在 `evaluateChallenge` 裡(挑戰系統),而**劇本目標走的是
+   * 另一條路** —— 於是 `survive-until` 那一型只看年份:「存續至220年」在
+   * 勢力早已被抹掉之後,到了 220 年照樣判成功。掃描裡的赤壁吳殘部 3/3、
+   * 官渡曹操殘部 3/3,有一部分就是這麼來的。
+   *
+   * `defeat-force` / `break-force` / `protect-force` 同理:那三型問的是**別人**
+   * 的城數,不看自己還在不在 —— 「我救了趙國」不能由一個已經亡了的國家來說。
+   * `hold-cities` 本來就會自然判失敗(城不是你的了),多這一層不改變它。
+   */
+  if (ctx.playerForceId && !ctx.liveForceIds.has(ctx.playerForceId)) {
+    return { status: 'failure' };
+  }
   switch (goal.kind) {
     case 'hold-cities': {
       const owned = goal.cityIds.filter(
