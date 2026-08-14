@@ -136,18 +136,24 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-chibi-cao',
       forceId: 'cao',
+      /*
+       * 主次對調。`unify-realm` 是 128 座城 —— 他開局 76 座已經是全庫最大的
+       * 一家,自走仍然 0/3,因為統一是這張盤的**勝利條件**,不是一條目標。
+       * 而題目的名字就寫著「順流東下」:那件事是把江東殘部掃掉,三座城,
+       * 無錫 3.07、臨海 1.71、會稽 1.48,全在門檻之上。
+       */
       primary: {
         title: { zh: '順流東下', en: 'Down the River' },
-        description: 'Bring all under one banner — the wind did not turn.',
-        descriptionZh: "混一天下 —— 東風沒有來,江東已無屏障。",
-        goal: { kind: 'unify-realm' },
+        description: 'Destroy the Wu remnant by 215 — the wind did not turn.',
+        descriptionZh: "於215年前掃滅吳之殘部 —— 東風沒有來,江東已無屏障。",
+        goal: { kind: 'defeat-force', forceId: 'sun', byYear: 215 },
       },
       secondary: [
         {
-          title: { zh: '掃平江東', en: 'Sweep Jiangdong' },
-          description: 'Destroy the Wu remnant by 215.',
-          descriptionZh: "於215年前掃滅吳之殘部。",
-          goal: { kind: 'defeat-force', forceId: 'sun', byYear: 215 },
+          title: { zh: '混一天下', en: 'All Under One Banner' },
+          description: 'Bring all under one banner.',
+          descriptionZh: "混一天下 —— 十分天下已有其九。",
+          goal: { kind: 'unify-realm' },
         },
       ],
     },
@@ -172,13 +178,25 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-chibi-liubei',
       forceId: 'liu-bei',
+      /*
+       * 他在這張盤上只有新野一座城,四面全是曹操(壓力 0.10–0.42),
+       * 而原本的主目標是取成都 —— 中間隔著四座城,沒有一座是他打得動的。
+       * 題目的名字已經說了是「無立錐之地」:那就把它寫成它本來的意思 ——
+       * **活著**。取蜀留在次要,那是活下來之後的事。
+       */
       primary: {
         title: { zh: '無立錐之地', en: 'Nowhere to Set a Foot' },
-        description: 'Take Chengdu by 216 — Jing is lost before you ever held it; go west or die.',
-        descriptionZh: "於216年前取成都 —— 荊州還沒到手就沒了,不入蜀便無死所。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 216 },
+        description: 'Survive to 216 — Jing is lost before you ever held it, and every road out is his.',
+        descriptionZh: "存續至216年 —— 荊州還沒到手就沒了,四面都是曹操的城,而你還沒有死。",
+        goal: { kind: 'survive-until', year: 216 },
       },
       secondary: [
+        {
+          title: { zh: '不入蜀便無死所', en: 'West or Nowhere' },
+          description: 'Take Chengdu by 220.',
+          descriptionZh: "於220年前取成都 —— 不入蜀便無死所。",
+          goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 220 },
+        },
         {
           title: { zh: '據險而守', en: 'Hold the Passes' },
           description: 'Hold Chengdu and Hanzhong by 220.',
@@ -208,12 +226,25 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-cao-wins-chibi-zhang-lu',
       forceId: 'zhang-lu',
+      /*
+       * 原本是守漢中、天水到 214 年 —— 而赤壁贏了之後的曹操對漢中的壓力是
+       * **2.98**,遠在門檻之上,六年的守成他撐不到。改成他自己能推出去的那一步
+       * (葭萌 2.31),守漢中的年份留在次要,壓到 212。
+       */
       primary: {
         title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: "Still hold Hanzhong and Tianshui in 214. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
-        descriptionZh: "至214年仍據漢中、天水。政教合一,置義舍米肉,三十年不見兵革。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'tianshui'], byYear: 214 },
+        description: 'Hold Hanzhong and take Jiameng by 211 — the road south is the only one still open.',
+        descriptionZh: "於211年前據漢中、葭萌 —— 北面已經沒有指望,能走的只剩巴蜀那一條路。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 211 },
       },
+      secondary: [
+        {
+          title: { zh: '三十年不見兵革', en: 'Thirty Years Without an Army' },
+          description: 'Still hold Hanzhong and Tianshui in 212.',
+          descriptionZh: "至212年仍據漢中、天水。政教合一,置義舍米肉,三十年不見兵革。",
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'tianshui'], byYear: 212 },
+        },
+      ],
     },
     {
       id: 'obj-wi-cao-wins-chibi-ma-teng',
@@ -260,12 +291,21 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-women-lady-sun',
       forceId: 'lady-sun',
+      /* 江陵在黃月英手裡而壓力只有 0.46 —— 江北的廬江才是她推得動的那一座(3.11)。 */
       primary: {
         title: { zh: '侍婢百人皆執刀', en: 'A Hundred Maids, All Armed' },
-        description: 'Hold Jianye and Jiangling by 212 — Liu Bei was afraid to enter your rooms.',
-        descriptionZh: "於212年前據建業、江陵 —— 房中侍婢百餘,皆親執刀侍立,劉備每入,心常凜然。",
-        goal: { kind: 'hold-cities', cityIds: ['jianye', 'jiangling'], byYear: 212 },
+        description: 'Hold Jianye and take Lujiang by 210 — Liu Bei was afraid to enter your rooms.',
+        descriptionZh: "於210年前據建業、廬江 —— 房中侍婢百餘,皆親執刀侍立,劉備每入,心常凜然。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'lujiang'], byYear: 210 },
       },
+      secondary: [
+        {
+          title: { zh: '過江之西', en: 'West Across the River' },
+          description: 'Take Jiangling by 214.',
+          descriptionZh: "於214年前取江陵 —— 兄長的舊部還記得孫家的旗。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 214 },
+        },
+      ],
     },
     {
       id: 'obj-wi-women-yueying',
@@ -308,22 +348,47 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-women-qiao',
       forceId: 'qiao',
+      /*
+       * 建業、吳郡、柴桑三座都在孫尚香手裡,而前兩座與二喬的城**完全不相鄰**
+       * (壓力 0.00/0.00/0.64)—— 江東是回不去的。她們在這張盤上據的是徐豫,
+       * 推得動的是淮南那條線(壽春 1.27)。
+       */
       primary: {
         title: { zh: '銅雀春深', en: 'Not for the Bronze Bird Tower' },
-        description: 'Hold Jianye, Wu and Chaisang by 213 — the tower in Ye was built with you in mind.',
-        descriptionZh: "於213年前據建業、吳、柴桑 —— 鄴城那座銅雀台,本是為你們而築。",
-        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'chaisang'], byYear: 213 },
+        description: 'Hold Pengcheng and take Shouchun by 210 — the tower in Ye was built with you in mind.',
+        descriptionZh: "於210年前據彭城、壽春 —— 東風不與周郎便,銅雀春深鎖二喬;這一世沒有周郎替你們擋,那就自己把淮南按住。",
+        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'shouchun'], byYear: 210 },
       },
+      secondary: [
+        {
+          title: { zh: '重返江東', en: 'Home to the East' },
+          description: 'Hold Jianye, Wu and Chaisang by 216.',
+          descriptionZh: "於216年前據建業、吳、柴桑 —— 一個嫁了孫策,一個嫁了周瑜,那本來是她們的家。",
+          goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'chaisang'], byYear: 216 },
+        },
+      ],
     },
     {
       id: 'obj-wi-women-bian',
       forceId: 'bian-liang',
+      /*
+       * 鄴與許昌一座在蔡琰手裡、一座在貂蟬手裡,而兩座都**不與她相鄰**
+       * (壓力 0.00)—— 她這張盤上據的是涼州、隴右與漢中,東出的第一道門是陳倉。
+       */
       primary: {
         title: { zh: '倡家女為國母', en: 'From Entertainer to Mother of a Dynasty' },
-        description: 'Hold Ye and Xuchang by 213 — you kept the House of Cao together when Cao Cao was thought dead.',
-        descriptionZh: "於213年前據鄴城、許昌 —— 曹操凶問傳來時,是你按住了整個曹家。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'xuchang'], byYear: 213 },
+        description: 'Hold Hanzhong and take Chencang by 210 — you kept the House of Cao together when Cao Cao was thought dead.',
+        descriptionZh: "於210年前據漢中、陳倉 —— 曹操凶問傳來時,是你按住了整個曹家;要從隴上走進關中,先得有陳倉這道門。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'chencang'], byYear: 210 },
       },
+      secondary: [
+        {
+          title: { zh: '鄴與許', en: 'Ye and Xu' },
+          description: 'Hold Ye and Xuchang by 216.',
+          descriptionZh: "於216年前據鄴城、許昌 —— 曹家的兩座都城,一座也不能少。",
+          goal: { kind: 'hold-cities', cityIds: ['ye', 'xuchang'], byYear: 216 },
+        },
+      ],
     },
   ],
 
@@ -332,13 +397,25 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-yg-yuanshao',
       forceId: 'yuan-shao',
+      /*
+       * 原本是「殲滅」曹操殘部,自走 0/3 —— 而三座城裡兩座壓力都在 2.5 以上,
+       * 不是打不到,是**收不了尾**(§4 第 2 條:AI 收官很慢,十一條「滅某家」
+       * 的主目標多半死在這裡)。改用 `break-force`:官渡贏了之後,
+       * 要的是把他打回一座城,不是把他從史書上抹掉。
+       */
       primary: {
         title: { zh: '併吞四海', en: 'Swallow the Four Seas' },
-        description: 'Destroy the Cao Cao remnant by 208 — Wuchao did not burn.',
-        descriptionZh: "於208年前殲滅曹操殘部 —— 烏巢沒有燒起來。",
-        goal: { kind: 'defeat-force', forceId: 'cao', byYear: 208 },
+        description: 'Break the Cao Cao remnant down to a single city by 208 — Wuchao did not burn.',
+        descriptionZh: "於208年前將曹操殘部逼到只剩一城 —— 烏巢沒有燒起來,而他還有一顆腦袋。",
+        goal: { kind: 'break-force', forceId: 'cao', maxCities: 1, byYear: 208 },
       },
       secondary: [
+        {
+          title: { zh: '斬草除根', en: 'Root and Branch' },
+          description: 'Destroy the Cao Cao remnant by 212.',
+          descriptionZh: "於212年前殲滅曹操殘部 —— 沮授說過,此人不可留。",
+          goal: { kind: 'defeat-force', forceId: 'cao', byYear: 212 },
+        },
         {
           title: { zh: '入主許都', en: 'Take Xuchang' },
           description: 'Hold Xuchang and Luoyang by 208.',
@@ -378,22 +455,48 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-yg-liubei',
       forceId: 'liu-bei',
+      /*
+       * 江陵在劉表手裡、成都在劉璋手裡,而**兩座都與他的四座城不相鄰**
+       * (壓力 0.00)。這張盤把他放在徐州(彭城、下邳、琅琊、小沛),
+       * 他推得動的只有一座:譙(1.51)—— 而那是曹操的老家。
+       */
       primary: {
         title: { zh: '再尋一處落腳', en: 'Another Roof, Again' },
-        description: 'Hold Chengdu or Jiangling by 212 — you have outlived four patrons; find land of your own.',
-        descriptionZh: "於212年前據江陵、成都 —— 依人者四矣,總該有自己的地方。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'chengdu'], byYear: 212 },
+        description: 'Hold Xiapi and take Qiao by 206 — you have outlived four patrons; find land of your own.',
+        descriptionZh: "於206年前據下邳、譙 —— 依人者四矣,總該有自己的地方;而譙是曹家的祖塋所在。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'qiao'], byYear: 206 },
       },
+      secondary: [
+        {
+          title: { zh: '荊益之望', en: 'Jing and Yi' },
+          description: 'Hold Jiangling and Chengdu by 214.',
+          descriptionZh: "於214年前據江陵、成都 —— 那兩個字他念了半輩子。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling', 'chengdu'], byYear: 214 },
+        },
+      ],
     },
     {
       id: 'obj-wi-yg-liubiao',
       forceId: 'liu-biao',
+      /*
+       * 洛陽在袁紹手裡而**與荊州十八城全不相鄰**(壓力 0.00)。題目的名字是
+       * 「宛洛」兩個字 —— 宛城才是他推得動的那一座(1.39,曹操殘部的城),
+       * 也正是這條路真正的第一站。洛陽降為次要。
+       */
       primary: {
         title: { zh: '北出宛洛', en: 'North Through Wan and Luo' },
-        description: 'Take Luoyang by 211 — with Cao Cao broken, the road north is finally open.',
-        descriptionZh: "於211年前北取洛陽 —— 曹操既敗,宛洛之路終於開了。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 211 },
+        description: 'Hold Xiangyang and take Wancheng by 208 — with Cao Cao broken, the road north is finally open.',
+        descriptionZh: "於208年前據襄陽、宛城 —— 曹操既敗,宛洛之路終於開了,而宛是第一站。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'wancheng'], byYear: 208 },
       },
+      secondary: [
+        {
+          title: { zh: '還於舊都', en: 'Back to the Old Capital' },
+          description: 'Take Luoyang by 214.',
+          descriptionZh: "於214年前北取洛陽 —— 漢室宗親,總該有人回一趟舊都。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 214 },
+        },
+      ],
     },
     {
       id: 'obj-wi-yuan-guandu-liu-zhang',
@@ -468,12 +571,25 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-lbxz-yuanshao',
       forceId: 'yuan-shao',
+      /*
+       * 許昌壓力 0.82,在 AI 的候選門檻(1.05)之下 —— 而白馬 4.12、延津 3.77、
+       * 官渡 2.18 全在門檻之上,那正是他南下要先過的三個渡口。
+       * 主目標改寫成過河那一步,許昌降為次要。
+       */
       primary: {
         title: { zh: '南下之機', en: 'The Moment to Move South' },
-        description: 'Take Xuchang by 206 — Cao Cao is pinned in the east.',
-        descriptionZh: "於206年前攻取許昌 —— 曹操東顧不暇,正當南下。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 206 },
+        description: 'Take Baima, Yanjin and Guandu by 206 — Cao Cao is pinned in the east.',
+        descriptionZh: "於206年前取白馬、延津、官渡 —— 曹操東顧不暇,而黃河三個渡口就在眼前。",
+        goal: { kind: 'hold-cities', cityIds: ['baima', 'yanjin', 'guandu'], byYear: 206 },
       },
+      secondary: [
+        {
+          title: { zh: '入主許都', en: 'Take Xuchang' },
+          description: 'Take Xuchang by 210.',
+          descriptionZh: "於210年前攻取許昌 —— 渡口過了,許都就在南邊。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 210 },
+        },
+      ],
     },
     {
       id: 'obj-wi-lbxz-sun',
@@ -550,11 +666,17 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-mcgz-machao',
       forceId: 'ma-chao',
+      /*
+       * 原本是守長安到 218 年 —— 七年的守成,而對面是五十一城的曹操
+       * (函谷關 2.06、潼關 1.30 都在門檻之上,他從東邊一路磨進來)。
+       * 三輪 0/3。改成「關隴一體」:守長安**並取天水**(2.72),
+       * 那是他真正要做的事,而且拿到就算,不必空守七年。
+       */
       primary: {
         title: { zh: '神威天將軍', en: 'The God-Might General' },
-        description: "Hold Chang'an and control Liang province by 218 — no forged letter divided you from Han Sui.",
-        descriptionZh: "於218年前據長安並盡有涼州 —— 那封塗改的書信沒有寄出,關中十部未散。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 218 },
+        description: "Hold Chang'an and take Tianshui by 215 — no forged letter divided you from Han Sui.",
+        descriptionZh: "於215年前據長安、天水 —— 那封塗改的書信沒有寄出,關中十部未散,隴右自當連成一片。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tianshui'], byYear: 215 },
       },
       secondary: [
         {
@@ -568,13 +690,24 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-mcgz-cao',
       forceId: 'cao',
+      /*
+       * 「殲滅」十二城的馬超,自走 0/3 —— 又是收尾那一關(§4 第 2 條)。
+       * 改用 `break-force` 壓到一城:曹操說的是「馬兒不死,吾無葬地」,
+       * 而他在史書上做到的也正是把他趕出關中,不是把他殺掉。
+       */
       primary: {
         title: { zh: '馬兒不死', en: '"While That Horse Lives"' },
-        description: "Destroy the Ma Chao force by 219 — \"while that boy lives I shall have no place to be buried.\"",
-        descriptionZh: "於219年前擊滅馬超 —— 「馬兒不死,吾無葬地也。」",
-        goal: { kind: 'defeat-force', forceId: 'ma-chao', byYear: 219 },
+        description: 'Break the Ma Chao force down to a single city by 217.',
+        descriptionZh: "於217年前將馬超逼到只剩一城 —— 「馬兒不死,吾無葬地也。」",
+        goal: { kind: 'break-force', forceId: 'ma-chao', maxCities: 1, byYear: 217 },
       },
       secondary: [
+        {
+          title: { zh: '斬草除根', en: 'Root and Branch' },
+          description: 'Destroy the Ma Chao force by 222.',
+          descriptionZh: "於222年前擊滅馬超 —— 他的父親與兩個弟弟已經死在許都。",
+          goal: { kind: 'defeat-force', forceId: 'ma-chao', byYear: 222 },
+        },
         {
           title: { zh: '奪回長安', en: "Retake Chang'an" },
           description: "Hold Chang'an by 218.",
@@ -586,11 +719,15 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-mcgz-hansui',
       forceId: 'han-sui',
+      /*
+       * 四座城的題目,而他開局只有四座 —— 其中兩座(武威、安定)在馬超手裡,
+       * 曝險是「窗口 × 城數」,這條兩頭都滿。壓成兩座:守金城、取安定(1.45)。
+       */
       primary: {
         title: { zh: '關中十部', en: 'The Ten Camps of Guanzhong' },
-        description: "Still hold Jincheng, Wuwei, Anding and Longxi in 215.",
-        descriptionZh: "至215年仍據金城、武威、安定、隴西 —— 十部聯軍,而各有各的城。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding', 'longxi'], byYear: 215 },
+        description: 'Hold Jincheng and take Anding by 214 — ten camps, each with its own walls.',
+        descriptionZh: "於214年前據金城、安定 —— 十部聯軍,而各有各的城;在涼州三十年,他從來只信自己那一部。",
+        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'anding'], byYear: 214 },
       },
       secondary: [
         {
@@ -604,12 +741,24 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-mcgz-liubei',
       forceId: 'liu-bei',
+      /*
+       * 成都與漢中**與他任何一座城都不相鄰**(壓力 0.00)。由荊入益只有一扇門:
+       * 永安。與 211 渭南盤同型、同一個修法。
+       */
       primary: {
-        title: { zh: '西川與關中', en: 'Shu and Guanzhong' },
-        description: 'Hold Chengdu and Hanzhong by 219 — with Cao Cao held in the west, the door to Shu is unguarded.',
-        descriptionZh: "於219年前據成都、漢中 —— 曹操被牽制於關西,入蜀之路無人守。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 219 },
+        title: { zh: '入蜀之門', en: 'The Gate into Shu' },
+        description: 'Take Yong-an by 216 — with Cao Cao held in the west, the door to Shu is unguarded.',
+        descriptionZh: "於216年前攻取永安 —— 曹操被牽制於關西,而由荊入益只有魚復這一扇門。",
+        goal: { kind: 'hold-cities', cityIds: ['yongan'], byYear: 216 },
       },
+      secondary: [
+        {
+          title: { zh: '西川與關中', en: 'Shu and Guanzhong' },
+          description: 'Hold Chengdu and Hanzhong by 219.',
+          descriptionZh: "於219年前據成都、漢中 —— 入蜀之路無人守。",
+          goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 219 },
+        },
+      ],
     },
     {
       id: 'obj-wi-mcgz-sun',
@@ -636,10 +785,14 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: "Still hold Hanzhong and Baxi in 216. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
-        descriptionZh: "至216年仍據漢中、巴西。政教合一,置義舍米肉,三十年不見兵革。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 216 },
+        description: 'Hold Hanzhong and take Jiameng by 214 — church and state in one hand, and the road south still open.',
+        descriptionZh: "於214年前據漢中、葭萌 —— 政教合一,置義舍米肉;而北面兩家都比他大,能走的只剩巴蜀那一條路。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 214 },
       },
+      /*
+       * 三座城守五年,而漢中同時被曹操(1.83)與馬超(2.16)指著 —— 三輪 0/3。
+       * 改成他自己推得動的那一步(葭萌 2.73),拿到就算。
+       */
     },
     {
       id: 'obj-wi-machao-guanzhong-shi-xie',
@@ -659,12 +812,23 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-sc-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '襲許迎帝', en: 'Raid Xuchang, Take the Emperor' },
-        description: 'Take Xuchang by 208 — the plan you were preparing when the assassins found you.',
-        descriptionZh: "於208年前襲取許昌 —— 遇刺那年,你正在做的就是這件事。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 208 },
+        title: { zh: '西取江夏', en: 'West to Jiangxia' },
+        description: 'Hold Jianye and take Jiangxia by 206 — Huang Zu first, the way you were already going.',
+        descriptionZh: "於206年前據建業、江夏 —— 遇刺那年他正在西征黃祖,那條路本來就是先荊州、後許都。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'jiangxia'], byYear: 206 },
       },
+      /*
+       * 原本的主目標是襲許迎帝 —— 而那正是他**還沒來得及做**的事(壓力 0.66,
+       * 在門檻之下)。準則是主目標寫他真正做到的、次要寫他沒做到的:
+       * 江夏 1.38 是他當時真的在打的那一座。
+       */
       secondary: [
+        {
+          title: { zh: '襲許迎帝', en: 'Raid Xuchang, Take the Emperor' },
+          description: 'Take Xuchang by 210 — the plan you were preparing when the assassins found you.',
+          descriptionZh: "於210年前襲取許昌 —— 遇刺那年,你正在做的就是這件事。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 210 },
+        },
         {
           title: { zh: '全據江漢', en: 'The River Entire' },
           description: 'Hold Jianye, Jiangxia and Jiangling by 210.',
@@ -678,16 +842,20 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '兩面受敵', en: 'Enemies on Two Sides' },
-        description: 'Still hold Xuchang in 208, and destroy Yuan Shao — the tiger cub is at your back.',
-        descriptionZh: "至208年仍據許昌並擊滅袁紹 —— 北有袁紹,背後還有一頭小老虎。",
-        goal: { kind: 'defeat-force', forceId: 'yuan-shao', byYear: 210 },
+        description: 'Still hold Xuchang and Luoyang in 207 — Yuan Shao to the north, a tiger cub at your back.',
+        descriptionZh: "至207年仍據許昌、洛陽 —— 北有袁紹二十一城,背後還有一頭沒有死的小老虎;先別談滅誰。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 207 },
       },
+      /*
+       * 十一城要「殲滅」二十一城的袁紹,三輪 0/3 —— 而題目的名字就叫兩面受敵。
+       * 主目標改成守住兩京(這張盤上洛陽、許昌都是他的),滅袁紹降為次要。
+       */
       secondary: [
         {
-          title: { zh: '許都不容有失', en: 'Xuchang Above All' },
-          description: 'Still hold Xuchang in 208.',
-          descriptionZh: "至208年仍據許昌。",
-          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 208 },
+          title: { zh: '北破袁紹', en: 'Break Yuan Shao' },
+          description: 'Destroy Yuan Shao by 212.',
+          descriptionZh: "於212年前擊滅袁紹 —— 官渡那一把火,這一世還沒有燒。",
+          goal: { kind: 'defeat-force', forceId: 'yuan-shao', byYear: 212 },
         },
       ],
     },
@@ -696,20 +864,38 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '南北夾擊', en: 'The Pincer' },
-        description: 'Take Xuchang by 207 — Sun Ce comes from the south, you from the north.',
-        descriptionZh: "於207年前攻取許昌 —— 孫策自南,你自北,曹操無以兩顧。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 207 },
+        description: 'Take Guandu, Baima and Yanjin by 206 — Sun Ce comes from the south, you from the north.',
+        descriptionZh: "於206年前取官渡、白馬、延津 —— 孫策自南,你自北;黃河三個渡口先過了,許都才談得上。",
+        goal: { kind: 'hold-cities', cityIds: ['guandu', 'baima', 'yanjin'], byYear: 206 },
       },
+      /* 許昌壓力 0.77,在門檻之下;白馬 3.89、延津 3.56、官渡 2.06 才是他過得去的地方。 */
+      secondary: [
+        {
+          title: { zh: '入主許都', en: 'Take Xuchang' },
+          description: 'Take Xuchang by 210.',
+          descriptionZh: "於210年前攻取許昌 —— 曹操無以兩顧。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 210 },
+        },
+      ],
     },
     {
       id: 'obj-wi-sc-liubei',
       forceId: 'liu-bei',
       primary: {
         title: { zh: '亂中取地', en: 'Take Land in the Confusion' },
-        description: 'Hold Jiangling or Chengdu by 212.',
-        descriptionZh: "於212年前據江陵、成都 —— 三強相持,反是無地者的機會。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'chengdu'], byYear: 212 },
+        description: 'Hold Xiapi and take Qiao by 206 — three powers at a standstill is a landless man\u2019s chance.',
+        descriptionZh: "於206年前據下邳、譙 —— 三強相持,反是無地者的機會;而譙是曹家的祖塋所在。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'qiao'], byYear: 206 },
       },
+      /* 江陵與成都跟他徐州那四座城**完全不相鄰**(壓力 0.00);譙 1.14 才是他推得動的。 */
+      secondary: [
+        {
+          title: { zh: '荊益之望', en: 'Jing and Yi' },
+          description: 'Hold Jiangling and Chengdu by 214.',
+          descriptionZh: "於214年前據江陵、成都 —— 那兩個字他念了半輩子。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling', 'chengdu'], byYear: 214 },
+        },
+      ],
     },
     {
       id: 'obj-wi-sunce-lives-liu-biao',
@@ -778,11 +964,22 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '再舉義兵', en: 'Raise the Righteous Army Again' },
-        description: 'Destroy the Dong Zhuo force by 202 — the coalition dissolved; you did not.',
-        descriptionZh: "於202年前擊滅董卓 —— 關東諸侯散了,你沒散。",
-        goal: { kind: 'defeat-force', forceId: 'dong', byYear: 202 },
+        description: 'Still hold Xuchang and Guandu in 197 — the coalition dissolved; you did not.',
+        descriptionZh: "至197年仍據許昌、官渡 —— 關東諸侯散了,你沒散;而你只有兩座城。",
+        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'guandu'], byYear: 197 },
       },
+      /*
+       * **兩座城**要殲滅十三城的董卓,三輪 0/3。而他四周沒有一座城在門檻之上
+       * (彭城 0.96、譙 0.91 是最高的兩座)—— 這張盤的曹操是從谷底起家的那一個,
+       * 主目標先寫成「站住」。滅董卓與迎天子留在次要。
+       */
       secondary: [
+        {
+          title: { zh: '擊滅董卓', en: 'Destroy Dong Zhuo' },
+          description: 'Destroy the Dong Zhuo force by 205.',
+          descriptionZh: "於205年前擊滅董卓 —— 諸君北面,我自西向。",
+          goal: { kind: 'defeat-force', forceId: 'dong', byYear: 205 },
+        },
         {
           title: { zh: '迎天子於長安', en: 'Fetch the Emperor Home' },
           description: "Hold Chang'an by 204.",
@@ -805,21 +1002,46 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-dl-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '孫堅入洛', en: 'Sun Jian Enters Luoyang' },
-        description: 'Take Luoyang by 199 — you were the only one who actually fought Dong Zhuo.',
-        descriptionZh: "於199年前攻入洛陽 —— 十八路諸侯,真打董卓的只有你一個。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 199 },
+        title: { zh: '先定荊南', en: 'The Four Southern Commanderies' },
+        description: 'Hold Changsha and take Guilin by 196 — a base before a march.',
+        descriptionZh: "於196年前據長沙、桂林 —— 孫堅是長沙太守,而北伐之前總得先有一塊自己的地。",
+        goal: { kind: 'hold-cities', cityIds: ['changsha', 'guilin'], byYear: 196 },
       },
+      /*
+       * 洛陽在董卓手裡,而**與他那三座荊南的城完全不相鄰**(壓力 0.00)——
+       * 掃描三輪 0/3。入洛降為次要:那是他史書上做過的事,但要先走得到。
+       */
+      secondary: [
+        {
+          title: { zh: '孫堅入洛', en: 'Sun Jian Enters Luoyang' },
+          description: 'Take Luoyang by 200 — you were the only one who actually fought Dong Zhuo.',
+          descriptionZh: "於200年前攻入洛陽 —— 十八路諸侯,真打董卓的只有你一個。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 200 },
+        },
+      ],
     },
     {
       id: 'obj-wi-dl-yuanshu',
       forceId: 'yuan-shu',
       primary: {
         title: { zh: '南陽起事', en: 'Rise from Nanyang' },
-        description: 'Declare yourself emperor.',
-        descriptionZh: "稱帝建號。",
-        goal: { kind: 'declare-emperor' },
+        description: 'Hold Shouchun and take Xuchang by 198 — the seal is not enough; you need the boy who wears the crown.',
+        descriptionZh: "於198年前據壽春、許昌 —— 玉璽在手還不夠,得先有那個戴冠的孩子。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'xuchang'], byYear: 198 },
       },
+      /*
+       * 稱帝當主目標,三輪 0/3 —— 持璽稱帝那條路(`aiCourt`)要列侯以上加八城,
+       * 而 AI 幾乎摸不到那個門檻。他在這張盤上其實推得很動(小沛 2.31、
+       * 下邳 1.85、許昌 1.51),主目標改成往北那一步,稱帝降為次要。
+       */
+      secondary: [
+        {
+          title: { zh: '代漢者當塗高', en: 'The One Foretold' },
+          description: 'Declare yourself emperor.',
+          descriptionZh: "稱帝建號 —— 「代漢者,當塗高也」,他說那四個字說的就是自己。",
+          goal: { kind: 'declare-emperor' },
+        },
+      ],
     },
     {
       id: 'obj-wi-dong-lives-liu-biao',
@@ -890,16 +1112,21 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shu',
       primary: {
         title: { zh: '仲氏之世', en: 'The Reign of Zhong' },
-        description: 'Still hold Shouchun and Hefei in 199 — the title stuck this time.',
-        descriptionZh: "至199年仍據壽春、合肥 —— 這一次,帝號沒有變成笑話。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 199 },
+        description: 'Hold Shouchun and take Xuchang by 204 — two emperors cannot share a realm.',
+        descriptionZh: "於204年前據壽春、許昌 —— 天無二日;帝號要不變成笑話,許都那位必須廢。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'xuchang'], byYear: 204 },
       },
+      /*
+       * 原本是守壽春、合肥到 199 —— 開局 198,**一年的窗口**,三輪 0/3。
+       * 而他在這張盤上其實推得動(許昌 1.27、小沛 1.57、下邳 1.49),
+       * 主目標改成僭號之後真正該做的那件事,守兩座城降為次要。
+       */
       secondary: [
         {
-          title: { zh: '北取許都', en: 'Take Xuchang' },
-          description: 'Take Xuchang by 210 — two emperors cannot share a realm.',
-          descriptionZh: "於210年前攻取許昌 —— 天無二日,許都那位必須廢。",
-          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 210 },
+          title: { zh: '淮南不失', en: 'Huainan Holds' },
+          description: 'Still hold Shouchun and Hefei in 200.',
+          descriptionZh: "至200年仍據壽春、合肥 —— 這一次,帝號沒有變成笑話。",
+          goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 200 },
         },
       ],
     },
@@ -918,20 +1145,38 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '不為人下', en: 'No Longer Anyone\'s Subordinate' },
-        description: 'Take Shouchun and Hefei by 208 — your father\'s old master owes you a realm.',
-        descriptionZh: "於208年前取壽春、合肥 —— 父親當年投的那個人,如今要還債了。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 208 },
+        description: 'Hold Jianye and take Lujiang by 204 — your father\'s old master owes you a realm.',
+        descriptionZh: "於204年前據建業、廬江 —— 父親當年投的那個人,如今要還債了;而廬江是他討過的第一座城。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'lujiang'], byYear: 204 },
       },
+      /* 壽春 0.62、合肥 0.65 都在門檻之下,而廬江 1.03 剛好在上面 —— 先過那一座。 */
+      secondary: [
+        {
+          title: { zh: '淮南可取', en: 'Huainan Is There for the Taking' },
+          description: 'Take Shouchun and Hefei by 208.',
+          descriptionZh: "於208年前取壽春、合肥 —— 僭號者的都城。",
+          goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 208 },
+        },
+      ],
     },
     {
       id: 'obj-wi-ys-lubu',
       forceId: 'lubu',
       primary: {
         title: { zh: '轅門射戟', en: 'The Halberd at the Gate' },
-        description: 'Hold Xiapi and take Shouchun by 208 — you shot the halberd to keep them apart; now take the prize.',
-        descriptionZh: "於208年前守下邳並取壽春 —— 轅門射戟解了紛爭,如今自取其地。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'shouchun'], byYear: 208 },
+        description: 'Still hold Xiapi and Langya in 202 — you shot the halberd to keep them apart; keep what you have.',
+        descriptionZh: "至202年仍據下邳、琅琊 —— 轅門射戟解了別人的紛爭,而他自己的地從來沒守過兩年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 202 },
       },
+      /* 兩座城的人,而壽春 0.30、彭城 0.86、小沛 0.69 —— 他一座都推不動。 */
+      secondary: [
+        {
+          title: { zh: '自取其地', en: 'Take the Prize' },
+          description: 'Take Shouchun by 208.',
+          descriptionZh: "於208年前取壽春 —— 僭號者的都城,本來也可以是他的。",
+          goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 208 },
+        },
+      ],
     },
     {
       id: 'obj-wi-ys-yuanshao',
@@ -1010,11 +1255,21 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '赤壁之火', en: 'The Fire at Chibi' },
-        description: 'Destroy the Cao Cao force by 216 — the fire still has to be lit, and now someone is watching for it.',
-        descriptionZh: "於216年前擊敗曹操 —— 火還是要放,只是這回北岸有人在等。",
-        goal: { kind: 'defeat-force', forceId: 'cao', byYear: 216 },
+        description: 'Hold Jianye and take Jiangling by 213 — the fire still has to be lit, and now someone is watching for it.',
+        descriptionZh: "於213年前據建業、江陵 —— 火還是要放,只是這回北岸有人在等;而燒完之後,江陵才是那一仗真正的彩頭。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'jiangling'], byYear: 213 },
       },
+      /*
+       * 十四城「殲滅」四十八城的曹操,三輪 0/3 —— 而赤壁之後孫吳真正拿到的
+       * 是江陵(周瑜圍了一年)。江陵 1.30 在門檻之上,滅曹降為次要。
+       */
       secondary: [
+        {
+          title: { zh: '北岸無曹', en: 'No Cao on the North Bank' },
+          description: 'Destroy the Cao Cao force by 218.',
+          descriptionZh: "於218年前擊滅曹操 —— 火還是要放。",
+          goal: { kind: 'defeat-force', forceId: 'cao', byYear: 218 },
+        },
         {
           title: { zh: '保有江東', en: 'Keep Jiangdong' },
           description: 'Still hold Jianye and Chaisang in 214.',
@@ -1064,20 +1319,34 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-biao',
       primary: {
         title: { zh: '荊襄之守', en: 'The Jing Heartland' },
-        description: "Still hold Xiangyang and Jiangling in 214. He rode into Yicheng alone and settled the province. A man for talk, they said — and Jing province did have seventeen quiet years.",
-        descriptionZh: "至214年仍據襄陽、江陵。單騎入宜城而定荊州,坐談客耳 —— 守成之主,而荊州確實安了十七年。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 214 },
+        description: 'Still hold Xiangyang in 212 — a man for talk, they said, and Jing province did have seventeen quiet years.',
+        descriptionZh: "至212年仍據襄陽。單騎入宜城而定荊州,坐談客耳 —— 守成之主,而荊州確實安了十七年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 212 },
       },
+      /*
+       * 原本是守襄陽、江陵到 214 —— 六年,而江北是四十八城的曹操、江東的孫權
+       * 對江陵 1.30、武陵 2.45、桂陽 1.76 全在門檻之上。三輪 0/3。
+       * 曝險是「窗口 × 城數」,兩頭一起收:一座城,四年。
+       */
+      secondary: [
+        {
+          title: { zh: '江陵不失', en: 'Jiangling Holds' },
+          description: 'Still hold Jiangling in 214.',
+          descriptionZh: "至214年仍據江陵 —— 荊州的糧、船與甲仗都在那裡。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 214 },
+        },
+      ],
     },
     {
       id: 'obj-wi-guojia-lives-zhang-lu',
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: "Still hold Hanzhong and Baxi in 214. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
-        descriptionZh: "至214年仍據漢中、巴西。政教合一,置義舍米肉,三十年不見兵革。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 214 },
+        description: 'Hold Hanzhong and take Jiameng by 212 — church and state in one hand, and the road south still open.',
+        descriptionZh: "於212年前據漢中、葭萌 —— 政教合一,置義舍米肉;而北面是曹操,能走的只剩巴蜀那一條路。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 212 },
       },
+      /* 三城守六年而北面是四十八城的曹操,三輪 0/3;葭萌 3.87 是他自己推得動的那一步。 */
     },
     {
       id: 'obj-wi-guojia-lives-ma-teng',
@@ -1109,10 +1378,20 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       primary: {
         title: { zh: '取蜀之策', en: "Zhou Yu's Plan for Shu" },
         description: 'Take Jiangling and Chengdu by 218 — the two-emperor plan he died before starting.',
-        descriptionZh: "於218年前取江陵、成都 —— 周瑜二分天下之策,他沒來得及開始。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'chengdu'], byYear: 218 },
+        descriptionZh: "於215年前取江陵 —— 周瑜二分天下之策,第一步是從劉備手裡拿回南郡;他沒來得及開始。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 215 },
       },
+      /*
+       * 成都與他任何一座城都不相鄰(壓力 0.00),而江陵 1.12 在門檻之上 ——
+       * 周瑜的二分之策本來就是「先取南郡,再圖巴蜀」。取蜀降為次要。
+       */
       secondary: [
+        {
+          title: { zh: '西進巴蜀', en: 'On into Shu' },
+          description: 'Take Chengdu by 220.',
+          descriptionZh: "於220年前取成都 —— 得蜀而並張魯,結馬超為援,此周郎所言。",
+          goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 220 },
+        },
         {
           title: { zh: '與操分天下', en: 'Split the Realm With Cao' },
           description: "Hold Xiangyang and Chang'an by 224.",
@@ -1126,10 +1405,19 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '不得借荊州', en: 'No Loan of Jing This Time' },
-        description: 'Take Chengdu by 217 — Zhou Yu would never have lent you Nanjun; get to Shu first.',
-        descriptionZh: "於217年前攻取成都 —— 周瑜在,南郡便借不到,只能自己搶先入蜀。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 217 },
+        description: 'Take Yong-an by 215 — Zhou Yu would never have lent you Nanjun; get to Shu first.',
+        descriptionZh: "於215年前攻取永安 —— 周瑜在,南郡便借不到,只能自己搶先入蜀;而由荊入益只有魚復這一扇門。",
+        goal: { kind: 'hold-cities', cityIds: ['yongan'], byYear: 215 },
       },
+      /* 成都與他任何一座城都不相鄰(壓力 0.00);與 211 渭南盤同型、同一個修法。 */
+      secondary: [
+        {
+          title: { zh: '搶先入蜀', en: 'Into Shu First' },
+          description: 'Take Chengdu by 218.',
+          descriptionZh: "於218年前攻取成都 —— 周瑜也在往那裡走。",
+          goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 218 },
+        },
+      ],
     },
     {
       id: 'obj-wi-zy-cao',
@@ -1154,20 +1442,38 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-chao',
       primary: {
         title: { zh: '關中之亂', en: 'The Guanzhong Rising' },
-        description: "Take Chang'an by 216.",
-        descriptionZh: "於216年前攻取長安。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 216 },
+        description: 'Hold Anding and take Hanzhong by 214 — where he actually went after Weinan.',
+        descriptionZh: "於214年前據安定、漢中 —— 關中十部起事;而渭南之敗以後,他真正去的地方是漢中。",
+        goal: { kind: 'hold-cities', cityIds: ['anding', 'hanzhong'], byYear: 214 },
       },
+      /*
+       * 長安在五十五城的曹操手裡而壓力只有 0.67。第一版改指金城(1.54)——
+       * **`objectiveDiplomacy.test.ts` 當場擋下**:馬超與韓遂在這張盤上開局
+       * 是 `allied`,那條目標從第 0 旬就是死的。改指漢中(1.09,張魯的城),
+       * 而那也正是史書上他兵敗之後去投的地方。
+       */
+      secondary: [
+        {
+          title: { zh: '東取長安', en: "On to Chang'an" },
+          description: "Take Chang'an by 218.",
+          descriptionZh: "於218年前攻取長安 —— 渭南那一仗,這一世還沒有打。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 218 },
+        },
+      ],
     },
     {
       id: 'obj-wi-zhouyu-lives-han-sui',
       forceId: 'han-sui',
       primary: {
         title: { zh: '西州自立', en: 'A Realm in the West' },
-        description: "Still hold Jincheng and Tianshui in 215. Thirty years in Liang, and never once answered a summons to court.",
-        descriptionZh: "至215年仍據金城、天水。在涼州三十年,一次也沒有應詔入朝。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui'], byYear: 215 },
+        description: 'Still hold Tianshui and Shanggui in 213. Thirty years in Liang, and never once answered a summons to court.',
+        descriptionZh: "至213年仍據天水、上邽。在涼州三十年,一次也沒有應詔入朝。",
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui'], byYear: 213 },
       },
+      /*
+       * 原本守的是金城 —— 而馬超對金城的壓力是 1.54,在門檻之上;
+       * 上邽最高只被馬超的 0.94 指著。窗口一併從四年壓到兩年。
+       */
     },
     {
       id: 'obj-wi-zhouyu-lives-liu-zhang',
@@ -1184,10 +1490,11 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: "Still hold Hanzhong and Baxi in 216. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
-        descriptionZh: "至216年仍據漢中、巴西。政教合一,置義舍米肉,三十年不見兵革。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 216 },
+        description: 'Hold Hanzhong and take Jiameng by 214 — church and state in one hand, and the road south still open.',
+        descriptionZh: "於214年前據漢中、葭萌 —— 政教合一,置義舍米肉;而北面是五十五城的曹操,能走的只剩巴蜀那一條路。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 214 },
       },
+      /* 三城守五年,而漢中同時被馬超(1.09)指著;葭萌 2.73 是他自己推得動的那一步。 */
     },
     {
       id: 'obj-wi-zhouyu-lives-shi-xie',
@@ -1208,11 +1515,18 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '臥龍鳳雛並在', en: 'Both the Dragon and the Phoenix' },
-        description: "Take Hanzhong, Chang'an and Luoyang by 230 — with Pang Tong in Shu, Zhuge Liang is free to march.",
-        descriptionZh: "於230年前取漢中、長安、洛陽 —— 鳳雛坐鎮成都,臥龍便能專心北伐。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'changan', 'luoyang'], byYear: 230 },
+        description: 'Take Hanzhong by 220 — with Pang Tong in Shu, Zhuge Liang is free to march.',
+        descriptionZh: "於220年前取漢中 —— 鳳雛坐鎮成都,臥龍便能專心北伐;而北伐的第一步是漢中。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 220 },
       },
+      /* 漢中 2.09 在門檻之上,而長安、洛陽與他二十五座城**全不相鄰**(壓力 0.00)。 */
       secondary: [
+        {
+          title: { zh: '還於舊都', en: 'Back to the Old Capital' },
+          description: "Take Chang'an and Luoyang by 230.",
+          descriptionZh: "於230年前取長安、洛陽 —— 隆中對的最後一句。",
+          goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 230 },
+        },
         {
           title: { zh: '荊益不失其一', en: 'Lose Neither Jing nor Yi' },
           description: 'Still hold Jiangling and Chengdu in 222.',
@@ -1244,9 +1558,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '荊州之爭', en: 'The Jing Question' },
-        description: 'Take Jiangling by 224 and Hefei by 228.',
-        descriptionZh: "於224年前取江陵、228年前取合肥。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 224 },
+        description: 'Hold Jiangxia and take Jiangling by 228.',
+        descriptionZh: "於228年前據江夏、江陵 —— 荊州這筆帳,孫吳記了二十年。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangxia', 'jiangling'], byYear: 228 },
       },
       secondary: [
         {
@@ -1306,11 +1620,21 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '威震華夏', en: 'His Fame Shook the Realm' },
-        description: "Take Xiangyang, Xuchang and Luoyang by 228 — the water drowned Yu Jin and did not stop.",
-        descriptionZh: "於228年前取襄陽、許昌、洛陽 —— 那場大水淹了于禁七軍之後,沒有停。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'xuchang', 'luoyang'], byYear: 228 },
+        description: 'Still hold Xiangyang and Fancheng in 224 — the water drowned Yu Jin; holding after it drains is the harder half.',
+        descriptionZh: "至224年仍據襄陽、樊城 —— 那場大水淹了于禁七軍,而水退之後守得住才算數。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'fancheng'], byYear: 224 },
       },
+      /*
+       * 許昌 0.39、洛陽 0.22,兩座都在 AI 的候選門檻之下 —— 而襄陽、樊城
+       * 開局就是他的:「威震華夏」講的本來就是那場水之後他握住了荊北。
+       */
       secondary: [
+        {
+          title: { zh: '許都震動', en: 'Xuchang Trembles' },
+          description: 'Take Xuchang and Luoyang by 228.',
+          descriptionZh: "於228年前取許昌、洛陽 —— 曹操議徙都以避其鋒。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 228 },
+        },
         {
           title: { zh: '興復漢室', en: 'Restore the Han' },
           description: 'Bring all under the Han banner.',
@@ -1384,11 +1708,23 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '先發制人', en: 'Strike First' },
-        description: 'Destroy the Sima faction by 254 — the old fox was only pretending to be senile.',
-        descriptionZh: "於254年前翦滅司馬氏 —— 那個老人是裝病,你這次沒有信。",
-        goal: { kind: 'defeat-force', forceId: 'sima', byYear: 254 },
+        description: 'Break the Sima faction down to five cities by 256 — the old fox was only pretending to be senile.',
+        descriptionZh: "於256年前將司馬氏逼到只剩五城 —— 那個老人是裝病,你這次沒有信。",
+        goal: { kind: 'break-force', forceId: 'sima', maxCities: 5, byYear: 256 },
       },
+      /*
+       * 這張盤上兩家**互相**以 `defeat-force` 對方為主目標,於是兩邊永遠 0 ——
+       * 249 歷史盤(高平陵之變)早就踩過同一個坑並修掉了,而它的兩張假想盤
+       * 沿用了舊寫法。改用 `break-force`:那一天要的是把對方打回附庸,
+       * 不是把一個握著二十九城的執政從史書上抹掉。
+       */
       secondary: [
+        {
+          title: { zh: '斬草除根', en: 'Root and Branch' },
+          description: 'Destroy the Sima faction by 262.',
+          descriptionZh: "於262年前翦滅司馬氏 —— 夷三族,那是他們對你做過的事。",
+          goal: { kind: 'defeat-force', forceId: 'sima', byYear: 262 },
+        },
         {
           title: { zh: '曹魏不亡', en: 'Wei Endures' },
           description: 'Still hold Luoyang and Xuchang in 265 — the year Wei falls in history.',
@@ -1402,10 +1738,19 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sima',
       primary: {
         title: { zh: '反守為攻', en: 'Turn It Around' },
-        description: 'Destroy the Cao Shuang force by 254 — you have lost the surprise; you still have the army.',
-        descriptionZh: "於254年前翦滅曹爽 —— 先機已失,所恃者唯宿將與人望。",
-        goal: { kind: 'defeat-force', forceId: 'cao', byYear: 254 },
+        description: 'Take Baima, Yanjin and Guandu by 256 — you have lost the surprise; you still have the army.',
+        descriptionZh: "於256年前取白馬、延津、官渡 —— 先機已失,所恃者唯宿將與人望;而河南先要過得去。",
+        goal: { kind: 'hold-cities', cityIds: ['baima', 'yanjin', 'guandu'], byYear: 256 },
       },
+      /* 同上:二十九城要殲滅四十三城的曹爽,兩邊互相寫成 defeat-force 就是兩邊都 0。 */
+      secondary: [
+        {
+          title: { zh: '翦滅曹爽', en: 'Destroy Cao Shuang' },
+          description: 'Destroy the Cao Shuang force by 262.',
+          descriptionZh: "於262年前翦滅曹爽 —— 指洛水為誓的那一天,他信了。",
+          goal: { kind: 'defeat-force', forceId: 'cao', byYear: 262 },
+        },
+      ],
     },
     {
       id: 'obj-wi-gpl-shu',
@@ -1454,11 +1799,21 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sima',
       primary: {
         title: { zh: '南顧之憂', en: 'Trouble in the South' },
-        description: 'Destroy the Wu force by 268 — with Lu Xun alive, the river line does not rot from within.',
-        descriptionZh: "於268年前滅吳 —— 陸遜尚在,江防不會從內部爛掉。",
-        goal: { kind: 'defeat-force', forceId: 'sun', byYear: 268 },
+        description: 'Take Guangling and Jianye by 262 — with Lu Xun alive, the river line does not rot from within.',
+        descriptionZh: "於262年前取廣陵、建業 —— 陸遜尚在,江防不會從內部爛掉,那就只能一寸一寸打過去。",
+        goal: { kind: 'hold-cities', cityIds: ['guangling', 'jianye'], byYear: 262 },
       },
+      /*
+       * 「滅吳」是二十四座城的事,自走 0/3。廣陵 1.52、建業 1.17 都在門檻之上 ——
+       * 過江那一步先寫成目標,滅吳降為次要。
+       */
       secondary: [
+        {
+          title: { zh: '一統之業', en: 'The Realm Made One' },
+          description: 'Destroy the Wu force by 275.',
+          descriptionZh: "於275年前滅吳 —— 史書上晉滅吳是 280 年。",
+          goal: { kind: 'defeat-force', forceId: 'sun', byYear: 275 },
+        },
         {
           title: { zh: '先取洛陽', en: 'Secure the Court First' },
           description: 'Destroy the Cao Shuang force.',
@@ -1472,10 +1827,22 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '曹氏自保', en: 'Save the House of Cao' },
-        description: 'Destroy the Sima faction by 254.',
-        descriptionZh: "於254年前翦滅司馬氏。",
-        goal: { kind: 'defeat-force', forceId: 'sima', byYear: 254 },
+        description: "Still hold Chang'an and Xiangyang in 256 — the Cao name is now a province, not a court.",
+        descriptionZh: "至256年仍據長安、襄陽 —— 洛陽已經不是曹家的了,關中與荊北是最後兩根柱子。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'xiangyang'], byYear: 256 },
       },
+      /*
+       * 二十九城要殲滅四十三城的司馬,自走 0/3;而他對司馬的城壓力最高只有
+       * 0.71(太原)—— 一座都推不動。主目標改成守住自己那一半,翦滅降為次要。
+       */
+      secondary: [
+        {
+          title: { zh: '翦滅司馬', en: 'Destroy the Sima' },
+          description: 'Destroy the Sima faction by 262.',
+          descriptionZh: "於262年前翦滅司馬氏 —— 指洛水為誓的那一天,他信了。",
+          goal: { kind: 'defeat-force', forceId: 'sima', byYear: 262 },
+        },
+      ],
     },
     {
       id: 'obj-wi-lx-shu',

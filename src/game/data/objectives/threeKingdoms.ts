@@ -2939,12 +2939,28 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-207bl-liubiao',
       forceId: 'liu-biao',
+      /*
+       * 這一家原本的主目標是「北伐許都」,而那正是**劉備勸他、他沒有動**的那件事
+       * —— 本專案的準則是主目標寫他真正做到的,次要寫他沒做到的,這條寫反了。
+       * 許昌與他任何一座城都不相鄰(`reachability-audit` 壓力 0.00),
+       * 全庫掃描裡它也一直在「從未達成」那一欄。
+       * 其餘十一張盤的劉表清一色是「荊襄之守 / 保江漢間 / 坐保江漢」,
+       * 只有這一張是進攻型 —— 對齊回去,把襲許降為次要。
+       */
       primary: {
-        title: { zh: '北伐許都', en: 'Strike at Xuchang' },
-        description: 'Take Xuchang by 213 — Liu Bei urged it while Cao Cao marched north.',
-        descriptionZh: "於213年前攻取許昌 —— 曹操北征之際,劉備曾勸你襲許,你沒有動。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 213 },
+        title: { zh: '守此荊土', en: 'Guard the Jing Soil' },
+        description: 'Still hold Xiangyang and Jiangling in 210 — history gave you only to 208.',
+        descriptionZh: "至210年仍據襄陽、江陵 —— 曹操北征烏桓,南方無事;而史書只給了你到208年八月。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 210 },
       },
+      secondary: [
+        {
+          title: { zh: '北伐許都', en: 'Strike at Xuchang' },
+          description: 'Take Xuchang by 213 — Liu Bei urged it while Cao Cao marched north.',
+          descriptionZh: "於213年前攻取許昌 —— 曹操北征之際,劉備曾勸你襲許,你沒有動。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 213 },
+        },
+      ],
     },
     {
       id: 'obj-207bl-liuzhang',
@@ -3087,13 +3103,33 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-211-liubei',
       forceId: 'liu-bei',
+      /*
+       * 原本的主目標是「於216年前攻取成都」,而**成都與他任何一座城都不相鄰**
+       * (`reachability-audit` 壓力 0.00);六輪掃描實測 0/6,而且「多跑六年也
+       * 從未達成」。史書上他不是打進去的:劉璋遣法正迎之,他從公安溯江而上,
+       * 屯葭萌,三年後才回頭取成都。盤上沒有「迎入」這回事,於是那條路只剩下
+       * 江水一線 —— 永安、江州,正是建安十九年張飛、趙雲入蜀走的那一路。
+       * 主目標改成那一步,成都留在次要(「跨有荊益」原本就在)。
+       */
       primary: {
-        title: { zh: '西取益州', en: 'Take Yi Province' },
-        description: 'Take Chengdu by 216 — the Longzhong plan, second half.',
-        descriptionZh: "於216年前攻取成都 —— 隆中對的下半篇。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 216 },
+        title: { zh: '入蜀之門', en: 'The Gate into Shu' },
+        description: 'Take Yong-an by 214 — the one door from Jing into Yi.',
+        descriptionZh: "於214年前攻取永安 —— 魚復扼三峽之口,由荊入益只有這一扇門。",
+        goal: { kind: 'hold-cities', cityIds: ['yongan'], byYear: 214 },
       },
       secondary: [
+        {
+          title: { zh: '溯江而上', en: 'Up the River' },
+          description: 'Take Jiangzhou by 216 — the road Zhang Fei took.',
+          descriptionZh: "於216年前取江州 —— 建安十九年,張飛溯流而上,義釋嚴顏於江州。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangzhou'], byYear: 216 },
+        },
+        {
+          title: { zh: '西取益州', en: 'Take Yi Province' },
+          description: 'Take Chengdu by 218 — the Longzhong plan, second half.',
+          descriptionZh: "於218年前攻取成都 —— 隆中對的下半篇。",
+          goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 218 },
+        },
         {
           title: { zh: '跨有荊益', en: 'Straddle Jing and Yi' },
           description: 'Hold Jiangling and Chengdu together by 218.',
@@ -4718,31 +4754,48 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-goh-cao',
       forceId: 'cao',
+      /*
+       * 主次對調。原本的主目標是 `unify-realm` —— 128 座城,而他開局 12 座:
+       * 那不是目標,是這張盤的勝利條件本身。全庫只有兩條主目標敢用它,
+       * 另一條是秦滅六國(開局 42 城,而那張盤講的正是這件事)。
+       */
       primary: {
-        title: { zh: '寧我負人', en: 'Rather I Wrong the World' },
-        description: 'Bring all under one banner.',
-        descriptionZh: "混一天下 —— 群雄畢集,正是治世能臣、亂世奸雄的分野處。",
-        goal: { kind: 'unify-realm' },
+        title: { zh: '先定中原', en: 'The Central Plain First' },
+        description: 'Hold Luoyang, Xuchang and Ye by 210.',
+        descriptionZh: "於210年前兼據洛陽、許昌、鄴城 —— 群雄畢集,而中原是誰的,天下就是誰的。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'ye'], byYear: 210 },
       },
       secondary: [
         {
-          title: { zh: '先定中原', en: 'The Central Plain First' },
-          description: 'Hold Luoyang, Xuchang and Ye by 210.',
-          descriptionZh: "於210年前兼據洛陽、許昌、鄴城。",
-          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'ye'], byYear: 210 },
+          title: { zh: '寧我負人', en: 'Rather I Wrong the World' },
+          description: 'Bring all under one banner.',
+          descriptionZh: "混一天下 —— 群雄畢集,正是治世能臣、亂世奸雄的分野處。",
+          goal: { kind: 'unify-realm' },
         },
       ],
     },
     {
       id: 'obj-goh-liubei',
       forceId: 'liu-bei',
+      /*
+       * 這張盤把劉備放在河北(平原、南皮、博陵、信都)加新野、樊城 ——
+       * 而原本的主目標要他取成都、江陵、洛陽,三座**開局壓力全是 0.00**
+       * (`reachability-audit`:一座都不與他相鄰)。跨有荊益是隆中對,
+       * 不是這張盤上他站的地方。改成他站得到的那一步,隆中對降為次要。
+       */
       primary: {
-        title: { zh: '興復漢室', en: 'Restore the Han' },
-        description: 'Hold Chengdu, Jiangling and Luoyang by 215.',
-        descriptionZh: "於215年前兼據成都、江陵、洛陽 —— 跨有荊益,還於舊都。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangling', 'luoyang'], byYear: 215 },
+        title: { zh: '中山靖王之後', en: 'Descendant of Prince Jing of Zhongshan' },
+        description: 'Hold Pingyuan and Zhongshan by 210 — a piece of ground that is actually yours.',
+        descriptionZh: "於210年前據平原、中山 —— 織席販履而自稱帝室之胄,先要有一塊真正是自己的地,才談得上興復。",
+        goal: { kind: 'hold-cities', cityIds: ['pingyuan', 'zhongshan'], byYear: 210 },
       },
       secondary: [
+        {
+          title: { zh: '興復漢室', en: 'Restore the Han' },
+          description: 'Hold Chengdu, Jiangling and Luoyang by 215.',
+          descriptionZh: "於215年前兼據成都、江陵、洛陽 —— 跨有荊益,還於舊都。",
+          goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangling', 'luoyang'], byYear: 215 },
+        },
         {
           title: { zh: '三分而後一統', en: 'Three Parts, Then One' },
           description: 'Bring all under one banner.',
@@ -4766,46 +4819,112 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '四世三公', en: 'Four Generations, Three Excellencies' },
-        description: 'Control Ji province and take Xuchang by 210.',
-        descriptionZh: "於210年前盡有冀州並取許昌 —— 名門之望,當有名門之業。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'xuchang'], byYear: 210 },
+        description: 'Hold Ye and take Guandu by 213 — Xuchang lies just beyond the ford.',
+        descriptionZh: "於213年前據鄴城、官渡 —— 名門之望,當有名門之業;而許都就在官渡之南。",
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'guandu'], byYear: 213 },
       },
+      /*
+       * 原本主目標要的是許昌,壓力 0.68 —— 在 AI 的候選門檻(1.05)之下,
+       * 也就是他一輩子不會去打。官渡是他真正壓著曹操的那個渡口(1.80),
+       * 拿下之後許都才進得了視野;許昌降為次要。
+       */
+      secondary: [
+        {
+          title: { zh: '挾天子者當易人', en: 'Another Hand on the Emperor' },
+          description: 'Take Xuchang by 213.',
+          descriptionZh: "於213年前攻取許昌 —— 田豐勸他緩,郭圖勸他急,而他兩邊都聽了一半。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 213 },
+        },
+      ],
     },
     {
       id: 'obj-goh-dong',
       forceId: 'dong',
       primary: {
-        title: { zh: '廢立由我', en: 'I Make and Unmake Emperors' },
-        description: "Hold Luoyang and Chang'an by 208.",
-        descriptionZh: "於208年前兼據洛陽、長安 —— 兩京在手,廢立由我。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 208 },
+        title: { zh: '還定關中', en: 'Guanzhong Made Whole' },
+        description: "Hold Chang'an and take Chencang by 206 — the Liang man secures his own valley first.",
+        descriptionZh: "於206年前據長安、陳倉 —— 涼州出身的人先把關中按住,兩京的事再說。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang'], byYear: 206 },
       },
+      /*
+       * 第一版寫的是安定(1.71),六輪 0/6 —— 安定是馬騰的城,而**馬騰的主目標
+       * 也指著同一片涼州**,兩家搶一座,四城的董卓搶不過。改指陳倉(1.89,
+       * 張魯的城,沒有第二家要它);窗口同時放寬兩年。
+       */
+      /*
+       * 洛陽在這張盤上是曹操的,壓力 0.47 —— 打不到。而董卓本人在這張盤上
+       * 只有四城,自走三輪**三輪都在期限之前就覆滅**;十年期的題目對他沒有意義。
+       * 換成他四年內夠得著的那一步(安定 1.71),兩京降為次要。
+       */
+      secondary: [
+        {
+          title: { zh: '廢立由我', en: 'I Make and Unmake Emperors' },
+          description: "Hold Luoyang and Chang'an by 212.",
+          descriptionZh: "於212年前兼據洛陽、長安 —— 兩京在手,廢立由我。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 212 },
+        },
+      ],
     },
     {
       id: 'obj-goh-lubu',
       forceId: 'lubu',
       primary: {
         title: { zh: '人中呂布', en: 'Lü Bu Among Men' },
-        description: 'Hold Xiapi, Pengcheng and Luoyang by 212 — a place of your own at last.',
-        descriptionZh: "於212年前據下邳、彭城、洛陽 —— 馬中赤兔,人中呂布,終於有了自己的地。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'pengcheng', 'luoyang'], byYear: 212 },
+        description: 'Still hold Xiapi and Langya in 204 — a place of your own, kept.',
+        descriptionZh: "至204年仍據下邳、琅琊 —— 馬中赤兔,人中呂布,而他一生沒有一塊守得住的地。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 204 },
       },
+      /*
+       * 洛陽壓力 0.00(與他兩座城都不相鄰),移到次要;而彭城那一步也不行 ——
+       * 六輪複驗仍 0/6,因為**同一座彭城有三家在搶**,而袁紹 2.87、曹操 2.49
+       * 都排在他的 1.52 前面。兩座城的人搶不過兩個大國,主目標改成守住自己的。
+       */
+      secondary: [
+        {
+          title: { zh: '轅門之外', en: 'Beyond the Gate' },
+          description: 'Take Pengcheng by 208.',
+          descriptionZh: "於208年前取彭城 —— 轅門射戟那一箭,替別人解的圍。",
+          goal: { kind: 'hold-cities', cityIds: ['pengcheng'], byYear: 208 },
+        },
+        {
+          title: { zh: '洛陽在望', en: 'Luoyang in Sight' },
+          description: 'Take Luoyang by 212.',
+          descriptionZh: "於212年前攻取洛陽 —— 他曾在那座城裡殺過兩個義父。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 212 },
+        },
+      ],
     },
     {
       id: 'obj-goh-yuanshu',
       forceId: 'yuan-shu',
+      /*
+       * 開局**一座城**,而主目標是稱帝 —— 而稱帝那條路(持璽稱帝,見
+       * `aiCourt`)要列侯以上加八座城。他自走三輪三輪覆滅,一次也沒有摸到門檻。
+       * 主目標換成他四年內夠得著的那一步(小沛 1.31),稱帝降為次要:
+       * 玉璽在他手上,路仍然是通的,只是要先變成兩城之主。
+       */
       primary: {
-        title: { zh: '受命於天', en: 'Mandated by Heaven' },
-        description: 'Declare yourself emperor and hold Shouchun through 210.',
-        descriptionZh: "稱帝建號,並至210年仍據壽春。",
-        goal: { kind: 'declare-emperor' },
+        title: { zh: '淮南不飢', en: 'Huainan Shall Not Starve' },
+        description: 'Still hold Shouchun in 204 — the histories give you a cup of honeyed water and nothing else.',
+        descriptionZh: "至204年仍據壽春 —— 史書上他死的時候只想討一碗蜜水,左右說:只有血水。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 204 },
       },
+      /*
+       * 小沛那一步六輪複驗仍 0/6:那是陶謙的城,而袁紹、曹操、呂布都排在
+       * 他的 1.31 前面。一座城的人搶不過三家,主目標只好是守住那一座。
+       */
       secondary: [
         {
-          title: { zh: '淮南不飢', en: 'Huainan Shall Not Starve' },
-          description: 'Still hold Shouchun in 210.',
-          descriptionZh: "至210年仍據壽春 —— 史書上你死時只想討一碗蜜水。",
-          goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 210 },
+          title: { zh: '淮南之主', en: 'Lord of Huainan' },
+          description: 'Hold Shouchun and take Xiaopei by 208.',
+          descriptionZh: "於208年前據壽春、小沛 —— 一城之主要先變成兩城之主,玉璽才壓得住。",
+          goal: { kind: 'hold-cities', cityIds: ['shouchun', 'xiaopei'], byYear: 208 },
+        },
+        {
+          title: { zh: '受命於天', en: 'Mandated by Heaven' },
+          description: 'Declare yourself emperor.',
+          descriptionZh: "稱帝建號 —— 玉璽在手,而袁氏四世三公。",
+          goal: { kind: 'declare-emperor' },
         },
       ],
     },
@@ -4813,14 +4932,25 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-goh-liubiao',
       forceId: 'liu-biao',
       primary: {
-        title: { zh: '荊州之主', en: 'Lord of Jing' },
-        description: "Hold Xiangyang, Jiangling, Jiangxia and Changsha by 210.",
-        descriptionZh: "於210年前據襄陽、江陵、江夏、長沙 —— 荊襄之心,九郡是牌匾上的話。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia', 'changsha'], byYear: 210 },
+        title: { zh: '荊襄之守', en: 'The Jing Heartland' },
+        description: 'Still hold Xiangyang, Jiangling and Jiangxia in 205.',
+        descriptionZh: "至205年仍據襄陽、江陵、江夏 —— 荊襄之心;九郡是牌匾上的話。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 205 },
       },
+      /*
+       * 原本是「守三座 + 取長沙,到 210 年」。長沙構得著(1.33),
+       * 守不住才是問題:自走三輪他從 16 城掉到 3 城(區間 3–9)。
+       * 主目標壓成五年的守成,長沙與盡有荊州降為次要。
+       */
       secondary: [
         {
           title: { zh: '荊州之主', en: 'Lord of Jing' },
+          description: 'Take Changsha by 210.',
+          descriptionZh: "於210年前取長沙 —— 江南四郡,名義上一直是你的。",
+          goal: { kind: 'hold-cities', cityIds: ['changsha'], byYear: 210 },
+        },
+        {
+          title: { zh: '九郡俱全', en: 'All Nine Commanderies' },
           description: 'Control Jing province by 210.',
           descriptionZh: "於210年前盡有荊州。",
           goal: { kind: 'control-province', provinceId: 'jing', byYear: 210 },
@@ -4856,11 +4986,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '白馬將軍', en: 'The White Horse General' },
-        description: "Hold Ji, Beiping, Yuyang and Liucheng by 210 — the frontier is yours; Jieqiao was not the end of it.",
-        descriptionZh: "於210年前據薊、北平、漁陽、柳城 —— 邊地是你的;界橋之敗,本非定局。",
-        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping', 'yuyang', 'liucheng'], byYear: 210 },
+        description: 'Still hold Ji and Beiping in 205 — the frontier is yours; Jieqiao was not the end of it.',
+        descriptionZh: "至205年仍據薊、北平 —— 邊地是你的;界橋之敗,本非定局。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 205 },
       },
+      /* 原本要守四座到 210 年,而他自走三輪從 5 城掉到 1 城(一輪覆滅)。 */
       secondary: [
+        {
+          title: { zh: '塞外之柳城', en: 'Liucheng Beyond the Wall' },
+          description: 'Hold Yuyang and take Liucheng by 210.',
+          descriptionZh: "於210年前據漁陽、柳城 —— 白馬義從追亡逐北,本來就不止於塞內。",
+          goal: { kind: 'hold-cities', cityIds: ['yuyang', 'liucheng'], byYear: 210 },
+        },
         {
           title: { zh: '白馬將軍', en: 'The White Horse General' },
           description: 'Control You province and destroy Yuan Shao.',
@@ -4879,21 +5016,39 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-goh-mateng',
       forceId: 'ma-teng',
       primary: {
-        title: { zh: '西涼入關', en: 'Liang Comes Through the Pass' },
-        description: "Take Chang'an by 210.",
-        descriptionZh: "於210年前攻取長安 —— 西涼鐵騎,本可東出。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 210 },
+        title: { zh: '涼州只容一個', en: 'Liang Holds Only One' },
+        description: 'Hold Wuwei and take Jincheng by 206 — sworn brothers who fought like enemies.',
+        descriptionZh: "於206年前據武威、金城 —— 馬騰與韓遂結為異姓兄弟,而後相攻如仇讎;涼州只容得下一個。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng'], byYear: 206 },
       },
+      /* 長安在董卓手裡,壓力 0.28 —— AI 的候選門檻是 1.05,他一輩子不會去打。 */
+      secondary: [
+        {
+          title: { zh: '西涼入關', en: 'Liang Comes Through the Pass' },
+          description: "Take Chang'an by 212.",
+          descriptionZh: "於212年前攻取長安 —— 西涼鐵騎,本可東出。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 212 },
+        },
+      ],
     },
     {
       id: 'obj-goh-zhanglu',
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '政教合一', en: 'Church and State as One' },
-        description: 'Hold Hanzhong and Chengdu by 212.',
-        descriptionZh: "於212年前據漢中、成都 —— 以鬼道教民,雄據巴漢三十年。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'chengdu'], byYear: 212 },
+        description: 'Hold Hanzhong and take Jiameng by 210.',
+        descriptionZh: "於210年前據漢中、葭萌 —— 以鬼道教民,置義舍米肉,巴漢之間他自己就是王法。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 210 },
       },
+      /* 成都壓力 0.62,在門檻之下;而他自走三輪有兩輪覆滅 —— 十二年的題目輪不到他。 */
+      secondary: [
+        {
+          title: { zh: '西取成都', en: 'On to Chengdu' },
+          description: 'Take Chengdu by 212.',
+          descriptionZh: "於212年前攻取成都 —— 米賊之名,他自己從來不認。",
+          goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 212 },
+        },
+      ],
     },
     {
       id: 'obj-gathering-of-heroes-gongsun-du',
@@ -4910,10 +5065,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'han-sui',
       primary: {
         title: { zh: '西州自立', en: 'A Realm in the West' },
-        description: "Still hold Jincheng and Tianshui in 206. Thirty years in Liang, and never once answered a summons to court.",
-        descriptionZh: "至206年仍據金城、天水。在涼州三十年,一次也沒有應詔入朝。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui'], byYear: 206 },
+        description: 'Still hold Tianshui and Shanggui in 204. Thirty years in Liang, and never once answered a summons to court.',
+        descriptionZh: "至204年仍據天水、上邽。在涼州三十年,一次也沒有應詔入朝。",
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui'], byYear: 204 },
       },
+      /*
+       * 原本守的是金城 —— 而金城在這張盤上是**兩家的頭號目標**:董卓 2.00、
+       * 馬騰 1.49,兩邊都在門檻之上。他自走三輪從 10 城掉到 2 城。
+       * 主目標換成隴右那兩座沒有人壓在門檻之上的(上邽最高只被張魯的 0.41 指著),
+       * 金城之爭留給馬騰那條「涼州只容一個」。
+       */
     },
     {
       id: 'obj-gathering-of-heroes-kong-rong',
@@ -4930,10 +5091,25 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'tao',
       primary: {
         title: { zh: '徐州安堵', en: 'Xu Province at Peace' },
-        description: "Still hold Pengcheng and Xiaopei in 206. Xu province is prosperous and he is old: every year it holds is a year won.",
-        descriptionZh: "至206年仍據彭城、小沛。徐州殷實,而他老了,守得住一年是一年。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiaopei'], byYear: 206 },
+        description: 'Survive to 203. Xu province is prosperous and he is old: every year it holds is a year won.',
+        descriptionZh: "存續至203年。徐州殷實,而他老了,守得住一年是一年。",
+        goal: { kind: 'survive-until', year: 203 },
       },
+      /*
+       * 兩座城,而三家的兵鋒都在門檻之上:袁紹 2.87、曹操 2.49、呂布 1.52。
+       * 自走三輪三輪覆滅,六輪複驗把窗口壓到三年仍然 0/6 ——「守到 200 年」,
+       * 開局那一年就丟。守住哪兩座已經不是他能決定的事,主目標改成**還在**
+       * (`survive-until` 現在會查勢力存活,見 GUIDE「一座城都不剩的人」),
+       * 守住那兩座降為次要。
+       */
+      secondary: [
+        {
+          title: { zh: '彭城與小沛', en: 'Pengcheng and Xiaopei' },
+          description: 'Still hold Pengcheng and Xiaopei in 203.',
+          descriptionZh: "至203年仍據彭城、小沛 —— 三讓徐州的那個人,先得有徐州。",
+          goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiaopei'], byYear: 203 },
+        },
+      ],
     },
     {
       id: 'obj-gathering-of-heroes-shi-xie',
