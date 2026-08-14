@@ -118,6 +118,33 @@ describe('SCENARIO_OBJECTIVES wiring', () => {
       }
     }
   });
+
+  /*
+   * 中英文寫的年份要一致 —— **改目標時最容易漏掉英文那一行。**
+   *
+   * 全庫掃一遍抓到三條:伊闕秦「取洛陽、許昌」中文 186 而英文 183;
+   * 若周瑜不死孫「取蜀之策」中文 215 而英文 218;反董卓袁紹「盟主之實」
+   * 中文 196 而英文 199 —— 最後那條的英文寫的還是**上一版的題目**
+   * (Control Ji province,而目標早就改成取平原了)。三條都是同一個動作:
+   * 改了 `descriptionZh` 與 `byYear`,`description` 留在原地。
+   *
+   * 判準只看兩邊都出現三位數年份的情況;英文沒寫年份的不管。
+   */
+  it('中英文描述裡的年份對得上', () => {
+    const bad: string[] = [];
+    for (const [scenarioId, list] of Object.entries(SCENARIO_OBJECTIVES)) {
+      for (const o of list) {
+        for (const g of goalsOf(o)) {
+          const zh = (g.descriptionZh ?? '').match(/(\d{3})年/);
+          const en = (g.description ?? '').match(/\b(\d{3})\b/);
+          if (zh && en && zh[1] !== en[1]) {
+            bad.push(`${scenarioId} / ${o.forceId} 「${g.title.zh}」 zh=${zh[1]} en=${en[1]}`);
+          }
+        }
+      }
+    }
+    expect(bad, '改目標時漏掉了英文那一行').toEqual([]);
+  });
 });
 
 /**
