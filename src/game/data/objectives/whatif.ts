@@ -1377,7 +1377,7 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '取蜀之策', en: "Zhou Yu's Plan for Shu" },
-        description: 'Take Jiangling and Chengdu by 218 — the two-emperor plan he died before starting.',
+        description: 'Take Jiangling by 215 — the first step of the two-realm plan he died before starting.',
         descriptionZh: "於215年前取江陵 —— 周瑜二分天下之策,第一步是從劉備手裡拿回南郡;他沒來得及開始。",
         goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 215 },
       },

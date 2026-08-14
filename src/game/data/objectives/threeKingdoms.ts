@@ -305,7 +305,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '盟主之實', en: 'Make the Alliance Real' },
-        description: 'Control Ji province by 199 — a chief of the alliance needs land of his own.',
+        description: 'Take Pingyuan by 196 — a chief of the alliance needs land of his own.',
         /*
          * 「於199年前盡取冀州」十二輪 0 中。冀州盤上五城:鄴、渤海是他的,
          * 平原、南皮、博陵在公孫瓚手裡 —— 全取等於九年之內把公孫瓚打乾淨,

@@ -575,7 +575,7 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '伊闕斬首', en: 'The Slaughter at Yique' },
-        description: 'Take Luoyang and Xuchang by 183 — Bai Qi against two armies that will not fight together.',
+        description: 'Take Luoyang and Xuchang by 186 — Bai Qi against two armies that will not fight together.',
         descriptionZh: "於186年前取洛陽、許昌 —— 白起以寡擊眾,韓魏各自為戰。",
         goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 186 },
       },
