@@ -4889,7 +4889,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         {
           title: { zh: '洛陽在望', en: 'Luoyang in Sight' },
           description: 'Take Luoyang by 212.',
-          descriptionZh: "於212年前攻取洛陽 —— 他曾在那座城裡殺過兩個義父。",
+          descriptionZh: "於212年前攻取洛陽 —— 他第一次殺義父,就在那座城裡。",
           goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 212 },
         },
       ],
