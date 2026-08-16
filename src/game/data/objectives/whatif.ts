@@ -96,11 +96,24 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '出師未捷身不死', en: 'The Campaign Outlives the Man' },
-        description: "Take Chang'an and Luoyang by 255 — the years Wuzhang Plain took back.",
-        descriptionZh: "於255年前克復長安、洛陽 —— 五丈原奪走的那些年,還你了。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 255 },
+        description: 'Take Xincheng by 246 — the years Wuzhang Plain took back, spent on the road he never finished.',
+        descriptionZh: "於246年前攻取新城 —— 五丈原奪走的那些年還你了,而那條沒走完的路,第一段在新城。",
+        goal: { kind: 'hold-cities', cityIds: ['xincheng'], byYear: 246 },
       },
+      /*
+       * 實測(6 輪,開局 240,+1/+3/+5/+8 年在手比例):32 城長到 39,
+       * 而長安與洛陽**一次也沒有在手上** —— 原期限 255 更是開局後十五年。
+       * 他真正推得動的:南中 6/6、越巂 6/6(南征)、新城 3/6→4/6、建寧 4/6→5/6。
+       * 新城是孟達那一塊,北伐路上真正碰得到的第一段,拿它當主目標;
+       * 克復二都留在次要。
+       */
       secondary: [
+        {
+          title: { zh: '克復二都', en: 'Both Capitals Retaken' },
+          description: "Take Chang'an and Luoyang by 255.",
+          descriptionZh: "於255年前克復長安、洛陽 —— 出師表裡寫的那件事。",
+          goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 255 },
+        },
         {
           title: { zh: '斷隴右', en: 'Cut Off Longyou' },
           description: 'Hold Tianshui and Hanzhong by 246.',
@@ -144,11 +157,23 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
        */
       primary: {
         title: { zh: '順流東下', en: 'Down the River' },
-        description: 'Destroy the Wu remnant by 215 — the wind did not turn.',
-        descriptionZh: "於215年前掃滅吳之殘部 —— 東風沒有來,江東已無屏障。",
-        goal: { kind: 'defeat-force', forceId: 'sun', byYear: 215 },
+        description: 'Push the Wu remnant down to two cities by 215 — the wind did not turn, and there is no shield left on the river.',
+        descriptionZh: "於215年前將吳之殘部逼到只剩兩城 —— 東風沒有來,江東已無屏障。",
+        goal: { kind: 'break-force', forceId: 'sun', maxCities: 2, byYear: 215 },
       },
+      /*
+       * 實測(6 輪,開局 208):吳殘部開局三城,而他**守得住** ——
+       * 會稽 6/6 5/6 5/6 5/6、無錫 5/6→3/6、臨海 5/6→2/6,末期中位仍是 3 城。
+       * 曹操確實打得到它們(臨海 +3年 4/6、會稽 2/6、無錫 2/6),
+       * 只是從來沒有同時拿下三座 —— 所以「掃滅」三輪 0/3,而「逼到兩城」成立。
+       */
       secondary: [
+        {
+          title: { zh: '掃滅江東', en: 'Wu Wiped Out' },
+          description: 'Destroy the Wu remnant by 220.',
+          descriptionZh: "於220年前掃滅吳之殘部 —— 三座城,一座也不留。",
+          goal: { kind: 'defeat-force', forceId: 'sun', byYear: 220 },
+        },
         {
           title: { zh: '混一天下', en: 'All Under One Banner' },
           description: 'Bring all under one banner.',
