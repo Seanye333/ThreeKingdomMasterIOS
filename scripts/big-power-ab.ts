@@ -201,16 +201,26 @@ async function main() {
     results.push(res);
   }
 
-  console.log('\n=== 大國留存(中位數) ===');
-  console.log('盤                        最大的一家    城留存   兵留存   戰線   派出兵   易手  存國');
+  console.log('\n=== 大國留存(中位數,括號內是最差–最好) ===');
+  console.log('盤                        最大的一家   城留存(區間)      兵留存(區間)      戰線  易手  存國');
   for (const r of results) {
-    const c = median(r.cityRatios) * 100;
-    const t = median(r.troopRatios) * 100;
+    const pct = (xs: number[]) => `${(median(xs) * 100).toFixed(0)}%`;
+    /*
+     * 區間跟中位數一樣重要 —— **A/B 只看中位數會下錯結論。**
+     *
+     * 上一輪比對是我手動從日誌裡把六個數字撈出來排序才看出來的:
+     * 244 盤兩組兵力區間完全不重疊(380–486k vs 532–756k)= 真效果;
+     * 而五國攻秦兩組都橫跨 50–250k,中位數看起來從 40% 掉到 20%,
+     * 其實那個差距**小於組內離散**,n=6 根本分不出來。
+     * 兩種情況的中位數都在動,只有區間分得出哪個算數。
+     */
+    const span = (xs: number[]) =>
+      `${(Math.min(...xs) * 100).toFixed(0)}–${(Math.max(...xs) * 100).toFixed(0)}`;
     console.log(
-      `${r.scenario.padEnd(24)}  ${r.force.padEnd(12)}  ` +
-      `${c.toFixed(0).padStart(5)}%  ${t.toFixed(0).padStart(5)}%  ` +
-      `${median(r.fronts).toFixed(1).padStart(5)}  ` +
-      `${Math.round(median(r.marchTroops) / 1000).toString().padStart(5)}k  ` +
+      `${r.scenario.padEnd(24)}  ${r.force.padEnd(10)}  ` +
+      `${pct(r.cityRatios).padStart(5)} (${span(r.cityRatios).padStart(7)})  ` +
+      `${pct(r.troopRatios).padStart(5)} (${span(r.troopRatios).padStart(7)})  ` +
+      `${median(r.fronts).toFixed(1).padStart(4)}  ` +
       `${median(r.flips).toFixed(0).padStart(4)}  ${median(r.aliveForces).toFixed(0).padStart(4)}`,
     );
   }
@@ -222,6 +232,7 @@ async function main() {
     `兵留存 ${(median(allT) * 100).toFixed(0)}%  易手 ${median(allF).toFixed(0)}`,
   );
   console.log('⚠ 城留存上升而易手塌下去 = 把盤面凍住了,不算修好。');
+  console.log('⚠ 比 A/B 時先看區間再看中位:兩組區間重疊得厲害就是 n 不夠,中位差不算數。');
   console.log(`(${RUNS} 輪 × ${TURNS} 旬 × ${results.length} 盤)`);
   console.log('JSON ' + JSON.stringify({
     runs: RUNS, turns: TURNS,
