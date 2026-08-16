@@ -1345,11 +1345,16 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'lubu',
       primary: {
         title: { zh: '轅門射戟', en: 'The Halberd at the Gate' },
-        description: 'Still hold Xiapi and Langya in 202 — you shot the halberd to keep them apart; keep what you have.',
-        descriptionZh: "至202年仍據下邳、琅琊 —— 轅門射戟解了別人的紛爭,而他自己的地從來沒守過兩年。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 202 },
+        description: 'Still hold Xiapi and Langya in 200 — two years past the gate at Baimen. You shot the halberd to settle someone else\u2019s quarrel; this time keep your own ground.',
+        descriptionZh: "至200年仍據下邳、琅琊 —— 比白門樓多活兩年。轅門射戟解的是別人的紛爭,而他自己的地從來沒守過兩年。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 200 },
       },
-      /* 兩座城的人,而壽春 0.30、彭城 0.86、小沛 0.69 —— 他一座都推不動。 */
+      /*
+       * 同這張盤的公孫瓚:開局 198,而原期限 202 已在**他史書卒年之後四年**
+       * (呂布 198 年十二月縊於白門樓)。掃描量到他撐到 199 就丟。
+       * 期限改成 200 —— 比白門樓多活兩年,那才是這張盤問得出口的事。
+       * 次要那條「取壽春」留著(壓力 0.30,他一座都推不動,所以本來就是次要)。
+       */
       secondary: [
         {
           title: { zh: '自取其地', en: 'Take the Prize' },
@@ -1409,10 +1414,20 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
-        description: "Still hold Beiping and Ji in 204. Frontier troops, used to running with the steppe horse — and after Jieqiao he drew back further every year.",
-        descriptionZh: "至204年仍據北平、薊。邊地之兵,慣與胡騎相馳 —— 而界橋之後,他愈退愈深。",
-        goal: { kind: 'hold-cities', cityIds: ['beiping', 'ji'], byYear: 204 },
+        description: "Still hold Beiping and Ji in 200 — one year past the tower at Yijing. Frontier troops, used to running with the steppe horse; after Jieqiao he drew back further every year.",
+        descriptionZh: "至200年仍據北平、薊 —— 比易京樓那把火多活一年。邊地之兵,慣與胡騎相馳,而界橋之後他愈退愈深。",
+        goal: { kind: 'hold-cities', cityIds: ['beiping', 'ji'], byYear: 200 },
       },
+      /*
+       * 開局 198,而原期限 204 是**他史書卒年之後五年**(公孫瓚 199 年自焚於
+       * 易京樓)。掃描量到他撐到 198 就丟 —— 六年的窗口對一個正在崩的人太長。
+       *
+       * 這張盤的前提是袁術稱帝成,不是公孫瓚不死;所以給他的題目該是
+       * 「比史書多活一年」而不是「多活五年」。判準:**一家的史實終局落在
+       * 窗口之內時,期限訂在那個終局的稍後,才是這張盤真正在問的事。**
+       * (反例見 §4:陶謙「徐州安堵」要到 194,而他正是 194 年死的 ——
+       * 那種有史實錨的年份不能改小,該修的是模擬。)
+       */
     },
     {
       id: 'obj-wi-yuanshu-empire-ma-teng',
