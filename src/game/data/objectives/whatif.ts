@@ -1582,16 +1582,27 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-zy-machao',
       forceId: 'ma-chao',
       primary: {
-        title: { zh: '關中之亂', en: 'The Guanzhong Rising' },
-        description: 'Hold Anding and take Hanzhong by 214 — where he actually went after Weinan.',
-        descriptionZh: "於214年前據安定、漢中 —— 關中十部起事;而渭南之敗以後,他真正去的地方是漢中。",
-        goal: { kind: 'hold-cities', cityIds: ['anding', 'hanzhong'], byYear: 214 },
+        title: { zh: '西涼之主', en: 'Lord of the Western Liang' },
+        description: 'Hold Wuwei and take Zhangye by 214 — Guanzhong is shut; the corridor west is not.',
+        descriptionZh: "於214年前據武威、取張掖 —— 關中的門關上了,而河西走廊那一頭沒有。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'zhangye'], byYear: 214 },
       },
       /*
-       * 長安在五十五城的曹操手裡而壓力只有 0.67。第一版改指金城(1.54)——
-       * **`objectiveDiplomacy.test.ts` 當場擋下**:馬超與韓遂在這張盤上開局
-       * 是 `allied`,那條目標從第 0 旬就是死的。改指漢中(1.09,張魯的城),
-       * 而那也正是史書上他兵敗之後去投的地方。
+       * 兩次改都沒改對,而兩次的判準都不是「他實際做得到什麼」:
+       *  - 第一版指金城(壓力 1.54)—— `objectiveDiplomacy.test.ts` 當場擋下,
+       *    馬超與韓遂開局 `allied`,那條從第 0 旬就是死的。
+       *  - 第二版改指漢中(壓力 1.09,張魯的城),理由是史書上他兵敗後去投張魯。
+       *    三次掃描全死。
+       *
+       * 實測(6 輪,+1/+3/+5/+8 年在手比例)他真正在做的事:
+       *
+       *   張掖 **6/6 6/6 5/6 5/6** ← 開局就往西打下來,而且守得住
+       *   酒泉 0/6 0/6 3/6 4/6      敦煌 0/6 0/6 0/6 4/6
+       *   武威 5/6 5/6 4/6 3/6
+       *   安定 **開局有、每個檢查點都已失去**   漢中 一次也沒有在手上
+       *
+       * 他不往東也不往南,他往西 —— 河西走廊是關中關上門之後唯一還開的方向。
+       * 東取長安留在次要。
        */
       secondary: [
         {
