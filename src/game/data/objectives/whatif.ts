@@ -397,11 +397,27 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
        */
       primary: {
         title: { zh: '倡家女為國母', en: 'From Entertainer to Mother of a Dynasty' },
-        description: 'Hold Hanzhong and take Chencang by 210 — you kept the House of Cao together when Cao Cao was thought dead.',
-        descriptionZh: "於210年前據漢中、陳倉 —— 曹操凶問傳來時,是你按住了整個曹家;要從隴上走進關中,先得有陳倉這道門。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'chencang'], byYear: 210 },
+        description: 'Still hold Wuwei, Shanggui and Longxi in 205 — you kept the House of Cao together when Cao Cao was thought dead; keep the Long right the same way.',
+        descriptionZh: "至205年仍據武威、上邽、隴西 —— 曹操凶問傳來時,是你按住了整個曹家;隴右也照那個按法守住。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'shanggui', 'longxi'], byYear: 205 },
       },
+      /*
+       * 實測(6 輪,開局 200,+1/+3/+5/+8 年在手比例):
+       *
+       *   武威 6/6 6/6 6/6 6/6   上邽 6/6 6/6 6/6 4/6   隴西 6/6 5/6 5/6 4/6
+       *   漢中 3/6 0/6 0/6 0/6   陳倉 0/6 0/6 0/6 1/6
+       *
+       * 原主目標是「於210年前據漢中、陳倉」—— 期限是開局後**十年**,而漢中
+       * 一年後就全丟、陳倉幾乎沒拿下過。改成她真正握得住的隴右三城。
+       * 進關中那一步(陳倉)降為次要。
+       */
       secondary: [
+        {
+          title: { zh: '陳倉之門', en: 'The Gate at Chencang' },
+          description: 'Take Chencang by 210 — to walk from the Long right into Guanzhong you need this door.',
+          descriptionZh: "於210年前攻取陳倉 —— 要從隴上走進關中,先得有陳倉這道門。",
+          goal: { kind: 'hold-cities', cityIds: ['chencang'], byYear: 210 },
+        },
         {
           title: { zh: '鄴與許', en: 'Ye and Xu' },
           description: 'Hold Ye and Xuchang by 216.',
