@@ -959,16 +959,27 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '西取江夏', en: 'West to Jiangxia' },
-        description: 'Hold Jianye and take Jiangxia by 206 — Huang Zu first, the way you were already going.',
-        descriptionZh: "於206年前據建業、江夏 —— 遇刺那年他正在西征黃祖,那條路本來就是先荊州、後許都。",
-        goal: { kind: 'hold-cities', cityIds: ['jianye', 'jiangxia'], byYear: 206 },
+        description: 'Hold Jianye and take Runan by 206 — the year he was killed he was already marching; north of the river is where the road actually went.',
+        descriptionZh: "於206年前據建業並取汝南 —— 遇刺那年他正在用兵,而路實際上是往江北去的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'runan'], byYear: 206 },
       },
       /*
-       * 原本的主目標是襲許迎帝 —— 而那正是他**還沒來得及做**的事(壓力 0.66,
-       * 在門檻之下)。準則是主目標寫他真正做到的、次要寫他沒做到的:
-       * 江夏 1.38 是他當時真的在打的那一座。
+       * 實測(6 輪,開局 201,+1/+3/+5/+8 年在手比例):**江夏一次也沒有在手上**,
+       * 而他真正打得下的是汝南 4/6 3/6 4/6 4/6、臨海 2/6→5/6。
+       * 江夏在劉表手裡,而這張盤的孫策 18 城掉到 11,沒有餘力西向。
+       * 西征黃祖降為次要 —— 那本來就是他遇刺那年沒做完的事。
+       */
+      /*
+       * 原本的主目標是襲許迎帝(壓力 0.66,在門檻之下);上一版改指江夏
+       * (壓力 1.38)—— 而壓力值不預測實際攻取,實測江夏一次也沒有在手上。
        */
       secondary: [
+        {
+          title: { zh: '西征黃祖', en: 'West Against Huang Zu' },
+          description: 'Take Jiangxia by 210 — the campaign he was on when the arrow found him.',
+          descriptionZh: "於210年前攻取江夏 —— 遇刺那年他正在走的那條路。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangxia'], byYear: 210 },
+        },
         {
           title: { zh: '襲許迎帝', en: 'Raid Xuchang, Take the Emperor' },
           description: 'Take Xuchang by 210 — the plan you were preparing when the assassins found you.',
@@ -1839,11 +1850,22 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '荊州之爭', en: 'The Jing Question' },
-        description: 'Hold Jiangxia and take Jiangling by 228.',
-        descriptionZh: "於228年前據江夏、江陵 —— 荊州這筆帳,孫吳記了二十年。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangxia', 'jiangling'], byYear: 228 },
+        description: 'Hold Jiangxia and take Wancheng by 222 — Jing is a twenty-year account, and the end that will actually move is north of the river.',
+        descriptionZh: "於222年前據江夏並取皖城 —— 荊州那筆帳孫吳記了二十年,而先動得了的是江北這一頭。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangxia', 'wancheng'], byYear: 222 },
       },
+      /*
+       * 實測(6 輪,開局 215):江陵在**劉備**手裡而他一次也沒拿到,
+       * 真正打得下的是臨海 6/6 6/6 6/6 5/6、皖城 1/6→4/6、合肥 1/6→4/6。
+       * 原期限 228 更是開局後十三年。取江陵降為次要。
+       */
       secondary: [
+        {
+          title: { zh: '荊州之爭', en: 'The Fight for Jing' },
+          description: 'Take Jiangling by 228.',
+          descriptionZh: "於228年前取江陵 —— 荊州這筆帳,孫吳記了二十年。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 228 },
+        },
         {
           title: { zh: '北取合肥', en: 'Take Hefei' },
           description: 'Hold Hefei by 228.',
@@ -2101,15 +2123,23 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sima',
       primary: {
         title: { zh: '南顧之憂', en: 'Trouble in the South' },
-        description: 'Take Guangling and Jianye by 262 — with Lu Xun alive, the river line does not rot from within.',
-        descriptionZh: "於262年前取廣陵、建業 —— 陸遜尚在,江防不會從內部爛掉,那就只能一寸一寸打過去。",
-        goal: { kind: 'hold-cities', cityIds: ['guangling', 'jianye'], byYear: 262 },
+        description: 'Take Xinye and Wancheng by 254 — with Lu Xun alive the river line does not rot from within, so the pressure goes to the Han valley instead.',
+        descriptionZh: "於254年前取新野、宛城 —— 陸遜尚在,江防不會從內部爛掉;使得上力的是漢水這一路。",
+        goal: { kind: 'hold-cities', cityIds: ['xinye', 'wancheng'], byYear: 254 },
       },
       /*
-       * 「滅吳」是二十四座城的事,自走 0/3。廣陵 1.52、建業 1.17 都在門檻之上 ——
-       * 過江那一步先寫成目標,滅吳降為次要。
+       * 實測(6 輪,開局 249):建業與廣陵**都沒拿到**(廣陵最高 3/6 且逐年掉),
+       * 而他真正推得動的是漢水一路 —— 新野 6/6 6/6 6/6 5/6、宛城 5/6 4/6 4/6。
+       * 陸遜不死的前提正是「江防不爛」,那麼壓力本來就該轉向別處。
+       * 取建業廣陵降為次要。
        */
       secondary: [
+        {
+          title: { zh: '南顧之憂', en: 'The Trouble to the South' },
+          description: 'Take Guangling and Jianye by 262.',
+          descriptionZh: "於262年前取廣陵、建業 —— 一寸一寸打過去。",
+          goal: { kind: 'hold-cities', cityIds: ['guangling', 'jianye'], byYear: 262 },
+        },
         {
           title: { zh: '一統之業', en: 'The Realm Made One' },
           description: 'Destroy the Wu force by 275.',
