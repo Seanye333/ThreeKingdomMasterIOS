@@ -227,22 +227,42 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-cao-wins-chibi-zhang-lu',
       forceId: 'zhang-lu',
       /*
-       * 原本是守漢中、天水到 214 年 —— 而赤壁贏了之後的曹操對漢中的壓力是
-       * **2.98**,遠在門檻之上,六年的守成他撐不到。改成他自己能推出去的那一步
-       * (葭萌 2.31),守漢中的年份留在次要,壓到 212。
+       * 改過兩次,而第一次改錯了。
+       *
+       * 原本是守漢中、天水到 214;上一批改成「據漢中、葭萌」,理由是葭萌的
+       * 壓力值 2.31 看起來推得動 —— 而那個理由本身是錯的
+       * (見 scripts/reachability-audit.ts 檔頭:壓力高不等於打得下來)。
+       * 重掃結果三輪 0/3。
+       *
+       * 這次用 `scripts/what-they-actually-do.ts` 實測 6 輪(在手比例,
+       * 開局後 +1/+2/+3/+5 年):
+       *
+       *   陽平關  5/6  5/6  3/6  1/6
+       *   白水關  6/6  5/6  3/6  1/6
+       *   漢中   2/6  0/6  0/6  0/6      ← 一年內就沒了,而且是**劉璋**拿走的
+       *
+       * 漢中留不住,所以主目標不能寫它。留得住的是兩道關 ——
+       * 而張魯這輩子最像樣的一仗,本來就是據陽平拒曹公。
+       * 「取葭萌」那條從頭到尾一個檢查點都沒成立過,降為次要。
        */
       primary: {
-        title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: 'Hold Hanzhong and take Jiameng by 211 — the road south is the only one still open.',
-        descriptionZh: "於211年前據漢中、葭萌 —— 北面已經沒有指望,能走的只剩巴蜀那一條路。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 211 },
+        title: { zh: '兩關不失', en: 'The Passes Hold' },
+        description: 'Still hold the Yangping and Baishui passes in 210 — the valley may go; the passes are what a Shijun can actually keep.',
+        descriptionZh: "至210年仍據陽平關、白水關 —— 谷地或許保不住,而據關拒守才是師君真做得到的事。",
+        goal: { kind: 'hold-cities', cityIds: ['yangping', 'baishuiguan'], byYear: 210 },
       },
       secondary: [
         {
+          title: { zh: '南下巴蜀', en: 'The Road South' },
+          description: 'Take Jiameng — the road south is the only one still open.',
+          descriptionZh: "取葭萌 —— 北面已經沒有指望,能走的只剩巴蜀那一條路。",
+          goal: { kind: 'hold-cities', cityIds: ['jiameng'], byYear: 216 },
+        },
+        {
           title: { zh: '三十年不見兵革', en: 'Thirty Years Without an Army' },
-          description: 'Still hold Hanzhong and Tianshui in 212.',
-          descriptionZh: "至212年仍據漢中、天水。政教合一,置義舍米肉,三十年不見兵革。",
-          goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'tianshui'], byYear: 212 },
+          description: 'Still hold Hanzhong and Tianshui in 214.',
+          descriptionZh: "至214年仍據漢中、天水。政教合一,置義舍米肉,三十年不見兵革。",
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'tianshui'], byYear: 214 },
         },
       ],
     },
@@ -783,16 +803,34 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-machao-guanzhong-zhang-lu',
       forceId: 'zhang-lu',
-      primary: {
-        title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: 'Hold Hanzhong and take Jiameng by 214 — church and state in one hand, and the road south still open.',
-        descriptionZh: "於214年前據漢中、葭萌 —— 政教合一,置義舍米肉;而北面兩家都比他大,能走的只剩巴蜀那一條路。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 214 },
-      },
       /*
-       * 三座城守五年,而漢中同時被曹操(1.83)與馬超(2.16)指著 —— 三輪 0/3。
-       * 改成他自己推得動的那一步(葭萌 2.73),拿到就算。
+       * 實測(`what-they-actually-do.ts` 6 輪,在手比例,開局後 +1/+2/+3/+5 年):
+       *
+       *   巴西   6/6  6/6  4/6  0/6
+       *   陽平關  5/6  4/6  4/6  2/6
+       *   漢中   1/6  0/6  0/6  0/6      ← 開局一年內就丟
+       *   葭萌   一個檢查點都沒有在手上
+       *
+       * 這張盤的前提就是馬超盡得關中 —— 北面壓下來,漢中他守不住。
+       * 而史書上張魯失漢中之後做的正是這件事:「奔南山入巴中」。
+       * 期限壓在 212(+1 年,實測巴西 6/6、陽平關 5/6)。**+2 年那一格試過並且失敗**:
+       * 邊際看起來是 6/6 與 4/6,合取卻三輪 0/3 —— 兩座城的失守是相關的,不是獨立事件,
+       * 所以不能拿邊際相乘去估合取。
        */
+      primary: {
+        title: { zh: '奔南山入巴中', en: 'Into Ba' },
+        description: 'Still hold the Yangping Pass and Baxi in 212 — Guanzhong is lost and the valley with it; what a Shijun keeps is his flock, not his capital.',
+        descriptionZh: "至212年仍據陽平關、巴西 —— 關中既非我有,漢中亦難久持;師君所保者在其眾,不在其城。",
+        goal: { kind: 'hold-cities', cityIds: ['yangping', 'baxi'], byYear: 212 },
+      },
+      secondary: [
+        {
+          title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
+          description: 'Still hold Hanzhong in 214 — church and state in one hand, and the rice-measure open to all.',
+          descriptionZh: "至214年仍據漢中 —— 政教合一,置義舍米肉,行者量腹取足。",
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 214 },
+        },
+      ],
     },
     {
       id: 'obj-wi-machao-guanzhong-shi-xie',
@@ -1488,13 +1526,32 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-zhouyu-lives-zhang-lu',
       forceId: 'zhang-lu',
+      /*
+       * 實測(`what-they-actually-do.ts` 6 輪,在手比例,開局後 +1/+2/+3/+5 年):
+       *
+       *   巴西   6/6  5/6  5/6  4/6
+       *   陽平關  5/6  5/6  5/6  5/6
+       *   漢中   **四個檢查點全部 0/6** —— 開局那幾旬就沒了
+       *   葭萌   一個檢查點都沒有在手上
+       *
+       * 五十五城的曹操在北面,漢中是留不住的。同 machao-guanzhong:
+       * 主目標寫他退得到的地方,而那正是史書上他失漢中之後去的地方。
+       * 這張盤他退得比較穩(兩座都 5/6 撐到 +3 年),所以期限給到 214。
+       */
       primary: {
-        title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: 'Hold Hanzhong and take Jiameng by 214 — church and state in one hand, and the road south still open.',
-        descriptionZh: "於214年前據漢中、葭萌 —— 政教合一,置義舍米肉;而北面是五十五城的曹操,能走的只剩巴蜀那一條路。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 214 },
+        title: { zh: '奔南山入巴中', en: 'Into Ba' },
+        description: 'Still hold the Yangping Pass and Baxi in 214 — with fifty-five cities to the north, the valley was never going to keep. What a Shijun keeps is his flock.',
+        descriptionZh: "至214年仍據陽平關、巴西 —— 北面五十五城,漢中本就留不住;師君所保者在其眾,不在其城。",
+        goal: { kind: 'hold-cities', cityIds: ['yangping', 'baxi'], byYear: 214 },
       },
-      /* 三城守五年,而漢中同時被馬超(1.09)指著;葭萌 2.73 是他自己推得動的那一步。 */
+      secondary: [
+        {
+          title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
+          description: 'Still hold Hanzhong in 214 — the thing history did not let him keep.',
+          descriptionZh: "至214年仍據漢中 —— 史書沒有讓他留住的那一座。",
+          goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 214 },
+        },
+      ],
     },
     {
       id: 'obj-wi-zhouyu-lives-shi-xie',
