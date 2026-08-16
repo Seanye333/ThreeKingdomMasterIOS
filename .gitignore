@@ -42,3 +42,6 @@ public/models/duel/_src/
 !.vscode/extensions.json
 .idea
 *.sw?
+
+# Coverage output
+coverage

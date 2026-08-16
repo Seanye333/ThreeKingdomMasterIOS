@@ -11,6 +11,7 @@
  * panel can import them back.
  */
 import { lazy, Suspense, useMemo, useState } from 'react';
+import { portraitUrl, remotePortraitUrl } from '../../portraitSrc';
 import { useGameStore } from '../../../game/state/store';
 import { composeBiography } from '../../../game/systems/biography';
 import type { BoutRecord } from '../../../game/systems/duelHall';
@@ -490,20 +491,29 @@ export function PortraitColumn({
   archetype: PortraitArchetype;
   age: number;
 }) {
-  const [imgFailed, setImgFailed] = useState(() => missingFullPortraits.has(officer.id));
-  const src = `${import.meta.env.BASE_URL}portraits/${officer.id}-full.webp`;
+  // 本地 → 遠端 → 剪影,同 OfficerPortrait(見 ui/portraitSrc.ts)。
+  const [stage, setStage] = useState<'local' | 'remote' | 'failed'>(
+    () => (missingFullPortraits.has(officer.id) ? 'failed' : 'local'),
+  );
+  const remote = remotePortraitUrl(officer.id, 'full');
+  const src = stage === 'remote' && remote ? remote : portraitUrl(officer.id, 'full');
 
   return (
     <div className={styles.portraitColumn}>
-      {imgFailed ? (
+      {stage === 'failed' ? (
         <Portrait zh={zh} color={color} archetype={archetype} age={age} />
       ) : (
         <img
+          key={stage}
           className={styles.portraitFull}
           src={src}
           alt={zh}
           loading="lazy"
-          onError={() => { missingFullPortraits.add(officer.id); setImgFailed(true); }}
+          onError={() => {
+            if (stage === 'local' && remote) { setStage('remote'); return; }
+            missingFullPortraits.add(officer.id);
+            setStage('failed');
+          }}
         />
       )}
     </div>

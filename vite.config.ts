@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { copyFile, mkdir, readdir, rm, stat } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, sep } from 'node:path'
 
 // The duel folder holds many Mixamo packs (~259MB) kept on disk for future use,
 // but only a few are loaded at runtime: the 3D duel uses the Sword-and-Shield
@@ -25,15 +25,59 @@ import { join } from 'node:path'
  */
 const PUBLIC_EXCLUDE = [join('models', 'duel', '_src')]
 
+/*
+ * **任何**叫 `_src` 的目錄都不進 dist —— 不只是 models/duel 那一個。
+ *
+ * 上面那張表是逐條列的,於是它只擋住了 Blender 那 5GB;而 `.gitignore` 裡
+ * 還有另外五個同名目錄(popups / duel-campaigns / scenarios / endings / events
+ * 的 key-art 母版 PNG),它們照樣被整包複製進 dist。實測 **64.6 MiB**
+ * (endings/_src + popups/_src),而遊戲載的是旁邊那張壓過的 .jpg,
+ * 母版一次也不會被請求 —— 純粹是背在安裝包上的死重。
+ *
+ * 這個判準用目錄名而不是路徑表,新加的 `_src` 才不會又漏一次。
+ */
+const isSourceMasters = (rel: string) => rel.split(sep).includes('_src')
+
+/*
+ * 瘦身版肖像(`VITE_SLIM_PORTRAITS=1`)—— **只給 iOS 那份 build 用。**
+ *
+ * 肖像庫 206.5 MiB 其實是兩批人:三國名冊 802 人 73.8 MiB,歷代名冊
+ * (春秋到清)1409 人 **132.8 MiB**。歷代那批要玩家在設定裡開啟朝代才會
+ * 進場,預設一個都不出現 —— 為它們讓安裝包越過 App Store 的蜂窩下載
+ * 200 MB 上限並不划算。開了這個旗標,dist 少 132.8 MiB。
+ *
+ * 遊戲端不會破圖:`ui/portraitSrc.ts` 是本地 → 遠端(`VITE_PORTRAIT_CDN`,
+ * 通常就指網頁版那份完整部署)→ 程序剪影,而**剪影那一段本來就在**。
+ *
+ * ⚠ 預設是關的。網頁版(Vercel)必須維持完整,因為它同時是遠端的來源。
+ */
+const SLIM_PORTRAITS = process.env.VITE_SLIM_PORTRAITS === '1'
+
+/** 歷代名冊的肖像檔名(頭像 + 全身)。只在瘦身時才算,平時不付這個代價。 */
+async function historicalPortraitFiles(): Promise<Set<string>> {
+  if (!SLIM_PORTRAITS) return new Set()
+  // 這張表只 import 一個 type,拿來在建構期用是安全的。
+  const { HISTORICAL_OFFICER_IDS } = await import('./src/game/data/historicalOfficers')
+  const s = new Set<string>()
+  for (const id of HISTORICAL_OFFICER_IDS) {
+    s.add(join('portraits', `${id}.webp`))
+    s.add(join('portraits', `${id}-full.webp`))
+  }
+  return s
+}
+
 function copyPublicExcept(): Plugin {
   return {
     name: 'copy-public-except-sources',
     apply: 'build',
     async writeBundle() {
       const outDir = 'dist'
+      const slim = await historicalPortraitFiles()
       let copied = 0
+      let slimmed = 0
+      let slimmedBytes = 0
       const walk = async (rel: string) => {
-        if (PUBLIC_EXCLUDE.includes(rel)) return
+        if (PUBLIC_EXCLUDE.includes(rel) || isSourceMasters(rel)) return
         const from = join('public', rel)
         let entries
         try { entries = await readdir(from, { withFileTypes: true }) } catch { return }
@@ -42,12 +86,24 @@ function copyPublicExcept(): Plugin {
           const childRel = rel ? join(rel, e.name) : e.name
           if (e.isDirectory()) { await walk(childRel); continue }
           if (PUBLIC_EXCLUDE.includes(childRel)) continue
+          if (slim.has(childRel)) {
+            slimmed++
+            slimmedBytes += (await stat(join('public', childRel))).size
+            continue
+          }
           await copyFile(join('public', childRel), join(outDir, childRel))
           copied++
         }
       }
       await walk('')
       console.log(`\n[copy-public] ${copied} files (skipped ${PUBLIC_EXCLUDE.join(', ')})`)
+      if (slimmed > 0) {
+        console.log(
+          `[slim-portraits] 歷代肖像 ${slimmed} 檔留在包外 ` +
+          `(−${(slimmedBytes / 1024 / 1024).toFixed(1)} MiB);` +
+          `執行期改由 VITE_PORTRAIT_CDN 取,取不到則用剪影`,
+        )
+      }
     },
   }
 }

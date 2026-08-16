@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Officer } from '../../game/types';
 import { useLanguage, pickName } from '../i18n';
+import { portraitUrl, remotePortraitUrl } from '../portraitSrc';
 
 /**
  * Stylized SVG portrait silhouettes for officers.
@@ -92,8 +93,19 @@ export function OfficerPortrait({
 
   // Prefer a hand-drawn portrait at public/portraits/<id>.webp if present; fall
   // back to the procedural SVG silhouette when there is no image for this id.
-  const [imgFailed, setImgFailed] = useState(() => missingPortraits.has(officer.id));
-  const src = `${import.meta.env.BASE_URL}portraits/${officer.id}.webp`;
+  //
+  // 中間多了一段遠端:iOS 那份 build 把歷代人物的肖像留在包外(見 portraitSrc.ts),
+  // 本地 404 時改向遠端取一次,再失敗才落到剪影。
+  const [stage, setStage] = useState<'local' | 'remote' | 'failed'>(
+    () => (missingPortraits.has(officer.id) ? 'failed' : 'local'),
+  );
+  const remote = remotePortraitUrl(officer.id, 'head');
+  const src = stage === 'remote' && remote ? remote : portraitUrl(officer.id, 'head');
+  const onImgError = () => {
+    if (stage === 'local' && remote) { setStage('remote'); return; }
+    missingPortraits.add(officer.id);
+    setStage('failed');
+  };
 
   return (
     <div
@@ -102,18 +114,19 @@ export function OfficerPortrait({
       title={`${pickName(officer.name, lang)} · ${(lang === 'en' ? ARCH_LABEL_EN : ARCH_LABEL)[arch]}`}
       {...factionAttr}
     >
-      {imgFailed ? (
+      {stage === 'failed' ? (
         <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
           <ArchetypeSilhouette arch={arch} accent={accent} />
         </svg>
       ) : (
         <img
+          key={stage}
           src={src}
           alt={pickName(officer.name, lang)}
           width={size}
           height={size}
           loading="lazy"
-          onError={() => { missingPortraits.add(officer.id); setImgFailed(true); }}
+          onError={onImgError}
           style={{ width: size, height: size, objectFit: 'cover', display: 'block' }}
         />
       )}
