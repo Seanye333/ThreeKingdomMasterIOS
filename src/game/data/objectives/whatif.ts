@@ -1957,18 +1957,30 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-gpl-cao',
       forceId: 'cao',
       primary: {
-        title: { zh: '先發制人', en: 'Strike First' },
-        description: 'Break the Sima faction down to five cities by 256 — the old fox was only pretending to be senile.',
-        descriptionZh: "於256年前將司馬氏逼到只剩五城 —— 那個老人是裝病,你這次沒有信。",
-        goal: { kind: 'break-force', forceId: 'sima', maxCities: 5, byYear: 256 },
+        title: { zh: '二都不失', en: 'Both Capitals Held' },
+        description: 'Still hold Luoyang and Chang\u2019an in 253 — the old fox was only pretending to be senile, and this time you did not believe him. Holding both capitals is what that buys you.',
+        descriptionZh: "至253年仍據洛陽、長安 —— 那個老人是裝病,而這一次你沒有信;先發制人買到的,是這兩座城還在手上。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 253 },
       },
       /*
-       * 這張盤上兩家**互相**以 `defeat-force` 對方為主目標,於是兩邊永遠 0 ——
+       * 實測(6 輪,開局 249,+1/+3/+5/+8 年在手比例):他 43 城掉到 23,
+       * 是在**收縮**而不是在擴張 —— 「把司馬氏逼到只剩五城」自然三輪 0/3。
+       * 但兩座都城他守得住:長安 6/6 6/6 6/6 6/6、洛陽 6/6 5/6 5/6 4/6。
+       * 主目標改成守二都,逼垮司馬氏降為次要。
+       */
+      /*
+       * 這張盤上兩家原本**互相**以 `defeat-force` 對方為主目標,於是兩邊永遠 0 ——
        * 249 歷史盤(高平陵之變)早就踩過同一個坑並修掉了,而它的兩張假想盤
-       * 沿用了舊寫法。改用 `break-force`:那一天要的是把對方打回附庸,
-       * 不是把一個握著二十九城的執政從史書上抹掉。
+       * 沿用了舊寫法。上一版改成 `break-force`(逼到只剩五城),仍然 0/3,
+       * 因為他根本不在擴張;這一版才把主目標換成守二都。
        */
       secondary: [
+        {
+          title: { zh: '先發制人', en: 'Strike First' },
+          description: 'Break the Sima faction down to five cities by 256.',
+          descriptionZh: "於256年前將司馬氏逼到只剩五城。",
+          goal: { kind: 'break-force', forceId: 'sima', maxCities: 5, byYear: 256 },
+        },
         {
           title: { zh: '斬草除根', en: 'Root and Branch' },
           description: 'Destroy the Sima faction by 262.',
