@@ -503,13 +503,32 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
        * 「宛洛」兩個字 —— 宛城才是他推得動的那一座(1.39,曹操殘部的城),
        * 也正是這條路真正的第一站。洛陽降為次要。
        */
+      /*
+       * 實測(`what-they-actually-do.ts` 6 輪,開局 201,+1/+3/+5/+8 年在手比例):
+       *
+       *   江夏 6/6 6/6 6/6 4/6    夷陵 6/6 6/6 6/6 4/6    西陵 6/6 6/6 6/6 5/6
+       *   襄陽 **3/6 2/6 1/6 0/6** ← 他自己的治所,守不住
+       *   樊城 6/6 4/6 1/6 1/6    博望 6/6 3/6 3/6 3/6
+       *   宛城 一次也沒有在手上
+       *
+       * 袁紹贏了官渡之後河北壓下來,荊北(襄陽、樊城、博望、新城)是留不住的;
+       * 他真正守得住的是江漢以南那一片。原主目標「據襄陽、取宛城」兩個條件
+       * 都不成立,改成守江漢,而北出宛洛整條路降為次要 ——
+       * 那本來就是他沒做到的事(史書上他坐談荊州十七年,始終沒有北出)。
+       */
       primary: {
-        title: { zh: '北出宛洛', en: 'North Through Wan and Luo' },
-        description: 'Hold Xiangyang and take Wancheng by 208 — with Cao Cao broken, the road north is finally open.',
-        descriptionZh: "於208年前據襄陽、宛城 —— 曹操既敗,宛洛之路終於開了,而宛是第一站。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'wancheng'], byYear: 208 },
+        title: { zh: '坐保江漢', en: 'The River Held' },
+        description: 'Still hold Jiangxia, Yiling and Xiling in 206 — Jing north of the Han cannot be kept; what can be kept is the river.',
+        descriptionZh: "至206年仍據江夏、夷陵、西陵 —— 漢水以北留不住,留得住的是這條江。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangxia', 'yiling', 'xiling'], byYear: 206 },
       },
       secondary: [
+        {
+          title: { zh: '北出宛洛', en: 'North Through Wan and Luo' },
+          description: 'Take Wancheng by 208 — with Cao Cao broken, the road north is finally open.',
+          descriptionZh: "於208年前攻取宛城 —— 曹操既敗,宛洛之路終於開了,而宛是第一站。",
+          goal: { kind: 'hold-cities', cityIds: ['wancheng'], byYear: 208 },
+        },
         {
           title: { zh: '還於舊都', en: 'Back to the Old Capital' },
           description: 'Take Luoyang by 214.',
