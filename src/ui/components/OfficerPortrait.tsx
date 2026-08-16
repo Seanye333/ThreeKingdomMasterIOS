@@ -77,6 +77,13 @@ interface PortraitProps {
 // Officer ids whose portrait image 404'd this session — skip re-requesting so we
 // don't re-fire a failing GET for every list cell.
 const missingPortraits = new Set<string>();
+/*
+ * 本地沒有、但遠端有的那些 id(瘦身版才會出現,見 ui/portraitSrc.ts)。
+ *
+ * 少了這張表,每一次重新掛載都會再打一次注定 404 的本地請求 —— 而肖像是
+ * 出現在列表格子裡的,捲一次名冊就是幾十次。記住之後,重掛直接從遠端起跑。
+ */
+const localMissingPortraits = new Set<string>();
 
 export function OfficerPortrait({
   officer,
@@ -96,13 +103,18 @@ export function OfficerPortrait({
   //
   // 中間多了一段遠端:iOS 那份 build 把歷代人物的肖像留在包外(見 portraitSrc.ts),
   // 本地 404 時改向遠端取一次,再失敗才落到剪影。
-  const [stage, setStage] = useState<'local' | 'remote' | 'failed'>(
-    () => (missingPortraits.has(officer.id) ? 'failed' : 'local'),
-  );
+  const [stage, setStage] = useState<'local' | 'remote' | 'failed'>(() => {
+    if (missingPortraits.has(officer.id)) return 'failed';
+    return localMissingPortraits.has(officer.id) ? 'remote' : 'local';
+  });
   const remote = remotePortraitUrl(officer.id, 'head');
   const src = stage === 'remote' && remote ? remote : portraitUrl(officer.id, 'head');
   const onImgError = () => {
-    if (stage === 'local' && remote) { setStage('remote'); return; }
+    if (stage === 'local' && remote) {
+      localMissingPortraits.add(officer.id);
+      setStage('remote');
+      return;
+    }
     missingPortraits.add(officer.id);
     setStage('failed');
   };

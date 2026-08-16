@@ -472,6 +472,8 @@ function getSurname(zh: string): string {
 // Officer ids whose full-body portrait (public/portraits/<id>-full.webp) 404'd
 // this session — skip re-requesting so we don't re-fire a failing GET.
 const missingFullPortraits = new Set<string>();
+/** 本地沒有、遠端有的(瘦身版);記住才不會每次開武將卡都再打一次 404。 */
+const localMissingFullPortraits = new Set<string>();
 
 /**
  * Left column of the officer-detail modal. Shows a hand-drawn full-body
@@ -492,9 +494,10 @@ export function PortraitColumn({
   age: number;
 }) {
   // 本地 → 遠端 → 剪影,同 OfficerPortrait(見 ui/portraitSrc.ts)。
-  const [stage, setStage] = useState<'local' | 'remote' | 'failed'>(
-    () => (missingFullPortraits.has(officer.id) ? 'failed' : 'local'),
-  );
+  const [stage, setStage] = useState<'local' | 'remote' | 'failed'>(() => {
+    if (missingFullPortraits.has(officer.id)) return 'failed';
+    return localMissingFullPortraits.has(officer.id) ? 'remote' : 'local';
+  });
   const remote = remotePortraitUrl(officer.id, 'full');
   const src = stage === 'remote' && remote ? remote : portraitUrl(officer.id, 'full');
 
@@ -510,7 +513,11 @@ export function PortraitColumn({
           alt={zh}
           loading="lazy"
           onError={() => {
-            if (stage === 'local' && remote) { setStage('remote'); return; }
+            if (stage === 'local' && remote) {
+              localMissingFullPortraits.add(officer.id);
+              setStage('remote');
+              return;
+            }
             missingFullPortraits.add(officer.id);
             setStage('failed');
           }}
