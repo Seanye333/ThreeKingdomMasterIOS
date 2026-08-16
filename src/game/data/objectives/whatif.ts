@@ -8,9 +8,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '兩路北伐', en: 'Two Roads North' },
-        description: "Hold Jiangling, Xiangyang and Chang'an by 232 — the Longzhong plan, intact.",
-        descriptionZh: "於232年前兼據江陵、襄陽、長安 —— 荊州未失,隆中對的兩路出兵終於成立。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang', 'changan'], byYear: 232 },
+        description: "Hold Jiangling, Xiangyang and Wancheng by 232 — the Longzhong plan, intact; Wan is the first stop on the Jing road.",
+        descriptionZh: "於232年前兼據江陵、襄陽、宛城 —— 荊州未失,隆中對的兩路出兵終於成立;而宛是荊州那一路的第一站。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang', 'wancheng'], byYear: 232 },
       },
       secondary: [
         {
@@ -1982,9 +1982,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '中原有變', en: 'The Change in the Central Plain' },
-        description: "Take Chang'an by 262 — this is the moment the Longzhong plan waited for.",
-        descriptionZh: "於262年前克復長安 —— 「天下有變」,隆中對等的就是這一刻。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 262 },
+        description: "Take Yinping by 256 — this is the moment the Longzhong plan waited for, and the road into Longyou starts at Yinping, not Chang'an.",
+        descriptionZh: "於256年前取陰平 —— 「天下有變」,而出隴右的第一步在陰平,不在長安。",
+        goal: { kind: 'hold-cities', cityIds: ['yinping'], byYear: 256 },
       },
     },
     {
@@ -2074,9 +2074,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '吳蜀並力', en: 'Shu and Wu Together' },
-        description: "Take Chang'an and Luoyang by 265.",
-        descriptionZh: "於265年前克復長安、洛陽 —— 東線有陸遜牽制,西線正可用力。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 265 },
+        description: "Take Yinping and Jiameng by 256 — with Lu Xun holding the east, the west is where the weight goes.",
+        descriptionZh: "於256年前取陰平、葭萌 —— 東線有陸遜牽制,西線正可用力;而用力的方向是隴右。",
+        goal: { kind: 'hold-cities', cityIds: ['yinping', 'jiameng'], byYear: 256 },
       },
     },
   ],
