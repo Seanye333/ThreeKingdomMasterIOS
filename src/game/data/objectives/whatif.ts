@@ -331,11 +331,25 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-women-yueying',
       forceId: 'yueying',
       primary: {
-        title: { zh: '木牛流馬', en: 'Wooden Oxen and Flowing Horses' },
-        description: 'Hold Chengdu and Hanzhong by 214 — the machines were half yours anyway.',
-        descriptionZh: "於214年前據成都、漢中 —— 那些木牛流馬,本也有你一半。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 214 },
+        title: { zh: '沔南之女', en: 'The Daughter of Mianan' },
+        description: 'Still hold Xiangyang and Jiangling in 205 — Huang Chengyan\u2019s daughter, on her own ground.',
+        descriptionZh: "至205年仍據襄陽、江陵 —— 沔南名士黃承彥之女,守的是自己家門口那塊地。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 205 },
       },
+      /*
+       * 原本是「於214年前據成都、漢中」—— 開局 200 年,期限是**十四年後**,
+       * 而那兩座城開局都不是她的。實測 6 輪她真正握著的是荊州一整塊:
+       * 襄陽/零陵/桂陽 全 6/6、長沙/武陵 6/6→5/6、江陵 6/6→5/6,20 城長到 24。
+       * 主目標改成守自家門口,木牛流馬那條野心降為次要。
+       */
+      secondary: [
+        {
+          title: { zh: '木牛流馬', en: 'Wooden Oxen and Flowing Horses' },
+          description: 'Hold Chengdu and Hanzhong by 214 — the machines were half yours anyway.',
+          descriptionZh: "於214年前據成都、漢中 —— 那些木牛流馬,本也有你一半。",
+          goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 214 },
+        },
+      ],
     },
     {
       id: 'obj-wi-women-zhurong',
@@ -1562,16 +1576,27 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-zy-sun',
       forceId: 'sun',
       primary: {
-        title: { zh: '取蜀之策', en: "Zhou Yu's Plan for Shu" },
-        description: 'Take Jiangling by 215 — the first step of the two-realm plan he died before starting.',
-        descriptionZh: "於215年前取江陵 —— 周瑜二分天下之策,第一步是從劉備手裡拿回南郡;他沒來得及開始。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 215 },
+        title: { zh: '合肥之圍', en: 'The Siege of Hefei' },
+        description: 'Take Hefei by 216 — before any plan for Shu, the north gate of the Huai.',
+        descriptionZh: "於216年前攻取合肥 —— 二分天下之前,先過淮南這道北門。",
+        goal: { kind: 'hold-cities', cityIds: ['hefei'], byYear: 216 },
       },
       /*
-       * 成都與他任何一座城都不相鄰(壓力 0.00),而江陵 1.12 在門檻之上 ——
-       * 周瑜的二分之策本來就是「先取南郡,再圖巴蜀」。取蜀降為次要。
+       * 改過兩次。上一版按壓力值把主目標訂在江陵(1.12 在門檻之上),
+       * 而壓力值不預測實際攻取 —— 三次掃描全死。
+       *
+       * 實測(6 輪,開局 211,+1/+3/+5/+8 年在手比例)他真正在打的:
+       *   臨海 6/6 6/6 6/6 6/6   合肥 1/6 3/6 4/6 5/6   壽春 1/6 2/6 1/6 2/6
+       *   江陵 一次也沒有在手上
+       * 主目標改成合肥(孫權打了一輩子的那道北門),二分天下整條路降為次要。
        */
       secondary: [
+        {
+          title: { zh: '取蜀之策', en: "Zhou Yu's Plan for Shu" },
+          description: 'Take Jiangling by 218 — the first step of the two-realm plan he died before starting.',
+          descriptionZh: "於218年前取江陵 —— 周瑜二分天下之策,第一步是從劉備手裡拿回南郡。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 218 },
+        },
         {
           title: { zh: '西進巴蜀', en: 'On into Shu' },
           description: 'Take Chengdu by 220.',
