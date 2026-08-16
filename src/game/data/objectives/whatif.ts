@@ -611,17 +611,31 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-lbxz-yuanshao',
       forceId: 'yuan-shao',
       /*
-       * 許昌壓力 0.82,在 AI 的候選門檻(1.05)之下 —— 而白馬 4.12、延津 3.77、
-       * 官渡 2.18 全在門檻之上,那正是他南下要先過的三個渡口。
-       * 主目標改寫成過河那一步,許昌降為次要。
+       * 上一版按壓力值改的(白馬 4.12、延津 3.77、官渡 2.18 全在候選門檻之上),
+       * 而那個判準已經證實不可靠 —— 壓力高只代表沒被入選門檻擋掉,
+       * 不代表打得下來(見 scripts/reachability-audit.ts 檔頭)。三次掃描全死。
+       *
+       * 實測(6 輪,+1/+3/+5/+8 年在手比例)他到底在做什麼:
+       *
+       *   北平 5/6 5/6 5/6 3/6    易縣 1/6 2/6 2/6 2/6    柳城 1/6 2/6 2/6 2/6
+       *   白馬 / 延津 / 官渡 —— **三個渡口一次也沒有在手上**
+       *
+       * 他不南下,他北上。而那也正是史書上的順序:先破公孫瓚定河北,
+       * 才有南向的本錢。主目標改成北平,三個渡口與許都都降為次要。
        */
       primary: {
-        title: { zh: '南下之機', en: 'The Moment to Move South' },
-        description: 'Take Baima, Yanjin and Guandu by 206 — Cao Cao is pinned in the east.',
-        descriptionZh: "於206年前取白馬、延津、官渡 —— 曹操東顧不暇,而黃河三個渡口就在眼前。",
-        goal: { kind: 'hold-cities', cityIds: ['baima', 'yanjin', 'guandu'], byYear: 206 },
+        title: { zh: '先定河北', en: 'The North First' },
+        description: 'Take Beiping by 206 — before the river, the north. Gongsun Zan holds it, and he is the one thing behind you.',
+        descriptionZh: "於206年前攻取北平 —— 過河之前先了背後。公孫瓚在那裡,而背後不能有人。",
+        goal: { kind: 'hold-cities', cityIds: ['beiping'], byYear: 206 },
       },
       secondary: [
+        {
+          title: { zh: '南下之機', en: 'The Moment to Move South' },
+          description: 'Take Baima, Yanjin and Guandu by 208 — Cao Cao is pinned in the east, and three fords lie open.',
+          descriptionZh: "於208年前取白馬、延津、官渡 —— 曹操東顧不暇,而黃河三個渡口就在眼前。",
+          goal: { kind: 'hold-cities', cityIds: ['baima', 'yanjin', 'guandu'], byYear: 208 },
+        },
         {
           title: { zh: '入主許都', en: 'Take Xuchang' },
           description: 'Take Xuchang by 210.',
