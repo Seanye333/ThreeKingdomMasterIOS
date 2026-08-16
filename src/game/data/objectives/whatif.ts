@@ -72,9 +72,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'nanman',
       primary: {
         title: { zh: '南中之主', en: 'Lord of Nanzhong' },
-        description: "Still hold Jianning and Nanzhong in 226. They trusted to distance and mountains and answered to no one. The hills are theirs.",
-        descriptionZh: "至226年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
-        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 226 },
+        description: "Still hold Jianning, Yunnan and Yongchang in 226. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至226年仍據建寧、雲南、永昌。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yunnan', 'yongchang'], byYear: 226 },
       },
     },
     {
