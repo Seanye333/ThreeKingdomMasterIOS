@@ -118,6 +118,17 @@ export interface AIPlanInput {
   rng?: () => number;
 }
 
+/*
+ * 多線作戰的收縮幅度(見攻擊迴圈裡 dispersalMul 的註解)。
+ *
+ * 每多開一條戰線,**非主攻方向**的攻擊門檻乘上 (1 − 0.15),最低到 0.55 ——
+ * 也就是五面受敵時,偏師要有近兩倍於平時的把握才動手,而主攻那一路照舊。
+ * 上限存在的理由:再嚴下去,四面受敵的一家會連自衛反擊都不打,
+ * 盤面被凍住(A/B 的易手次數會塌)。
+ */
+const DISPERSAL_PER_FRONT = 0.15;
+const DISPERSAL_FLOOR = 0.55;
+
 /** Map the 1–5 AI-strength dial to a multiplier on the attack threshold.
  *  >1 = the AI tolerates worse troop ratios (more aggressive expansion). */
 export function aggressionFromStrength(level: number | undefined): number {
@@ -212,6 +223,8 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     const forceTargetId = pickForceTarget(forceId, forceCities, cities, input.diplomacy, hegemonId, coalitionFoeId, deterredFrom);
     // Season posture: consolidate when a bordering force overshadows us.
     const overshadowedBy = overshadowingForce(forceId, forceCities, cities);
+    // 多線作戰 — how many frontiers this realm is actually fighting on (§4b).
+    const frontCount = hostileFrontCount(forceId, forceCities, cities, input.diplomacy);
     // 迷霧對等 — this force's own sight of the map (own cities + borders + its
     // columns' scout rings). When fog is on, the AI may only react to enemy
     // columns inside it; off → null = omniscient, same as the player un-fogged.
@@ -256,6 +269,7 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
         input.weather,
         input.forts,
         fog,
+        frontCount,
       );
       if (!decision) continue;
 
@@ -1187,6 +1201,40 @@ export function overshadowingForce(
 }
 
 /**
+ * 敵鄰家數 —— **這一家同時開著幾條戰線**(能打的鄰國,不含互不侵犯的)。
+ *
+ * 為 §4b 而生。逐盤量下來,開局最大的那一家末旬還剩幾成城,幾乎只由這個數
+ * 決定(6 輪 × 240 旬 × 4 盤):
+ *
+ * | 盤 | 戰線 | 城留存 | 兵留存 |
+ * |---|---|---|---|
+ * | 241 芍陂(魏) | 3 | 94% | 66% |
+ * | 249 高平陵(晉) | 4 | 87% | 69% |
+ * | 244 興勢(魏) | 4 | 84% | 64% |
+ * | 五國攻秦(楚) | **5** | **59%** | **40%** |
+ *
+ * 城數多 = 邊界長 = 戰線多,所以**史書上的強國在盤上一律會崩**:它不是打輸了
+ * 某一仗,是同時在五個方向上各打各的,每一路都只帶得動本城七成的兵。
+ * 見 `docs/CAMPAIGN-CHECKS.md` §4b。
+ */
+export function hostileFrontCount(
+  forceId: EntityId,
+  forceCities: City[],
+  allCities: Record<EntityId, City>,
+  diplomacy: DiplomaticState,
+): number {
+  const fronts = new Set<EntityId>();
+  for (const c of forceCities) {
+    for (const adjId of c.adjacentCityIds) {
+      const adj = allCities[adjId];
+      if (!adj || adj.ownerForceId === forceId || !adj.ownerForceId) continue;
+      if (isHostilePermitted(diplomacy, forceId, adj.ownerForceId)) fronts.add(adj.ownerForceId);
+    }
+  }
+  return fronts.size;
+}
+
+/**
  * The map's hegemon — the single force whose total troops clearly dominate
  * (>1.3× the next strongest). Returns null when no one runs away with it, so
  * forces only gang up once a leader actually emerges. Other forces then bias
@@ -1227,6 +1275,8 @@ function decideCommand(
   weather?: import('./weather').Weather,
   forts?: Record<EntityId, import('../types/fort').Fort>,
   fog: FogView | null = null,
+  /** 這一家同時開著幾條戰線(見 hostileFrontCount)—— 多線則收縮到主攻一路。 */
+  frontCount = 1,
 ): Decision | null {
   const ownRulerId = forces[forceId]?.rulerOfficerId;
   // 前線 — a city bordering an enemy (or neutral) realm. Computed up-front so
@@ -1483,6 +1533,28 @@ function decideCommand(
        */
       const vsOvershadower = target.ownerForceId != null && target.ownerForceId === overshadowedBy;
       const postureMul = vsOvershadower && !vsHegemon ? 0.5 : 1;
+      /*
+       * 多線作戰 —— **處處進攻就是處處不進攻。**
+       *
+       * §4b 的病灶:一家開著五條戰線時,五個方向的邊城各打各的,每一路只帶
+       * 本城七成的兵,於是每一仗都在勉強線上 —— 城打不下來,兵一批批填進去。
+       * 量出來的相關性很直:戰線 3 條的魏末旬還剩 94% 的城,5 條的楚只剩 59%。
+       *
+       * 修法不是讓 AI 少打,是讓它**只在一路上打**。`pickForceTarget` 早就
+       * 每季選出了一個全力級目標(而 focusRelax 給它放寬),但在這之前
+       * 沒有任何東西讓**其餘方向**收手 —— 那個「集中」機制只會加,不會減。
+       * 這裡把另一半補上:戰線愈多,非主攻方向的門檻愈嚴。
+       *
+       * 主攻那一路完全不受影響,所以盤面不會被凍住 —— A/B 的易手次數是
+       * 這個改動的防呆線(見 scripts/big-power-ab.ts 裡 flips 的註解)。
+       *
+       * 遠交近攻:秦昭王用范雎之策,「得寸則王之寸,得尺亦王之尺」——
+       * 五面受敵的解法從來不是五面出兵。
+       */
+      const offFocus = forceTargetId != null && target.id !== forceTargetId;
+      const dispersalMul = offFocus
+        ? Math.max(DISPERSAL_FLOOR, 1 - DISPERSAL_PER_FRONT * Math.max(0, frontCount - 1))
+        : 1;
       // 君主性格 — a tyrant/aggressive lord strikes on thin margins; a cautious
       // or scholarly one only when very safe.
       const personalityMul = personalityAttackMul(forces[forceId]?.personality);
@@ -1490,7 +1562,7 @@ function decideCommand(
       // presses; snow holds the column. (hasFireMind: someone here can light it.)
       const hasFireMind = officersHere.some((c) => c.stats.intelligence >= 80);
       const weatherMul = weatherAttackMul(weather, hasFireMind);
-      const attackThreshold = baseThreshold * deterrence * focusRelax * postureMul * aiAggressionMul * personalityMul * weatherMul;
+      const attackThreshold = baseThreshold * deterrence * focusRelax * postureMul * dispersalMul * aiAggressionMul * personalityMul * weatherMul;
 
       // 識城防 — a city ringed by enemy 箭樓/投石臺/陣/防壁 is a far harder nut: the
       // forts shell the storming column, muster extra garrison and stiffen the

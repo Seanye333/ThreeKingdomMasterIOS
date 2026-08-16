@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { pickForceTarget, pickReinforcementTarget, forcePosture, findHegemon, chooseDevelopment, planAITurn } from './ai';
+import { pickForceTarget, pickReinforcementTarget, forcePosture, findHegemon, hostileFrontCount, chooseDevelopment, planAITurn } from './ai';
 import type { City, Force } from '../types';
 import type { DiplomaticState } from '../types/diplomacy';
+import { pairKey } from '../types/diplomacy';
 import { mkOfficer } from '../../test/factories';
 import { prestigeRecruitBonus } from './officerFate';
 
@@ -93,6 +94,46 @@ describe('forcePosture — consolidate when outmatched', () => {
   it('stays aggressive with no bordering force', () => {
     const a1 = mkCity({ id: 'a1', ownerForceId: 'A', troops: 5000, adjacentCityIds: [] });
     expect(forcePosture('A', [a1], { a1 })).toBe('aggressive');
+  });
+});
+
+describe('hostileFrontCount — 多線作戰的寬度(§4b)', () => {
+  it('數的是能打的鄰**國**,不是鄰城', () => {
+    // 一家有兩座城,各自貼著同一個敵國的兩座城 —— 那是一條戰線,不是兩條。
+    const a1 = mkCity({ id: 'a1', ownerForceId: 'A', adjacentCityIds: ['b1'] });
+    const a2 = mkCity({ id: 'a2', ownerForceId: 'A', adjacentCityIds: ['b2'] });
+    const b1 = mkCity({ id: 'b1', ownerForceId: 'B', adjacentCityIds: ['a1'] });
+    const b2 = mkCity({ id: 'b2', ownerForceId: 'B', adjacentCityIds: ['a2'] });
+    expect(hostileFrontCount('A', [a1, a2], { a1, a2, b1, b2 }, NO_DIPLO)).toBe(1);
+  });
+
+  it('三個不同的鄰國 = 三條戰線', () => {
+    const a1 = mkCity({ id: 'a1', ownerForceId: 'A', adjacentCityIds: ['b1', 'c1', 'd1'] });
+    const b1 = mkCity({ id: 'b1', ownerForceId: 'B' });
+    const c1 = mkCity({ id: 'c1', ownerForceId: 'C' });
+    const d1 = mkCity({ id: 'd1', ownerForceId: 'D' });
+    expect(hostileFrontCount('A', [a1], { a1, b1, c1, d1 }, NO_DIPLO)).toBe(3);
+  });
+
+  it('簽了互不侵犯的鄰國不算戰線 —— 打不了的邊界不是戰線', () => {
+    const a1 = mkCity({ id: 'a1', ownerForceId: 'A', adjacentCityIds: ['b1', 'c1'] });
+    const b1 = mkCity({ id: 'b1', ownerForceId: 'B' });
+    const c1 = mkCity({ id: 'c1', ownerForceId: 'C' });
+    // 鍵用 pairKey 生,別手搓 —— 格式是 `a__b`,手寫成 `a|b` 會靜默不命中,
+    // 於是這條測試看起來過了其實什麼都沒測到(第一版就是這樣紅的)。
+    const pact: DiplomaticState = {
+      relations: {
+        [pairKey('A', 'B')]: { forceA: 'A', forceB: 'B', score: 60, status: 'non-aggression' },
+      },
+    } as unknown as DiplomaticState;
+    expect(hostileFrontCount('A', [a1], { a1, b1, c1 }, NO_DIPLO)).toBe(2);
+    expect(hostileFrontCount('A', [a1], { a1, b1, c1 }, pact)).toBe(1);
+  });
+
+  it('無主之城不算 —— 那是可取之地,不是敵國', () => {
+    const a1 = mkCity({ id: 'a1', ownerForceId: 'A', adjacentCityIds: ['empty'] });
+    const empty = mkCity({ id: 'empty', ownerForceId: null });
+    expect(hostileFrontCount('A', [a1], { a1, empty }, NO_DIPLO)).toBe(0);
   });
 });
 
