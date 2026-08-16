@@ -1482,12 +1482,21 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-guojia-lives-zhang-lu',
       forceId: 'zhang-lu',
       primary: {
-        title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: 'Hold Hanzhong and take Jiameng by 212 — church and state in one hand, and the road south still open.',
-        descriptionZh: "於212年前據漢中、葭萌 —— 政教合一,置義舍米肉;而北面是曹操,能走的只剩巴蜀那一條路。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 212 },
+        title: { zh: '奔南山入巴中', en: 'Into Ba' },
+        description: 'Still hold the Yangping Pass and Baxi in 209 — the valley goes; the flock does not have to.',
+        descriptionZh: "至209年仍據陽平關、巴西 —— 谷地留不住,而人可以帶走。",
+        goal: { kind: 'hold-cities', cityIds: ['yangping', 'baxi'], byYear: 209 },
       },
-      /* 三城守六年而北面是四十八城的曹操,三輪 0/3;葭萌 3.87 是他自己推得動的那一步。 */
+      /*
+       * 同 cao-wins-chibi / machao-guanzhong / zhouyu-lives 那三條的第五、六例 ——
+       * 「師君治漢中」這條目標一字不差出現在五張盤上,而漢中在其中沒有一張守得住。
+       * 實測(6 輪,開局 208,+1/+3/+5/+8 年在手比例):
+       *
+       *   陽平關 5/6 2/6 2/6 2/6   巴西 4/6 3/6 2/6 2/6   葭萌 3/6 2/6 2/6 2/6
+       *   漢中  **開局有、每個檢查點都已失去**
+       *
+       * 期限壓到 209(+1 年),再往後兩座都掉到 2/6。
+       */
     },
     {
       id: 'obj-wi-guojia-lives-ma-teng',
@@ -1746,11 +1755,20 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-pangtong-lives-zhang-lu',
       forceId: 'zhang-lu',
       primary: {
-        title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: "Still hold Hanzhong and Wudu in 216. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
-        descriptionZh: "至216年仍據漢中、武都。政教合一,置義舍米肉,三十年不見兵革。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'wudu'], byYear: 216 },
+        title: { zh: '武都不失', en: 'Wudu Holds' },
+        description: "Still hold Wudu in 216 — two cities, and the whole north standing over them. One of the two is what a Shijun can actually keep.",
+        descriptionZh: "至216年仍據武都 —— 兩座城,而整個北面都壓在頭上;守得住的是其中一座。",
+        goal: { kind: 'hold-cities', cityIds: ['wudu'], byYear: 216 },
       },
+      /*
+       * 「師君治漢中」的第六例,也是最窘的一張:開局只有兩座城。
+       * 實測(6 輪,開局 215,+1/+3/+5/+8 年在手比例):
+       *
+       *   武都 6/6 1/6 1/6 0/6
+       *   漢中 **開局有、每個檢查點都已失去**
+       *
+       * 兩座城守六年,而其中一座開局一年內就沒了 —— 改成單守武都。
+       */
     },
     {
       id: 'obj-wi-pangtong-lives-shi-xie',
