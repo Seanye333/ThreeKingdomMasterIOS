@@ -5,10 +5,19 @@
 	<!--
 	  Privacy manifest — required by App Store Connect since 2024-05-01.
 
-	  This game is fully offline: it makes no network requests, has no
-	  analytics/ads/crash SDK, and every save stays on device. So both the
-	  tracking flag and the collected-data list are empty; the only entries
-	  below are the "required reason" APIs our dependencies reach for.
+	  This game has no analytics/ads/crash SDK, and every save stays on
+	  device. So both the tracking flag and the collected-data list are
+	  empty; the only entries below are the "required reason" APIs our
+	  dependencies reach for.
+
+	  ⚠ It is no longer true that the app makes NO network request. The iOS
+	  build ships without the 1409 crossover-dynasty portraits (132.8 MiB,
+	  see README "兩份構建為什麼不一樣"); when VITE_PORTRAIT_CDN is set, a
+	  portrait the bundle lacks is fetched from that host on demand. That
+	  request carries an image path and nothing else — no identifier, no
+	  user data — so the collected-data list stays empty. Leave the var
+	  unset and the app is entirely offline (missing portraits fall back to
+	  the procedural silhouette).
 
 	  Sources of each declared API:
 	    FileTimestamp   — tauri-plugin-log rotates its log file (stat/mtime)
