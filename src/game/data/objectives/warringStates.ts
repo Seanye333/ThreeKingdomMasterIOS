@@ -1116,8 +1116,8 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'zhao',
       primary: {
         title: { zh: '毋易廉頗', en: 'Do Not Replace Lian Po' },
-        description: 'Still hold Shangdang and Ye in 185 — Lian Po held the line; the swap lost the war.',
-        descriptionZh: "至185年仍保上黨、鄴城 —— 廉頗堅壁不出,換上趙括才是敗因。",
+        description: 'Hold Ye and take Shangdang by 185 — Lian Po held the line; the swap lost the war.',
+        descriptionZh: "於185年前據鄴城並取上黨 —— 廉頗堅壁不出,換上趙括才是敗因。",
         goal: { kind: 'hold-cities', cityIds: ['shangdang', 'ye'], byYear: 185 },
       },
       secondary: [

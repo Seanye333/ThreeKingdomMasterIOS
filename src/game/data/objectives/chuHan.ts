@@ -146,8 +146,8 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '魏地復國', en: 'Wei Restored' },
-        description: "Still hold Puyang and Chenliu in 185 — Wei Bao got his ancestors' land back; Luoyang was never part of it.",
-        descriptionZh: "至185年仍據濮陽、陳留 —— 魏豹復得魏地;洛陽從來不在其中。",
+        description: "Hold Puyang and take Chenliu by 185 — Wei Bao got his ancestors' land back; Luoyang was never part of it.",
+        descriptionZh: "於185年前據濮陽並取陳留 —— 魏豹復得魏地;洛陽從來不在其中。",
         goal: { kind: 'hold-cities', cityIds: ['puyang', 'chenliu'], byYear: 185 },
       },
       secondary: [

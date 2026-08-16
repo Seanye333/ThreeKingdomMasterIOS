@@ -1821,8 +1821,8 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '西南之患', en: 'The Threat from the Southwest' },
-        description: "Still hold Chang'an and Hanzhong in 225.",
-        descriptionZh: "至225年仍保長安、漢中 —— 蜀中多了一個能謀的人。",
+        description: "Hold Chang'an and take Hanzhong by 225 — there is one more clever head in Shu now.",
+        descriptionZh: "於225年前據長安並取漢中 —— 蜀中多了一個能謀的人。",
         goal: { kind: 'hold-cities', cityIds: ['changan', 'hanzhong'], byYear: 225 },
       },
       secondary: [

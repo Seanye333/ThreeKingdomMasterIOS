@@ -62,6 +62,13 @@ export const HARD_TAGS = [
  * 機制上照樣跑得動 —— 所以只有文案與資料對讀才抓得到。
  */
 const HOLD_WORDING = /仍據|仍保|Still hold/i;
+/**
+ * 例外:文案自己已經說明白「其中一座要打下來」的,不算錯。
+ *
+ * 「至213年仍據建業**並取**江夏」是正確的寫法 —— 它沒有騙玩家。
+ * 第一版沒有這道例外,於是把兩條寫對的也報成錯。
+ */
+const TAKE_WORDING = /並取|而取|and take|then take/i;
 
 /** 這張盤上,每一家開局據幾座城。 */
 function cityCounts(cities: Array<{ ownerForceId?: string | null }>): Map<string, number> {
@@ -134,13 +141,25 @@ for (const scenario of SCENARIOS) {
           });
           break;
         }
-        // 文案說「仍據」而一座都不是他的 —— 題目寫了別人家的城。
-        if (own.length === 0 && goal.cityIds.length > 0
-            && (HOLD_WORDING.test(o.primary.descriptionZh ?? '')
-                || HOLD_WORDING.test(o.primary.description ?? ''))) {
+        /*
+         * 文案說「仍據」而**不是每一座都是他的** —— 題目寫了別人家的城。
+         *
+         * ⚠ 第一版只在「一座都不是他的」時才報,於是漏掉了更常見的一半:
+         * 英雄集結的公孫瓚寫「至202年仍據薊、北平」而北平不在他手上(薊在),
+         * 掃描要跑一小時才看得出來。判準必須是 **`defending` 的判準** ——
+         * `evaluateGoal` 要求 `cityIds.every(初始擁有)` 才走守成語意,
+         * 缺一座就整條退回「取得」,而文案還寫著「仍據」。
+         */
+        const saysHold = HOLD_WORDING.test(o.primary.descriptionZh ?? '')
+          || HOLD_WORDING.test(o.primary.description ?? '');
+        const saysTake = TAKE_WORDING.test(o.primary.descriptionZh ?? '')
+          || TAKE_WORDING.test(o.primary.description ?? '');
+        if (own.length < goal.cityIds.length && goal.cityIds.length > 0 && saysHold && !saysTake) {
+          const notMine = goal.cityIds.filter((cid) => owner.get(cid) !== o.forceId)
+            .map((cid) => `${cityName.get(cid) ?? cid}=${label(owner.get(cid) ?? null)}`);
           findings.push({
             rank: 0, tag: '守成寫了別人的城',
-            line: `${who} — 文案寫「仍據/仍保」而開局一座都不是他的:${marks.join(' ')}`,
+            line: `${who} — 文案寫「仍據/仍保」而這幾座開局不是他的:${notMine.join(' ')}`,
           });
           break;
         }

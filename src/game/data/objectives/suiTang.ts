@@ -121,8 +121,8 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'dingyang',
       primary: {
         title: { zh: '借突厥之力', en: 'The Turkic Horse' },
-        description: "Still hold Yanmen, Yunzhong and Shuofang in 188 — Liu Wuzhou's power was borrowed, and borrowed things go back.",
-        descriptionZh: "至188年仍據雁門、雲中、朔方 —— 劉武周的兵是借突厥的,借來的東西要還。",
+        description: "Hold Yunzhong and take Yanmen by 180 — Liu Wuzhou's power was borrowed, and borrowed things go back.",
+        descriptionZh: "於180年前據雲中並取雁門 —— 劉武周的兵是借突厥的,借來的東西要還。",
         goal: { kind: 'hold-cities', cityIds: ['yanmen', 'yunzhong'], byYear: 180 },
       },
       secondary: [
