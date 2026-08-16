@@ -47,7 +47,21 @@ export type OwnershipFinding = {
  */
 export const HARD_TAGS = [
   '城不在此盤', '第0旬就成立', '對象開局無城', '救援門檻高於開局', '人不在此盤',
+  '守成寫了別人的城',
 ];
+
+/**
+ * 文案說「仍據/仍保/Still hold」的,判準是**開局就據有**。
+ *
+ * 2026-08-16 撞到一條靜態就看得出來卻跑了一小時掃描才發現的:諸葛亮活到八十
+ * 那張盤,魏的主目標寫「至255年仍保長安、天水」——**兩座都不在魏手上**,
+ * 一個檢查點都沒有過。這不是難不難的問題,是題目寫了別人家的城,
+ * 而玩家看到的字面是「守住你已有的」。
+ *
+ * `evaluateGoal` 對這種寫法不會報錯:全部不據有時它退回「取得」語意,
+ * 機制上照樣跑得動 —— 所以只有文案與資料對讀才抓得到。
+ */
+const HOLD_WORDING = /仍據|仍保|Still hold/i;
 
 /** 這張盤上,每一家開局據幾座城。 */
 function cityCounts(cities: Array<{ ownerForceId?: string | null }>): Map<string, number> {
@@ -117,6 +131,16 @@ for (const scenario of SCENARIOS) {
           findings.push({
             rank: 1, tag: '第0旬就成立',
             line: `${who} — 開局全據且無期限:${marks.join(' ')}`,
+          });
+          break;
+        }
+        // 文案說「仍據」而一座都不是他的 —— 題目寫了別人家的城。
+        if (own.length === 0 && goal.cityIds.length > 0
+            && (HOLD_WORDING.test(o.primary.descriptionZh ?? '')
+                || HOLD_WORDING.test(o.primary.description ?? ''))) {
+          findings.push({
+            rank: 0, tag: '守成寫了別人的城',
+            line: `${who} — 文案寫「仍據/仍保」而開局一座都不是他的:${marks.join(' ')}`,
           });
           break;
         }

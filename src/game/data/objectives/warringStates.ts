@@ -404,9 +404,9 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'zhao',
       primary: {
         title: { zh: '邯鄲不陷', en: 'Handan Holds' },
-        description: 'Still hold Ye in 184.',
-        descriptionZh: "至184年仍據鄴城 —— 齊之救兵未必來得及,先守住再說。",
-        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 184 },
+        description: 'Still hold Taiyuan and Changshan in 184 — the relief from Qi may not arrive in time; hold first, and argue later.',
+        descriptionZh: "至184年仍據太原、常山 —— 齊之救兵未必來得及,先守住再說。",
+        goal: { kind: 'hold-cities', cityIds: ['taiyuan', 'changshan'], byYear: 184 },
       },
     },
     {

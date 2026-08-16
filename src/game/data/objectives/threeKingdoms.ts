@@ -1381,8 +1381,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '拒漢中於秦川', en: 'Hold Hanzhong' },
-        description: 'Still hold Hanzhong at 220 — keep Liu Bei out of Guanzhong.',
-        descriptionZh: "於220年仍守住漢中,拒劉備於秦川之外。",
+        description: 'Retake Hanzhong by 220 — he has only just taken it, and it was never his to keep.',
+        descriptionZh: "於220年前奪回漢中,拒劉備於秦川之外 —— 這座城他剛拿走,而它不該是他的。",
         goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 220 },
       },
     },
@@ -4529,8 +4529,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'dengai',
       primary: {
         title: { zh: '偷渡陰平', en: 'The March Through Yinping' },
-        description: "Hold Chengdu in 268 — seven hundred li of unpeopled mountain, and the war was over. Yinping is a road, not a prize.",
-        descriptionZh: "至268年仍據成都 —— 行無人之地七百餘里,鑿山通道,以氈自裹推轉而下,而蜀亡。",
+        description: "Take Chengdu by 268 — seven hundred li of unpeopled mountain, and the war was over. Yinping is a road, not a prize.",
+        descriptionZh: "於268年前取成都 —— 行無人之地七百餘里,鑿山通道,以氈自裹推轉而下,而蜀亡。",
         goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 268 },
       },
       secondary: [
