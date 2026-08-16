@@ -1148,23 +1148,42 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-ys-yuanshu',
       forceId: 'yuan-shu',
-      primary: {
-        title: { zh: '仲氏之世', en: 'The Reign of Zhong' },
-        description: 'Hold Shouchun and take Xuchang by 204 — two emperors cannot share a realm.',
-        descriptionZh: "於204年前據壽春、許昌 —— 天無二日;帝號要不變成笑話,許都那位必須廢。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'xuchang'], byYear: 204 },
-      },
       /*
-       * 原本是守壽春、合肥到 199 —— 開局 198,**一年的窗口**,三輪 0/3。
-       * 而他在這張盤上其實推得動(許昌 1.27、小沛 1.57、下邳 1.49),
-       * 主目標改成僭號之後真正該做的那件事,守兩座城降為次要。
+       * 實測(`what-they-actually-do.ts` 6 輪,+1/+3/+5/+8 年在手比例):
+       *
+       *   汝南   6/6  4/6  3/6  2/6
+       *   濡須   6/6  5/6  2/6  0/6
+       *   皖城   5/6  5/6  2/6  0/6
+       *   壽春   **四個檢查點全部失去** —— 開局一年內就沒了
+       *   許昌   一次也沒有在手上
+       *
+       * ⚠ **這張盤的前提被它自己的開局外交推翻了。** 盤名是「若袁術稱帝成」,
+       * 而 `premiseOfficerIds: ['yuan-shu']` 只保他不死;開局他與曹、孫、
+       * 袁紹、呂布四家全是 neutral 且惡感 −45 ~ −90(「僭號仲家,漢臣共討」
+       * 寫得沒錯,但四面同時來就守不住帝都)。仲氏之帝連壽春都留不住,
+       * 「仲氏之世」自然是死目標。城池歸屬與兵力沒動,只把主目標改成
+       * 他真正守得住的地方 —— 帝都與許都都降為次要。
+       *
+       * 汝南是袁氏本鄉(四世三公出於此),退保汝南在敘事上也接得住。
        */
+      primary: {
+        title: { zh: '汝南袁氏', en: 'The Yuans of Runan' },
+        description: 'Still hold Runan in 200 — four generations of the Three Excellencies came out of this one commandery. The crown may go; the name is older than the crown.',
+        descriptionZh: "至200年仍據汝南 —— 四世三公出於此鄉。冕旒或許保不住,而袁氏這個姓比冕旒老得多。",
+        goal: { kind: 'hold-cities', cityIds: ['runan'], byYear: 200 },
+      },
       secondary: [
         {
-          title: { zh: '淮南不失', en: 'Huainan Holds' },
-          description: 'Still hold Shouchun and Hefei in 200.',
-          descriptionZh: "至200年仍據壽春、合肥 —— 這一次,帝號沒有變成笑話。",
-          goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 200 },
+          title: { zh: '仲氏之世', en: 'The Reign of Zhong' },
+          description: 'Still hold Shouchun in 202 — an emperor who keeps his capital.',
+          descriptionZh: "至202年仍據壽春 —— 守得住帝都的皇帝。",
+          goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 202 },
+        },
+        {
+          title: { zh: '天無二日', en: 'Two Suns' },
+          description: 'Take Xuchang — two emperors cannot share a realm.',
+          descriptionZh: "攻取許昌 —— 天無二日;帝號要不變成笑話,許都那位必須廢。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 206 },
         },
       ],
     },
@@ -1219,12 +1238,27 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
     {
       id: 'obj-wi-ys-yuanshao',
       forceId: 'yuan-shao',
+      /*
+       * 實測(6 輪,+1/+3/+5/+8 年在手比例):許昌**一次也沒有在手上**,
+       * 而他真正在做的是往北推 —— 易縣 0/3/4/3、柳城 0/4/3/4、烏丸 0/2/2/2。
+       *
+       * 那也正是史實上他做的事:建安四年破公孫瓚於易京,而後征烏丸。
+       * 所以主目標改成北進,「兄弟之爭」降為次要 —— 那本來就是他沒做到的。
+       */
       primary: {
-        title: { zh: '兄弟之爭', en: 'Brothers' },
-        description: 'Take Xuchang by 208 — your half-brother wears a crown; you will need a better one.',
-        descriptionZh: "於208年前攻取許昌 —— 庶弟已戴冕旒,嫡兄豈可落後。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 208 },
+        title: { zh: '易京樓火', en: 'The Tower at Yijing' },
+        description: 'Take Yijing by 203 — three hundred thousand piculs of grain and a tower he never came down from. Finish the north before you look south.',
+        descriptionZh: "於203年前攻取易縣 —— 積穀三百萬斛,而他終究沒有從那座樓上下來。先了北面,再談南向。",
+        goal: { kind: 'hold-cities', cityIds: ['yi-county'], byYear: 203 },
       },
+      secondary: [
+        {
+          title: { zh: '兄弟之爭', en: 'Brothers' },
+          description: 'Take Xuchang — your half-brother wears a crown; you will need a better one.',
+          descriptionZh: "攻取許昌 —— 庶弟已戴冕旒,嫡兄豈可落後。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 208 },
+        },
+      ],
     },
     {
       id: 'obj-wi-yuanshu-empire-liu-biao',
