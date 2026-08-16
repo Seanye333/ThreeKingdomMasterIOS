@@ -128,6 +128,22 @@ export interface AIPlanInput {
  */
 const DISPERSAL_PER_FRONT = 0.15;
 const DISPERSAL_FLOOR = 0.55;
+/*
+ * **只有大國才會「攤薄」—— 小國打的是內線。**
+ *
+ * 第一版沒有這道門,結果假想盤的目標掃描從 31 條死目標變成 34,而新死的
+ * 八條全是小勢力的攻取目標(英雄集結的張魯、若馬超盡得關中的韓遂、
+ * 若孫策不死的劉備/孫/袁紹…)。回頭看是我把機制套錯了對象:
+ *
+ * §4b 的病是**邊界長到無法集中** —— 六十六座城的魏,五個方向的邊城彼此隔著
+ * 十幾座城,誰也支援不了誰。而三座城開三條戰線的張魯不是這個處境:
+ * 他的城互相挨著,本來就在內線上,要集中隨時能集中。對他收縮只是讓他變呆,
+ * 而他的主目標偏偏是「往南取葭萌」。
+ *
+ * 所以加一道城數門檻:握不到這麼多城的一家不吃這條規則。128 座城的圖上
+ * 取 12(約十分之一)—— 大到邊界會outrun 集結能力,才算得上「多線作戰」。
+ */
+const DISPERSAL_MIN_CITIES = 12;
 
 /** Map the 1–5 AI-strength dial to a multiplier on the attack threshold.
  *  >1 = the AI tolerates worse troop ratios (more aggressive expansion). */
@@ -224,7 +240,10 @@ export function planAITurn(input: AIPlanInput): AIPlanOutput {
     // Season posture: consolidate when a bordering force overshadows us.
     const overshadowedBy = overshadowingForce(forceId, forceCities, cities);
     // 多線作戰 — how many frontiers this realm is actually fighting on (§4b).
-    const frontCount = hostileFrontCount(forceId, forceCities, cities, input.diplomacy);
+    // 小國不吃這條規則(見 DISPERSAL_MIN_CITIES):它打的是內線。
+    const frontCount = forceCities.length >= DISPERSAL_MIN_CITIES
+      ? hostileFrontCount(forceId, forceCities, cities, input.diplomacy)
+      : 1;
     // 迷霧對等 — this force's own sight of the map (own cities + borders + its
     // columns' scout rings). When fog is on, the AI may only react to enemy
     // columns inside it; off → null = omniscient, same as the player un-fogged.
