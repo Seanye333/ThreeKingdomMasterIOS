@@ -825,11 +825,22 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
        */
       primary: {
         title: { zh: '馬兒不死', en: '"While That Horse Lives"' },
-        description: 'Break the Ma Chao force down to a single city by 217.',
-        descriptionZh: "於217年前將馬超逼到只剩一城 —— 「馬兒不死,吾無葬地也。」",
-        goal: { kind: 'break-force', forceId: 'ma-chao', maxCities: 1, byYear: 217 },
+        description: 'Break the Ma Chao force down to six cities by 219 — "while that horse-boy lives, I shall have no ground to be buried in."',
+        descriptionZh: "於219年前將馬超逼到只剩六城 —— 「馬兒不死,吾無葬地也。」",
+        goal: { kind: 'break-force', forceId: 'ma-chao', maxCities: 6, byYear: 219 },
       },
+      /*
+       * 實測(6 輪,開局 211):馬超 12 城掉到**中位 6 城** —— 也就是曹操確實
+       * 把他打掉一半,但離「只剩一城」很遠,三輪 0/3。門檻改成六城(實測的
+       * 中位),逼到一城與滅族都留在次要。
+       */
       secondary: [
+        {
+          title: { zh: '逼到一城', en: 'Down to One' },
+          description: 'Break the Ma Chao force down to a single city by 222.',
+          descriptionZh: "於222年前將馬超逼到只剩一城。",
+          goal: { kind: 'break-force', forceId: 'ma-chao', maxCities: 1, byYear: 222 },
+        },
         {
           title: { zh: '斬草除根', en: 'Root and Branch' },
           description: 'Destroy the Ma Chao force by 222.',

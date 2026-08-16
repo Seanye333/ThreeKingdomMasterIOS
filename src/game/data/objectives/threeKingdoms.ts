@@ -4761,9 +4761,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
        */
       primary: {
         title: { zh: '先定中原', en: 'The Central Plain First' },
-        description: 'Hold Luoyang, Xuchang and Ye by 210.',
-        descriptionZh: "於210年前兼據洛陽、許昌、鄴城 —— 群雄畢集,而中原是誰的,天下就是誰的。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang', 'ye'], byYear: 210 },
+        description: 'Still hold Luoyang and Xuchang in 210 — every warlord who ever lived stands on this map; whoever holds the Central Plain holds the realm.',
+        descriptionZh: "至210年仍據洛陽、許昌 —— 群雄畢集,而中原是誰的,天下就是誰的。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 210 },
       },
       secondary: [
         {
