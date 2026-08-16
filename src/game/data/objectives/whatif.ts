@@ -1131,17 +1131,33 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-dl-yuanshu',
       forceId: 'yuan-shu',
       primary: {
-        title: { zh: '南陽起事', en: 'Rise from Nanyang' },
-        description: 'Hold Shouchun and take Xuchang by 198 — the seal is not enough; you need the boy who wears the crown.',
-        descriptionZh: "於198年前據壽春、許昌 —— 玉璽在手還不夠,得先有那個戴冠的孩子。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'xuchang'], byYear: 198 },
+        title: { zh: '淮南自立', en: 'Huainan Stands Alone' },
+        description: 'Still hold Shouchun and Hefei in 197 — the seal is in your hands and Dong Zhuo still holds the north; the Huai is rich enough to stand on its own.',
+        descriptionZh: "至197年仍據壽春、合肥 —— 玉璽在手,而董卓還壓著北面;淮南之富,足以自立。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 197 },
       },
       /*
-       * 稱帝當主目標,三輪 0/3 —— 持璽稱帝那條路(`aiCourt`)要列侯以上加八城,
-       * 而 AI 幾乎摸不到那個門檻。他在這張盤上其實推得很動(小沛 2.31、
-       * 下邳 1.85、許昌 1.51),主目標改成往北那一步,稱帝降為次要。
+       * 實測(6 輪,開局 192,+1/+3/+5/+8 年在手比例)—— 他在這張盤上其實
+       * 過得不錯,10 城只掉到 8:
+       *
+       *   合肥 6/6 6/6 6/6 5/6   廬江 6/6 6/6 6/6 5/6   汝南 6/6 5/6 5/6 5/6
+       *   壽春 6/6 4/6 4/6 5/6
+       *   許昌 **一次也沒有在手上**
+       *
+       * 也就是說原主目標只死在「取許昌」那一半上。改成守淮南兩座
+       * (壽春+合肥,至197),許昌與稱帝都降為次要。
+       *
+       * 上一版的註解說「他在這張盤上其實推得很動(小沛 2.31、下邳 1.85、
+       * 許昌 1.51)」—— 那三個是壓力值,而壓力值不預測實際攻取
+       * (見 scripts/reachability-audit.ts 檔頭)。許昌他一次也沒碰到。
        */
       secondary: [
+        {
+          title: { zh: '南陽起事', en: 'Rise from Nanyang' },
+          description: 'Take Xuchang by 200 — the seal is not enough; you need the boy who wears the crown.',
+          descriptionZh: "於200年前攻取許昌 —— 玉璽在手還不夠,得先有那個戴冠的孩子。",
+          goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 200 },
+        },
         {
           title: { zh: '代漢者當塗高', en: 'The One Foretold' },
           description: 'Declare yourself emperor.',
