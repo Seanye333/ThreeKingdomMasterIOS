@@ -1394,9 +1394,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '郭奉孝在', en: 'Had Fengxiao Been Here' },
-        description: 'Take Jiangling and Jianye by 215 — "had Fengxiao lived, I would not have come to this."',
-        descriptionZh: "於215年前取江陵、建業 —— 「郭奉孝在,不使孤至此。」這一次他在。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'jianye'], byYear: 215 },
+        description: 'Take Xiangyang and Hanzhong by 213 — "had Fengxiao lived, I would not have come to this." This time he did.',
+        descriptionZh: "於213年前取襄陽、漢中 —— 「郭奉孝在,不使孤至此。」這一次他在。",
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'hanzhong'], byYear: 213 },
       },
       secondary: [
         {
@@ -1412,9 +1412,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '赤壁之火', en: 'The Fire at Chibi' },
-        description: 'Hold Jianye and take Jiangling by 213 — the fire still has to be lit, and now someone is watching for it.',
-        descriptionZh: "於213年前據建業、江陵 —— 火還是要放,只是這回北岸有人在等;而燒完之後,江陵才是那一仗真正的彩頭。",
-        goal: { kind: 'hold-cities', cityIds: ['jianye', 'jiangling'], byYear: 213 },
+        description: 'Still hold Jianye, Chaisang and Baqiu in 213 — the fire still has to be lit, and this time someone on the north bank is watching for it.',
+        descriptionZh: "至213年仍據建業、柴桑、巴丘 —— 火還是要放,只是這回北岸有人在等;先守住放火的那一段江。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'chaisang', 'baqiu'], byYear: 213 },
       },
       /*
        * 十四城「殲滅」四十八城的曹操,三輪 0/3 —— 而赤壁之後孫吳真正拿到的
@@ -1440,11 +1440,31 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '走投何處', en: 'Where Now?' },
-        description: 'Hold Jiangling by 214 and Chengdu by 218.',
-        descriptionZh: "於214年前據江陵、218年前據成都 —— 對面多了一個算得比你快的人。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 214 },
+        description: 'Still hold Jiangxia, Wuchang and Chibi in 213 — three cities on one stretch of river, and across it a man who now reckons faster than you.',
+        descriptionZh: "至213年仍據江夏、武昌、赤壁 —— 一段江上的三座城,而對面多了一個算得比你快的人。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangxia', 'wuchang', 'chibi'], byYear: 213 },
       },
+      /*
+       * 這張盤原本**三家的主目標同時指著江陵**(曹「取江陵、建業」、
+       * 孫「據建業、取江陵」、劉「據江陵」),而江陵在劉表手裡 ——
+       * 正是 §3c 記的那個反面樣板,只是這次是三倍。三家一起 0/3。
+       *
+       * 實測(6 輪,開局 208,+1/+3/+5/+8 年在手比例)三家各自真正在做的事:
+       *
+       *   曹  48→55 城;取 漢中 6/6、襄陽 4/6→5/6、上庸、新城   江陵/建業 幾乎沒有
+       *   孫  14→21 城;守 建業/柴桑/巴丘 全 6/6;取 零陵 6/6、臨海 5/6
+       *   劉  3→4 城;守 江夏/武昌/赤壁 **全部 6/6**;取 長沙 2/6
+       *
+       * 三條於是拆成三個方向:曹取襄陽漢中、孫守放火的那一段江、劉守江上三城。
+       * 江陵誰也沒拿到,所以誰的主目標裡都不再有它。
+       */
       secondary: [
+        {
+          title: { zh: '借得江陵', en: 'Jiangling Borrowed' },
+          description: 'Take Jiangling by 216.',
+          descriptionZh: "於216年前取江陵 —— 那座城要來的方式,史書上叫「借」。",
+          goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 216 },
+        },
         {
           title: { zh: '西入益州', en: 'West into Yi' },
           description: 'Hold Chengdu by 218.',
