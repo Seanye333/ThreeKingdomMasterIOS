@@ -30,11 +30,26 @@ npm install
 npm run dev        # 開發
 npm test           # 單元測試
 npm run test:e2e   # 冒煙測試
-npm run build      # 生產構建
+npm run build      # 生產構建(網頁版:完整 4402 張肖像,dist ≈ 310 MiB)
+npm run build:ios  # iOS 版(歷代肖像留在包外,dist ≈ 178 MiB)
 npm run tauri:dev  # 桌面版(需 Rust,見 src-tauri/README.md)
 ```
 
 每次 push 到 `main` 自動部署 GitHub Pages 與 Vercel。
+
+### 兩份構建為什麼不一樣
+
+肖像庫 206.5 MiB 是兩批人:三國名冊 802 人 73.8 MiB,歷代名冊(春秋到清)
+1409 人 **132.8 MiB**。歷代那批要在設定裡開啟朝代才會進場,預設一個都不出現,
+卻足以讓 iOS 安裝包越過 App Store 的**蜂窩網路 200 MB 下載上限**。
+
+所以 `build:ios`(= `VITE_SLIM_PORTRAITS=1`)把歷代肖像留在包外,
+`src-tauri/tauri.ios.conf.json` 讓 `tauri ios build` 自動走這條。
+執行期取址是**本地 → 遠端 → 程序剪影**三段(`src/ui/portraitSrc.ts`):
+設了 `VITE_PORTRAIT_CDN` 就向它取(通常指網頁版那份完整部署),取不到
+就用剪影 —— 所以離線玩家看到的是剪影,不是破圖。
+
+⚠ **網頁版必須維持完整**,因為它同時就是遠端的來源。
 
 ## License
 
