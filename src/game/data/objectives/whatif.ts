@@ -693,12 +693,32 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
        * 那是他真正要做的事,而且拿到就算,不必空守七年。
        */
       primary: {
-        title: { zh: '神威天將軍', en: 'The God-Might General' },
-        description: "Hold Chang'an and take Tianshui by 215 — no forged letter divided you from Han Sui.",
-        descriptionZh: "於215年前據長安、天水 —— 那封塗改的書信沒有寄出,關中十部未散,隴右自當連成一片。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'tianshui'], byYear: 215 },
+        title: { zh: '關西十部', en: 'The Ten of the West' },
+        description: "Still hold Wuwei, Mei and Chencang in 214 — no forged letter divided you from Han Sui, and the west still answers to one man.",
+        descriptionZh: "至214年仍據武威、郿、陳倉 —— 那封塗改的書信沒有寄出,關西十部未散,西陲仍聽一人號令。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'mei', 'chencang'], byYear: 214 },
       },
+      /*
+       * 實測(`what-they-actually-do.ts` 6 輪,+1/+3/+5/+8 年在手比例):
+       *
+       *   武威   6/6  6/6  6/6  5/6
+       *   郿    6/6  6/6  5/6  2/6
+       *   陳倉   6/6  5/6  3/6  3/6
+       *   長安   **1/6  1/6  1/6  1/6**   ← 開局一年內就丟,六輪只有一輪守住
+       *   天水   一次也沒有在手上(開局屬韓遂)
+       *
+       * ⚠ **又一張盤面推翻自己前提的**(同 scn-whatif-yuanshu-empire 的壽春):
+       * 盤名叫「若馬超盡得關中」,而長安開局雖然是他的,一年內就沒了。
+       * 這次同樣只改目標、不動城池與兵力 —— 要不要保長安是盤面設計的決定。
+       * 主目標改寫成他真正守得住的西陲三城,長安與東出洛陽都降為次要。
+       */
       secondary: [
+        {
+          title: { zh: '據長安', en: "Chang'an Held" },
+          description: "Still hold Chang'an in 214 — the prize the premise says you took.",
+          descriptionZh: "至214年仍據長安 —— 這張盤的前提說你拿下了它,而守住是另一回事。",
+          goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 214 },
+        },
         {
           title: { zh: '東出函谷', en: 'East Through Hangu' },
           description: 'Take Luoyang by 222.',
