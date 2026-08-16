@@ -4819,16 +4819,32 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '四世三公', en: 'Four Generations, Three Excellencies' },
-        description: 'Hold Ye and take Guandu by 213 — Xuchang lies just beyond the ford.',
-        descriptionZh: "於213年前據鄴城、官渡 —— 名門之望,當有名門之業;而許都就在官渡之南。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'guandu'], byYear: 213 },
+        description: 'Still hold Ye in 201 — sixteen rivals stand on this map at once. Keeping your own seat through the first year is the whole of it.',
+        descriptionZh: "至201年仍據鄴城 —— 這張圖上同時站著十六家。守得住自己的治所過第一年,就已經是全部。",
+        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 201 },
       },
       /*
-       * 原本主目標要的是許昌,壓力 0.68 —— 在 AI 的候選門檻(1.05)之下,
-       * 也就是他一輩子不會去打。官渡是他真正壓著曹操的那個渡口(1.80),
-       * 拿下之後許都才進得了視野;許昌降為次要。
+       * 改過兩次。原本要許昌(壓力 0.68,在候選門檻之下,AI 一輩子不會去打);
+       * 上一版改成「據鄴城、取官渡」,理由是官渡壓力 1.80 —— 而那個判準
+       * 已經證實不可靠(見 scripts/reachability-audit.ts 檔頭)。三次掃描全死。
+       *
+       * 實測(6 輪,開局 200,+1/+3/+5/+8 年在手比例):
+       *
+       *   雁門 6/6 6/6 6/6 6/6   黎陽 6/6 4/6 3/6 2/6   壺關 6/6 5/6 2/6 1/6
+       *   鄴  3/6 3/6 2/6 2/6    ← 他自己的治所也只有一半
+       *   官渡 一次也沒有在手上
+       *
+       * 十七路諸侯同場,他開局 10 城而 +8 年只剩 3 —— 而原本的期限寫的是
+       * **開局後十三年**。守成才是這張盤上他做得到的事;取官渡、入許都
+       * 都降為次要。
        */
       secondary: [
+        {
+          title: { zh: '渡口在南', en: 'The Ford to the South' },
+          description: 'Take Guandu by 210 — Xuchang lies just beyond it.',
+          descriptionZh: "於210年前攻取官渡 —— 而許都就在官渡之南。",
+          goal: { kind: 'hold-cities', cityIds: ['guandu'], byYear: 210 },
+        },
         {
           title: { zh: '挾天子者當易人', en: 'Another Hand on the Emperor' },
           description: 'Take Xuchang by 213.',
