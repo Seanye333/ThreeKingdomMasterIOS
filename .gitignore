@@ -45,3 +45,6 @@ public/models/duel/_src/
 
 # Coverage output
 coverage
+
+# App Store 送審截圖 —— 33MiB 的可再生產物,跑 `npx playwright test appStoreShots` 重出
+e2e/__appstore__/
