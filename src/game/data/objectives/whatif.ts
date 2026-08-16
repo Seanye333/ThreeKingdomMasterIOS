@@ -127,9 +127,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '拖死孔明', en: 'Outlast Kongming' },
-        description: "Still hold Chang'an and Tianshui in 255 — you cannot beat him, only wait him out. This time the wait is longer.",
-        descriptionZh: "至255年仍保長安、天水 —— 你打不贏他,只能等他死。這一次要等得久一些。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'tianshui'], byYear: 255 },
+        description: "Still hold Luoyang and Xuchang in 255 — you cannot beat him, only wait him out. This time the wait is longer.",
+        descriptionZh: "至255年仍保洛陽、許昌 —— 你打不贏他,只能等他死;而這一次要等得久一些。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 255 },
       },
     },
     {
@@ -137,9 +137,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '東西呼應', en: 'Answer from the East' },
-        description: 'Take Hefei and Xiangyang by 250.',
-        descriptionZh: "於250年前取合肥、襄陽 —— 蜀既能持久,吳當並力。",
-        goal: { kind: 'hold-cities', cityIds: ['hefei', 'xiangyang'], byYear: 250 },
+        description: 'Take Maicheng and Cangwu by 245 — Shu can hold; the east must pull its share, and this is where it can.',
+        descriptionZh: "於245年前取麥城、蒼梧 —— 蜀既能持久,吳當並力;而東邊使得上力的是這兩處。",
+        goal: { kind: 'hold-cities', cityIds: ['maicheng', 'cangwu'], byYear: 245 },
       },
     },
   ],
