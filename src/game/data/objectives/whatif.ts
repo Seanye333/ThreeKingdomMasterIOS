@@ -498,9 +498,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
        */
       primary: {
         title: { zh: '再尋一處落腳', en: 'Another Roof, Again' },
-        description: 'Hold Xiapi and take Qiao by 206 — you have outlived four patrons; find land of your own.',
-        descriptionZh: "於206年前據下邳、譙 —— 依人者四矣,總該有自己的地方;而譙是曹家的祖塋所在。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'qiao'], byYear: 206 },
+        description: 'Still hold Langya and Xiaopei in 206 — you have outlived four patrons; this time the ground stays yours.',
+        descriptionZh: "至206年仍據琅琊、小沛 —— 依人者四矣,而這一次腳下這塊地沒有再換人。",
+        goal: { kind: 'hold-cities', cityIds: ['langya', 'xiaopei'], byYear: 206 },
       },
       secondary: [
         {
@@ -990,9 +990,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '亂中取地', en: 'Take Land in the Confusion' },
-        description: 'Hold Xiapi and take Qiao by 206 — three powers at a standstill is a landless man\u2019s chance.',
-        descriptionZh: "於206年前據下邳、譙 —— 三強相持,反是無地者的機會;而譙是曹家的祖塋所在。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'qiao'], byYear: 206 },
+        description: 'Still hold Xiaopei and Langya in 206 — three powers at a standstill is a landless man\u2019s chance to stop moving.',
+        descriptionZh: "至206年仍據小沛、琅琊 —— 三強相持,反是無地者的機會;而機會的內容是不必再搬家。",
+        goal: { kind: 'hold-cities', cityIds: ['xiaopei', 'langya'], byYear: 206 },
       },
       /* 江陵與成都跟他徐州那四座城**完全不相鄰**(壓力 0.00);譙 1.14 才是他推得動的。 */
       secondary: [
