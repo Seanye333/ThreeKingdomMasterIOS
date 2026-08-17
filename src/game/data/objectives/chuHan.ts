@@ -26,11 +26,21 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '關東群盜', en: '"Merely Bandits, Your Majesty"' },
-        description: 'Destroy the Zhangchu force by 183 — the court insisted there was no rebellion at all.',
-        descriptionZh: "於183年前平定張楚 —— 朝廷上下都說那不過是群盜,不足憂。",
-        goal: { kind: 'defeat-force', forceId: 'zhangchu', byYear: 183 },
+        description: 'Break the Zhangchu force down to three cities by 183 — the court insisted there was no rebellion at all.',
+        descriptionZh: "於183年前將張楚逼到只剩三城 —— 朝廷上下都說那不過是群盜,不足憂。",
+        goal: { kind: 'break-force', forceId: 'zhangchu', maxCities: 3, byYear: 183 },
       },
+      /*
+       * 「平定張楚」自走 0/3。實測四輪張楚最少剩 3、5、3、4 城 —— 壓得下去
+       * 但壓不到零。門檻訂三城,平定降為次要。
+       */
       secondary: [
+        {
+          title: { zh: '關東群盜', en: 'Bandits of the East' },
+          description: 'Destroy the Zhangchu force by 186.',
+          descriptionZh: "於186年前平定張楚 —— 一個也不留。",
+          goal: { kind: 'defeat-force', forceId: 'zhangchu', byYear: 186 },
+        },
         {
           title: { zh: '二世而不亡', en: 'Not Dead in the Second Generation' },
           description: 'Survive to 186 — the empire that was to last ten thousand generations.',

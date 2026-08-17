@@ -1393,11 +1393,22 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '非六十萬不可', en: 'It Will Take Six Hundred Thousand' },
-        description: "Destroy the Qin force by 193 — Xiang Yan broke Li Xin's twenty legions before Wang Jian came.",
-        descriptionZh: "於193年前擊滅秦國 —— 項燕破李信二十萬,直到王翦以六十萬來。",
-        goal: { kind: 'defeat-force', forceId: 'qin', byYear: 193 },
+        description: "Break Qin down to twenty-four cities by 193 — Xiang Yan broke Li Xin's twenty legions before Wang Jian came.",
+        descriptionZh: "於193年前將秦逼到只剩二十四城 —— 項燕破李信二十萬,直到王翦以六十萬來。",
+        goal: { kind: 'break-force', forceId: 'qin', maxCities: 24, byYear: 193 },
       },
+      /*
+       * 「擊滅秦國」而秦**開局四十二城** —— 自走三輪 0/3。實測(4 輪,逐旬追
+       * 秦的城數)楚最多把它壓到 **17–22 城**,壓不到零。門檻訂在二十四城
+       * (實測最少值的上緣),滅秦降為次要 —— 那本來就是他沒做到的事。
+       */
       secondary: [
+        {
+          title: { zh: '非六十萬不可', en: 'Sixty Legions or Nothing' },
+          description: 'Destroy the Qin force by 200 — Xiang Yan broke Li Xin before Wang Jian came with sixty legions.',
+          descriptionZh: "於200年前擊滅秦國 —— 項燕破李信二十萬,而王翦說,非六十萬不可。",
+          goal: { kind: 'defeat-force', forceId: 'qin', byYear: 200 },
+        },
         {
           title: { zh: '守郢壽春', en: 'Hold the Southern Capitals' },
           description: 'Still hold Jiangling and Shouchun in 190.',
