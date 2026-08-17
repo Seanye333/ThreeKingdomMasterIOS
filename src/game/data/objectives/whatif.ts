@@ -296,9 +296,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-teng',
       primary: {
         title: { zh: '西涼之安', en: 'Liang Kept Quiet' },
-        description: "Still hold Wuwei and Anding in 214. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
-        descriptionZh: "至214年仍據武威、安定。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
-        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 214 },
+        description: "Still hold Wuwei and Longxi in 212. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
+        descriptionZh: "至212年仍據武威、隴西。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'longxi'], byYear: 212 },
       },
     },
     {
@@ -1615,9 +1615,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-teng',
       primary: {
         title: { zh: '西涼之安', en: 'Liang Kept Quiet' },
-        description: "Still hold Wuwei and Tianshui in 214. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
-        descriptionZh: "至214年仍據武威、天水。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
-        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'tianshui'], byYear: 214 },
+        description: "Still hold Wuwei and Tianshui in 213. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
+        descriptionZh: "至213年仍據武威、天水。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'tianshui'], byYear: 213 },
       },
     },
     {
@@ -1697,9 +1697,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '拒吳於襄樊', en: 'Stop Wu at Xiangyang' },
-        description: 'Still hold Xiangyang in 220, and break Sun Quan.',
-        descriptionZh: "至220年仍守襄陽 —— 周瑜不死,荊北便無寧日。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 220 },
+        description: 'Still hold Fancheng in 218 — with Zhou Yu alive there is no quiet year in northern Jing, and Fan is the hinge of it.',
+        descriptionZh: "至218年仍守樊城 —— 周瑜不死,荊北便無寧日,而樊城是那道門軸。",
+        goal: { kind: 'hold-cities', cityIds: ['fancheng'], byYear: 218 },
       },
       secondary: [
         {
