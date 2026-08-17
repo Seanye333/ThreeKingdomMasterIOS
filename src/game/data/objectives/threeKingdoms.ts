@@ -47,9 +47,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yellow-turban',
       primary: {
         title: { zh: '蒼天已死', en: 'The Blue Heaven is Dead' },
-        description: 'Take Luoyang before 186 AD.',
-        descriptionZh: "於186年前攻取洛陽。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 186 },
+        description: 'Still hold Linzi and Nanpi in 186 — the Yellow Sky was never going to reach Luoyang; holding the two that answered first is the whole of it.',
+        descriptionZh: "至186年仍據臨淄、南皮 —— 黃天到不了洛陽,守住最先舉旗的那兩座就已經是全部。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'nanpi'], byYear: 186 },
       },
       secondary: [
         {
@@ -1577,9 +1577,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '奉天子以令不臣', en: 'Shelter the Son of Heaven' },
-        description: 'Hold Luoyang and Xuchang by 199.',
-        descriptionZh: "於199年前兼據洛陽與許昌,奉天子以令不臣。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 199 },
+        description: 'Take Qiao by 195 — his own county first; the emperor comes later, and only to whoever still has an army.',
+        descriptionZh: "於195年前攻取譙 —— 先取本鄉。天子是後來的事,而且只落在還有兵的人手裡。",
+        goal: { kind: 'hold-cities', cityIds: ['qiao'], byYear: 195 },
       },
       secondary: [
         {
@@ -3309,9 +3309,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '入主西川', en: 'Master of the West' },
-        description: "Hold Jiangzhou and Baxi and take Chengdu by 218 — the heart of Yi; Nanzhong will need its own campaign.",
-        descriptionZh: "於218年前據江州、巴西並取成都 —— 益州之心;南中要另打一場仗。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'baxi'], byYear: 218 },
+        description: "Hold Jiangzhou and Baxi and take Fucheng by 217 — Fu is the gate Liu Bei actually came through; Chengdu is the year after.",
+        descriptionZh: "於217年前據江州、巴西並取涪城 —— 史書上他是從涪城進去的;成都是再下一步。",
+        goal: { kind: 'hold-cities', cityIds: ['fucheng', 'jiangzhou', 'baxi'], byYear: 217 },
       },
       secondary: [
         {
@@ -4540,12 +4540,25 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-264-dengai',
       forceId: 'dengai',
       primary: {
-        title: { zh: '偷渡陰平', en: 'The March Through Yinping' },
-        description: "Take Chengdu by 268 — seven hundred li of unpeopled mountain, and the war was over. Yinping is a road, not a prize.",
-        descriptionZh: "於268年前取成都 —— 行無人之地七百餘里,鑿山通道,以氈自裹推轉而下,而蜀亡。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 268 },
+        title: { zh: '守南中', en: 'The South Held' },
+        description: "Still hold Nanzhong, Jianning and Yuexi in 268 — the man who walked seven hundred li of unpeopled mountain now has six cities and no friends at court.",
+        descriptionZh: "至268年仍據南中、建寧、越巂 —— 行無人之地七百餘里的人,如今只有六座城,而朝中無人替他說話。",
+        goal: { kind: 'hold-cities', cityIds: ['nanzhong', 'jianning', 'yuexi'], byYear: 268 },
       },
+      /*
+       * 實測(6 輪,開局 264,+1/+2/+3/+5 年在手比例):他 6 城掉到**中位 2 城**,
+       * 而成都只有 1/6~2/6 —— 招牌那一步做得到但不穩,三輪 0/3。
+       * 守得住的是南中那一片:南中 6/6 5/6 5/6 5/6、越巂 5/6 6/6 6/6 5/6、
+       * 建寧 6/6 5/6 5/6 4/6。取成都降為次要 —— 它仍然是這張盤的高光,
+       * 只是不該當及格線。
+       */
       secondary: [
+        {
+          title: { zh: '偷渡陰平', en: 'The March Through Yinping' },
+          description: "Take Chengdu by 268 — seven hundred li of unpeopled mountain, and the war was over.",
+          descriptionZh: "於268年前取成都 —— 行無人之地七百餘里,鑿山通道,以氈自裹推轉而下,而蜀亡。",
+          goal: { kind: 'hold-cities', cityIds: ['chengdu'], byYear: 268 },
+        },
         {
           title: { zh: '功高見疑', en: 'Too Much Merit' },
           description: 'Destroy the Zhong Hui force — he wrote the letters that had you arrested.',
