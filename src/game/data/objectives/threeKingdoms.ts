@@ -1425,9 +1425,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '秭歸之進', en: 'The Advance to Zigui' },
-        description: "Hold Yiling and Xiaoting by 225 — the army got this far, and then the camps burned.",
-        descriptionZh: "於225年前取夷陵、猇亭 —— 大軍推到這裡,然後四十餘營燒了一夜。",
-        goal: { kind: 'hold-cities', cityIds: ['yiling', 'xiaoting'], byYear: 225 },
+        description: "Take Yinping by 228 — the eastern campaign ended in fire; what is left to Shu is the road north.",
+        descriptionZh: "於228年前取陰平 —— 東征以一夜大火收場,蜀漢還走得通的是北邊那條路。",
+        goal: { kind: 'hold-cities', cityIds: ['yinping'], byYear: 228 },
       },
       secondary: [
         {
@@ -2340,9 +2340,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'lu-bu',
       primary: {
         title: { zh: '徐州為家', en: 'Xuzhou for a Home' },
-        description: 'Hold Xiapi and Pengcheng by 198.',
-        descriptionZh: "於198年前兼據下邳、彭城,終得一塊自己的地。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'pengcheng'], byYear: 198 },
+        description: 'Hold Xiapi and take Xiaopei by 200 — a place of his own at last, and Xiaopei is the one he can actually reach.',
+        descriptionZh: "於200年前據下邳並取小沛 —— 終得一塊自己的地;而搆得著的那一座是小沛。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'xiaopei'], byYear: 200 },
       },
     },
     {
@@ -2422,9 +2422,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '易京之滅', en: 'The Tower at Yijing' },
-        description: "Take Yi County and Ji by 203 — Gongsun Zan built a tower ten zhang high and burned in it. That is the war of 198, not Guandu.",
-        descriptionZh: "於203年前取易京、薊 —— 公孫瓚起樓十丈,自焚而死。198年的仗打的是這個,不是官渡。",
-        goal: { kind: 'hold-cities', cityIds: ['yi-county', 'ji'], byYear: 203 },
+        description: "Break Gongsun Zan down to five cities by 205 — he built a tower ten zhang high and burned in it. That is the war of 198, not Guandu.",
+        descriptionZh: "於205年前將公孫瓚逼到只剩五城 —— 公孫瓚起樓十丈,自焚而死。198年的仗打的是這個,不是官渡。",
+        goal: { kind: 'break-force', forceId: 'gongsun', maxCities: 5, byYear: 205 },
       },
     },
     {
@@ -3267,11 +3267,23 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '湘水之西', en: 'West of the Xiang' },
-        description: "Hold Changsha and Guiyang by 219 — the Xiang treaty gave Wu these two, not Jiangling.",
-        descriptionZh: "於219年前取長沙、桂陽 —— 湘水劃界分給孫氏的是這兩郡,不是江陵。",
-        goal: { kind: 'hold-cities', cityIds: ['changsha', 'guiyang'], byYear: 219 },
+        description: "Still hold Changsha in 219 — the Xiang treaty gave Wu the south bank; keeping it is the whole of the treaty.",
+        descriptionZh: "至219年仍據長沙 —— 湘水劃界分給孫氏的是南岸,而守住它就是那紙盟約的全部。",
+        goal: { kind: 'hold-cities', cityIds: ['changsha'], byYear: 219 },
       },
+      /*
+       * 原本要「取長沙、桂陽」而桂陽在劉備手裡,自走 0/3。改指赤壁也不行 ——
+       * 兩次實測同一個指令,赤壁一次量到 4/6、一次量到 1/6(見
+       * what-they-actually-do 檔頭那條「看方向可靠、定期限不可靠」)。
+       * 長沙則兩次都是 6/6,收成單守長沙,取桂陽與赤壁留在次要。
+       */
       secondary: [
+        {
+          title: { zh: '湘水之西', en: 'West of the Xiang' },
+          description: 'Take Guiyang by 219 — the two commanderies the treaty named.',
+          descriptionZh: "於219年前取桂陽 —— 湘水劃界時點名的那兩郡,另一郡在對岸。",
+          goal: { kind: 'hold-cities', cityIds: ['guiyang'], byYear: 219 },
+        },
         {
           title: { zh: '索還荊州', en: 'Demand Jing Back' },
           description: 'Take Jiangling by 219.',
