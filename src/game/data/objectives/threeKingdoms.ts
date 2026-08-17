@@ -4311,11 +4311,23 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '平毌丘儉', en: 'Put Down Guanqiu Jian' },
-        description: 'Destroy the Guanqiu force by 258 — ride out with a tumour in your eye if you must.',
-        descriptionZh: "於258年前平定毌丘儉 —— 目瘤方割,亦當輿疾而東。",
-        goal: { kind: 'defeat-force', forceId: 'guanqiu', byYear: 258 },
+        description: 'Break the Guanqiu force down to two cities by 258 — ride out with a tumour in your eye if you must.',
+        descriptionZh: "於258年前將毌丘儉逼到只剩兩城 —— 目瘤方割,亦當輿疾而東。",
+        goal: { kind: 'break-force', forceId: 'guanqiu', maxCities: 2, byYear: 258 },
       },
+      /*
+       * 實測(4 輪,逐旬追毌丘儉的城數):最少剩 2、3、3、0 ——
+       * **滅得掉,但四輪只中一次**,所以「平定」自走 0/3。門檻訂兩城,
+       * 徹底翦除留在次要。史書上毌丘儉 255 年就敗走慎縣為平民所射殺,
+       * 這裡給到 258 已經寬。
+       */
       secondary: [
+        {
+          title: { zh: '平毌丘儉', en: 'Put Down Guanqiu' },
+          description: 'Destroy the Guanqiu force by 260.',
+          descriptionZh: "於260年前翦除毌丘儉 —— 一個也不留。",
+          goal: { kind: 'defeat-force', forceId: 'guanqiu', byYear: 260 },
+        },
         {
           title: { zh: '壽春在握', en: 'Hold Shouchun' },
           description: 'Still hold Shouchun in 260.',
