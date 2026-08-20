@@ -197,10 +197,24 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'zheng',
       primary: {
         title: { zh: '西向爭關', en: 'West While Tang Is Busy' },
-        description: "Hold Luoyang and take Tongguan by 185.",
-        descriptionZh: "於185年前守洛陽並取潼關 —— 唐師在隴右,關東可乘。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'tongguan'], byYear: 185 },
+        description: "Still hold Wancheng and Xinye in 181 — the Tang army is away in Longyou; what the east can do is not lose ground.",
+        descriptionZh: "至181年仍據宛城、新野 —— 唐師在隴右,而關東能做的是先不丟地。",
+        goal: { kind: 'hold-cities', cityIds: ['wancheng', 'xinye'], byYear: 181 },
       },
+      /*
+       * 原本要「守洛陽並取潼關」,而潼關在唐手裡、他 4 城掉到 3,三輪 0/3。
+       * 第一版改成守洛陽/宛城/博望仍然 0 —— 實測**洛陽本身就守不穩**
+       * (+1年 5/6、+3年起只剩 3/6),三城合取更低。收成他最穩的兩座:
+       * 宛城與新野(前期都是 6/6)。取潼關與守洛陽都留在次要。
+       */
+      secondary: [
+        {
+          title: { zh: '西向爭關', en: 'West While Tang Is Busy' },
+          description: "Hold Luoyang and take Tongguan by 185.",
+          descriptionZh: "於185年前守洛陽並取潼關 —— 唐師在隴右,關東可乘。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'tongguan'], byYear: 185 },
+        },
+      ],
     },
     {
       id: 'obj-stqs-xia',
@@ -275,9 +289,9 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'dingyang',
       primary: {
         title: { zh: '宋金剛南下', en: "Song Jin'gang Drives South" },
-        description: "Hold Taiyuan and take Chang'an by 185 — you have taken the Li clan's home ground; do not stop.",
-        descriptionZh: "於185年前守太原並取長安 —— 已奪李氏根本之地,不可頓兵。",
-        goal: { kind: 'hold-cities', cityIds: ['taiyuan', 'changan'], byYear: 180 },
+        description: "Still hold Ji, Hukou and Yuyang in 181 — you have taken the Li clan's home ground; now keep it.",
+        descriptionZh: "至181年仍據薊、壺口、漁陽 —— 已奪李氏根本之地,接下來是守得住。",
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'hukou', 'yuyang'], byYear: 181 },
       },
     },
     {

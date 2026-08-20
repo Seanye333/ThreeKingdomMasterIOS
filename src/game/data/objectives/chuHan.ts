@@ -507,16 +507,26 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'han',
       primary: {
         title: { zh: '背水一戰', en: 'With the River at Our Backs' },
-        description: 'Take Handan by 184 — put the men where they cannot run, and they will fight.',
+        description: "Take Chang'an by 182 — put the men where they cannot run and they will fight; then the road west opens.",
         /*
-         * 原本是「取鄴城、常山」,而**常山對漢是 0.00(完全不相鄰)** ——
-         * 兩座缺一不可,於是整條 0。井陘之戰的結果是滅趙、擒趙王歇、
-         * 斬陳餘於泜水,而那一件事在盤上就是拿下邯鄲(鄴)。
+         * 改過兩次。原本是「取鄴城、常山」而常山對漢壓力 0.00(完全不相鄰);
+         * 上一版改成單取鄴(邯鄲),仍然三輪 0/3 —— **鄴在趙手裡而漢打不動它**。
+         *
+         * 實測(6 輪,開局 178,+1/+3/+5/+8 年在手比例)漢真正在做的事:
+         * 他 28 城長到 40,而 **郿 6/6、散關 6/6、長安 6/6(+3 年起)** ——
+         * 那是還定三秦那條路,也正是井陘之後韓信真正打開的方向。
+         * 取邯鄲與滅趙都留在次要。
          */
-        descriptionZh: "於184年前取邯鄲(鄴) —— 陷之死地而後生,置之亡地而後存;井陘一戰,斬成安君泜水上,禽趙王歇。",
-        goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 184 },
+        descriptionZh: "於182年前取長安 —— 陷之死地而後生,置之亡地而後存;背水而勝,西邊那條路才開得了。",
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 182 },
       },
       secondary: [
+        {
+          title: { zh: '取邯鄲', en: 'Take Handan' },
+          description: 'Take Handan (Ye) by 186 — Chen Yu fell at the Zhi, and Zhao Xie was taken.',
+          descriptionZh: "於186年前取邯鄲(鄴) —— 井陘一戰,斬成安君泜水上,禽趙王歇。",
+          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 186 },
+        },
         {
           title: { zh: '滅趙', en: 'End Zhao' },
           description: 'Destroy the Zhao force by 186.',

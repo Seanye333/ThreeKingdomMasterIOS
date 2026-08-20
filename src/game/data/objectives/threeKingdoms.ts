@@ -4167,9 +4167,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '挾帝幸許', en: 'Take the Emperor to Xuchang' },
-        description: "Take Xuchang by 253 — Huan Fan begged you to go there and call up the realm; you went home instead.",
-        descriptionZh: "於253年前取許昌 —— 桓範勸你挾天子走許昌、召天下兵,你選擇了回家做富家翁。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang'], byYear: 253 },
+        description: "Still hold Wuwei and Jincheng in 253 — Huan Fan begged you to run to Xuchang and call up the realm; you went home instead. The west is what is left.",
+        descriptionZh: "至253年仍據武威、金城 —— 桓範勸你挾天子走許昌、召天下兵,你選擇了回家做富家翁;剩下的是西邊這一塊。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng'], byYear: 253 },
       },
       secondary: [
         {
