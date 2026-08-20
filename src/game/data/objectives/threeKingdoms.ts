@@ -1887,9 +1887,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '河北一統', en: 'Master of the North' },
-        description: 'Control Ji province by 201.',
-        descriptionZh: "於201年前盡取冀州。",
-        goal: { kind: 'control-province', provinceId: 'ji', byYear: 201 },
+        description: 'Take Pingyuan and Beiping by 201 — to hold Hebei entire, join these two up first.',
+        descriptionZh: "於201年前取平原、北平 —— 河北要一統,先把這兩座接起來。",
+        goal: { kind: 'hold-cities', cityIds: ['pingyuan', 'beiping'], byYear: 201 },
       },
       secondary: [
         {
@@ -1905,8 +1905,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shu',
       primary: {
         title: { zh: '淮南之主', en: 'Lord of Huainan' },
-        description: "Hold Shouchun and take Runan by 198 — the seal was in his sleeve and the granaries were not.",
-        descriptionZh: "於198年前據壽春並取汝南 —— 玉璽在袖,而倉廩不在。稱帝是明年的事,而明年之後就沒有後年了。",
+        description: "Still hold Shouchun and Hefei in 198 — the seal was in his sleeve and the granaries were not.",
+        descriptionZh: "至198年仍據壽春、合肥 —— 玉璽在袖,而倉廩不在。稱帝是明年的事,而明年之後就沒有後年了。",
         /*
          * 原本是 `declare-emperor`,而 **AI 袁術永遠稱不了帝**:`aiCourt` 的
          * 即位規則要 `ranknow === 'king'`(20 城 + 215 年後)且
@@ -1920,7 +1920,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 記在 docs/CAMPAIGN-CHECKS.md 的待辦裡。
          * 主目標先寫他真正握著的那一塊,稱帝降為次要。
          */
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'runan'], byYear: 198 },
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'hefei'], byYear: 198 },
       },
       secondary: [
         {

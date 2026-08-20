@@ -119,6 +119,12 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
   { scenario: 'scn-204-yecheng',   force: 'yuan-shang', why: '「鄴城固守」—— 鄴城陷落是這張盤的名字。' },
   { scenario: 'scn-199-yijing',    force: 'gongsun',    why: '同 195:易京之戰的結局就是樓焚。' },
   // 楚漢:項羽在這幾年裡先後打垮了齊與九江,那正是「楚漢相爭」的內容。
+  /*
+   * 垓下:盤名就是他的結局。實測 16 城掉到**中位 0** —— 而「存續至 X 年」
+   * 要求的正是不覆滅。這與呂布之於白門樓、公孫瓚之於易京樓同型:
+   * 那不是資料錯,是這張盤要玩家改寫的那件事。
+   */
+  { scenario: 'scn-ch-gaixia',    force: 'chu',        why: '「不肯過江東」—— 漢五年十二月,垓下潰圍,自刎烏江。盤名就是他的死。' },
   { scenario: 'scn-ch-chuhan',    force: 'jiujiang',   why: '「黥布反楚」—— 叛楚之後龍且擊破九江,英布單身走漢。' },
   { scenario: 'scn-ch-sanqin',    force: 'jiujiang',   why: '同上:按兵不動的下場是被楚順手收拾。' },
   { scenario: 'scn-ch-pengcheng', force: 'jiujiang',   why: '同上。' },

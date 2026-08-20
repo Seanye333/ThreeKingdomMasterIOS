@@ -1375,11 +1375,23 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '六王畢,四海一', en: 'Six Kings Ended, the Realm One' },
-        description: 'Bring all under one banner — ten years, six states, in order.',
-        descriptionZh: "混一天下 —— 十年之間,韓趙魏楚燕齊,以次而滅。",
-        goal: { kind: 'unify-realm' },
+        description: 'Break Chu down to eighteen cities by 190 — the largest of the six goes first, and the rest follow in order.',
+        descriptionZh: "於190年前將楚逼到只剩十八城 —— 六國之中楚最大,先折它,其餘以次而下。",
+        goal: { kind: 'break-force', forceId: 'chu', maxCities: 18, byYear: 190 },
       },
+      /*
+       * **勝利條件當主目標**(`unify-realm`)是走勢表點名的一種死法 ——
+       * 自走三輪 0/3,而秦其實 42 城只掉到 34,穩得很,只是吞不完六國。
+       * 實測(4 輪,15 年內追楚的城數)楚最少剩 18、4、8、8 ——
+       * 折得動。門檻訂十八城(最少值的上緣),混一天下降為次要。
+       */
       secondary: [
+        {
+          title: { zh: '六王畢,四海一', en: 'Six Kings Done, the Realm One' },
+          description: 'Bring all under one banner — ten years, six states, in order.',
+          descriptionZh: "混一天下 —— 十年之間,韓趙魏楚燕齊,以次而滅。",
+          goal: { kind: 'unify-realm' },
+        },
         {
           title: { zh: '先滅韓趙', en: 'Han and Zhao First' },
           description: 'Destroy the Han force by 188.',
