@@ -26,13 +26,18 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '關東群盜', en: '"Merely Bandits, Your Majesty"' },
-        description: 'Break the Zhangchu force down to three cities by 183 — the court insisted there was no rebellion at all.',
-        descriptionZh: "於183年前將張楚逼到只剩三城 —— 朝廷上下都說那不過是群盜,不足憂。",
-        goal: { kind: 'break-force', forceId: 'zhangchu', maxCities: 3, byYear: 183 },
+        description: 'Break the Zhangchu force down to five cities by 183 — the court insisted there was no rebellion at all.',
+        descriptionZh: "於183年前將張楚逼到只剩五城 —— 朝廷上下都說那不過是群盜,不足憂。",
+        goal: { kind: 'break-force', forceId: 'zhangchu', maxCities: 5, byYear: 183 },
       },
       /*
-       * 「平定張楚」自走 0/3。實測四輪張楚最少剩 3、5、3、4 城 —— 壓得下去
-       * 但壓不到零。門檻訂三城,平定降為次要。
+       * 「平定張楚」自走 0/3。壓得下去但壓不到零,所以改 break-force。
+       *
+       * ⚠ 門檻訂過兩次,第一次錯了:我用**跑十年**的探針量到最少剩 3 城就寫了
+       * 三城,而這條的期限只有 183(開局 +5 年)—— **期限之內**張楚最少剩
+       * 4~5 城,於是仍然 0/3。改成五城才過。
+       * 判準:量 break-force 門檻時,探針必須在 `byYear` 就停,
+       * 跟公孫瓚那條是同一個錯(見 §資料「滅一家與逼一家」)。
        */
       secondary: [
         {

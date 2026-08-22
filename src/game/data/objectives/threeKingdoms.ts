@@ -4323,9 +4323,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '平毌丘儉', en: 'Put Down Guanqiu Jian' },
-        description: 'Break the Guanqiu force down to two cities by 258 — ride out with a tumour in your eye if you must.',
-        descriptionZh: "於258年前將毌丘儉逼到只剩兩城 —— 目瘤方割,亦當輿疾而東。",
-        goal: { kind: 'break-force', forceId: 'guanqiu', maxCities: 2, byYear: 258 },
+        description: 'Break the Guanqiu force down to three cities by 258 — ride out with a tumour in your eye if you must.',
+        descriptionZh: "於258年前將毌丘儉逼到只剩三城 —— 目瘤方割,亦當輿疾而東。",
+        goal: { kind: 'break-force', forceId: 'guanqiu', maxCities: 3, byYear: 258 },
       },
       /*
        * 實測(4 輪,逐旬追毌丘儉的城數):最少剩 2、3、3、0 ——

@@ -27,6 +27,7 @@
 | 7b | 取得型目標 AI 構不構得著 | `node --import tsx scripts/reachability-audit.ts` | — | 134 條取得型:**25 條壓力 0** / 98 條低於門檻(診斷,一秒) |
 | 7c | 目標指的城/人開局在誰手上 | `node --import tsx scripts/objective-ownership-audit.ts` | `objectiveOwnership.test.ts` | **六類硬性 0**(2026-08-16 加「守成寫了別人的城」);另 77 條提示(診斷,一秒) |
 | 7d | **這一家實際上做得到什麼** | `node --import tsx scripts/what-they-actually-do.ts <盤id> 6 [勢力] --years=1,3,5,8` | — | 逐家報每座城在各檢查點的在手比例(診斷,單盤數分鐘)。**看方向可靠,定期限不可靠**,見該檔頭 |
+| 7e | **`break-force` 門檻訂多少** | `node --import tsx scripts/break-floor.ts <盤id> <對方id> <期限年> 4` | — | 量**期限之內**對方最少剩幾城(診斷,單盤數分鐘)。⚠ 探針視野必須在 `byYear` 就停 —— 這個錯犯過兩次 |
 | 8 | 單盤 AI 自走體檢 | `node --import tsx scripts/scenario-report.ts <id> 180 12` | — | 逐盤(診斷) |
 | 9 | 全 AI 觀察一整局 | `node --import tsx scripts/ai-watch.ts` | — | 診斷 |
 | 10 | 時代不外漏(外傳三線) | — | `eraLeaks.test.ts` / `altEraEventChains.test.ts` | **硬性** |
