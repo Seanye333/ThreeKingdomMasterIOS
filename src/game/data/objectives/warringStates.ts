@@ -939,9 +939,9 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '淮北之爭', en: 'The Fight for Huaibei' },
-        description: 'Hold Shouchun and Pengcheng by 185.',
-        descriptionZh: "於185年前據壽春、彭城 —— 宋地之利,楚亦欲得。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'pengcheng'], byYear: 185 },
+        description: 'Still hold Shouchun, Xiangyang and Jiangxia in 183 — Song is a prize Chu wants too, but the Huai and the Han come first.',
+        descriptionZh: "至183年仍據壽春、襄陽、江夏 —— 宋地之利楚亦欲得,而淮漢這一片要先守得住。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'xiangyang', 'jiangxia'], byYear: 183 },
       },
     },
     {

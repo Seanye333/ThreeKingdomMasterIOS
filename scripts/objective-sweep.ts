@@ -124,6 +124,11 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
    * 要求的正是不覆滅。這與呂布之於白門樓、公孫瓚之於易京樓同型:
    * 那不是資料錯,是這張盤要玩家改寫的那件事。
    */
+  /*
+   * 樂毅伐齊:齊開局只剩莒與即墨兩城,而實測末期中位 0 —— 「存續」在這張盤上
+   * 正是田單復國之前的絕境。盤名就是樂毅下齊七十餘城。
+   */
+  { scenario: 'scn-ws-yueyi',     force: 'qi',         why: '「莒與即墨」—— 樂毅下齊七十餘城,唯莒與即墨未下;齊只剩兩城,而那正是這張盤的題目。' },
   { scenario: 'scn-ch-gaixia',    force: 'chu',        why: '「不肯過江東」—— 漢五年十二月,垓下潰圍,自刎烏江。盤名就是他的死。' },
   { scenario: 'scn-ch-chuhan',    force: 'jiujiang',   why: '「黥布反楚」—— 叛楚之後龍且擊破九江,英布單身走漢。' },
   { scenario: 'scn-ch-sanqin',    force: 'jiujiang',   why: '同上:按兵不動的下場是被楚順手收拾。' },

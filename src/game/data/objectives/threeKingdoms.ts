@@ -1559,9 +1559,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'dong',
       primary: {
         title: { zh: '提兵入洛', en: 'March into Luoyang' },
-        description: 'Take Luoyang by 192.',
-        descriptionZh: "於192年前提兵入洛,執掌朝綱。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 192 },
+        description: "Still hold Chang'an and Wuwei in 192 — the march on Luoyang is the plan; keeping the west behind you is what makes it possible.",
+        descriptionZh: "至192年仍據長安、武威 —— 提兵入洛是打算,而背後的西涼守得住才走得成。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'wuwei'], byYear: 192 },
       },
       secondary: [
         {
@@ -3373,9 +3373,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '湘水劃界', en: 'The Xiang Partition' },
-        description: "Hold Changsha and Guiyang by 220 — three commanderies east of the Xiang; Jiangling waits until 219.",
-        descriptionZh: "於220年前取長沙、桂陽 —— 湘水以東三郡歸吳;江陵要等到建安二十四年。",
-        goal: { kind: 'hold-cities', cityIds: ['changsha', 'guiyang'], byYear: 220 },
+        description: "Still hold Jianye, Wu and Yuzhang in 220 — the Xiang treaty settles the west; the base it protects is the point.",
+        descriptionZh: "至220年仍據建業、吳郡、豫章 —— 湘水劃界了結的是西邊,而它護住的這塊根本才是要害。",
+        goal: { kind: 'hold-cities', cityIds: ['jianye', 'wu', 'yuzhang'], byYear: 220 },
       },
       secondary: [
         {
