@@ -409,9 +409,9 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '三萬破五十六萬', en: 'Thirty Thousand Against Half a Million' },
-        description: 'Retake Pengcheng by 182 and destroy the Han army — the fastest reversal in the record.',
-        descriptionZh: "於182年前收復彭城 —— 以三萬精騎,晨擊漢軍五十六萬,半日而破之。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng'], byYear: 182 },
+        description: 'Still hold Wancheng, Xinye and Xiangyang in 180 — three myriad horse broke five hundred and sixty thousand at dawn; holding what that bought is the next problem.',
+        descriptionZh: "至180年仍據宛城、新野、襄陽 —— 以三萬精騎晨擊漢軍五十六萬,半日而破之;而守得住那一戰換來的地,是另一回事。",
+        goal: { kind: 'hold-cities', cityIds: ['wancheng', 'xinye', 'xiangyang'], byYear: 180 },
       },
       secondary: [
         {

@@ -2504,9 +2504,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '拔易京', en: 'Storm Yijing' },
-        description: 'Destroy the Gongsun Zan force by 202.',
-        descriptionZh: "於202年前滅公孫瓚,拔其樓堞。",
-        goal: { kind: 'defeat-force', forceId: 'gongsun', byYear: 202 },
+        description: 'Break Gongsun Zan down to five cities by 202 — pull his towers down one at a time.',
+        descriptionZh: "於202年前將公孫瓚逼到只剩五城 —— 樓堞一座一座拔。",
+        goal: { kind: 'break-force', forceId: 'gongsun', maxCities: 5, byYear: 202 },
       },
       secondary: [
         {
@@ -2921,9 +2921,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'wuhuan',
       primary: {
         title: { zh: '踏頓南下', en: 'Tadun Rides South' },
-        description: 'Take Beiping by 211 — strike before the Han army reaches the steppe.',
-        descriptionZh: "於211年前攻取北平 —— 與其待其深入,不如先發南下。",
-        goal: { kind: 'hold-cities', cityIds: ['beiping'], byYear: 211 },
+        description: 'Still hold Liucheng and Wuhuan in 211 — the Han army is coming to the steppe; surviving it is the victory.',
+        descriptionZh: "至211年仍據柳城、烏丸 —— 漢軍要進草原了,而撐過去本身就是勝。",
+        goal: { kind: 'hold-cities', cityIds: ['liucheng', 'wuhuan'], byYear: 211 },
       },
     },
     {
@@ -4688,9 +4688,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '西陵之復', en: 'Xiling Retaken' },
-        description: 'Retake Xiling and hold Jiangling to 276 — the ring went up in the autumn and the city fell before the year turned.',
-        descriptionZh: "復西陵、保江陵至276年 —— 圍成於秋,城下於冬,步氏夷三族。這是吳國兵法的最後一件傑作,也是它多活的那十年。",
-        goal: { kind: 'hold-cities', cityIds: ['xiling', 'jiangling'], byYear: 276 },
+        description: 'Still hold Jiangling, Wu and Yuzhang in 275 — the ring went up in the autumn and the city fell before the year turned. What that bought Wu was ten more years.',
+        descriptionZh: "至275年仍據江陵、吳郡、豫章 —— 圍成於秋,城下於冬,步氏夷三族;那一戰替吳國多買了十年。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'wu', 'yuzhang'], byYear: 275 },
       },
       secondary: [
         {
