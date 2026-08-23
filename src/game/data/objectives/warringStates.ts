@@ -613,10 +613,17 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '伊闕斬首', en: 'The Slaughter at Yique' },
-        description: 'Take Luoyang and Xuchang by 186 — Bai Qi against two armies that will not fight together.',
-        descriptionZh: "於186年前取洛陽、許昌 —— 白起以寡擊眾,韓魏各自為戰。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 186 },
+        description: 'Break Han down to two cities by 186 — Bai Qi against two armies that will not fight together.',
+        descriptionZh: "於186年前將韓逼到只剩兩城 —— 白起以寡擊眾,韓魏各自為戰,斬首二十四萬。",
+        goal: { kind: 'break-force', forceId: 'han', maxCities: 2, byYear: 186 },
       },
+      /*
+       * 原本寫「取洛陽、許昌」而**洛陽開局就是秦的**(伊闕之後三川郡入秦,
+       * 這張盤的前提就是那件事),於是它只剩許昌一座在問,而許昌四輪只有 2/4。
+       * 伊闕斬首問的本來也不是城,是**韓魏聯軍被打垮**:實測期限之內韓
+       * 被壓到 2/1/1/0 城,所以 `break-force` 門檻兩城,四輪全中。
+       * 洛陽、許昌那條留在次要,那才是問城的地方。
+       */
       secondary: [
         {
           title: { zh: '滅韓', en: 'End Han' },
@@ -885,10 +892,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '地方五千里', en: 'Five Thousand Li' },
-        description: "Still hold Jiangling and Xiangyang in 184. Chu is five thousand li across with a million halberds — and a government that does not hold together.",
-        descriptionZh: "至184年仍據江陵、襄陽。楚地方五千里,持戟百萬 —— 而政散民離。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang'], byYear: 184 },
+        description: "Still hold Shouchun, Jianye and Yuzhang in 184. Chu is five thousand li across with a million halberds — and a government that does not hold together.",
+        descriptionZh: "至184年仍據壽春、建業、豫章。楚地方五千里,持戟百萬 —— 而政散民離。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'jianye', 'yuzhang'], byYear: 184 },
       },
+      /*
+       * **這張盤的楚跟其他幾張正好相反**,而這正是「同一座城在不同盤上不是
+       * 同一件事」最乾淨的例子:
+       *   七雄 / 魏文侯 / 商鞅 —— 壽春守不住(商鞅那張甚至是「每個檢查點都
+       *     已失去」),而江陵、襄陽 +6 年還是 4/4。
+       *   閼與(這張)       —— **襄陽 +6 年 0/4**,而壽春、建業、豫章、合肥全 4/4。
+       * 「至184年仍據江陵、襄陽」這句話一字不差地複製在**五張**戰國盤上,
+       * 而只有這一張是死的 —— 所以只改這一份,別順手五份一起改。
+       */
     },
     {
       id: 'obj-ws-yuyu-qi',
@@ -1007,10 +1023,16 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'han',
       primary: {
         title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
-        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
-        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+        description: "Still hold Runan and Xuchang in 181. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
+        descriptionZh: "至181年仍據汝南、許昌。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
+        goal: { kind: 'hold-cities', cityIds: ['runan', 'xuchang'], byYear: 181 },
       },
+      /*
+       * 「許昌、洛陽」這一組寫在**九張**戰國盤的韓身上,而這一張是死的:
+       * **洛陽每個檢查點都已失去**、許昌 +3 年只剩 2/4(韓 4 城 → 中位 2)。
+       * 這張盤的齊湣王稱帝把中原攪得比別張更亂,韓守得住的只有汝南(4/4)。
+       * 窗口一併從 184 收到 181 —— 許昌 +6 年就掉到 1/4 了。
+       */
     },
   ],
 
