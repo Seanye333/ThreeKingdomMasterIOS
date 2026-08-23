@@ -1403,10 +1403,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'yan',
       primary: {
         title: { zh: '毋易樂毅', en: 'Do Not Recall Yue Yi' },
-        description: 'Still hold Linzi and Ji in 185 — the reversal began with a change of general.',
+        description: 'Still hold Xiangping, Lelang and Daifang in 185 — the reversal began with a change of general.',
         /* 同樂毅盤:琅琊(莒)開局就在齊手裡,燕從來沒拿下過它。守住已下之地才是題目。 */
-        descriptionZh: "至185年仍保臨淄、薊 —— 敗局起於騎劫代將,而不是起於莒未下。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi', 'ji'], byYear: 185 },
+        descriptionZh: "至185年仍保襄平、樂浪、帶方 —— 敗局起於騎劫代將,而不是起於莒未下。",
+        /*
+         * 臨淄是齊的(燕四輪一次也沒握住),而**薊 +7 年 0/4** —— 燕 15 城
+         * 七年後中位剩 7,它在崩。真正穩的是東邊那一段:
+         * 樂浪 4/4、帶方 4/4、襄平 4/4→3/4(遼東 3/4)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['xiangping', 'lelang', 'daifang'], byYear: 185 },
       },
     },
     {
@@ -1432,9 +1437,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'zhao',
       primary: {
         title: { zh: '燕齊兩弊', en: 'Both Neighbours Exhausted' },
-        description: 'Hold Ye, Taiyuan and Shangdang by 184.',
-        descriptionZh: "於184年前據鄴城、太原、上黨。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'taiyuan', 'shangdang'], byYear: 184 },
+        description: 'Still hold Ye, Nanpi and Changshan in 184 — while Yan and Qi ruin each other, make Hebei solid.',
+        descriptionZh: "至184年仍據鄴城、南皮、常山 —— 燕齊兩弊之際,趙該做的是把河北坐實。",
+        /*
+         * **趙在這張盤是長的**(14 城 → 七年後中位 21),而題目挑的三座裡
+         * 上黨 +7 年只剩 1/4、太原更是四輪沒進過名單。
+         * 河北腹地一路 4/4(南皮/常山/信都/中山/博陵/平原),鄴 3/4。
+         * 跟七雄、伊闕兩張的趙同一個結論:**腹地守得住,北邊那一線守不住。**
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'nanpi', 'changshan'], byYear: 184 },
       },
     },
     {
@@ -1462,9 +1473,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'han',
       primary: {
         title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
-        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
-        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+        description: "Still hold Runan in 180. The realm's strongest bows come out of Han; the land is small, and this time even holding is beyond it.",
+        descriptionZh: "至180年仍據汝南 —— 天下之強弓勁弩皆從韓出,而地小,守則有餘;這一回連有餘都談不上。",
+        /*
+         * 這是第三張量到同一件事的韓盤:**洛陽 +4 年 0/4、許昌 +4 年 0/4**,
+         * 而汝南 3/4→2/4。「許昌、洛陽」那一組寫在九張盤的韓身上,
+         * 而只有部分盤是死的 —— 所以**不能整批改**,得一張一張量(齊湣王、長平、
+         * 田單三張已量到死,其餘七張自走過得去)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['runan'], byYear: 180 },
       },
     },
   ],
@@ -1535,9 +1552,16 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'zhao',
       primary: {
         title: { zh: '李牧在,趙不亡', en: 'While Li Mu Lives' },
-        description: 'Still hold Ye and Taiyuan in 191 — Zhao fell to a bribe, not to an army.',
-        descriptionZh: "至191年仍保鄴城、太原 —— 趙不是敗於秦軍,是敗於一筆賄賂。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'taiyuan'], byYear: 191 },
+        description: 'Still hold Nanpi, Xindu and Changshan in 188 — Zhao fell to a bribe, not to an army.',
+        descriptionZh: "至188年仍保南皮、信都、常山 —— 趙不是敗於秦軍,是敗於一筆賄賂。",
+        /*
+         * **太原四輪一次也沒進過名單**(這張盤它不是趙的),而鄴 +6 年 3/4、
+         * +10 年 2/4。趙在這張其實是長的(13 城 → 中位 17),
+         * 而穩的一樣是腹地:南皮 4/4、信都 4/4、常山/博陵 3/4。
+         * 這是第四張得到同一結論的趙盤 —— 腹地守得住,北邊那一線守不住。
+         * 窗口 191(開局 +13 年)收到 188。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['nanpi', 'xindu', 'changshan'], byYear: 188 },
       },
     },
     {
@@ -1573,15 +1597,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'yan',
       primary: {
         title: { zh: '燕祚未絕', en: 'Yan Not Yet Ended' },
-        description: "Still hold Ji and Liaodong in 190 — the dagger failed; the king fled beyond the Liao and gave up his own son's head to buy five more years.",
-        descriptionZh: "至190年仍據薊、遼東 —— 圖窮匕見而事不成,秦將王翦破薊,王喜走遼東,斬太子丹以獻。五年之後,燕亡。",
+        description: "Still hold Lelang, Daifang and Liucheng in 188 — Yan fell last, and distance is why.",
+        descriptionZh: "至188年仍據樂浪、帶方、柳城 —— 燕最後才亡,而它靠的是遠。",
         /*
          * 原本是「於192年前取長安」(以長安代表咸陽)—— 荊軻刺秦是**刺殺**,
          * 不是進軍;燕在遼東,對長安是 0.00,中間隔著整個天下。
          * 主目標改成他真正做到的那件事:秦破薊之後,燕在遼東又撐了五年。
          * 刺秦降為次要 —— 那本來就是一次孤注,不是國策。
          */
-        goal: { kind: 'hold-cities', cityIds: ['ji', 'liaodong'], byYear: 190 },
+        /*
+         * **北平「每個檢查點都已失去」、薊 1/4** —— 而樂浪 4/4、帶方 4/4、
+         * 柳城 3/4→2/4。跟田單那張的燕同一個結論:燕守得住的是最東邊那一段。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['lelang', 'daifang', 'liucheng'], byYear: 188 },
       },
     },
     {

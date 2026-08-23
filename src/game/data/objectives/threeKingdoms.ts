@@ -1770,9 +1770,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'lijue',
       primary: {
         title: { zh: '還都長安', en: "Retake Chang'an" },
-        description: "Take Chang'an by 195 — avenge the Grand Preceptor.",
-        descriptionZh: "於195年前攻取長安,為太師復仇。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 195 },
+        description: "Still hold Mei and Sanguan in 195 — avenge the Grand Preceptor; the capital never did come back.",
+        descriptionZh: "至195年仍據郿、散關 —— 為太師復仇,而長安終究沒有還回來。",
+        /*
+         * 「取長安」四輪一次也沒有 —— 長安在漢室手上,而李傕在這張盤是**在崩**的
+         * (漢中與陽平關「每個檢查點都已失去」、陳倉 +6 年 0/4)。
+         * 他真正握著的只有郿 4/4→3/4 與散關 3/4。
+         * 郿正是董卓的塢 —— 「為太師復仇」而守著太師的塢,比空喊還都貼。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['mei', 'sanguan'], byYear: 195 },
       },
     },
     {
@@ -1816,9 +1822,13 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
-        description: "Still hold Ji, Beiping and Yuyang in 199 — You province also runs out to Lelang and Daifang, which no one contests.",
-        descriptionZh: "至199年仍據薊、北平、漁陽 —— 幽州名下還有樂浪帶方,那是沒有人去爭的地方。",
-        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping', 'yuyang'], byYear: 199 },
+        description: "Still hold Ji and Yuyang in 199 — You province also runs out to Lelang and Daifang, which no one contests.",
+        descriptionZh: "至199年仍據薊、漁陽 —— 幽州名下還有樂浪帶方,那是沒有人去爭的地方。",
+        /*
+         * **北平又是它** —— 公孫家在四張盤上都守不住那一座(見若袁術稱帝成那條)。
+         * 拿掉就成立,薊與漁陽是他真正的幽州本鎮。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'yuyang'], byYear: 199 },
       },
       secondary: [
         {
