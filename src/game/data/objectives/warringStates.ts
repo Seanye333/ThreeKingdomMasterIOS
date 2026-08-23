@@ -99,10 +99,19 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'zhao',
       primary: {
         title: { zh: '胡服騎射', en: 'Nomad Dress, Mounted Archery' },
-        description: 'Take Taiyuan, Yanmen and Yunzhong by 195, then strike at Qin.',
-        descriptionZh: "於195年前據太原、雁門、雲中 —— 胡服騎射,北取樓煩林胡之地。",
-        goal: { kind: 'hold-cities', cityIds: ['taiyuan', 'yanmen', 'yunzhong'], byYear: 195 },
+        description: 'Still hold Xindu, Nanpi and Changshan in 184 — the mounted archers were raised to keep Hebei, not the frontier.',
+        descriptionZh: "至184年仍據信都、南皮、常山 —— 胡服騎射練出來的騎兵,守得住的是河北,不是樓煩林胡那一線。",
+        goal: { kind: 'hold-cities', cityIds: ['xindu', 'nanpi', 'changshan'], byYear: 184 },
       },
+      /*
+       * 趙在戰國盤上的形狀,兩張盤量出來一模一樣:**河北腹地守得住,
+       * 北邊那一線守不住。**
+       *   七雄(這張):太原 +3 年 **0/4**、雁門 2/4、雲中 2/4;
+       *                而信都 4/4、南皮 3/4、常山/博陵/中山 3/4(+6 年)。
+       *   伊闕:       上黨 2/4、太原 1/4、鄴一個檢查點都沒撐到;南皮/信都 4/4。
+       * 而題目原本正好挑的是那三座北邊的(窗口還是**開局 +17 年**)。
+       * 胡服騎射練的是騎兵,不是邊塞的城 —— 改成他真的守得住的那一段。
+       */
       secondary: [
         {
           title: { zh: '自雲中襲秦', en: 'Down on Qin from Yunzhong' },
@@ -672,10 +681,16 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'zhao',
       primary: {
         title: { zh: '趙不可獨存', en: 'Zhao Cannot Stand Alone Either' },
-        description: 'Still hold Shangdang and Taiyuan in 186 — Han and Wei are bleeding, and the road after them is yours.',
-        descriptionZh: "至186年仍據上黨、太原 —— 韓魏若亡,趙即當秦鋒;而這一年,趙什麼也沒有做。",
-        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'taiyuan'], byYear: 186 },
+        description: 'Still hold Nanpi and Xindu in 181 — Han and Wei are bleeding, and the road after them is yours.',
+        descriptionZh: "至181年仍據南皮、信都 —— 韓魏若亡,趙即當秦鋒;而這一年,趙什麼也沒有做。",
+        goal: { kind: 'hold-cities', cityIds: ['nanpi', 'xindu'], byYear: 181 },
       },
+      /*
+       * 上黨與太原是趙在這張盤上**最先丟的兩座**(+3 年 2/4 與 1/4,鄴更是
+       * 一個檢查點都沒撐到),而題目原本正是要他守這兩座到 186(開局 +8 年)。
+       * 趙 14 城十年後中位只剩 5 —— 它整個在縮,守得住的是河北東邊:
+       * 南皮 4/4、信都 4/4(+3 年)。窗口一併收到 181。
+       */
       secondary: [
         {
           title: { zh: '西向爭洛', en: 'Contest Luoyang' },
