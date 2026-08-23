@@ -3419,15 +3419,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '據險自保', en: 'Hold the Passes' },
-        description: 'Still hold Wudu and the Yangping Pass in 215 — the passes outlast the seat.',
-        descriptionZh: "至215年仍據武都、陽平關 —— 守得住的是關,不是治所。",
+        description: 'Still hold Wudu and the Yangping Pass in 214 — the passes outlast the seat, and not by much.',
+        descriptionZh: "至214年仍據武都、陽平關 —— 守得住的是關,不是治所,而且撐不了多久。",
         /*
          * **漢中是「每個檢查點都已失去」的那種**,而題目原本只查漢中一城。
          * 這張盤的張魯三城,六年後中位 0 —— 武都 +2 年 3/4、陽平關 2/4,
-         * 就這麼多了。窗口 216(+3 年)收到 215。
+         * 就這麼多了。窗口 216(+3 年)先收到 215,而 215(+2 年)實跑仍是 0/3
+         * ——兩座 3/4 與 2/4 合起來就是擲硬幣。再收到 214(+1 年)。
+         * 這已經是這條能給的極限:再不成立就只能進 BY_DESIGN。
          * 漢中在張魯身上是全庫級的老毛病(五張盤同一句話),見鄴城陷落那條註。
          */
-        goal: { kind: 'hold-cities', cityIds: ['wudu', 'yangping'], byYear: 215 },
+        goal: { kind: 'hold-cities', cityIds: ['wudu', 'yangping'], byYear: 214 },
       },
     },
     {
