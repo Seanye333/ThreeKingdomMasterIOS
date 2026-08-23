@@ -3764,9 +3764,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'nanman',
       primary: {
         title: { zh: '南中之主', en: 'Lord of Nanzhong' },
-        description: "Still hold Jianning, Yunnan and Yuexi in 232 — the mountains are yours; Chengdu was never in reach.",
-        descriptionZh: "至232年仍據建寧、雲南、越巂 —— 山是你的;成都從來不在你能到的地方。",
-        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yunnan', 'yuexi'], byYear: 232 },
+        description: "Still hold Jianning, Yunnan and Yongchang in 232 — the mountains are yours; Chengdu was never in reach.",
+        descriptionZh: "至232年仍據建寧、雲南、永昌 —— 山是你的;成都從來不在你能到的地方。",
+        /*
+         * 越巂 +4 年 3/4、+7 年 3/4,而永昌每個檢查點都是 4/4 ——
+         * 南蠻五城七年後中位還是 5,它一點都沒崩,只是邊上兩座(南中、越巂)
+         * 會被蜀漢啃。換成永昌,與另外五張盤的南蠻對齊。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yunnan', 'yongchang'], byYear: 232 },
       },
       secondary: [
         {
