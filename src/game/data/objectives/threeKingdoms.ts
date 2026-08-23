@@ -4509,10 +4509,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'guanqiu',
       primary: {
         title: { zh: '淮南舉義', en: 'The Huainan Rising' },
-        description: "Hold Shouchun and take Runan by 258 — the call went out to the realm; only Huainan answered.",
-        descriptionZh: "於258年前據壽春並取汝南 —— 移檄郡國,而應者只有淮南一路。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'runan'], byYear: 258 },
+        description: "Still hold Shouchun and Lujiang in 257 — the call went out to the realm; only Huainan answered.",
+        descriptionZh: "至257年仍據壽春、廬江 —— 移檄郡國,而應者只有淮南一路。",
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'lujiang'], byYear: 257 },
       },
+      /*
+       * 「取汝南」四輪一次也沒有 —— 移檄郡國而應者只有淮南一路,
+       * 那句文案自己就說了。他真正握著的是廬江 4/4、皖城 3/4、壽春 3/4(+2 年),
+       * 而且**他其實在長**(3 城 → 中位 4)。改成守本部兩座,窗口 258 → 257。
+       */
       secondary: [
         {
           title: { zh: '清君側', en: 'Purge the Emperor\'s Side' },
@@ -4565,10 +4570,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '圍壽春', en: 'Encircle Shouchun' },
-        description: 'Destroy the Zhuge Dan force by 261 — twenty-six legions, a ring of earth, and patience.',
-        descriptionZh: "於261年前平定諸葛誕 —— 二十六萬眾,築圍而守,不與野戰。",
-        goal: { kind: 'defeat-force', forceId: 'huainan', byYear: 261 },
+        description: 'Take Lujiang by 259 — twenty-six legions, a ring of earth, and patience; cut the outside first and Shouchun stands alone.',
+        descriptionZh: "於259年前取廬江 —— 二十六萬眾,築圍而守,不與野戰;先斷其外,壽春自孤。",
+        goal: { kind: 'hold-cities', cityIds: ['lujiang'], byYear: 259 },
       },
+      /*
+       * 「平定諸葛誕」四輪 0 中,而**這不是窗口的問題**:把期限拉到 265 再量,
+       * 諸葛誕三城仍是 3,3,3,0 —— AI 就是啃不掉一個三城的叛鎮
+       * (跟毌丘儉那條同型,見 §資料「break-force 的兩道邊界」)。
+       * 司馬昭 62 城六年後還是 62 —— 他根本沒動。他真的取得到的只有廬江 3/4。
+       * 題目改成先斷其外,平定留在次要。
+       */
       secondary: [
         {
           title: { zh: '混一宇內', en: 'Unify the Realm' },
