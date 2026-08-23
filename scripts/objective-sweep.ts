@@ -130,6 +130,13 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
    * 那兩張他還撐得住兩三年,改城改窗口就救得回。
    */
   { scenario: 'scn-215-hefei',     force: 'zhang-lu',   why: '「五斗自守」—— 215 年曹操出散關,張魯奔巴中而降;這張盤的開局就是他的末日。' },
+  /*
+   * 假想盤原本沒有 BY_DESIGN 豁免(它的題目本來就是「前提成立之後會怎樣」),
+   * 而「曹操贏赤壁」是唯一的例外:那張盤的前提**就是劉備沒有地方去**。
+   * 實測 6 輪:他開局只有新野一城,+1 年 1/6、+2 年 0/6,中位 0。
+   * 換城沒得換(只有一座)、縮到 +1 年也只有 1/6 —— 這一條救不回來。
+   */
+  { scenario: 'scn-whatif-cao-wins-chibi', force: 'liu-bei', why: '「亂中取地」—— 赤壁若敗,劉備連新野都保不住;開局一城,一年後 1/6。' },
   { scenario: 'scn-204-yecheng',   force: 'yuan-shang', why: '「鄴城固守」—— 鄴城陷落是這張盤的名字。' },
   { scenario: 'scn-199-yijing',    force: 'gongsun',    why: '同 195:易京之戰的結局就是樓焚。' },
   // 楚漢:項羽在這幾年裡先後打垮了齊與九江,那正是「楚漢相爭」的內容。

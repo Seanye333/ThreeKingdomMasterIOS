@@ -81,6 +81,12 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       id: 'obj-wi-guanyu-jing-xianbei',
       forceId: 'xianbei',
       primary: {
+        /*
+         * ⚠ 盤面平衡,不是題目寫錯 —— 同 220 三國鼎立那條。實測 6 輪:
+         * 開局兩城,烏丸在第一個檢查點就已失去、柳城 +1 年 2/6,中位 0。
+         * **縮窗口救不了、換城沒得換**(只有兩座)。
+         * 要動就是動盤面(給鮮卑更多城或改開局關係),那是設計決定。
+         */
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
         description: "Survive to 226. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
         descriptionZh: "存續至226年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
@@ -1750,9 +1756,16 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'han-sui',
       primary: {
         title: { zh: '西州自立', en: 'A Realm in the West' },
-        description: 'Still hold Tianshui and Shanggui in 213. Thirty years in Liang, and never once answered a summons to court.',
-        descriptionZh: "至213年仍據天水、上邽。在涼州三十年,一次也沒有應詔入朝。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui'], byYear: 213 },
+        description: 'Still hold Tianshui and Longxi in 213. Thirty years in Liang, and never once answered a summons to court.',
+        descriptionZh: "至213年仍據天水、隴西。在涼州三十年,一次也沒有應詔入朝。",
+        /*
+         * **上邽在這張盤上根本不是他的**(逐城量四輪一次也沒出現),
+         * 而題目正要他守上邽。他真正握著的是天水 4/4、隴西 4/4(+2 年),
+         * 金城與武都各 2/4。
+         * 「西州自立」這條寫在好幾張盤的韓遂身上,而**每張盤他手裡的城不一樣** ——
+         * 渭南那張是隴西、上邽,這張是天水、隴西。要一張一張量。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'longxi'], byYear: 213 },
       },
       /*
        * 原本守的是金城 —— 而馬超對金城的壓力是 1.54,在門檻之上;
