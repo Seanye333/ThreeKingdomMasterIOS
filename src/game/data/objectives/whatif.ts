@@ -420,9 +420,15 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
        */
       primary: {
         title: { zh: '銅雀春深', en: 'Not for the Bronze Bird Tower' },
-        description: 'Hold Pengcheng and take Shouchun by 210 — the tower in Ye was built with you in mind.',
-        descriptionZh: "於210年前據彭城、壽春 —— 東風不與周郎便,銅雀春深鎖二喬;這一世沒有周郎替你們擋,那就自己把淮南按住。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'shouchun'], byYear: 210 },
+        description: 'Still hold Xiapi, Langya and Xiaopei in 206 — the tower in Ye was built with you in mind.',
+        descriptionZh: "至206年仍據下邳、琅琊、小沛 —— 東風不與周郎便,銅雀春深鎖二喬;這一世沒有周郎替你們擋,那就自己把徐州按住。",
+        /*
+         * **壽春從來沒到過她們手上**(四輪 0/4,到 +8 年才 1/4),而彭城 +4 年也只剩 2/4。
+         * 二喬十一城八年後中位 9 —— 她們沒有崩,只是按不住淮南。
+         * 真正穩的是徐州本部:小沛 4/4、琅琊 4/4、下邳 3/4(+4 年)。
+         * 窗口 210(開局 +10 年)收到 206。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya', 'xiaopei'], byYear: 206 },
       },
       secondary: [
         {
@@ -1392,9 +1398,13 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'lubu',
       primary: {
         title: { zh: '轅門射戟', en: 'The Halberd at the Gate' },
-        description: 'Still hold Xiapi and Langya in 200 — two years past the gate at Baimen. You shot the halberd to settle someone else\u2019s quarrel; this time keep your own ground.',
-        descriptionZh: "至200年仍據下邳、琅琊 —— 比白門樓多活兩年。轅門射戟解的是別人的紛爭,而他自己的地從來沒守過兩年。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 200 },
+        description: 'Still hold Xiapi and Langya in 199 — a year past the gate at Baimen. You shot the halberd to settle someone else\u2019s quarrel; this time keep your own ground.',
+        descriptionZh: "至199年仍據下邳、琅琊 —— 比白門樓多活一年。轅門射戟解的是別人的紛爭,而他自己的地從來沒守過兩年。",
+        /*
+         * 下邳 +1 年 3/4、**+2 年就掉到 1/4**,而琅琊 4/4。窗口 200(+2 年)收到 199。
+         * 「他自己的地從來沒守過兩年」—— 那句文案自己就把答案寫出來了。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 199 },
       },
       /*
        * 同這張盤的公孫瓚:開局 198,而原期限 202 已在**他史書卒年之後四年**
@@ -1461,9 +1471,15 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
-        description: "Still hold Beiping and Ji in 200 — one year past the tower at Yijing. Frontier troops, used to running with the steppe horse; after Jieqiao he drew back further every year.",
-        descriptionZh: "至200年仍據北平、薊 —— 比易京樓那把火多活一年。邊地之兵,慣與胡騎相馳,而界橋之後他愈退愈深。",
-        goal: { kind: 'hold-cities', cityIds: ['beiping', 'ji'], byYear: 200 },
+        description: "Still hold Ji and Yuyang in 200 — one year past the tower at Yijing. Frontier troops, used to running with the steppe horse; after Jieqiao he drew back further every year.",
+        descriptionZh: "至200年仍據薊、漁陽 —— 比易京樓那把火多活一年。邊地之兵,慣與胡騎相馳,而界橋之後他愈退愈深。",
+        /*
+         * **北平是公孫家的老毛病城**,三張盤同一個數字:反董卓 +6 年 1/4、
+         * 鄴城陷落(公孫康)+6 年 1/4、這張 +1 年就只有 1/4。
+         * 而薊 4/4、漁陽 4/4、柳城 4/4 —— 他守得住的是幽州腹地,不是遼西那個郡。
+         * 跟襄陽之於劉表、漢中之於張魯同一類:**跨盤都低的城,改題目不改盤**。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'yuyang'], byYear: 200 },
       },
       /*
        * 開局 198,而原期限 204 是**他史書卒年之後五年**(公孫瓚 199 年自焚於
@@ -1597,9 +1613,14 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-biao',
       primary: {
         title: { zh: '荊襄之守', en: 'The Jing Heartland' },
-        description: 'Still hold Xiangyang in 212 — a man for talk, they said, and Jing province did have seventeen quiet years.',
-        descriptionZh: "至212年仍據襄陽。單騎入宜城而定荊州,坐談客耳 —— 守成之主,而荊州確實安了十七年。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 212 },
+        description: 'Still hold Jiangling, Gong-an and Xiling in 212 — a man for talk, they said, and Jing province did have seventeen quiet years.',
+        descriptionZh: "至212年仍據江陵、公安、西陵。單騎入宜城而定荊州,坐談客耳 —— 守成之主,而荊州確實安了十七年。",
+        /*
+         * **第四張栽在襄陽上的劉表**(這張 +2 年就只剩 1/4)。
+         * 公安 4/4、西陵 4/4、江陵 3/4 一路到 +8 年 —— 他守得住的是江陵一帶,
+         * 不是治所。零陵更是「每個檢查點都已失去」。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'gongan', 'xiling'], byYear: 212 },
       },
       /*
        * 原本是守襄陽、江陵到 214 —— 六年,而江北是四十八城的曹操、江東的孫權
