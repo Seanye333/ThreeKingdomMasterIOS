@@ -135,8 +135,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 鎖存之後,這條是 5/5)。史實上宛城下於 184 年十一月,就是當年之內;
          * 給到 185 年底,是「兩個戰季之內結束這場仗」的意思。
          */
-        description: 'Take Wancheng before 186 — the rebellion ended where Zhu Jun ended it, in the eleventh month of 184.',
-        descriptionZh: '於186年前攻取宛城 —— 黃巾之亂終於此城,史實上是184年十一月。',
+        description: 'Take Wancheng before 185 — the rebellion ended where Zhu Jun ended it, in the eleventh month of 184.',
+        descriptionZh: '於185年前攻取宛城 —— 黃巾之亂終於此城,史實上是184年十一月。',
         goal: { kind: 'hold-cities', cityIds: ['wancheng'], byYear: 185 },
       },
       secondary: [
@@ -1137,8 +1137,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '受禪定鼎', en: 'The Abdication Received' },
-        description: "Still hold Luoyang, Xuchang, Chang'an and Ye in 226 — the dynasty is new; first it must not wobble.",
-        descriptionZh: "至226年仍據洛陽、許昌、長安、鄴 —— 新朝初立,先站得住再談一統。",
+        description: "Still hold Luoyang and Chang'an in 226 — the dynasty is new; first it must not wobble.",
+        descriptionZh: "至226年仍據洛陽、長安 —— 新朝初立,先站得住再談一統。",
         goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 226 },
       },
       secondary: [
@@ -1235,8 +1235,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '拒亮於渭南', en: 'Hold the Wei' },
-        description: "Still hold Chang'an, Anding and Longxi in 240 — refuse battle; the grain will decide it.",
-        descriptionZh: "至240年仍據長安、安定、隴西 —— 堅壁拒守,不與交鋒,以待其變。",
+        description: "Still hold Chang'an in 240 — refuse battle; the grain will decide it.",
+        descriptionZh: "至240年仍據長安 —— 堅壁拒守,不與交鋒,以待其變。",
         goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 240 },
       },
       secondary: [
@@ -1758,8 +1758,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
-        description: "Still hold Ji, Beiping, Yuyang and Yi County in 199 — You province also runs out to Lelang and Daifang, which no one contests.",
-        descriptionZh: "至199年仍據薊、北平、漁陽、易縣 —— 幽州名下還有樂浪帶方,那是沒有人去爭的地方。",
+        description: "Still hold Ji, Beiping and Yuyang in 199 — You province also runs out to Lelang and Daifang, which no one contests.",
+        descriptionZh: "至199年仍據薊、北平、漁陽 —— 幽州名下還有樂浪帶方,那是沒有人去爭的地方。",
         goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping', 'yuyang'], byYear: 199 },
       },
       secondary: [
@@ -1936,8 +1936,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-teng',
       primary: {
         title: { zh: '西涼鐵騎', en: 'The Iron Horse of Liang' },
-        description: "Still hold Jincheng, Wuwei, Anding and Longxi in 202 — Liang also counts Dunhuang and Jiuquan, a month's ride past anyone's interest.",
-        descriptionZh: "至202年仍據金城、武威、安定、隴西 —— 涼州名下還有敦煌酒泉,那是誰也不會去的河西盡頭。",
+        description: "Still hold Jincheng, Wuwei and Anding in 202 — Liang also counts Dunhuang and Jiuquan, a month's ride past anyone's interest.",
+        descriptionZh: "至202年仍據金城、武威、安定 —— 涼州名下還有敦煌酒泉,那是誰也不會去的河西盡頭。",
         goal: { kind: 'hold-cities', cityIds: ['jincheng', 'wuwei', 'anding'], byYear: 202 },
       },
       secondary: [
@@ -2340,18 +2340,24 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'lu-bu',
       primary: {
         title: { zh: '徐州為家', en: 'Xuzhou for a Home' },
-        description: 'Hold Xiapi and take Xiaopei by 200 — a place of his own at last, and Xiaopei is the one he can actually reach.',
-        descriptionZh: "於200年前據下邳並取小沛 —— 終得一塊自己的地;而搆得著的那一座是小沛。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'xiaopei'], byYear: 200 },
+        description: 'Still hold Xiapi and Langya in 198 — a place of his own at last, and 198 is as long as he keeps it.',
+        descriptionZh: "至198年仍據下邳、琅琊 —— 終得一塊自己的地,而他守得住的最後一年就是198。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 198 },
       },
+      /*
+       * 期限原本寫 200,而呂布 198 年縊於白門樓 —— `objectiveLifespan` 硬性歸零。
+       * 順手量了他實際做得到什麼:取小沛只有 1/6、取彭城 0~1/6(**搆不著**),
+       * 而守下邳 5/6、守琅琊 6/6。於是題目從「據下邳並取小沛」改成純守成,
+       * 期限壓回 198 —— 那正是「他活著的時候守住了徐州」。
+       */
     },
     {
       id: 'obj-197-bohai-yuan-shu',
       forceId: 'yuan-shu',
       primary: {
         title: { zh: '淮南之主', en: 'Lord of Huainan' },
-        description: "Still hold Shouchun and Wancheng in 203. Four generations of ministers behind him, and Huainan rich enough to stand alone.",
-        descriptionZh: "至203年仍據壽春、宛城。四世三公之後,而淮南之富足以自立。",
+        description: "Still hold Shouchun and Wancheng in 199. Four generations of ministers behind him, and Huainan rich enough to stand alone.",
+        descriptionZh: "至199年仍據壽春、宛城。四世三公之後,而淮南之富足以自立。",
         goal: { kind: 'hold-cities', cityIds: ['shouchun', 'wancheng'], byYear: 199 },
       },
     },
@@ -2560,8 +2566,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-biao',
       primary: {
         title: { zh: '荊襄之守', en: 'The Jing Heartland' },
-        description: "Still hold Xiangyang, Jiangling, Jiangxia, Changsha and Wancheng in 206 — the nine commanderies were never all yours at once.",
-        descriptionZh: "至206年仍據襄陽、江陵、江夏、長沙、宛城 —— 荊襄九郡從來沒有同時全在你手上。",
+        description: "Still hold Xiangyang, Jiangling and Jiangxia in 206 — the nine commanderies were never all yours at once.",
+        descriptionZh: "至206年仍據襄陽、江陵、江夏 —— 荊襄九郡從來沒有同時全在你手上。",
         goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 206 },
       },
       secondary: [
@@ -2704,8 +2710,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'shi-xie',
       primary: {
         title: { zh: '交州王', en: 'King of Jiao' },
-        description: "Still hold Jiaozhi, Nanhai, Hepu and Cangwu in 210 — Jiao also counts Zhuyai and Rinan, past the end of the roads.",
-        descriptionZh: "至210年仍據交趾、南海、合浦、蒼梧 —— 交州名下還有珠崖日南,那是路的盡頭之外。",
+        description: "Still hold Jiaozhi, Nanhai and Hepu in 210 — Jiao also counts Zhuyai and Rinan, past the end of the roads.",
+        descriptionZh: "至210年仍據交趾、南海、合浦 —— 交州名下還有珠崖日南,那是路的盡頭之外。",
         goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai', 'hepu'], byYear: 210 },
       },
       secondary: [
@@ -2825,8 +2831,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-zhang',
       primary: {
         title: { zh: '守此蜀土', en: 'Hold the Shu Lands' },
-        description: "Still hold Chengdu, Jiangzhou, Luocheng, Fucheng and Mianzhu in 214 — Yi also runs down to Nanzhong, which answers to no one.",
-        descriptionZh: "至214年仍據成都、江州、雒城、涪城、綿竹 —— 益州名下還有南中,那裡誰的號令也不聽。",
+        description: "Still hold Chengdu, Jiangzhou and Mianzhu in 214 — Yi also runs down to Nanzhong, which answers to no one.",
+        descriptionZh: "至214年仍據成都、江州、綿竹 —— 益州名下還有南中,那裡誰的號令也不聽。",
         goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'mianzhu'], byYear: 214 },
       },
       secondary: [
@@ -2853,8 +2859,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-teng',
       primary: {
         title: { zh: '不入許都', en: 'Do Not Go to Xuchang' },
-        description: "Still hold Wuwei, Jincheng, Anding and Longxi in 212 — stay in the west; the summons to court is a cage.",
-        descriptionZh: "至212年仍據武威、金城、安定、隴西 —— 留在西邊。徵你入朝的那道詔書是個籠子。",
+        description: "Still hold Wuwei, Jincheng and Anding in 212 — stay in the west; the summons to court is a cage.",
+        descriptionZh: "至212年仍據武威、金城、安定 —— 留在西邊。徵你入朝的那道詔書是個籠子。",
         goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'anding'], byYear: 212 },
       },
       secondary: [
@@ -2871,8 +2877,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'shi-xie',
       primary: {
         title: { zh: '交趾世家', en: 'The House of Jiaozhi' },
-        description: "Still hold Jiaozhi, Nanhai, Hepu and Cangwu in 212 — forty years in which the south saw no war.",
-        descriptionZh: "至212年仍據交趾、南海、合浦、蒼梧 —— 兄弟並為列郡守,四十餘年疆場無事。",
+        description: "Still hold Jiaozhi, Nanhai and Hepu in 212 — forty years in which the south saw no war.",
+        descriptionZh: "至212年仍據交趾、南海、合浦 —— 兄弟並為列郡守,四十餘年疆場無事。",
         goal: { kind: 'hold-cities', cityIds: ['jiaozhi', 'nanhai', 'hepu'], byYear: 212 },
       },
       secondary: [
@@ -2967,8 +2973,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-zhang',
       primary: {
         title: { zh: '益州自守', en: 'Yi Keeps to Itself' },
-        description: "Still hold Chengdu, Jiangzhou, Luocheng and Fucheng in 214 — while the north settles itself, shut the passes.",
-        descriptionZh: "至214年仍據成都、江州、雒城、涪城 —— 北方自去廝殺,你只要把關閉上。",
+        description: "Still hold Chengdu, Jiangzhou and Luocheng in 214 — while the north settles itself, shut the passes.",
+        descriptionZh: "至214年仍據成都、江州、雒城 —— 北方自去廝殺,你只要把關閉上。",
         goal: { kind: 'hold-cities', cityIds: ['chengdu', 'jiangzhou', 'luocheng'], byYear: 214 },
       },
       secondary: [
@@ -3362,8 +3368,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '得隴望蜀', en: 'Having Long, Covet Shu' },
-          description: 'Take Hanzhong by 217, then Chengdu.',
-          descriptionZh: "於217年前取漢中,再下成都 —— 人苦無足,既得隴,復望蜀。",
+          description: 'Take Hanzhong and then Chengdu by 220.',
+          descriptionZh: "於220年前取漢中,再下成都 —— 人苦無足,既得隴,復望蜀。",
           goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'chengdu'], byYear: 220 },
         },
       ],
@@ -3527,8 +3533,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '守成之君', en: 'Keep What Was Received' },
-        description: "Still hold Luoyang, Xuchang, Chang'an and Ye in 230 — Wei never unified; it also never wobbled.",
-        descriptionZh: "至230年仍據洛陽、許昌、長安、鄴 —— 魏未曾一統,而四十六年未曾動搖。",
+        description: "Still hold Luoyang and Chang'an in 230 — Wei never unified; it also never wobbled.",
+        descriptionZh: "至230年仍據洛陽、長安 —— 魏未曾一統,而四十六年未曾動搖。",
         goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 230 },
       },
       secondary: [
@@ -3729,8 +3735,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '江表無虞', en: 'The Southland Untouched' },
-        description: "Still hold Wuchang, Jianye, Jiangxia and Chaisang in 236 — Zhou Fang's false surrender was to break an army, not to take a city.",
-        descriptionZh: "至236年仍據武昌、建業、江夏、柴桑 —— 周魴斷髮詐降,要的是曹休那十萬人,不是一座城。",
+        description: "Still hold Wuchang and Jiangxia in 236 — Zhou Fang's false surrender was to break an army, not to take a city.",
+        descriptionZh: "至236年仍據武昌、江夏 —— 周魴斷髮詐降,要的是曹休那十萬人,不是一座城。",
         goal: { kind: 'hold-cities', cityIds: ['wuchang', 'jiangxia'], byYear: 236 },
       },
       secondary: [
@@ -3753,8 +3759,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '淮南不失', en: 'Huainan Holds' },
-        description: 'Still hold Hefei and Shouchun in 236.',
-        descriptionZh: "至236年仍保合肥、壽春 —— 曹休輕進,幾覆全軍。",
+        description: 'Still hold Shouchun in 236.',
+        descriptionZh: "至236年仍保壽春 —— 曹休輕進,幾覆全軍。",
         goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 236 },
       },
     },
@@ -3795,8 +3801,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '中原之固', en: 'The Central Plain Holds' },
-        description: "Still hold Luoyang, Xuchang, Chang'an and Ye in 245 — the empire that outlasts both rivals.",
-        descriptionZh: "至245年仍據洛陽、許昌、長安、鄴 —— 魏未曾一統,但也未曾動搖。",
+        description: "Still hold Luoyang and Chang'an in 245 — the empire that outlasts both rivals.",
+        descriptionZh: "至245年仍據洛陽、長安 —— 魏未曾一統,但也未曾動搖。",
         goal: { kind: 'hold-cities', cityIds: ['luoyang', 'changan'], byYear: 245 },
       },
       secondary: [
@@ -4093,8 +4099,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '關中不搖', en: 'Guanzhong Unshaken' },
-        description: "Still hold Chang'an, Anding and Longxi in 249 — the retreat from Xingshi cost dearly, but not the west.",
-        descriptionZh: "至249年仍據長安、安定、隴西 —— 興勢之退折兵甚眾,關中卻未曾動搖。",
+        description: "Still hold Chang'an in 249 — the retreat from Xingshi cost dearly, but not the west.",
+        descriptionZh: "至249年仍據長安 —— 興勢之退折兵甚眾,關中卻未曾動搖。",
         goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 249 },
       },
       secondary: [
@@ -4323,15 +4329,23 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '平毌丘儉', en: 'Put Down Guanqiu Jian' },
-        description: 'Break the Guanqiu force down to three cities by 258 — ride out with a tumour in your eye if you must.',
-        descriptionZh: "於258年前將毌丘儉逼到只剩三城 —— 目瘤方割,亦當輿疾而東。",
-        goal: { kind: 'break-force', forceId: 'guanqiu', maxCities: 3, byYear: 258 },
+        description: 'Break the Guanqiu force down to two cities by 258 — ride out with a tumour in your eye if you must.',
+        descriptionZh: "於258年前將毌丘儉逼到只剩兩城 —— 目瘤方割,亦當輿疾而東。",
+        goal: { kind: 'break-force', forceId: 'guanqiu', maxCities: 2, byYear: 258 },
       },
       /*
-       * 實測(4 輪,逐旬追毌丘儉的城數):最少剩 2、3、3、0 ——
-       * **滅得掉,但四輪只中一次**,所以「平定」自走 0/3。門檻訂兩城,
+       * 實測(6 輪,逐旬追毌丘儉的城數,期限之內):最少剩 2,3,3,4,2,3 ——
+       * **滅得掉,但六輪只中兩次**,所以「平定」自走 0/3。門檻訂兩城,
        * 徹底翦除留在次要。史書上毌丘儉 255 年就敗走慎縣為平民所射殺,
        * 這裡給到 258 已經寬。
+       *
+       * ⚠ 中途改成三城過,那是**假的通過**:毌丘儉開局就只有三城,
+       * 門檻等於開局城數 = 第 0 旬就成立。是 objectiveOwnership 那條測試
+       * 攔下來的,不是我自己看出來的。
+       *
+       * 順帶量到一件跟直覺相反的事:這張盤的毌丘儉**不是被壓縮,是會長大**
+       * ——六輪裡取合肥 3/6、取下邳 3/6,而司馬師取壽春只有 2/6(+5 年掉回 0/6)。
+       * 「大國平小亂」在這個模擬裡並不便宜,門檻才要訂得這麼緊。
        */
       secondary: [
         {
@@ -4387,8 +4401,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '洮西大捷', en: 'The Victory at Taoxi' },
-        description: "Still hold Wudu, Yinping and Hanzhong in 264 — Taoxi killed tens of thousands and changed nothing.",
-        descriptionZh: "至264年仍據武都、陰平、漢中 —— 洮西破王經,死者數萬,而隴右終不可得。",
+        description: "Still hold Wudu and Hanzhong in 264 — Taoxi killed tens of thousands and changed nothing.",
+        descriptionZh: "至264年仍據武都、漢中 —— 洮西破王經,死者數萬,而隴右終不可得。",
         goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'wudu'], byYear: 264 },
       },
       secondary: [

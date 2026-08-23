@@ -8,8 +8,8 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '據崤函之固', en: 'Behind the Passes of Xiao and Han' },
-        description: "Still hold Chang'an, Hanguguan, Tongguan, Hanzhong and Chengdu in 197 — the base six generations built.",
-        descriptionZh: "至197年仍據長安、函谷關、潼關、漢中、成都 —— 六世之餘烈,先是守得住這一塊。",
+        description: "Still hold Chang'an, Hanguguan and Hanzhong in 198 — the base six generations built.",
+        descriptionZh: "至198年仍據長安、函谷關、漢中 —— 六世之餘烈,先是守得住這一塊。",
         goal: { kind: 'hold-cities', cityIds: ['changan', 'hanguguan', 'hanzhong'], byYear: 198 },
       },
       secondary: [
@@ -21,8 +21,8 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
         },
         {
           title: { zh: '東出函谷', en: 'East Through Hangu' },
-          description: 'Take Luoyang and Chenliu by 197.',
-          descriptionZh: "於197年前東取洛陽、陳留 —— 先取韓魏,則天下之樞在我。",
+          description: 'Take Luoyang and Chenliu by 198.',
+          descriptionZh: "於198年前東取洛陽、陳留 —— 先取韓魏,則天下之樞在我。",
           goal: { kind: 'hold-cities', cityIds: ['luoyang', 'chenliu'], byYear: 198 },
         },
       ],
@@ -63,8 +63,8 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '稷下之盛', en: 'The Jixia Academy' },
-          description: 'Still hold Linzi and Beihai in 197.',
-          descriptionZh: "至197年仍保臨淄、北海 —— 稷下學宮,天下文樞。",
+          description: 'Still hold Linzi and Beihai in 198.',
+          descriptionZh: "至198年仍保臨淄、北海 —— 稷下學宮,天下文樞。",
           goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 198 },
         },
       ],
@@ -128,15 +128,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'han',
       primary: {
         title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
-        description: 'Still hold Luoyang and Xuchang in 197 — smallest of the seven, first to be eaten.',
-        descriptionZh: "至197年仍保洛陽、許昌 —— 七雄之末,秦之近攻首當其衝。",
+        description: 'Still hold Luoyang and Xuchang in 198 — smallest of the seven, first to be eaten.',
+        descriptionZh: "至198年仍保洛陽、許昌 —— 七雄之末,秦之近攻首當其衝。",
         goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 198 },
       },
       secondary: [
         {
           title: { zh: '存韓', en: 'Han Survives' },
-          description: 'Survive to 202.',
-          descriptionZh: "存續至202年 —— 韓非入秦而死,他要保的就是這件事。",
+          description: 'Survive to 205.',
+          descriptionZh: "存續至205年 —— 韓非入秦而死,他要保的就是這件事。",
           goal: { kind: 'survive-until', year: 205 },
         },
       ],
@@ -180,8 +180,8 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '保關中', en: 'Hold Guanzhong' },
-        description: "Still hold Chang'an, Chencang and Hanzhong in 190 — Qin before the reforms is the weakest of the seven.",
-        descriptionZh: "至190年仍據長安、陳倉、漢中 —— 變法之前的秦是七國最弱的一個,先活下來。",
+        description: "Still hold Chang'an and Hanzhong in 190 — Qin before the reforms is the weakest of the seven.",
+        descriptionZh: "至190年仍據長安、漢中 —— 變法之前的秦是七國最弱的一個,先活下來。",
         goal: { kind: 'hold-cities', cityIds: ['changan', 'hanzhong'], byYear: 190 },
       },
       secondary: [
@@ -214,15 +214,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '吳起變法', en: "Wu Qi's Reforms" },
-        description: "Still hold Wancheng and Jiangling in 190 — Wu Qi went south to Chu and made its law; the nobles killed him over the corpse of the king.",
-        descriptionZh: "至190年仍據宛城、江陵 —— 吳起南走楚而變其法;悼王一死,貴戚射之於王屍之上。",
+        description: "Still hold Wancheng and Jiangling in 195 — Wu Qi went south to Chu and made its law; the nobles killed him over the corpse of the king.",
+        descriptionZh: "至195年仍據宛城、江陵 —— 吳起南走楚而變其法;悼王一死,貴戚射之於王屍之上。",
         goal: { kind: 'hold-cities', cityIds: ['wancheng', 'jiangling'], byYear: 195 },
       },
       secondary: [
         {
           title: { zh: '吳起變法', en: "Wu Qi's Reforms" },
-          description: 'Take Wancheng and Xuchang by 190 — Wu Qi went south after Wei drove him out.',
-          descriptionZh: "於190年前北取宛城、許昌 —— 吳起去魏入楚,楚亦可強。",
+          description: 'Take Wancheng and Xuchang by 195 — Wu Qi went south after Wei drove him out.',
+          descriptionZh: "於195年前北取宛城、許昌 —— 吳起去魏入楚,楚亦可強。",
           goal: { kind: 'hold-cities', cityIds: ['wancheng', 'xuchang'], byYear: 195 },
         },
       ],
@@ -1313,8 +1313,8 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '遠交近攻', en: 'Befriend the Far, Strike the Near' },
-        description: "Still hold Chang'an, Tongguan, Hanzhong and Chengdu in 185 — while Yan and Qi ruin each other, consolidate.",
-        descriptionZh: "至185年仍據長安、潼關、漢中、成都 —— 燕齊兩弊之際,范雎之策是先固其本。",
+        description: "Still hold Chang'an, Tongguan and Hanzhong in 185 — while Yan and Qi ruin each other, consolidate.",
+        descriptionZh: "至185年仍據長安、潼關、漢中 —— 燕齊兩弊之際,范雎之策是先固其本。",
         goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanzhong'], byYear: 185 },
       },
       secondary: [
@@ -1444,8 +1444,8 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qi',
       primary: {
         title: { zh: '不助五國者亡', en: 'The Last to Fall, and the Easiest' },
-        description: 'Survive to 188 — Qi surrendered without a battle after watching five states die.',
-        descriptionZh: "存續至188年 —— 齊坐視五國之亡,最後不戰而降。",
+        description: 'Survive to 195 — Qi surrendered without a battle after watching five states die.',
+        descriptionZh: "存續至195年 —— 齊坐視五國之亡,最後不戰而降。",
         goal: { kind: 'survive-until', year: 195 },
       },
       secondary: [
