@@ -26,18 +26,26 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '關東群盜', en: '"Merely Bandits, Your Majesty"' },
-        description: 'Break the Zhangchu force down to five cities by 183 — the court insisted there was no rebellion at all.',
-        descriptionZh: "於183年前將張楚逼到只剩五城 —— 朝廷上下都說那不過是群盜,不足憂。",
-        goal: { kind: 'break-force', forceId: 'zhangchu', maxCities: 5, byYear: 183 },
+        description: 'Still hold Hangu Pass and Luoyang in 181 — the court insisted there was no rebellion at all.',
+        descriptionZh: "至181年仍據函谷關與洛陽 —— 朝廷上下都說那不過是群盜,不足憂。",
+        goal: { kind: 'hold-cities', cityIds: ['hanguguan', 'luoyang'], byYear: 181 },
       },
       /*
-       * 「平定張楚」自走 0/3。壓得下去但壓不到零,所以改 break-force。
+       * 這條換過三次 goal,而**三次都是同一個誤判**:以為秦的難處是平不平得掉
+       * 亂民。實測六輪:秦開局 115 城,五年後中位 **62** 城,而張楚從四城長到
+       * **七城** —— 秦不是在剿匪,是在崩。
        *
-       * ⚠ 門檻訂過兩次,第一次錯了:我用**跑十年**的探針量到最少剩 3 城就寫了
-       * 三城,而這條的期限只有 183(開局 +5 年)—— **期限之內**張楚最少剩
-       * 4~5 城,於是仍然 0/3。改成五城才過。
-       * 判準:量 break-force 門檻時,探針必須在 `byYear` 就停,
-       * 跟公孫瓚那條是同一個錯(見 §資料「滅一家與逼一家」)。
+       * 於是題目改成守關:函谷關 +3 年 5/6、洛陽 4/6(+5 年掉到 2/6 和 4/6,
+       * 所以期限收在 181 而不是 183)。關中本部反而穩得很(長安/郿/陳倉/上邽
+       * 五年後全是 6/6),拿來當題目太便宜;**函谷關才是關東與關中的分界**,
+       * 也正是這張盤的題眼。
+       *
+       * ⚠ 先前 break-force 的門檻訂過三次,錯的方向相反,記在這裡免得重蹈:
+       *   一訂三城 —— 用跑十年的探針量的,而期限只有 +5 年。
+       *   二訂五城 —— 照 break-floor「最少值的上緣」訂的,而**張楚開局就只有
+       *     四城**:門檻高過開局城數 = 第 0 旬就成立,整條變擺設。
+       * 判準:break-force 的門檻有**兩道**邊界 —— 下緣是期限內量得到的最少值,
+       * 上緣是**對方開局城數減一**;交不到就別用這型。break-floor 現在兩道都報。
        */
       secondary: [
         {

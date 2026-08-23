@@ -19,8 +19,18 @@
  *   node --import tsx scripts/break-floor.ts <盤id> <目標勢力id> <期限年> [輪數]
  *   node --import tsx scripts/break-floor.ts scn-ch-daze zhangchu 183 4
  *
- * 讀法:門檻訂在**最少值的上緣**(例如量到 5,5,5,4 就訂 5)——
- * 訂在最小值等於只有運氣最好的那一輪過得了。改完仍要跑 objective-sweep 驗。
+ * ## 門檻有兩道邊界,不是一道
+ *
+ * 下緣:期限內量得到的**最少值的上緣**(量到 5,5,5,4 就訂 5)——
+ * 訂在最小值等於只有運氣最好的那一輪過得了。
+ *
+ * 上緣:**對方開局城數減一**。這條是後來補的,因為只看下緣會出人命:
+ * 張楚開局四城、期限內最少剩 3~4,照下緣訂五城 —— 門檻高過開局城數,
+ * 於是第 0 旬就成立,整條目標變擺設(毌丘儉那條也一樣,3 城訂 ≤3)。
+ * 兩條都是 `objectiveOwnership` 測試攔下來的,所以這支現在自己先報。
+ *
+ * 兩道邊界交不到的時候(小勢力壓不動),就別用 break-force —— 換題目。
+ * 改完仍要跑 objective-sweep 驗。
  */
 const g = globalThis as unknown as { localStorage?: unknown };
 if (!g.localStorage) {
@@ -56,5 +66,14 @@ for (let r = 0; r < runs; r++) {
   mins.push(min === Infinity ? -1 : min);
 }
 const sorted = [...mins].sort((a, b) => a - b);
-console.log(`${SID} / ${TARGET}  期限 ${DEADLINE} 之內最少城數: ${mins.join(', ')}`);
-console.log(`→ 建議門檻 maxCities: ${sorted[sorted.length - 1]}(最少值的上緣;訂在最小值只有最好那輪過得了)`);
+const startCities = scenario.cities.filter((c) => c.ownerForceId === TARGET).length;
+const ceiling = startCities - 1;   // 見檔頭「上緣」:等於開局城數就是第 0 旬成立
+const floor = sorted[sorted.length - 1];
+console.log(`${SID} / ${TARGET}  開局 ${startCities} 城,期限 ${DEADLINE} 之內最少城數: ${mins.join(', ')}`);
+if (floor <= ceiling) {
+  console.log(`→ 建議門檻 maxCities: ${floor}(最少值的上緣;上限 ${ceiling} = 開局城數 -1)`);
+} else {
+  const hits = mins.filter((m) => m >= 0 && m <= ceiling).length;
+  console.log(`→ ⚠ 兩道邊界交不到:下緣要 ${floor},而上緣只能到 ${ceiling}(開局 ${startCities} 城)。`);
+  console.log(`   訂 ${ceiling} 的話 ${runs} 輪只中 ${hits} 輪;${hits === 0 ? '這條別用 break-force,換題目。' : '勉強成立,務必跑 objective-sweep 驗。'}`);
+}
