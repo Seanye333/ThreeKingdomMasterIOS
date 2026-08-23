@@ -372,10 +372,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 主目標改成他真正立身的那一步:誘殺宗賊帥五十五人而後領荊州 ——
          * 守住襄陽(治所)、江陵(南郡)、江夏(黃祖)這三座。盡有荊州降為
          * 次要,那才是「竟成一方之主」的完成式。
+         *
+         * 再改(2026-08-23)。那三座裡有兩座他守不住:**襄陽 1/4、江夏 1/4**
+         * (+3 年,四輪),而夷陵 4/4、樊城 3/4、江陵 3/4。他在這張盤只有五城,
+         * 九年後中位剩 2 —— 跟十常侍那張的劉表(18 城、襄陽 3/4)完全不是同一回事。
+         * 同一個人、同一座城,在兩張盤上要分開量。窗口 196 → 193。
          */
-        description: 'Still hold Xiangyang, Jiangling and Jiangxia in 196 — he rode into Yicheng alone and took a province by killing fifty-five men at one meeting.',
-        descriptionZh: '至196年仍據襄陽、江陵、江夏 —— 單馬入宜城,誘宗賊帥五十五人而斬之,遂領荊州。',
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 196 },
+        description: 'Still hold Yiling and Fancheng in 193 — he rode into Yicheng alone and took a province by killing fifty-five men at one meeting.',
+        descriptionZh: '至193年仍據夷陵、樊城 —— 單馬入宜城,誘宗賊帥五十五人而斬之,遂領荊州。',
+        goal: { kind: 'hold-cities', cityIds: ['yiling', 'fancheng'], byYear: 193 },
       },
       secondary: [
         {
@@ -2086,10 +2091,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '先定徐方', en: 'Settle Xu First' },
-        description: "Take Xiapi and Langya by 201 — Yuan Shao is still an ally in 195; Lü Bu is the enemy at hand.",
-        descriptionZh: "於201年前取下邳、琅琊 —— 195年的袁紹還是盟友,而呂布就在肘腋之間。",
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'langya'], byYear: 201 },
+        description: "Hold Xiaopei and take Wancheng and Shouchun by 201 — Yuan Shao is still an ally in 195; the road out of Xu runs south, not east.",
+        descriptionZh: "至201年仍據小沛並取宛城、壽春 —— 195年的袁紹還是盟友,而出徐州的路在南邊,不在東邊。",
+        goal: { kind: 'hold-cities', cityIds: ['xiaopei', 'wancheng', 'shouchun'], byYear: 201 },
       },
+      /*
+       * 「取下邳、琅琊」四輪 1/4 與 0~1/4 —— 而徐州是呂布的,呂布在這張盤上
+       * 自己的主目標是 3/3,他守得住。曹操在這裡**不是打不動,是往別的方向長**:
+       * 16 城 → 九年後中位 **36**,而他真正取得到的是宛城 3/4、壽春 3/4、
+       * 新野 3/4、鄴 3/4(皆 +9 年)。小沛本來就是他的,+6 年 4/4。
+       * 判準:取得型目標死掉時,先看**這一家到底往哪邊長**,再挑那個方向的城。
+       */
       secondary: [
         {
           title: { zh: '官渡不失', en: 'Hold Guandu' },
@@ -2392,9 +2404,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shu',
       primary: {
         title: { zh: '淮南之主', en: 'Lord of Huainan' },
-        description: "Still hold Shouchun and Wancheng in 199. Four generations of ministers behind him, and Huainan rich enough to stand alone.",
-        descriptionZh: "至199年仍據壽春、宛城。四世三公之後,而淮南之富足以自立。",
-        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'wancheng'], byYear: 199 },
+        description: "Still hold Hefei, Ruxu and Wan in 199. Four generations of ministers behind him, and Huainan rich enough to stand alone.",
+        descriptionZh: "至199年仍據合肥、濡須、皖城。四世三公之後,而淮南之富足以自立。",
+        /*
+         * **壽春是他自己的都城,而他一個檢查點都沒守到**(每個檢查點都已失去),
+         * 宛城 +2 年也只剩 1/4 —— 而題目原本要的正是這兩座。
+         * 他真正握著的是江北那一線:合肥 4/4、濡須 4/4、皖城 4/4(+2 年)。
+         * 史實上他 199 年也正是棄壽春北走的,所以這麼寫反而更貼。
+         * 判準:守成型目標死掉時,**先查那一家的都城在不在他手上** ——
+         * 都城守不住的勢力,題目不能拿都城當門檻。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['hefei', 'ruxu', 'wan'], byYear: 199 },
       },
     },
     {

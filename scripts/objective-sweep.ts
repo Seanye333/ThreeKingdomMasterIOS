@@ -116,6 +116,12 @@ const BY_DESIGN: Array<{ scenario: string; force: string; why: string }> = [
   { scenario: 'scn-195-jiangdong', force: 'lu-bu',      why: '「白門樓之前」—— 標題就是說他到得了那一天;史書上他 198 年就沒了。' },
   { scenario: 'scn-195-jiangdong', force: 'gongsun',    why: '易京樓積穀三百萬斛而自焚於 199 —— 守到 200 年正是要玩家改寫的事。' },
   { scenario: 'scn-198-xiapi',     force: 'yuan-shu',   why: '「仲氏不亡」—— 他 199 年嘔血死於江亭,問廚下惟有麥屑三十斛。' },
+  /*
+   * 199 易京那張的袁術同型,而更徹底:開局五城,**每一座在第一個檢查點就已失去**,
+   * 中位 0。那張盤的開局年正是他死的那一年 —— 稱帝之後眾叛親離,是盤面事實。
+   * 先量過才放進來的:換城、縮窗口都救不了「他整個沒了」。
+   */
+  { scenario: 'scn-199-yijing',    force: 'yuan-shu',   why: '「淮南之主」—— 199 年正是他死的那一年;開局五城,兩年內一座不剩。' },
   { scenario: 'scn-204-yecheng',   force: 'yuan-shang', why: '「鄴城固守」—— 鄴城陷落是這張盤的名字。' },
   { scenario: 'scn-199-yijing',    force: 'gongsun',    why: '同 195:易京之戰的結局就是樓焚。' },
   // 楚漢:項羽在這幾年裡先後打垮了齊與九江,那正是「楚漢相爭」的內容。
