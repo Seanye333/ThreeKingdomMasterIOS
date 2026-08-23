@@ -721,9 +721,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '壽春不飢', en: 'Shouchun Fed' },
-          description: 'Still hold Shouchun in 204.',
-          descriptionZh: "至204年仍據壽春。",
-          goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 204 },
+          description: 'Still hold Shouchun in 199 — the year he died asking for honey water.',
+          descriptionZh: "至199年仍據壽春 —— 那一年他問廚下要蜜水,而廚下惟有麥屑三十斛。",
+          goal: { kind: 'hold-cities', cityIds: ['shouchun'], byYear: 199 },
         },
       ],
     },
@@ -871,9 +871,9 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '關中十部', en: 'The Ten Companies of Guanzhong' },
-          description: 'Control Liang province by 218 — this time the alliance did not break.',
-          descriptionZh: "於218年前盡有涼州 —— 這一次盟約沒有裂。",
-          goal: { kind: 'control-province', provinceId: 'liang', byYear: 218 },
+          description: 'Control Liang province by 215 — this time the alliance did not break.',
+          descriptionZh: "於215年前盡有涼州 —— 這一次盟約沒有裂;而韓遂 215 年就死了。",
+          goal: { kind: 'control-province', provinceId: 'liang', byYear: 215 },
         },
       ],
     },

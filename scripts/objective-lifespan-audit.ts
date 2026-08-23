@@ -37,6 +37,7 @@ export function auditObjectiveLifespans(): LifespanConflict[] {
     const objs = (SCENARIO_OBJECTIVES as Record<string, Array<{
       forceId: string;
       primary: { title: { zh: string }; goal: { kind: string; byYear?: number; year?: number } };
+      secondary?: Array<{ title: { zh: string }; goal: { kind: string; byYear?: number; year?: number } }>;
     }>>)[scenario.id] ?? [];
     if (!objs.length) continue;
     const officer = new Map(scenario.officers.map((o) => [o.id, o]));
@@ -46,9 +47,7 @@ export function auditObjectiveLifespans(): LifespanConflict[] {
       const force = scenario.forces.find((f) => f.id === o.forceId);
       const ruler = force?.rulerOfficerId ? officer.get(force.rulerOfficerId) : undefined;
       const death = (ruler as { deathYear?: number } | undefined)?.deathYear;
-      const g = o.primary.goal;
-      const by = g.byYear ?? g.year;
-      if (!ruler || !death || !by) continue;
+      if (!ruler || !death) continue;
       /*
        * 君主的卒年**早於開局年**時跳過 —— 那張盤已經改寫了他的下場。
        * 「曹操贏赤壁」是 208 年的架空盤,而孫氏由孫翊當家(史書上他 204 年
@@ -66,10 +65,24 @@ export function auditObjectiveLifespans(): LifespanConflict[] {
        * 不收這一刀,這條規則會報出 118 條而其中一百條是無害的。
        */
       const SMALL = 8;
-      if (by > death && (cityCount[o.forceId] ?? 0) <= SMALL) {
+      if ((cityCount[o.forceId] ?? 0) > SMALL) continue;
+      /*
+       * 主目標與**次要目標**一起查(2026-08-23 才擴到次要)。同一條理由:
+       * 小勢力的君主一死,勢力就散 —— 呂布死而徐州散、公孫瓚死而幽州入袁。
+       * 期限跨過卒年,那條目標就不是「難」,是「沒有人能替他完成」。
+       * 一擴就是 15 條,而 15 條全是真的(判準與主目標完全同一條)。
+       */
+      const slots = [
+        { tag: '', title: o.primary.title.zh, g: o.primary.goal },
+        ...(o.secondary ?? []).map((x) => ({ tag: '次', title: x.title.zh, g: x.goal })),
+      ];
+      for (const slot of slots) {
+        const by = slot.g.byYear ?? slot.g.year;
+        if (!by || by <= death) continue;
         out.push({
           scenarioId: scenario.id, scenarioZh: scenario.name.zh, forceId: o.forceId,
-          rulerZh: ruler.name.zh, title: o.primary.title.zh, byYear: by, deathYear: death, cities: cityCount[o.forceId] ?? 0,
+          rulerZh: ruler.name.zh, title: `${slot.tag}${slot.title}`, byYear: by,
+          deathYear: death, cities: cityCount[o.forceId] ?? 0,
         });
       }
     }

@@ -435,15 +435,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '流民歸之', en: 'The Refugees Come' },
-          description: 'Hold all of Xu province by 197 — grain in the granaries drew the displaced from four directions.',
-          descriptionZh: '於197年前盡有徐州 —— 穀米豐贍,流民多歸之。',
-          goal: { kind: 'control-province', provinceId: 'xu', byYear: 197 },
+          description: 'Hold all of Xu province by 194 — grain in the granaries drew the displaced from four directions.',
+          descriptionZh: '於194年前盡有徐州 —— 穀米豐贍,流民多歸之;而194年他就病死了。',
+          goal: { kind: 'control-province', provinceId: 'xu', byYear: 194 },
         },
         {
           title: { zh: '非劉備不能安此州', en: 'No One but Liu Bei' },
-          description: 'Have Liu Bei in your service by 195 — on his deathbed he gave the province to him.',
-          descriptionZh: '於195年前招得劉備入麾下 —— 臨終讓徐州曰:「非劉備不能安此州也。」',
-          goal: { kind: 'recruit-officer', officerId: 'liu-bei', byYear: 195 },
+          description: 'Have Liu Bei in your service by 194 — on his deathbed he gave the province to him.',
+          descriptionZh: '於194年前招得劉備入麾下 —— 臨終讓徐州曰:「非劉備不能安此州也。」',
+          goal: { kind: 'recruit-officer', officerId: 'liu-bei', byYear: 194 },
         },
       ],
     },
@@ -484,9 +484,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          */
         {
           title: { zh: '掃除宗廟', en: 'Sweep the Ancestral Shrines' },
-          description: 'Take Luoyang by 195 — of all the lords, only Sun Jian actually got there.',
-          descriptionZh: '於195年前攻取洛陽 —— 諸侯高會,唯堅獨進,入洛之日掃除宗廟、平塞諸陵。',
-          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 195 },
+          description: 'Take Luoyang by 191 — of all the lords, only Sun Jian actually got there, and he was dead by then.',
+          descriptionZh: '於191年前攻取洛陽 —— 諸侯高會,唯堅獨進,入洛之日掃除宗廟、平塞諸陵;而他也死在191年。',
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 191 },
         },
         {
           title: { zh: '峴山之讎', en: 'The Debt at Xian Mountain' },
@@ -838,9 +838,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         },
         {
           title: { zh: '入塞', en: 'Through the Wall' },
-          description: 'Take Ye — the Wuhuan rode into Hebei more than once, and not only as guests.',
-          descriptionZh: '攻取鄴城 —— 烏丸不只一次入河北,而且不只是作客。',
-          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 210 },
+          description: 'Take Ye by 207 — the Wuhuan rode into Hebei more than once, and not only as guests.',
+          descriptionZh: '於207年前攻取鄴城 —— 烏丸不只一次入河北,而且不只是作客;207年蹋頓死在白狼山。',
+          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 207 },
         },
       ],
     },
@@ -1647,9 +1647,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         },
         {
           title: { zh: '荊南立業', en: 'A Seat in the South' },
-          description: 'Hold Changsha and Jiangling by 198.',
-          descriptionZh: "於198年前據長沙、江陵,以荊南為業。",
-          goal: { kind: 'hold-cities', cityIds: ['changsha', 'jiangling'], byYear: 198 },
+          description: 'Hold Changsha and Jiangling by 191 — the year the arrow found him at Xiangyang.',
+          descriptionZh: "於191年前據長沙、江陵,以荊南為業 —— 那正是他中矢於襄陽的那一年。",
+          goal: { kind: 'hold-cities', cityIds: ['changsha', 'jiangling'], byYear: 191 },
         },
       ],
     },
@@ -2105,7 +2105,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           title: { zh: '公臺不去', en: 'Gongtai Stays' },
           description: 'Keep Chen Gong — he knew exactly what you were and stayed anyway.',
           descriptionZh: '留住陳宮 —— 他明知你是什麼人,還是留下了。',
-          goal: { kind: 'retain-officer', officerId: 'chen-gong', byYear: 199 },
+          goal: { kind: 'retain-officer', officerId: 'chen-gong', byYear: 198 },
         },
       ],
     },
@@ -2181,7 +2181,7 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
           title: { zh: '子龍未去', en: 'Zilong Has Not Left' },
           description: 'Keep Zhao Yun — he left in history, saying he had not found what he sought.',
           descriptionZh: '留住趙雲 —— 史實上他託辭兄喪而去,終身未歸。',
-          goal: { kind: 'retain-officer', officerId: 'zhao-yun', byYear: 200 },
+          goal: { kind: 'retain-officer', officerId: 'zhao-yun', byYear: 199 },
         },
       ],
     },
@@ -2223,9 +2223,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '東吳德王', en: 'Prince of Virtue' },
-          description: 'Break the Sun force outright — the boy came over with a thousand men.',
-          descriptionZh: '擊滅孫氏 —— 那孩子過江時不過千餘人。',
-          goal: { kind: 'defeat-force', forceId: 'sun', byYear: 200 },
+          description: 'Break the Sun force by 196 — the boy came over with a thousand men, and he had you by then.',
+          descriptionZh: '於196年前擊滅孫氏 —— 那孩子過江時不過千餘人,而196年他已經解決了你。',
+          goal: { kind: 'defeat-force', forceId: 'sun', byYear: 196 },
         },
       ],
     },
@@ -2661,9 +2661,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '入主鄴城', en: 'Take Ye for Yourself' },
-          description: 'Hold Ye by 208.',
-          descriptionZh: "於208年前入主鄴城。",
-          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 208 },
+          description: 'Hold Ye by 205 — the year Cao Chun\'s riders ran him down.',
+          descriptionZh: "於205年前入主鄴城 —— 而205年他就被曹純的虎豹騎追上了。",
+          goal: { kind: 'hold-cities', cityIds: ['ye'], byYear: 205 },
         },
       ],
     },
@@ -2866,9 +2866,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '不入許都', en: 'Do Not Go to Xuchang' },
-          description: 'Control Liang province by 213 — in history you accepted a court post and died for it.',
-          descriptionZh: "於213年前盡有涼州 —— 史書上,你應召入朝,闔門遇害。",
-          goal: { kind: 'control-province', provinceId: 'liang', byYear: 213 },
+          description: 'Control Liang province by 212 — in history you accepted a court post and died for it that year.',
+          descriptionZh: "於212年前盡有涼州 —— 史書上,你應召入朝,闔門遇害,就在212年。",
+          goal: { kind: 'control-province', provinceId: 'liang', byYear: 212 },
         },
       ],
     },
@@ -3100,9 +3100,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '西州自立', en: 'A Realm of My Own in the West' },
-          description: 'Control Liang province by 217 — thirty years in Guanzhong, always someone else\'s ally.',
-          descriptionZh: "於217年前盡有涼州 —— 縱橫關中三十年,總是別人的盟友。",
-          goal: { kind: 'control-province', provinceId: 'liang', byYear: 217 },
+          description: 'Control Liang province by 215 — thirty years in Guanzhong, always someone else\'s ally.',
+          descriptionZh: "於215年前盡有涼州 —— 縱橫關中三十年,總是別人的盟友;而215年他就死了。",
+          goal: { kind: 'control-province', provinceId: 'liang', byYear: 215 },
         },
       ],
     },
@@ -3880,9 +3880,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
         },
         {
           title: { zh: '襄平不陷', en: 'Xiangping Shall Not Fall' },
-          description: 'Still hold Xiangping in 245 — history sends Sima Yi in 238.',
-          descriptionZh: "至245年仍據襄平 —— 史書上,司馬懿238年就來了。",
-          goal: { kind: 'hold-cities', cityIds: ['xiangping'], byYear: 245 },
+          description: 'Still hold Xiangping in 238 — that is the year Sima Yi came.',
+          descriptionZh: "至238年仍據襄平 —— 史書上,司馬懿就是那一年來的。",
+          goal: { kind: 'hold-cities', cityIds: ['xiangping'], byYear: 238 },
         },
       ],
     },
@@ -4448,9 +4448,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '兵入洛陽', en: 'March on Luoyang' },
-          description: 'Take Luoyang by 264.',
-          descriptionZh: "於264年前攻取洛陽 —— 困守孤城必亡,唯有北出。",
-          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 264 },
+          description: 'Take Luoyang by 258 — the year the city fell and he died in the sortie.',
+          descriptionZh: "於258年前攻取洛陽 —— 困守孤城必亡,唯有北出;而他就是在258年城破突圍時死的。",
+          goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 258 },
         },
       ],
     },
