@@ -531,8 +531,8 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '地方五千里', en: 'Five Thousand Li' },
-        description: 'Still hold Jiangling and Shouchun in 185 — the coalition marched west and came home; what Chu kept was the Yangtze and the Huai.',
-        descriptionZh: "至185年仍據江陵、壽春 —— 合縱之師西指而還,楚所守者,仍是江淮之間那片地方五千里。",
+        description: 'Still hold Hefei, Jianye and Wu in 185 — the coalition marched west and came home; what Chu kept was the Yangtze and the Huai.',
+        descriptionZh: "至185年仍據合肥、建業、吳郡 —— 合縱之師西指而還,楚所守者,仍是江淮之間那片地方五千里。",
         /*
          * 五國攻秦在這張地圖上**演不出來**,而原因是結構性的:
          * 函谷關只與洛陽、潼關相鄰,而**洛陽是韓的** —— 也就是說通往秦的路
@@ -542,7 +542,14 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
          * 主目標改成各自守得住的那一塊,叩關降為次要 —— 玩家可以先取洛陽
          * 再西向,AI 不會。
          */
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'shouchun'], byYear: 185 },
+        /*
+         * 又一張「楚在縮」的盤(45 城 → 七年後中位 25),而縮的方向跟閼與那張一樣:
+         * 西邊先丟(襄陽 +7 年 0/4、江夏 0/4),東邊守得死死的
+         * (合肥/建業/吳郡 一路 4/4)。壽春 +4 年還有 4/4,+7 年掉到 1/4。
+         * 戰國七張盤的楚,病灶不是同一座城 —— 逐張量出來的方向卻只有兩種:
+         * 江南一線(七雄/魏文侯/商鞅)或江淮一線(閼與/五國攻秦)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['hefei', 'jianye', 'wu'], byYear: 185 },
       },
     },
     {
@@ -1167,9 +1174,16 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '取上黨', en: 'Take Shangdang' },
-        description: "Hold Shangdang by 184 — the plateau is what the whole war was fought for.",
-        descriptionZh: "於184年前據上黨 —— 這場仗打的就是這片高地;邯鄲是後話。",
-        goal: { kind: 'hold-cities', cityIds: ['shangdang'], byYear: 184 },
+        description: "Still hold Chang'an, Tongguan and Hanguguan in 182 — the plateau is what the war was fought for; the passes are what Qin kept.",
+        descriptionZh: "至182年仍據長安、潼關、函谷關 —— 這場仗打的是上黨那片高地,而秦真正拿回去的是崤函之固。",
+        /*
+         * 「取上黨」四輪一次也沒有 —— 上黨在趙手上,而趙在這張盤主目標 3/3,
+         * 他守得住(長平之戰的高地之爭,模擬裡沒有重演)。
+         * 秦在這張盤幾乎不擴張(取太原/朔方/五原都只有 1/4),而本部穩得很:
+         * 潼關 4/4、長安 4/4→3/4、函谷關 4/4→3/4。
+         * 題目改成守崤函之固,「取上黨」降為次要 —— 那才是它該待的地方。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'hanguguan'], byYear: 182 },
       },
       secondary: [
         {
@@ -1249,9 +1263,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'han',
       primary: {
         title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
-        description: "Still hold Xuchang and Luoyang in 184. The realm's strongest bows come out of Han; the land is small, and holding it is what it is good for.",
-        descriptionZh: "至184年仍據許昌、洛陽。天下之強弓勁弩皆從韓出,而地小,守則有餘。",
-        goal: { kind: 'hold-cities', cityIds: ['xuchang', 'luoyang'], byYear: 184 },
+        description: "Still hold Runan in 180. The realm's strongest bows come out of Han; the land is small, and this time even holding is beyond it.",
+        descriptionZh: "至180年仍據汝南。天下之強弓勁弩皆從韓出,而地小,守則有餘 —— 這一回連有餘都談不上。",
+        /*
+         * 長平那一年的韓最慘:四城六年後中位 **1**,而四座城 +4 年一律 1/4。
+         * +2 年只有汝南還有 3/4(洛陽、許昌各 2/4)。
+         * 「許昌、洛陽」這一組寫在九張盤的韓身上,而這張是全庫最緊的一張 ——
+         * 收成單守汝南到 180(+2 年)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['runan'], byYear: 180 },
       },
     },
   ],
