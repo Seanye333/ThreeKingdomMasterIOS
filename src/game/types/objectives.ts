@@ -36,6 +36,19 @@ export type ObjectiveGoal =
    */
   | { kind: 'protect-force';   forceId: EntityId;   minCities?: number; byYear: number }
   | { kind: 'recruit-officer'; officerId: EntityId; byYear?: number }
+  /**
+   * 留住某個人 —— **「別讓他走」這件事,目標系統原本也沒有形狀可以裝。**
+   *
+   * 全庫有十三條次要目標寫的是這個:呂布的「公臺不去」、劉璋的「孝直不叛」、
+   * 劉備的「掛印封金」、袁紹的「田豐之言」、朱儁的「織席販履之徒」……
+   * 文案句句都在說「他現在是你的,別弄丟了」,而它們一律寫成 `recruit-officer`
+   * ——那型問的是「他歸你了沒」,人本來就在麾下,於是**第 0 旬就成功**,
+   * 十三條全是白送的分。是 objectiveOwnership 擴到次要目標之後才看見的。
+   *
+   * 判法:到 `byYear` 那一年才結算(同守成型);中途死了或叛走則**立刻失敗**
+   * ——「田豐之言」的戲就在他會被殺,那一刻該當場判掉,而不是拖到期限。
+   */
+  | { kind: 'retain-officer';  officerId: EntityId; byYear: number }
   | { kind: 'survive-until';   year: number }
   | { kind: 'control-province'; provinceId: string; byYear?: number }
   | { kind: 'declare-emperor' }

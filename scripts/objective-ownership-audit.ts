@@ -284,6 +284,65 @@ for (const scenario of SCENARIOS) {
         break;
     }
   }
+
+  /*
+   * ── 次要目標:只跑硬性那幾類(2026-08-23 補)────────────────────────
+   *
+   * 上面那一圈只看 `primary`,而全庫 972 條目標裡有 432 條是次要的 ——
+   * 它們從來沒被這支掃過。診斷類(全取得/搶城/在野可招)對次要目標沒有意義:
+   * 次要目標本來就常常是「去打一座別人的城」。
+   * 所以這裡**只查無可辯解的那幾類**:城/人不在此盤、對象開局無城、
+   * 第 0 旬就成立、救援門檻高於開局。
+   */
+  for (const o of objs) {
+    for (const sec of o.secondary ?? []) {
+      const g: ObjectiveGoal = sec.goal;
+      const who = `${where} / ${label(o.forceId)} 次「${sec.title.zh}」`;
+      goalsChecked++;
+      if (g.kind === 'hold-cities') {
+        const missing = g.cityIds.filter((cid) => !owner.has(cid));
+        if (missing.length) {
+          findings.push({ rank: 0, tag: '城不在此盤', line: `${who} — ${missing.join('、')}` });
+          continue;
+        }
+        const own = g.cityIds.filter((cid) => owner.get(cid) === o.forceId);
+        if (own.length === g.cityIds.length && g.byYear === undefined) {
+          findings.push({
+            rank: 1, tag: '第0旬就成立',
+            line: `${who} — 開局全據且無期限:${g.cityIds.map((c) => cityName.get(c) ?? c).join('、')}`,
+          });
+        }
+      } else if (g.kind === 'defeat-force' || g.kind === 'break-force') {
+        const theirs = counts.get(g.forceId) ?? 0;
+        if (theirs === 0) {
+          findings.push({ rank: 0, tag: '對象開局無城', line: `${who} — ${label(g.forceId)} 開局 0 城` });
+        } else if (g.kind === 'break-force' && theirs <= g.maxCities) {
+          findings.push({
+            rank: 1, tag: '第0旬就成立',
+            line: `${who} — ${label(g.forceId)} 開局只有 ${theirs} 城(要壓到 ≤${g.maxCities})`,
+          });
+        }
+      } else if (g.kind === 'protect-force') {
+        const theirs = counts.get(g.forceId) ?? 0;
+        const need = g.minCities ?? 1;
+        if (theirs === 0) {
+          findings.push({ rank: 0, tag: '對象開局無城', line: `${who} — 要保的 ${label(g.forceId)} 開局 0 城` });
+        } else if (need > theirs) {
+          findings.push({
+            rank: 2, tag: '救援門檻高於開局',
+            line: `${who} — ${label(g.forceId)} 開局 ${theirs} 城,而要求 ≥${need}`,
+          });
+        }
+      } else if (g.kind === 'recruit-officer') {
+        const off = scenario.officers.find((x) => x.id === g.officerId);
+        if (!off) {
+          findings.push({ rank: 0, tag: '人不在此盤', line: `${who} — ${g.officerId}` });
+        } else if (off.forceId === o.forceId) {
+          findings.push({ rank: 1, tag: '第0旬就成立', line: `${who} — ${off.name.zh} 開局就在麾下` });
+        }
+      }
+    }
+  }
 }
 
 findings.sort((a, b) => a.rank - b.rank || a.line.localeCompare(b.line));

@@ -138,6 +138,19 @@ export function evaluateGoal(
       if (expired || (o?.status === 'dead')) return { status: 'failure' };
       return { status: 'pending' };
     }
+    case 'retain-officer': {
+      const o = ctx.officers[goal.officerId];
+      /*
+       * 三態要分清楚:
+       *   人沒了(死/不在名單)或換了主 → 立刻 failure,不等期限。
+       *   還在手上而未到期            → pending。
+       *   到期仍在手上                → success。
+       * 「立刻失敗」是刻意的:田豐被殺、陳宮被縊,那一刻就是這條目標的結局。
+       */
+      const kept = !!o && o.forceId === ctx.playerForceId && o.status !== 'dead';
+      if (!kept) return { status: 'failure' };
+      return ctx.year >= goal.byYear ? { status: 'success' } : { status: 'pending' };
+    }
     case 'survive-until':
       return ctx.year >= goal.year ? { status: 'success' } : { status: 'pending' };
     case 'control-province': {
