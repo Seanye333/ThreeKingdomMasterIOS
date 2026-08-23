@@ -1466,9 +1466,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '秭歸之進', en: 'The Advance to Zigui' },
-        description: "Take Yinping by 228 — the eastern campaign ended in fire; what is left to Shu is the road north.",
-        descriptionZh: "於228年前取陰平 —— 東征以一夜大火收場,蜀漢還走得通的是北邊那條路。",
-        goal: { kind: 'hold-cities', cityIds: ['yinping'], byYear: 228 },
+        description: "Still hold Chengdu, Zitong and Qianwei in 226 — the eastern campaign ended in fire; what is left is the country itself.",
+        descriptionZh: "至226年仍據成都、梓潼、犍為 —— 東征以一夜大火收場,而蜀漢還在。",
+        /*
+         * 「取陰平」四輪**一次也沒有** —— 陰平在這張盤上無主,而無主的邊城
+         * AI 不會特意去拿(同型於 reachability 那條「壓力值不等於打得下來」)。
+         * 夷陵之敗以後劉備真正握著的是本部:成都 4/4、梓潼 4/4、犍為 3/4,
+         * 而**漢中與上庸是「每個檢查點都已失去」的那種**。
+         * 題目從「還走得通的是北邊那條路」改成「蜀漢還在」——
+         * 這張盤問的本來就是敗戰之後守不守得住,不是還能不能北進。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'zitong', 'qianwei'], byYear: 226 },
       },
       secondary: [
         {
