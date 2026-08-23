@@ -281,10 +281,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 195 年皆 4/4)再加冀北的南皮與信都。後兩座是界橋那條線上的,
          * 袁紹的主目標指向平原、不指向它們,所以兩家可以各自成立而仍然相爭。
          */
-        description: 'Still hold You province and the Ji-north foothold in 196 — Panhe, Donguang, Jieqiao: he never fought anywhere else.',
-        descriptionZh: '至196年仍據北平、薊、漁陽、柳城與南皮、信都 —— 磐河、東光、界橋,他一生的仗都在河北打。',
-        goal: { kind: 'hold-cities', cityIds: ['beiping', 'ji', 'yuyang', 'liucheng', 'nanpi', 'xindu'], byYear: 196 },
+        description: 'Still hold Yi County, Yuyang and Ji in 193 — Panhe, Donguang, Jieqiao: he never fought anywhere else.',
+        descriptionZh: '至193年仍據易縣、漁陽、薊 —— 磐河、東光、界橋,他一生的仗都在河北打。',
+        goal: { kind: 'hold-cities', cityIds: ['yi-county', 'yuyang', 'ji'], byYear: 193 },
       },
+      /*
+       * 四改。六座城守六年,四輪 0 中 —— 而逐城量下來病灶在後三座:
+       * +6 年北平 1/4、南皮 1/4、信都 2/4,而易縣 3/4、漁陽 4/4、薊 3/4
+       * (+9 年薊反而回到 4/4)。**目標寫的城越多,最弱的那一座就越支配整條。**
+       * 收成他一生真正據著的三座、窗口 196 → 193。
+       * 易京是他最後困死的地方,而在盤上它也正是他守得最久的一座。
+       */
       secondary: [
         {
           title: { zh: '南下爭河北', en: 'The Fight for Hebei' },
@@ -428,10 +435,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'tao',
       primary: {
         title: { zh: '徐州安堵', en: 'Keep Xuzhou Quiet' },
-        description: 'Still hold Pengcheng and Xiapi in 194.',
-        descriptionZh: "至194年仍保彭城、下邳 —— 亂世之中,無事便是大功。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 194 },
+        description: 'Still hold Xiapi and Xiaopei in 193 — in a time like this, nothing happening is the achievement.',
+        descriptionZh: "至193年仍保下邳、小沛 —— 亂世之中,無事便是大功。",
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'xiaopei'], byYear: 193 },
       },
+      /*
+       * 這條先前被我歸成「該修的是模擬不是題目」(陶謙 194 卒,期限有史實錨點)。
+       * 量過之後那個判斷是錯的:**彭城是「每個檢查點都已失去」的那種**,
+       * 病灶是城不是期限。陶謙四城,九年後中位剩 1 —— 下邳 +3 年 4/4、
+       * 小沛 3/4,而 +6 年就掉到 1/4 與 0/4。改守這兩座、窗口收到 193。
+       */
       secondary: [
         {
           title: { zh: '流民歸之', en: 'The Refugees Come' },
@@ -519,10 +532,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 這才是「挾天子而令天下」在盤面上的樣子。洛陽降為次要:
          * 史實上他棄之,而棄之則關東長驅 —— 那是代價,不是門檻。
          */
-        description: "Hold Chang'an with the Tong and Wu passes through 195 — the emperor is only leverage while the gates are yours.",
-        descriptionZh: '至195年仍據長安與潼關、武關 —— 挾天子者,所挾的其實是那兩扇門。',
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'tongguan', 'wuguan'], byYear: 195 },
+        description: "Hold Chang'an with Mei and the Wu pass through 193 — the emperor is only leverage while the gates are yours.",
+        descriptionZh: '至193年仍據長安、郿與武關 —— 挾天子者,所挾的其實是那幾扇門。',
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'mei', 'wuguan'], byYear: 193 },
       },
+      /*
+       * 四改。三城守五年仍是 0 中,而逐城再量一次(4 輪 +3/+6/+9 年):
+       * 長安 4/4 → 2/4 → 1/4、潼關 2/4 → **0/4**、函谷關 2/4 → 0/4,
+       * 而郿 3/4 → 3/4 → 3/4、武關 4/4 → 4/4 → 3/4。
+       * **潼關才是那條把整條拉死的城** —— 上一次量它是 3/4,這次 +3 年就只剩 2/4;
+       * 董卓九城九年後中位剩 3,關東諸侯壓上來的第一站正是潼關。
+       * 換成郿(他自己築的塢)與武關,窗口 195 → 193。
+       */
       secondary: [
         {
           title: { zh: '洛陽不棄', en: 'Do Not Abandon Luoyang' },
@@ -1533,8 +1554,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'eunuchs',
       primary: {
         title: { zh: '據關以自固', en: 'Hold the Passes' },
-        description: 'Still hold Hulao and Guandu in 192 — you killed He Jin in the palace; what you never had was an army.',
-        descriptionZh: "至192年仍據虎牢、官渡 —— 誅大將軍於嘉德殿前易,而據天下之險以自固難。史書上你們連夜挾帝出穀門,至小平津,張讓辭曰「臣等殄滅,天下亂矣」,投河而死。",
+        description: 'Still hold Yanjin in 190 — you killed He Jin in the palace; what you never had was an army.',
+        descriptionZh: "至190年仍據延津 —— 誅大將軍於嘉德殿前易,而據天下之險以自固難。史書上你們連夜挾帝出穀門,至小平津,張讓辭曰「臣等殄滅,天下亂矣」,投河而死。",
         /*
          * 原本是「至193年仍據洛陽」,而**洛陽在這張盤上是何進的**,十常侍要先
          * 打下來 —— 算一次就知道打不動:他們三城合兵不到九千,姿態 ×0.55,
@@ -1543,8 +1564,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 而且不是「難」,是**評分函式根本不會把它列進來**。
          * 改成守他們真正握著的那兩座關;取洛陽降為次要。
          */
-        goal: { kind: 'hold-cities', cityIds: ['hulao', 'guandu'], byYear: 192 },
+        goal: { kind: 'hold-cities', cityIds: ['yanjin'], byYear: 190 },
       },
+      /*
+       * 十常侍開局三城,三年後中位 **0** —— 這張盤講的就是他們被誅。
+       * 但不必因此判它「設計如此」:實測 +1 年延津還有 4/6(虎牢 2/6、官渡 1/6),
+       * 而原題目挑的正是後兩座、窗口還開到 192(開局 +3 年)。
+       * 收成「守住延津到 190」—— 延津是黃河渡口,而他們正是挾帝奔小平津而死的。
+       */
       secondary: [
         {
           title: { zh: '挾持宮禁', en: 'Hold the Palace' },
@@ -1658,11 +1685,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-biao',
       primary: {
         title: { zh: '坐保江漢', en: 'Keep the Han Valley' },
-        description: 'Still hold Xiangyang and Jiangling in 196 — holding is also an answer.',
-        descriptionZh: "至196年仍據襄陽、江陵 —— 單騎入荊州,理兵襄陽,而後坐保江漢。守成之主,亦是一種答案。",
+        description: 'Still hold Xiangyang, Fancheng and Bowang in 193 — holding is also an answer.',
+        descriptionZh: "至193年仍據襄陽、樊城、博望 —— 單騎入荊州,理兵襄陽,而後坐保江漢。守成之主,亦是一種答案。",
         /* 原本連江夏一起查,而江夏是他真正丟得最兇的一座(黃祖與孫氏打了十年)
-           —— 三座城守十六年,12 輪 0/12。收窄到襄陽、江陵這兩個真支點。 */
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 196 },
+           —— 三座城守十六年,12 輪 0/12。收窄到襄陽、江陵這兩個真支點,仍然 0/3。
+           再量一次才看清楚:**襄陽、江陵也不是他最穩的**(+3 年 3/4、+6 年 2/4),
+           而樊城 +9 年還是 4/4、博望 3/4、宛城 3/4 —— 江漢真正穩的是漢水兩岸。
+           留襄陽(治所,也是張力所在),配樊城、博望,窗口從 196(開局 +7 年)收到 193。 */
+        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'fancheng', 'bowang'], byYear: 193 },
       },
     },
     {
@@ -1852,9 +1882,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'tao',
       primary: {
         title: { zh: '徐州不失', en: 'Xuzhou Shall Not Fall' },
-        description: 'Still hold Pengcheng and Xiapi in 198.',
-        descriptionZh: "至198年仍保彭城、下邳 —— 老病之身,守得一方是一方。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xiapi'], byYear: 198 },
+        description: 'Still hold Langya and Xiapi in 197 — old and ill, and every year the province stays quiet is a year won.',
+        descriptionZh: "至197年仍保琅琊、下邳 —— 老病之身,守得一方是一方。",
+        /*
+         * 這張盤的陶謙其實過得不錯(5 城 → 中位 6),而彭城是那三座裡最弱的一環
+         * (逐城 3/4,而琅琊每個檢查點都是 4/4)。**兩座 3/4 的城合起來就成擲硬幣**,
+         * 換掉一座就穩。窗口 198 → 197。
+         * 注意跟反董卓那張的陶謙**不是同一回事**:那張的彭城是「每個檢查點都已失去」。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['langya', 'xiapi'], byYear: 197 },
       },
     },
     {
