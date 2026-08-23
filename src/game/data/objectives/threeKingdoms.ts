@@ -2748,9 +2748,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '五斗米道', en: 'The Way of the Five Pecks' },
-        description: "Still hold Hanzhong and Yangping Pass in 212 — a church that is also a state, thirty years without an army passing through.",
-        descriptionZh: "至212年仍據漢中、陽平關 —— 政教合一之地,三十年不見兵革。成都是劉璋的,不在此列。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'yangping'], byYear: 212 },
+        description: 'Still hold the Yangping Pass and Jiameng in 207 — thirty years of church rule and not one campaign. Chengdu is Liu Zhang\'s, and not part of this.',
+        descriptionZh: "至207年仍據陽平關、葭萌 —— 政教合一之地,三十年不見兵革。成都是劉璋的,不在此列。",
+        /*
+         * 「漢中」是張魯目標裡的老問題(同一句話寫在五張盤上),而在這張盤上
+         * 逐城量下來:漢中 +3 年 2/4、+6 年 1/4,而**陽平關一路 2/4 沒掉**、
+         * 葭萌 +3 年 3/4。張魯四城九年後中位剩 1 —— 他整個在縮,
+         * 而縮到最後手裡的是那兩道關口,不是漢中本城。窗口 212(+8 年)收到 207。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['yangping', 'jiameng'], byYear: 207 },
       },
       secondary: [
         {
@@ -2805,8 +2811,12 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       primary: {
         title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
         description: "Still hold Liaodong and Beiping in 210. Frontier troops, used to running with the steppe horse — and after Jieqiao he drew back further every year.",
-        descriptionZh: "至210年仍據遼東、北平。邊地之兵,慣與胡騎相馳 —— 而界橋之後,他愈退愈深。",
-        goal: { kind: 'hold-cities', cityIds: ['liaodong', 'beiping'], byYear: 210 },
+        descriptionZh: "至210年仍據遼東、薊。邊地之兵,慣與胡騎相馳 —— 而界橋之後,他愈退愈深。",
+        /*
+         * 兩座裡壞的只有北平(+6 年 1/4),而遼東 3/4、**薊每個檢查點都是 4/4**。
+         * 換一座就成立 —— 「目標寫的城越多,最弱的那一座就越支配整條」。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['liaodong', 'ji'], byYear: 210 },
       },
     },
   ],
@@ -2868,17 +2878,28 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-207tv-liubiao',
       forceId: 'liu-biao',
       primary: {
-        title: { zh: '三顧得人', en: 'Three Visits, One Sleeping Dragon' },
-        description: 'Recruit Zhuge Liang — he is farming in Longzhong, in your province.',
-        descriptionZh: "招得諸葛亮 —— 臥龍就在你的隆中躬耕,劉備尚未三顧。",
-        goal: { kind: 'recruit-officer', officerId: 'zhuge-liang' },
+        title: { zh: '荊土不失', en: 'Jing Shall Not Be Handed Over' },
+        description: 'Still hold Yiling, Fancheng and Lingling in 210 — history has your son surrender the province.',
+        descriptionZh: "至210年仍保夷陵、樊城、零陵 —— 史書上,你的兒子把荊州拱手送人。",
+        goal: { kind: 'hold-cities', cityIds: ['yiling', 'fancheng', 'lingling'], byYear: 210 },
       },
+      /*
+       * 主次對調(2026-08-23)。原本的主目標是「招得諸葛亮」,而**AI 幾乎不招在野**
+       * ——那條在掃描裡永遠 0/3,不是因為難,是因為自走的一方不做這件事。
+       * 對玩家它反而是這張盤最好按的一鈕,所以不刪,降為次要
+       * (次目標不進掃描,AI 盲區在那裡是可以接受的)。
+       *
+       * 換上來的守成條也重挑過城:**襄陽在劉表身上是老毛病**
+       * ——這張 1/4、反董卓那張 1/4(只有十常侍那張 18 城時是 3/4);
+       * 而夷陵 +9 年 3/4、樊城 3/4、零陵 3/4、西陵/猇亭 3/4。
+       * 劉表 20 城九年後中位剩 8,守得住的是江漢與湘南,不是治所。
+       */
       secondary: [
         {
-          title: { zh: '荊土不失', en: 'Jing Shall Not Be Handed Over' },
-          description: 'Still hold Xiangyang and Jiangling in 212 — history has your son surrender them.',
-          descriptionZh: "至212年仍保襄陽、江陵 —— 史書上,你的兒子把它們拱手送人。",
-          goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling'], byYear: 212 },
+          title: { zh: '三顧得人', en: 'Three Visits, One Sleeping Dragon' },
+          description: 'Recruit Zhuge Liang — he is farming in Longzhong, in your province.',
+          descriptionZh: "招得諸葛亮 —— 臥龍就在你的隆中躬耕,劉備尚未三顧。",
+          goal: { kind: 'recruit-officer', officerId: 'zhuge-liang' },
         },
       ],
     },
@@ -2905,9 +2926,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '師君治漢中', en: 'The Teacher-Lord of Hanzhong' },
-        description: 'Still hold Hanzhong and Yangping in 216 — history gives you until 215.',
-        descriptionZh: "至216年仍據漢中、陽平 —— 史書只給了你到215年。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'yangping'], byYear: 216 },
+        description: 'Still hold Jiameng and Yangping in 210 — history gives you until 215.',
+        descriptionZh: "至210年仍據葭萌、陽平 —— 史書只給了你到215年。",
+        /*
+         * **漢中在張魯身上就是那一座**:這張 +3 年 1/4、鄴城陷落那張 2/4→1/4,
+         * 而葭萌 4/4、陽平關 3/4。「師君治漢中」一字不差寫在五張盤上,
+         * 而五張的漢中都不好守 —— 改題目,不改盤。窗口 216(+9 年)收到 210。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jiameng', 'yangping'], byYear: 210 },
       },
     },
     {
