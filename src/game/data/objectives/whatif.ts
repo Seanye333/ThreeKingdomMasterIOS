@@ -1038,9 +1038,13 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '南北夾擊', en: 'The Pincer' },
-        description: 'Take Guandu, Baima and Yanjin by 206 — Sun Ce comes from the south, you from the north.',
-        descriptionZh: "於206年前取官渡、白馬、延津 —— 孫策自南,你自北;黃河三個渡口先過了,許都才談得上。",
-        goal: { kind: 'hold-cities', cityIds: ['guandu', 'baima', 'yanjin'], byYear: 206 },
+        description: 'Take Baima and Yanjin by 206 — Sun Ce comes from the south, you from the north.',
+        descriptionZh: "於206年前取白馬、延津 —— 孫策自南,你自北;黃河渡口先過了,許都才談得上。",
+        /*
+         * 三個渡口裡**官渡是最弱的那個**(四輪 0/4 → 1/4),而白馬、延津各 2/4。
+         * 「目標寫的城越多,最弱的那一座就越支配整條」—— 拿掉官渡就成立。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['baima', 'yanjin'], byYear: 206 },
       },
       /* 許昌壓力 0.77,在門檻之下;白馬 3.89、延津 3.56、官渡 2.06 才是他過得去的地方。 */
       secondary: [
@@ -1106,9 +1110,13 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'wuhuan',
       primary: {
         title: { zh: '控弦南下', en: 'The Riders Come South' },
-        description: "Still hold Wuhuan and Liaodong in 207. Tadun had a name for daring, and the Wuhuan of Liaoxi rode at his word.",
-        descriptionZh: "至207年仍據烏丸、遼東。蹋頓有雄名,遼西烏丸皆從其號令。",
-        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liaodong'], byYear: 207 },
+        description: "Still hold Wuhuan and Liucheng in 207. Tadun had a name for daring, and the Wuhuan of Liaoxi rode at his word.",
+        descriptionZh: "至207年仍據烏丸、柳城。蹋頓有雄名,遼西烏丸皆從其號令。",
+        /*
+         * **遼東 +4 年只剩 1/4**,而烏丸 4/4、柳城 4/4→3/4 —— 換一座就成立。
+         * 跟官渡盤那條「兼有遼東與北平」同型:遼東不是烏丸守得住的地方。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['wuhuan', 'liucheng'], byYear: 207 },
       },
     },
   ],
@@ -1120,9 +1128,15 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'dong',
       primary: {
         title: { zh: '郿塢三十年', en: 'Thirty Years in Meiwu' },
-        description: "Still hold Chang'an and Luoyang in 200 — the dagger at the palace gate missed.",
-        descriptionZh: "至200年仍據長安、洛陽 —— 掖門那一戟沒有刺中。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'luoyang'], byYear: 200 },
+        description: "Still hold Chang'an, Mei and Chencang in 200 — the dagger at the palace gate missed, and Meiwu holds thirty years of grain.",
+        descriptionZh: "至200年仍據長安、郿、陳倉 —— 掖門那一戟沒有刺中,而郿塢積穀三十年。",
+        /*
+         * 洛陽 +8 年只剩 2/4(+4 年 3/4),而長安、郿、陳倉一路 4/4。
+         * 標題就叫「郿塢三十年」—— 郿正是他自己築的那座塢,拿它當門檻才對題。
+         * 董卓在這張盤沒有崩(13 城 → 中位 11),掉的是東邊那一圈
+         * (陳留 0/4、函谷關 0/4、白馬/延津 1/4)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'mei', 'chencang'], byYear: 200 },
       },
       secondary: [
         {
@@ -1167,9 +1181,14 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'yuan-shao',
       primary: {
         title: { zh: '另立天子', en: 'Enthrone Another' },
-        description: 'Hold Ye and take Luoyang by 202 — if the emperor is a hostage, make a new emperor.',
-        descriptionZh: "於202年前據鄴城並取洛陽 —— 天子既在賊手,不如另立一個。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'luoyang'], byYear: 202 },
+        description: 'Hold Ye and take Liucheng by 202 — if the emperor is a hostage, make a new emperor; the one you want is in You province.',
+        descriptionZh: "於202年前據鄴城並取柳城 —— 天子既在賊手,不如另立一個;而要立的那位在幽州。",
+        /*
+         * 洛陽是董卓的,而董卓在這張盤守得住(+2 年 4/4)—— 袁紹四輪一次也沒取到。
+         * 他真正取得到的是北邊:柳城 3/4(+4 年)、北平 2/4、雁門 2/4。
+         * 而「另立天子」要立的正是幽州牧劉虞 —— 往北才對題。鄴本來就穩(3~4/4)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'liucheng'], byYear: 202 },
       },
     },
     {
