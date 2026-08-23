@@ -34,6 +34,23 @@ export type TextFinding = { tag: string; line: string };
 /** 句子裡的期限:「至184年」「於184年前」「到184年」。 */
 const YEAR_RE = /[至於到](\d{2,4})年/;
 /**
+ * 英文那一側的期限:`by 184` / `in 184` / `to 184`。
+ *
+ * 兩側分開查,因為**它們會各自漂**:中文對得上不代表英文對得上。
+ * 第一版只查中文,而英文是我照著中文的提示一條條手改的 —— 那不是機制。
+ */
+const YEAR_EN_RE = /\b(?:by|in|to|before|until)\s+(\d{3})\b/i;
+/**
+ * 只看破折號之前那一段 —— 破折號之後是**史實旁白**,裡面的年份不是期限。
+ *
+ * 「Take Chang'an — in history he marched on it in 194 and was beaten.」
+ * 期限是 200,而 194 是史實。第一版沒有這道切法,就把它報成錯。
+ * 全庫的寫法都是「目標句 —— 旁白」,所以切破折號就夠。
+ */
+function goalClause(t: string): string {
+  return t.split(/—|——/)[0];
+}
+/**
  * 句子裡的城池枚舉:「仍據A、B、C」「據A與B、C」「取A、B並取C」。
  *
  * 分隔符不只頓號 —— 第一版只吃頓號,於是把「許昌、陳留與官渡」數成兩座、
@@ -81,10 +98,10 @@ export function auditObjectiveText(prefix = ''): { findings: TextFinding[]; chec
     const where = `${scenario.name.zh}(${scenario.id})`;
 
     for (const o of objs) {
-      const slots: Array<{ kind: string; g: ObjectiveGoal; zh: string; title: string }> = [
-        { kind: '主', g: o.primary.goal, zh: o.primary.descriptionZh ?? '', title: o.primary.title.zh },
+      const slots: Array<{ kind: string; g: ObjectiveGoal; zh: string; en: string; title: string }> = [
+        { kind: '主', g: o.primary.goal, zh: o.primary.descriptionZh ?? '', en: o.primary.description ?? '', title: o.primary.title.zh },
         ...(o.secondary ?? []).map((s) => ({
-          kind: '次', g: s.goal, zh: s.descriptionZh ?? '', title: s.title.zh,
+          kind: '次', g: s.goal, zh: s.descriptionZh ?? '', en: s.description ?? '', title: s.title.zh,
         })),
       ];
       for (const s of slots) {
@@ -92,12 +109,16 @@ export function auditObjectiveText(prefix = ''): { findings: TextFinding[]; chec
         const who = `${where} / ${forceName.get(o.forceId) ?? o.forceId} ${s.kind}「${s.title}」`;
 
         const yr = goalYear(s.g);
-        const m = YEAR_RE.exec(s.zh);
+        const m = YEAR_RE.exec(goalClause(s.zh));
         if (yr != null && m && Number(m[1]) !== yr) {
-          findings.push({ tag: '年份對不上', line: `${who} — 文案寫 ${m[1]} 年,goal 是 ${yr}` });
+          findings.push({ tag: '年份對不上', line: `${who} — 中文寫 ${m[1]} 年,goal 是 ${yr}` });
+        }
+        const em = YEAR_EN_RE.exec(goalClause(s.en));
+        if (yr != null && em && Number(em[1]) !== yr) {
+          findings.push({ tag: '年份對不上(英)', line: `${who} — 英文寫 ${em[1]},goal 是 ${yr}` });
         }
 
-        const bm = BREAK_RE.exec(s.zh);
+        const bm = BREAK_RE.exec(goalClause(s.zh));
         const cap = (s.g as unknown as { maxCities?: number }).maxCities;
         if (cap != null && bm && CN_NUM[bm[1]] !== cap) {
           findings.push({
@@ -107,7 +128,7 @@ export function auditObjectiveText(prefix = ''): { findings: TextFinding[]; chec
         }
 
         const want = goalCityCount(s.g);
-        const cm = listedCityCount(s.zh);
+        const cm = listedCityCount(goalClause(s.zh));
         if (want != null && cm && cm.n !== want) {
           findings.push({
             tag: '城數對不上',

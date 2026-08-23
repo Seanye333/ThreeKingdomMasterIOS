@@ -169,10 +169,16 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '魏地復國', en: 'Wei Restored' },
-        description: "Hold Puyang and take Chenliu by 185 — Wei Bao got his ancestors' land back; Luoyang was never part of it.",
-        descriptionZh: "於185年前據濮陽並取陳留 —— 魏豹復得魏地;洛陽從來不在其中。",
-        goal: { kind: 'hold-cities', cityIds: ['puyang', 'chenliu'], byYear: 185 },
+        description: "Hold Puyang and take Guandu by 184 — Wei Bao got his ancestors' land back; Luoyang was never part of it.",
+        descriptionZh: "於184年前據濮陽並取官渡 —— 魏豹復得魏地;洛陽從來不在其中。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'guandu'], byYear: 184 },
       },
+      /*
+       * 魏開局**只有一座城**(濮陽),而題目要他去取陳留 —— 實測六輪裡
+       * 陳留到第六年才有 1/6,期限之內是 0/6。他真正搆得著的是官渡(+3 年 2/6)。
+       * 濮陽本身守得住(+6 年 5/6),所以「守本 + 取一座搆得著的」才成立。
+       * 判準跟壓力值那一課同型:**一城小國的擴張目標要挑鄰城裡實測非零的那一座**。
+       */
       secondary: [
         {
           title: { zh: '魏地復國', en: 'Wei Restored' },
@@ -261,10 +267,18 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'qi',
       primary: {
         title: { zh: '齊地自立', en: 'Qi Stands Alone' },
-        description: 'Hold Linzi and Beihai by 184 — Tian Rong refused Xiang Yu\'s partition and paid for it.',
-        descriptionZh: "於184年前據臨淄、北海 —— 田榮不受項羽之封,遂反。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 184 },
+        description: 'Still hold Linzi and Beihai in 181 — Tian Rong refused Xiang Yu\'s partition and paid for it.',
+        descriptionZh: "至181年仍據臨淄、北海 —— 田榮不受項羽之封,遂反。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 181 },
       },
+      /*
+       * 窗口從 184(開局 +6 年)收到 181(+3 年)。實測 +3 年臨淄 5/6、北海 5/6,
+       * 而 +6 年北海掉到 3/6 —— 差別全在後面那三年。
+       * 田榮 205 BC 就死於平原,問他撐六年本來就過長。
+       *
+       * 文案也一併從「於…前據」改成「至…仍據」:兩座城開局都是齊的,
+       * 這是守成不是取得,原本的寫法會讓玩家以為要去打。
+       */
     },
     {
       id: 'obj-chch-zhao',

@@ -85,10 +85,18 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'xia',
       primary: {
         title: { zh: '河北夏王', en: 'Xia King of Hebei' },
-        description: "Still hold Ye and Bohai in 181 — Hebei first; Luoyang is what killed him.",
-        descriptionZh: "至181年仍據鄴、渤海 —— 先坐穩河北;去救洛陽的那一趟要了他的命。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai'], byYear: 181 },
+        description: "Still hold Nanpi, Xindu and Changshan in 181 — Hebei first; Luoyang is what killed him.",
+        descriptionZh: "至181年仍據南皮、信都、常山 —— 先坐穩河北;去救洛陽的那一趟要了他的命。",
+        goal: { kind: 'hold-cities', cityIds: ['nanpi', 'xindu', 'changshan'], byYear: 181 },
       },
+      /*
+       * 鄴與渤海雖是竇建德開局的城,他兩張盤都守不住:這裡鄴六輪一次也沒撐到
+       * 第一個檢查點、渤海 3/6,淺水原那張也只有鄴 2/6、渤海 1/6。
+       * 改守河北腹地:南皮 6/6、常山 6/6、信都 5/6(+3 年)。
+       *
+       * ⚠ `what-they-actually-do` 把「每個檢查點都已失去」的城**不列在守成那幾行**。
+       * 看不到某座開局有的城,不等於它沒事 —— 這次差點因此以為鄴不是他的。
+       */
       secondary: [
         {
           title: { zh: '河北夏王', en: 'The Xia King of Hebei' },
@@ -103,10 +111,16 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'xiqin',
       primary: {
         title: { zh: '隴右自立', en: 'A Realm in Longyou' },
-        description: "Still hold Jincheng and Tianshui in 179 — Xue Ju died before he could enter the passes.",
-        descriptionZh: "至179年仍據金城、天水 —— 薛舉死在入關之前,而隴右本來就是他的。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'tianshui'], byYear: 179 },
+        description: "Still hold Tianshui, Shanggui and Jiuquan in 180 — Xue Ju died before he could enter the passes.",
+        descriptionZh: "至180年仍據天水、上邽、酒泉 —— 薛舉死在入關之前,而隴右本來就是他的。",
+        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'shanggui', 'jiuquan'], byYear: 180 },
       },
+      /*
+       * **金城在這張盤 +1 年就只剩 1/6**(薛舉起兵之地,卻是最先被吃掉的)。
+       * 淺水原那張的金城是 3/6,我在那邊留著它當張力;這裡 1/6 太薄,換掉。
+       * 同一座城在不同盤上不是同一件事 —— 別把一張盤量到的結論搬去另一張。
+       * 實測 +2 年:上邽 6/6、酒泉 6/6、天水 5/6。
+       */
       secondary: [
         {
           title: { zh: '西秦入關', en: 'Xiqin Through the Pass' },
@@ -246,10 +260,21 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'wagang',
       primary: {
         title: { zh: '據洛口倉', en: 'The Granary at Luokou' },
-        description: "Still hold Puyang and Xuchang in 184. He opened the granary and let the people take what they wanted; the roads filled with the old and the carried.",
-        descriptionZh: "至184年仍據濮陽、許昌。開倉恣民所取,老弱襁負,道路不絕。",
-        goal: { kind: 'hold-cities', cityIds: ['puyang', 'xuchang'], byYear: 184 },
+        description: "Still hold Puyang, Liyang and Baima in 182. He opened the granary and let the people take what they wanted; the roads filled with the old and the carried.",
+        descriptionZh: "至182年仍據濮陽、黎陽、白馬。開倉恣民所取,老弱襁負,道路不絕。",
+        goal: { kind: 'hold-cities', cityIds: ['puyang', 'liyang', 'baima'], byYear: 182 },
       },
+      /*
+       * 原本要「仍據濮陽、許昌」到 184,而**許昌雖是瓦崗開局的城,他自己守不住**
+       * ——六輪裡 +1 年就只剩 3/6、+2 年 2/6。這一型靜態掃描抓不到(城確實是他的),
+       * 只有實測看得見。
+       *
+       * 改成他真的守得住的黃河一線:濮陽 5/6、白馬 6/6、黎陽 5/6(皆 +4 年),
+       * 期限收到 182。黎陽倉也正是李密開倉恣民所取的那座倉。
+       *
+       * ⚠ 同一段文案在柏壁盤也有一份(**同一條目標複製到多張盤**那一型),
+       * 但那張盤的許昌是 5/6,沒有壞 —— 所以只改這一份,不要順手兩份一起改。
+       */
     },
     {
       id: 'obj-st-qianshui-dingyang',
@@ -341,10 +366,19 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'xia',
       primary: {
         title: { zh: '趁虛而西', en: 'Westward While They Fight' },
-        description: "Still hold Ye and Bohai in 186 — Hebei is the base; the ride west is the gamble.",
-        descriptionZh: "至186年仍據鄴、渤海 —— 河北是本;西行是賭。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai'], byYear: 186 },
+        description: "Still hold Nanpi, Xindu and Pingyuan in 186 — Hebei is the base; the ride west is the gamble.",
+        descriptionZh: "至186年仍據南皮、信都、平原 —— 河北是本;西行是賭。",
+        goal: { kind: 'hold-cities', cityIds: ['nanpi', 'xindu', 'pingyuan'], byYear: 186 },
       },
+      /*
+       * 第三張栽在鄴上的夏。**竇建德在這個模擬裡守不住鄴**:柏壁 1/6(+1 年)、
+       * 淺水原 2/6、隋末更是一次也沒撐到第一個檢查點。而河北腹地他守得死死的
+       * ——南皮/信都/臨淄 +8 年還是 6/6。三張盤一起改成腹地三座。
+       *
+       * 這是「同一條目標複製到多張盤」的變形:文案不同、病灶同一座城。
+       * 判準:某座城在**多張盤**都拉低同一家的主目標時,那是盤面事實不是文案問題,
+       * 改題目而不是改盤。
+       */
       secondary: [
         {
           title: { zh: '趁虛而西', en: 'West While They Fight in Hedong' },
@@ -369,10 +403,16 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'xiqin',
       primary: {
         title: { zh: '隴右自立', en: 'A Realm in Longyou' },
-        description: "Still hold Tianshui and Anding in 184. The hard riders of Longyou — and Xue Ju died before he could enter the passes.",
-        descriptionZh: "至184年仍據天水、安定。隴右悍騎,而薛舉死在入關之前。",
-        goal: { kind: 'hold-cities', cityIds: ['tianshui', 'anding'], byYear: 184 },
+        description: "Still hold Wuwei, Dunhuang and Shanggui in 182. The hard riders of Longyou — and Xue Ju died before he could enter the passes.",
+        descriptionZh: "至182年仍據武威、敦煌、上邽。隴右悍騎,而薛舉死在入關之前。",
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'dunhuang', 'shanggui'], byYear: 182 },
       },
+      /*
+       * 天水、安定是**唐來取的城**(唐在淺水原那張的主目標就寫著取這兩座),
+       * 兩邊對著幹的城不該同時當西秦的守成題:實測 +4 年天水 2/6、安定 2/6,
+       * 而武威 6/6、敦煌 6/6、上邽 4/6 —— 河西那一段他守得住。
+       * 期限也從 184(開局 +6 年)收到 182:柏壁已是 620 年,史實的西秦早沒了。
+       */
     },
     {
       id: 'obj-st-bobi-wu',
@@ -411,10 +451,19 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'zheng',
       primary: {
         title: { zh: '守洛待援', en: 'Hold Until Xia Arrives' },
-        description: 'Still hold Luoyang in 182 — the city was down to eating clay when help came.',
-        descriptionZh: "至182年仍守洛陽 —— 城中糧盡,以土屑為餅,夏王之援終於未到。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 182 },
+        description: 'Still hold Luoyang and Wancheng in 179 — the city was down to eating clay when help came.',
+        descriptionZh: "至179年仍據洛陽、宛城 —— 城中糧盡,以土屑為餅,夏王之援終於未到。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'wancheng'], byYear: 179 },
       },
+      /*
+       * 這是全庫最緊的一條守成:鄭開局四城、末期中位 **0** 城,
+       * 洛陽 +1 年就只剩 2/6、+2 年 1/6 —— 圍城本來就是這張盤的題目。
+       * 窗口從 182(開局 +4 年)收到 179(+1 年):「以土屑為餅」是一年的事,
+       * 不是四年的事。南邊的宛城 +2 年還是 6/6,一起寫進去不會拉低它。
+       *
+       * 若這樣仍是 0/3,下一步是進 BY_DESIGN 而不是繼續放寬 ——
+       * 同垓下的項羽、白門樓的呂布、樂毅伐齊的齊:**絕境本身就是題目**。
+       */
     },
     {
       id: 'obj-sthl-xia',
@@ -467,10 +516,18 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'yan',
       primary: {
         title: { zh: '漁陽鼙鼓', en: 'The Drums of Yuyang' },
-        description: "Still hold Luoyang and Ye in 184 — An Lushan took the eastern capital in thirty-four days; Chang'an is the next year's problem.",
-        descriptionZh: "至184年仍據洛陽、鄴 —— 三十四日下東都,長安是明年的事。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'ye'], byYear: 184 },
+        description: "Still hold Luoyang, Liyang and Bohai in 180 — An Lushan took the eastern capital in thirty-four days; Chang'an is the next year's problem.",
+        descriptionZh: "至180年仍據洛陽、黎陽、渤海 —— 三十四日下東都,長安是明年的事。",
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'liyang', 'bohai'], byYear: 180 },
       },
+      /*
+       * 大燕在這個模擬裡崩得極快:開局 18 城,六年後中位 **3** 城,
+       * 洛陽 +3 年 2/6、+6 年 0/6,而鄴 +1 年就只剩 4/6、+3 年 0/6。
+       * 原本的窗口是 184(開局 +6 年),等於問「叛軍能不能撐六年」——
+       * 而安祿山 757 年就死於自己兒子之手,兩年而已。
+       * 收到 180(+2 年),鄴換成他真的守得住的黎陽、渤海(+3 年 6/6)。
+       * 「大燕不亡」撐到 190 那條留在次要,那才是問七年的地方。
+       */
       secondary: [
         {
           title: { zh: '漁陽鼙鼓', en: 'The War Drums of Yuyang' },
