@@ -3404,9 +3404,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '據險自保', en: 'Hold the Passes' },
-        description: 'Still hold Hanzhong in 216.',
-        descriptionZh: "至216年仍據漢中。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 216 },
+        description: 'Still hold Wudu and the Yangping Pass in 215 — the passes outlast the seat.',
+        descriptionZh: "至215年仍據武都、陽平關 —— 守得住的是關,不是治所。",
+        /*
+         * **漢中是「每個檢查點都已失去」的那種**,而題目原本只查漢中一城。
+         * 這張盤的張魯三城,六年後中位 0 —— 武都 +2 年 3/4、陽平關 2/4,
+         * 就這麼多了。窗口 216(+3 年)收到 215。
+         * 漢中在張魯身上是全庫級的老毛病(五張盤同一句話),見鄴城陷落那條註。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['wudu', 'yangping'], byYear: 215 },
       },
     },
     {
@@ -3498,10 +3504,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '漢中猶在', en: 'Hanzhong Endures' },
-        description: 'Still hold Hanzhong in 216.',
-        descriptionZh: "至216年仍據漢中。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong'], byYear: 216 },
+        description: 'Still hold Hanzhong and the Yangping Pass in 215 — Cao Cao comes out of the Sanguan road that year.',
+        descriptionZh: "至215年仍據漢中、陽平關 —— 曹操就是那一年出散關而來的。",
+        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'yangping'], byYear: 215 },
       },
+      /*
+       * 張魯這張盤只有兩城,六年後中位 0 —— 漢中 +2 年 3/4、+4 年 1/4、+6 年 0/4。
+       * 原窗口 216 是開局 +2 年,正落在他開始崩的那一刻。收到 215(+1 年):
+       * 那也正是史實上曹操出散關取漢中的那一年,窗口本來就該是一年。
+       */
     },
     {
       id: 'obj-214-xichuan-shi-xie',
