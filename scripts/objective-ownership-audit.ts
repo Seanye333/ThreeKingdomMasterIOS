@@ -47,7 +47,7 @@ export type OwnershipFinding = {
  */
 export const HARD_TAGS = [
   '城不在此盤', '第0旬就成立', '對象開局無城', '救援門檻高於開局', '人不在此盤',
-  '守成寫了別人的城',
+  '守成寫了別人的城', '要留的人開局不在麾下',
 ];
 
 /**
@@ -339,6 +339,21 @@ for (const scenario of SCENARIOS) {
           findings.push({ rank: 0, tag: '人不在此盤', line: `${who} — ${g.officerId}` });
         } else if (off.forceId === o.forceId) {
           findings.push({ rank: 1, tag: '第0旬就成立', line: `${who} — ${off.name.zh} 開局就在麾下` });
+        }
+      } else if (g.kind === 'retain-officer') {
+        /*
+         * `retain-officer` 的鏡像錯誤:要「留住」一個**開局不在你麾下**的人。
+         * 那條從第 0 旬就是 failure(判法是「不在手上即刻判敗」),
+         * 比第 0 旬就成功更糟 —— 玩家連補救的機會都沒有。
+         */
+        const off = scenario.officers.find((x) => x.id === g.officerId);
+        if (!off) {
+          findings.push({ rank: 0, tag: '人不在此盤', line: `${who} — ${g.officerId}` });
+        } else if (off.forceId !== o.forceId) {
+          findings.push({
+            rank: 0, tag: '要留的人開局不在麾下',
+            line: `${who} — ${off.name.zh} 開局屬 ${label(off.forceId ?? null)}`,
+          });
         }
       }
     }
