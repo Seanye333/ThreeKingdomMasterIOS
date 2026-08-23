@@ -4707,9 +4707,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhonghui',
       primary: {
         title: { zh: '據蜀自王', en: 'A Kingdom in Shu' },
-        description: 'Hold Chengdu and Hanzhong by 268 — with Shu\'s army and Jiang Wei\'s counsel.',
-        descriptionZh: "於268年前據成都、漢中 —— 得蜀兵,得姜維,事可濟也。",
-        goal: { kind: 'hold-cities', cityIds: ['chengdu', 'hanzhong'], byYear: 268 },
+        description: 'Still hold Luocheng and Baxi in 266 — with Shu\'s army and Jiang Wei\'s counsel; Chengdu does not last two years.',
+        descriptionZh: "至266年仍據雒城、巴西 —— 得蜀兵,得姜維,事可濟也;而成都守不了兩年。",
+        /*
+         * 鍾會開局十一城,四年後中位 **2** —— 而**十一座裡有九座是
+         * 「每個檢查點都已失去」的**,包括成都本身(題目原本正要他守成都)。
+         * 撐下來的只有雒城 4/4 與巴西 4/4。
+         * 漢中更不是他的。改成守這兩座、窗口 268(+4 年)收到 266(+2 年)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['luocheng', 'baxi'], byYear: 266 },
       },
       secondary: [
         {
