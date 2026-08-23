@@ -32,10 +32,17 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '地方五千里', en: 'Five Thousand Li' },
-        description: "Still hold Jiangling, Shouchun and Wancheng in 202 — Chu is the largest realm under heaven; Xianyang was never in reach.",
-        descriptionZh: "至202年仍據江陵、壽春、宛城 —— 楚地方五千里,持戟百萬;咸陽從來不在能到的地方。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'shouchun', 'wancheng'], byYear: 202 },
+        description: "Still hold Jiangling, Xiangyang and Changsha in 184 — Chu is the largest realm under heaven; Xianyang was never in reach.",
+        descriptionZh: "至184年仍據江陵、襄陽、長沙 —— 楚地方五千里,持戟百萬;咸陽從來不在能到的地方。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang', 'changsha'], byYear: 184 },
       },
+      /*
+       * 原本要守江陵、壽春、宛城到 202 —— **開局 +24 年**,而且挑的三座裡
+       * 兩座是他守不住的:壽春 +6 年 0/4,**宛城每個檢查點都已失去**
+       * (收在 what-they-actually-do 最後那條 ✗ 行,很容易看漏)。
+       * 楚開局 45 城,十年後中位 22 —— 它是在縮,不是在守。
+       * 改成他真的守得住的江南一線:江陵/襄陽/長沙 +6 年全是 4/4,窗口收到 184。
+       */
       secondary: [
         {
           title: { zh: '地方五千里', en: 'Five Thousand Li of Land' },
@@ -214,10 +221,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '吳起變法', en: "Wu Qi's Reforms" },
-        description: "Still hold Wancheng and Jiangling in 195 — Wu Qi went south to Chu and made its law; the nobles killed him over the corpse of the king.",
-        descriptionZh: "至195年仍據宛城、江陵 —— 吳起南走楚而變其法;悼王一死,貴戚射之於王屍之上。",
-        goal: { kind: 'hold-cities', cityIds: ['wancheng', 'jiangling'], byYear: 195 },
+        description: "Still hold Jiangling, Xiangyang and Jiangxia in 181 — Wu Qi went south to Chu and made its law; the nobles killed him over the corpse of the king.",
+        descriptionZh: "至181年仍據江陵、襄陽、江夏 —— 吳起南走楚而變其法;悼王一死,貴戚射之於王屍之上。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang', 'jiangxia'], byYear: 181 },
       },
+      /*
+       * 窗口原本開到 195 —— **開局 +17 年**,而楚在這張盤上崩得比七雄那張更快
+       * (45 城 → 十年後中位 **10**)。+3 年時江陵/襄陽/江夏都還是 4/4,
+       * +6 年掉到 3/4,+10 年只剩 1/4 —— 收到 181(+3 年)。
+       * 宛城拿掉:它 +6 年 2/4、+10 年 0/4,是楚北緣最先讓出去的那一座。
+       *
+       * 吳起變法的戲本來就只有悼王在位的那幾年,窗口十七年不是這條的意思。
+       */
       secondary: [
         {
           title: { zh: '吳起變法', en: "Wu Qi's Reforms" },

@@ -4534,9 +4534,13 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '救蜀', en: 'Save Shu' },
-          description: 'Hold Yongan by 267 — Shu falling leaves you alone against the north.',
-          descriptionZh: "於267年前據永安 —— 唇亡則齒寒,蜀亡則吳孤。",
-          goal: { kind: 'hold-cities', cityIds: ['yongan'], byYear: 267 },
+          description: 'Keep Shu standing to 267 — Shu falling leaves you alone against the north.',
+          descriptionZh: "至267年蜀未亡 —— 唇亡則齒寒,蜀亡則吳孤。",
+          /*
+           * 原本寫成「據永安」,而永安是**蜀**的城、吳蜀開局是同盟 ——
+           * 標題就叫「救蜀」,goal 卻要玩家去打蜀。改 `protect-force`。
+           */
+          goal: { kind: 'protect-force', forceId: 'liu-bei', byYear: 267 },
         },
       ],
     },

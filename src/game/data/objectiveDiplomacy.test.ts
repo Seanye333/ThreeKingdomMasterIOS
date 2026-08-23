@@ -18,7 +18,15 @@ import { auditObjectiveDiplomacy, describeConflict } from '../../../scripts/obje
  */
 describe('主目標與開局外交', () => {
   it('沒有任何一條主目標要求去打一個結了約的鄰居', () => {
-    const found = auditObjectiveDiplomacy();
+    /*
+     * 只歸零**主目標**。2026-08-23 把掃描擴到次要目標,一跑多出 44 條,
+     * 而逐條看過之後只有 4 條是真的:標題寫著「救」而 goal 卻是
+     * 「去取那一家的城」。另外五條不是錯 —— 三條是「背叛就是題目本身」,
+     * 兩條(烏桓)指的城到期限前多半已經易主,而這支只看開局歸屬。
+     * non-aggression 那 35 條則因為互不侵犯 20 季就期滿而根本不算。
+     * 判準同護欄那一課:先數它會叫幾次、其中幾次是真的,再決定要不要歸零。
+     */
+    const found = auditObjectiveDiplomacy().filter((c) => !c.secondary);
     expect(
       found.map(describeConflict),
       '這些目標從第 0 旬就是死的。修法:把該對關係改成 neutral,或改寫目標。'

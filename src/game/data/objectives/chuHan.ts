@@ -193,10 +193,15 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'qi',
       primary: {
         title: { zh: '齊不救趙', en: 'Qi Does Not Ride to Julu' },
-        description: 'Hold Linzi, Beihai and Langya by 183 — Qi sat out the decisive battle of the age.',
-        descriptionZh: "於183年前據臨淄、北海、琅琊 —— 這個時代的決戰,齊沒有參加。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai', 'langya'], byYear: 183 },
+        description: 'Still hold Linzi and Beihai in 180 — Qi sat out the decisive battle of the age.',
+        descriptionZh: "至180年仍據臨淄、北海 —— 這個時代的決戰,齊沒有參加。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 180 },
       },
+      /*
+       * 琅琊是這三座裡守不住的那一座(+1 年就只剩 2/6),而臨淄、北海
+       * +2 年還有 5~6/6、+5 年掉到 3/6。拿掉琅琊、窗口從 +5 年收到 +2 年。
+       * 文案也從「於…前據」改成「至…仍據」:三座開局都是齊的,這是守成不是取得。
+       */
     },
   ],
 
@@ -606,9 +611,14 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '救趙救齊', en: 'Save the North' },
-          description: 'Take Ye and Linzi by 186.',
-          descriptionZh: "於186年前取鄴城、臨淄 —— 韓信一路下去,楚之側翼全空。",
-          goal: { kind: 'hold-cities', cityIds: ['ye', 'linzi'], byYear: 186 },
+          description: 'Keep Zhao standing to 186 — Han Xin went north, and Chu\'s flank went with it.',
+          descriptionZh: "至186年趙未亡 —— 韓信一路下去,楚之側翼全空。",
+          /*
+           * 原本寫成「取鄴城、臨淄」而**趙與齊都是楚的開局盟友** ——
+           * `isHostilePermitted` 只放行 neutral,這條從第 0 旬就走不動。
+           * 標題寫的是「救」,那就用 `protect-force`:救援看的是他還在不在。
+           */
+          goal: { kind: 'protect-force', forceId: 'zhao', byYear: 186 },
         },
       ],
     },
@@ -694,9 +704,15 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '救齊之師', en: 'The Army Sent to Save Qi' },
-          description: 'Hold Linzi by 183 and Guandu through 196 — Long Ju took twenty legions east and lost them all.',
-          descriptionZh: "於183年前取臨淄、183年前仍守滎陽 —— 龍且將二十萬東救,全軍覆沒。",
-          goal: { kind: 'hold-cities', cityIds: ['linzi'], byYear: 183 },
+          description: 'Keep Qi standing to 183 — Long Ju took twenty legions east to save them and lost them all.',
+          descriptionZh: "至183年齊未亡 —— 龍且將二十萬東救,全軍覆沒。",
+          /*
+           * 原本寫成「取臨淄」,而臨淄是**齊**的城、齊是楚的開局盟友 ——
+           * 龍且是去**救**齊的,不是去打齊的。改 `protect-force`。
+           * 原文案還把兩件事擠在一句(「於183年前取臨淄、183年前仍守滎陽」),
+           * 而 goal 只有臨淄一座 —— 滎陽那半句是隔壁「守住正面」的內容。
+           */
+          goal: { kind: 'protect-force', forceId: 'qi', byYear: 183 },
         },
         {
           title: { zh: '守住正面', en: 'Hold the Front' },

@@ -477,9 +477,14 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       secondary: [
         {
           title: { zh: '毋赴虎牢', en: 'Do Not Go to Hulao' },
-          description: 'Take Luoyang by 182 while still holding Ye — Ling Jing advised crossing north instead; you refused.',
-          descriptionZh: "於182年前取洛陽且鄴城不失 —— 凌敬勸你北渡黃河取山西,你沒有聽。",
-          goal: { kind: 'hold-cities', cityIds: ['luoyang', 'ye'], byYear: 182 },
+          description: 'Keep Zheng standing to 182 — Ling Jing advised crossing north instead; you refused, and rode to Hulao.',
+          descriptionZh: "至182年鄭未亡 —— 凌敬勸你北渡黃河取山西,你沒有聽,還是去了虎牢。",
+          /*
+           * 原本寫成「取洛陽」,而洛陽是**鄭**的城、鄭是夏的開局盟友 ——
+           * 竇建德是去**救**王世充的,史書上他到虎牢是為了解洛陽之圍。
+           * 這正是 `protect-force` 要裝的形狀:出兵不為取地,而為那一家別亡。
+           */
+          goal: { kind: 'protect-force', forceId: 'zheng', byYear: 182 },
         },
         {
           title: { zh: '夏國不亡', en: 'Xia Endures' },
