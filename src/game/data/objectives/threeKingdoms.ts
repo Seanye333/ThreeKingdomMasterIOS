@@ -4944,9 +4944,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '守此殘江', en: 'Hold What Is Left of the River' },
-        description: 'Survive to 290 — the iron chains across the river will not be enough.',
-        descriptionZh: "存續至290年 —— 攔江鐵鎖擋不住樓船,能擋住的只有人心。",
-        goal: { kind: 'survive-until', year: 290 },
+        description: 'Survive to 282 — the iron chains across the river will not be enough.',
+        descriptionZh: "存續至282年 —— 攔江鐵鎖擋不住樓船,能擋住的只有人心。",
+        /*
+         * 窗口原本是 290 —— **開局 +10 年**,而吳在這張盤上 28 城四年後中位 **0**,
+         * 二十八座裡有二十三座是「每個檢查點都已失去」的(建業、吳郡都在內)。
+         * 逐年量:+1 年他還在(柴桑 4/4),+2 年只剩會稽 1/4。
+         * 所以收到 282(+2 年):撐過那兩年就是改寫「王濬樓船下益州」。
+         * 沒有進 BY_DESIGN —— 那是留給「連一年都撐不過」的(垓下的項羽、
+         * 易京的公孫瓚);這一條收窗口就救得回。
+         */
+        goal: { kind: 'survive-until', year: 282 },
       },
       secondary: [
         {

@@ -1263,9 +1263,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qin',
       primary: {
         title: { zh: '河東不失', en: 'Hold What Was Won' },
-        description: "Still hold Shangdang and Tongguan in 186 — the siege failed; the plateau taken at Changping did not.",
-        descriptionZh: "至186年仍據上黨、潼關 —— 邯鄲圍三年不下而還,長平所得的高地卻沒有丟。",
-        goal: { kind: 'hold-cities', cityIds: ['shangdang', 'tongguan'], byYear: 186 },
+        description: "Still hold Chang'an and Xiaoguan in 182 — the siege failed; the heartland did not.",
+        descriptionZh: "至182年仍據長安、蕭關 —— 邯鄲圍三年不下而還,而關中本部沒有動搖。",
+        /*
+         * 上黨 +2 年就只剩 1/4、+4 年 0/4 —— 那正是長平所爭的那塊高地,
+         * 而秦在這張盤上守不住它(邯鄲之戰本來就是秦由攻轉守的那一戰)。
+         * 逐城量:長安 3/4 一路到 +8 年、蕭關 4/4 4/4 2/4、函谷關 4/4→1/4。
+         * 改成守關中本部,窗口 186(+8 年)收到 182(+4 年)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'xiaoguan'], byYear: 182 },
       },
       secondary: [
         {
