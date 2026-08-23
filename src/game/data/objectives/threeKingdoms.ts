@@ -1218,6 +1218,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-220-declaration-xianbei',
       forceId: 'xianbei',
       primary: {
+        /*
+         * ⚠ 這條是**盤面平衡,不是題目寫錯** —— 實測 6 輪:鮮卑開局兩城,
+         * 烏丸在第一個檢查點就已失去、柳城 +1 年只剩 1/6,中位 0。
+         * **縮窗口救不了**(+1 年就已經 1/6),換城也沒得換(只有兩座)。
+         * 兩城的部族貼著稱帝之後的曹魏,結果就是這樣。
+         * 同一條目標在 218/219 兩張盤上是 2/3 —— 差別在那幾張的魏還沒那麼大。
+         * 要動就是動盤面(給鮮卑更多城或改開局關係),那是設計決定,不在這裡改。
+         */
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
         description: "Survive to 226. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
         descriptionZh: "存續至226年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
@@ -1229,9 +1237,16 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'nanman',
       primary: {
         title: { zh: '南中之主', en: 'Lord of Nanzhong' },
-        description: "Still hold Jianning and Nanzhong in 226. They trusted to distance and mountains and answered to no one. The hills are theirs.",
-        descriptionZh: "至226年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
-        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 226 },
+        description: "Still hold Jianning, Yunnan and Yongchang in 226. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至226年仍據建寧、雲南、永昌。恃其險遠,不服王化 —— 山是他們的。",
+        /*
+         * 「至X年仍據建寧、南中」一字不差寫在**五張盤**上,而**南中是那兩座裡
+         * 守不住的那一座**:220 盤實測 +2 年 3/6、+3 年 2/6,而建寧 6/6、
+         * 雲南 6/6、永昌 6/6(南蠻五城四年後中位剩 4,它並沒有崩,只是丟南中)。
+         * 五份一起換成他真正守得住的三座 —— 這一型「複製到多張盤」的目標,
+         * 病灶相同時就該一起改(跟襄陽之於劉表、漢中之於張魯相反,那兩個是逐盤不同)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yunnan', 'yongchang'], byYear: 226 },
       },
     },
   ],
@@ -1375,9 +1390,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'nanman',
       primary: {
         title: { zh: '南中之主', en: 'Lord of Nanzhong' },
-        description: "Still hold Jianning and Nanzhong in 221. They trusted to distance and mountains and answered to no one. The hills are theirs.",
-        descriptionZh: "至221年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
-        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 221 },
+        description: "Still hold Jianning, Yunnan and Yongchang in 221. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至221年仍據建寧、雲南、永昌。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yunnan', 'yongchang'], byYear: 221 },
       },
     },
   ],
@@ -1437,9 +1452,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'nanman',
       primary: {
         title: { zh: '南中之主', en: 'Lord of Nanzhong' },
-        description: "Still hold Jianning and Nanzhong in 225. They trusted to distance and mountains and answered to no one. The hills are theirs.",
-        descriptionZh: "至225年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
-        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 225 },
+        description: "Still hold Jianning, Yunnan and Yongchang in 225. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至225年仍據建寧、雲南、永昌。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yunnan', 'yongchang'], byYear: 225 },
       },
     },
   ],
@@ -1527,9 +1542,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'nanman',
       primary: {
         title: { zh: '南中之主', en: 'Lord of Nanzhong' },
-        description: "Still hold Jianning and Nanzhong in 228. They trusted to distance and mountains and answered to no one. The hills are theirs.",
-        descriptionZh: "至228年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
-        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 228 },
+        description: "Still hold Jianning, Yunnan and Yongchang in 228. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至228年仍據建寧、雲南、永昌。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yunnan', 'yongchang'], byYear: 228 },
       },
     },
   ],
@@ -3607,9 +3622,9 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'nanman',
       primary: {
         title: { zh: '南中之主', en: 'Lord of Nanzhong' },
-        description: "Still hold Jianning and Nanzhong in 224. They trusted to distance and mountains and answered to no one. The hills are theirs.",
-        descriptionZh: "至224年仍據建寧、南中。恃其險遠,不服王化 —— 山是他們的。",
-        goal: { kind: 'hold-cities', cityIds: ['jianning', 'nanzhong'], byYear: 224 },
+        description: "Still hold Jianning, Yunnan and Yongchang in 224. They trusted to distance and mountains and answered to no one. The hills are theirs.",
+        descriptionZh: "至224年仍據建寧、雲南、永昌。恃其險遠,不服王化 —— 山是他們的。",
+        goal: { kind: 'hold-cities', cityIds: ['jianning', 'yunnan', 'yongchang'], byYear: 224 },
       },
     },
   ],
