@@ -1724,9 +1724,14 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '不得借荊州', en: 'No Loan of Jing This Time' },
-        description: 'Take Yong-an by 215 — Zhou Yu would never have lent you Nanjun; get to Shu first.',
-        descriptionZh: "於215年前攻取永安 —— 周瑜在,南郡便借不到,只能自己搶先入蜀;而由荊入益只有魚復這一扇門。",
-        goal: { kind: 'hold-cities', cityIds: ['yongan'], byYear: 215 },
+        description: 'Still hold Xiaoting and Guilin in 215 — Zhou Yu would never have lent you Nanjun, and the door into Shu never opened; the four southern commanderies are where you can stand.',
+        descriptionZh: "至215年仍據猇亭、桂林 —— 周瑜在,南郡便借不到,入蜀那扇門也始終沒開;荊南四郡才是他站得住的地方。",
+        /*
+         * 「取永安」四輪一次也沒有 —— 周瑜不死,劉備連荊南都出不去。
+         * 他真正握著的是猇亭 4/4、桂林 4/4(+6 年),而江陵、公安、武陵
+         * 都掉到 1~2/4。題目從「搶先入蜀」改成「站得住荊南」,那才是這張盤的答案。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['xiaoting', 'guilin'], byYear: 215 },
       },
       /* 成都與他任何一座城都不相鄰(壓力 0.00);與 211 渭南盤同型、同一個修法。 */
       secondary: [
