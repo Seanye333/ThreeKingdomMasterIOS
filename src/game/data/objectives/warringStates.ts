@@ -329,10 +329,18 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '合縱長', en: 'Chief of the Vertical League' },
-        description: "Still hold Jiangling, Shouchun and Wancheng in 196 — Chu led the league; leading it is not the same as entering the passes.",
-        descriptionZh: "至196年仍據江陵、壽春、宛城 —— 楚為合縱長,而合縱長不等於入關。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'shouchun', 'wancheng'], byYear: 196 },
+        description: "Still hold Jiangling, Xiangyang and Jiangxia in 184 — Chu led the league; leading it is not the same as entering the passes.",
+        descriptionZh: "至184年仍據江陵、襄陽、江夏 —— 楚為合縱長,而合縱長不等於入關。",
+        goal: { kind: 'hold-cities', cityIds: ['jiangling', 'xiangyang', 'jiangxia'], byYear: 184 },
       },
+      /*
+       * 第三張栽在同一組城上的楚。「江陵、壽春、宛城」這個三連寫在
+       * 七雄逐鹿、魏文侯、商鞅變法三張盤上,而**壽春與宛城兩座他哪張都守不住**
+       * —— 這張盤上壽春是「每個檢查點都已失去」、宛城 +3 年就 0/4。
+       * 三張都改成他守得住的江南一線(這張是江陵/襄陽/江夏,+6 年 4/4、3/4、4/4;
+       * 七雄那張用江陵/襄陽/長沙),窗口一律收到 +3~6 年 ——
+       * 原本 196 是**開局 +18 年**,而楚 47 城十年後中位只剩 11。
+       */
       secondary: [
         {
           title: { zh: '合縱長', en: 'Lead the Vertical Alliance' },
@@ -347,10 +355,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qi',
       primary: {
         title: { zh: '東方之強', en: 'The Strength of the East' },
-        description: 'Hold Linzi, Pengcheng and Xiapi by 191.',
-        descriptionZh: "於191年前據臨淄、彭城、下邳 —— 秦強於西,齊當強於東。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi', 'pengcheng', 'xiapi'], byYear: 191 },
+        description: 'Still hold Linzi, Xiapi and Langya in 186 — Qin is strong in the west; Qi should be strong in the east.',
+        descriptionZh: "至186年仍據臨淄、下邳、琅琊 —— 秦強於西,齊當強於東。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'xiapi', 'langya'], byYear: 186 },
       },
+      /*
+       * 窗口 191 是**開局 +13 年**。齊在這張盤上其實過得不錯(6 城 → 中位 7),
+       * 弱點只有彭城一座(+10 年 2/4);臨淄 4/4、琅琊 4/4、下邳 3/4 一路到底。
+       * 彭城換琅琊,窗口收到 186(+8 年)。
+       */
     },
     {
       id: 'obj-ws-shangyang-yan',
@@ -391,10 +404,20 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'qi',
       primary: {
         title: { zh: '圍魏救趙', en: 'Surround Wei to Rescue Zhao' },
-        description: "Take Chenliu by 183 — strike the capital, not the siege.",
-        descriptionZh: "於183年前攻取陳留 —— 批亢擣虛,不救邯鄲而攻大梁。",
-        goal: { kind: 'hold-cities', cityIds: ['chenliu'], byYear: 183 },
+        description: 'Keep Zhao standing with ten cities to 183 — strike the capital, not the siege.',
+        descriptionZh: "至183年趙仍保有十城以上 —— 批亢擣虛,不救邯鄲而攻大梁;要的是趙不亡,不是大梁易主。",
+        goal: { kind: 'protect-force', forceId: 'zhao', minCities: 10, byYear: 183 },
       },
+      /*
+       * 這張盤的題目原本寫成「攻取陳留」,而**陳留(大梁)六輪裡到第十年才有 1/4**
+       * ——期限之內是 0。更要緊的是那本來就不是這一戰的事:圍魏救趙的結果是
+       * 桂陵設伏破魏軍,齊從來沒有拿下大梁。盤名寫著「救趙」,goal 卻要玩家去
+       * 打魏的城,而齊魏在這張盤上是可以打的、齊趙才是同盟 —— 形狀整個錯了。
+       *
+       * 改 `protect-force`:趙開局 13 城,實測期限之內最少剩 13/10/5/13
+       * (四輪裡一輪被打到只剩五城),所以門檻訂十城 —— 不救就真的會掉下去。
+       * 「減灶誘敵」滅魏那條留在次要,那才是問「打不打得下」的地方。
+       */
       secondary: [
         {
           title: { zh: '減灶誘敵', en: 'Fewer Cooking Fires Each Day' },
