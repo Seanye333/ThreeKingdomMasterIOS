@@ -2729,9 +2729,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       primary: {
         title: { zh: '西進荊州', en: 'West into Jing' },
         description: 'Take Jiangxia and Jiangling by 210.',
-        descriptionZh: "於210年前西取江夏、江陵 —— 父讎在黃祖,門戶在荊州。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangxia', 'jiangling'], byYear: 210 },
+        descriptionZh: "於210年前北取武昌、廣陵 —— 父讎在黃祖,而先動得了的是江北。",
+        goal: { kind: 'hold-cities', cityIds: ['wuchang', 'guangling'], byYear: 210 },
       },
+      /*
+       * 江夏 1/4、江陵**一次也沒拿到** —— 兩座都是劉表的,而劉表在這張盤上
+       * 主目標 3/3(他守得住)。孫權不是打不動:10 城九年後長到中位 **21**,
+       * 只是往北往東長 —— 取武昌 3/4、廣陵 4/4(+6 年)、濡須 4/4、皖城 3/4。
+       * 「這一家到底往哪邊長」那條判準的又一例。
+       */
     },
     {
       id: 'obj-204-liubiao',
@@ -3141,8 +3147,8 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-chao',
       primary: {
         title: { zh: '涼州猶在', en: 'Liang Province Still Stands' },
-        description: 'Still hold Wuwei and Anding in 213 — beaten at Wei-nan, he went back west and was still a power there two years on.',
-        descriptionZh: "至213年仍據武威、安定 —— 渭南既敗,超走涼州;明年復攻冀城,圍之八月而下。關中丟了,而隴右諸郡還聽他的。",
+        description: 'Still hold Wuwei and take Jiuquan by 213 — beaten at Wei-nan, he went back west and was still a power there two years on.',
+        descriptionZh: "至213年仍據武威並取酒泉 —— 渭南既敗,超走涼州;明年復攻冀城,圍之八月而下。關中丟了,而河西還聽他的。",
         /*
          * 三改而成,兩次都被工具擋下,記在這裡:
          *  ① 原本是「至215年仍據陳倉、安定、武威」—— 渭南之戰他**輸了**,
@@ -3152,8 +3158,12 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          *     而渭南之戰時馬韓兩家是盟軍**(開局 allied),這條從第 0 旬就是死的。
          *  ③ 改成守武威、安定到 213:那是他敗退之後真正還握著的地方,
          *     而且不指向盟友的城。原條(守到 215)降為次要。
+         *  ④ 四改(2026-08-23):**安定也是「每個檢查點都已失去」的那種** ——
+         *     渭南之敗以後關中一寸不剩,而 ③ 還留著它。實測他真正做得到的是
+         *     **往西走**:武威 3/4,而取酒泉 **4/4**(+2 年就穩,張掖、敦煌隨後 2/4)。
+         *     這也正是史書的走向:超走涼州,依張魯,再走河西。
          */
-        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 213 },
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jiuquan'], byYear: 213 },
       },
       secondary: [
         {
@@ -3175,9 +3185,18 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'han-sui',
       primary: {
         title: { zh: '西州自立', en: 'A Realm in the West' },
-        description: "Still hold Jincheng, Wuwei and Anding in 215 — thirty years in Liang, and never once summoned to court.",
-        descriptionZh: "至215年仍據金城、武威、安定 —— 在涼州三十年,一次也沒有應詔入朝。",
-        goal: { kind: 'hold-cities', cityIds: ['jincheng', 'longxi', 'tianshui'], byYear: 215 },
+        description: "Still hold Longxi and Shanggui in 213 — thirty years in Liang, and never once summoned to court.",
+        descriptionZh: "至213年仍據隴西、上邽 —— 在涼州三十年,一次也沒有應詔入朝。",
+        /*
+         * 兩件事一起修:
+         * 一、**文案與 goal 寫的根本不是同一組城** —— 文案「金城、武威、安定」,
+         *    而 cityIds 是 `jincheng, longxi, tianshui`。城數一樣(3 對 3),
+         *    所以 objectiveText 的城數檢查看不出來(它只數不對名)。
+         * 二、**金城是「每個檢查點都已失去」的那種**,而金城正是韓遂的起家之地。
+         *    實測 +2 年:隴西 4/4、上邽 3/4、天水 2/4、武都 1/4。
+         * 改成他真的守得住的兩座,窗口 215 → 213。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['longxi', 'shanggui'], byYear: 213 },
       },
       secondary: [
         {

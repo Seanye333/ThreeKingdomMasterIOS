@@ -1863,12 +1863,18 @@ export const OBJ_WHATIF: Record<string, ScenarioObjective[]> = {
         title: { zh: '荊州之爭', en: 'The Jing Question' },
         description: 'Hold Jiangxia and take Wancheng by 222 — Jing is a twenty-year account, and the end that will actually move is north of the river.',
         descriptionZh: "於222年前據江夏並取皖城 —— 荊州那筆帳孫吳記了二十年,而先動得了的是江北這一頭。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangxia', 'wancheng'], byYear: 222 },
+        goal: { kind: 'hold-cities', cityIds: ['jiangxia', 'wan'], byYear: 222 },
       },
       /*
        * 實測(6 輪,開局 215):江陵在**劉備**手裡而他一次也沒拿到,
        * 真正打得下的是臨海 6/6 6/6 6/6 5/6、皖城 1/6→4/6、合肥 1/6→4/6。
        * 原期限 228 更是開局後十三年。取江陵降為次要。
+       *
+       * ⚠ 2026-08-23 修:量的是**皖城**(`wan`,廬江,江北),寫進 goal 的卻是
+       * **宛城**(`wancheng`,南陽,遠在北邊)—— 一個 id 之差,題目就變成
+       * 「孫權去打南陽」。文案寫的一直是皖城,是 goal 錯。
+       * `wan` / `wancheng` 這一對是全庫最容易寫錯的 id;
+       * 判準:**城名一字之差時,回頭對一次文案**。
        */
       secondary: [
         {
