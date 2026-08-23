@@ -345,14 +345,19 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'yong',
       primary: {
         title: { zh: '廢丘十月', en: 'Ten Months in Feiqiu' },
-        description: "Still hold Chang'an and Mei in 182 — Zhang Han held Feiqiu ten months after everything else was gone.",
+        description: "Still hold Xiaoguan, Jieting and Shanggui in 180 — Zhang Han held Feiqiu ten months after everything else was gone.",
         /*
-         * 原本是「保長安、陳倉」,而**陳倉開局就在漢手裡** ——
-         * 暗度陳倉正是這張盤的前提,不是它的題目。章邯真正做到的是
-         * 三秦盡失之後還守了廢丘十個月,直到漢引水灌城。
+         * 改過兩次,兩次都是同一個病:**挑了他守不住的城**。
+         *   一寫「保長安、陳倉」——而陳倉開局就在漢手裡(暗度陳倉是這張盤的
+         *     前提,不是它的題目)。
+         *   二寫「保長安、郿」——實測長安 +1 年只剩 2/6,而**郿是每個檢查點
+         *     都已失去**的那種(what-they-actually-do 把這類城收在最後那條 ✗ 行,
+         *     不列在守成那幾行,很容易看漏)。
+         * 章邯真正做到的是三秦盡失之後還守著西邊:蕭關 6/6、街亭 6/6、
+         * 上邽 5/6(+2 年)。窗口跟著從 182 收到 180 ——「十個月」不是四年。
          */
-        descriptionZh: "至182年仍保長安、郿 —— 三秦盡失,而廢丘獨守十月;漢引水灌之,乃降,章邯自殺。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'mei'], byYear: 182 },
+        descriptionZh: "至180年仍據蕭關、街亭、上邽 —— 三秦盡失,而廢丘獨守十月;漢引水灌之,乃降,章邯自殺。",
+        goal: { kind: 'hold-cities', cityIds: ['xiaoguan', 'jieting', 'shanggui'], byYear: 180 },
       },
       secondary: [
         {
@@ -472,10 +477,16 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'yong',
       primary: {
         title: { zh: '廢丘之圍', en: 'The Siege of Feiqiu' },
-        description: "Still hold Chang'an in 182 — ten months, until they turned the river on the walls.",
-        descriptionZh: "至182年仍據長安 —— 十個月,直到他們引水灌城。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 182 },
+        description: "Still hold Chang'an and Xiaoguan in 179 — ten months, until they turned the river on the walls.",
+        descriptionZh: "至179年仍據長安、蕭關 —— 十個月,直到他們引水灌城。",
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'xiaoguan'], byYear: 179 },
       },
+      /*
+       * 長安在這張盤 +1 年 4/6、+2 年 3/6、+4 年 1/6,而窗口原本開到 182(+4 年)。
+       * 「十個月」就是十個月:收到 179(+1 年),再配一座他守得穩的蕭關(6/6)。
+       * 章邯的雍在三張盤上都守不住長安(彭城 4/6→1/6、井陘 4/6→2/6、
+       * 三秦 2/6→0/6),而蕭關/街亭/上邽三張都穩 —— 跟竇建德之於鄴同型。
+       */
       secondary: [
         {
           title: { zh: '廢丘之圍', en: 'The Siege of Feiqiu' },
@@ -490,10 +501,15 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'qi',
       primary: {
         title: { zh: '齊地未平', en: 'Qi Is Not Yet Pacified' },
-        description: 'Still hold Linzi and Beihai in 184.',
-        descriptionZh: "至184年仍保臨淄、北海 —— 項羽陷在齊地,劉邦才能襲彭城。",
-        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 184 },
+        description: 'Still hold Linzi and Beihai in 181 — Xiang Yu is stuck in Qi; that is the only reason Pengcheng is open.',
+        descriptionZh: "至181年仍保臨淄、北海 —— 項羽陷在齊地,劉邦才能襲彭城。",
+        goal: { kind: 'hold-cities', cityIds: ['linzi', 'beihai'], byYear: 181 },
       },
+      /*
+       * 窗口 184(開局 +6 年)→ 181(+3 年)。實測北海 +2 年 6/6、+4 年 4/6,
+       * 掉的全在後面那幾年;臨淄一路 6/6。田氏在楚漢盤上一律是三年的事,
+       * 楚漢爭霸那張的齊也是同樣的收法。
+       */
     },
     {
       id: 'obj-chpc-jiujiang',
@@ -611,9 +627,9 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'yong',
       primary: {
         title: { zh: '關中殘局', en: 'What Is Left of Guanzhong' },
-        description: "Still hold Chang'an in 183.",
-        descriptionZh: "至183年仍守長安。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 183 },
+        description: 'Still hold Xiaoguan, Shanggui and Jieting in 181 — what is left of Guanzhong, and it is not the capital.',
+        descriptionZh: "至181年仍據蕭關、上邽、街亭 —— 關中殘局,而剩下的不是那座都城。",
+        goal: { kind: 'hold-cities', cityIds: ['xiaoguan', 'shanggui', 'jieting'], byYear: 181 },
       },
     },
     {
