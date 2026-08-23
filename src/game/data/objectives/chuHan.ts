@@ -169,9 +169,16 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '魏地復國', en: 'Wei Restored' },
-        description: "Hold Puyang and take Guandu by 184 — Wei Bao got his ancestors' land back; Luoyang was never part of it.",
-        descriptionZh: "於184年前據濮陽並取官渡 —— 魏豹復得魏地;洛陽從來不在其中。",
-        goal: { kind: 'hold-cities', cityIds: ['puyang', 'guandu'], byYear: 184 },
+        description: "Still hold Puyang in 184 — Wei Bao got his ancestors' land back, and it is one city; Luoyang was never part of it.",
+        descriptionZh: "至184年仍據濮陽 —— 魏豹復得魏地,而魏地只有這一座;洛陽從來不在其中。",
+        /*
+         * 再改。取官渡量到 +3 年 2/4,寫進去之後掃描仍是 0/3 ——
+         * **一座 5/6 的城配一座 2/4 的城,合起來還是擲硬幣**
+         * (跟徐州牧的陶謙同一課)。而魏開局**只有濮陽一座**,
+         * 它 +6 年還有 5/6 —— 一城之國的守成題就該只寫那一座。
+         * 取官渡降為次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['puyang'], byYear: 184 },
       },
       /*
        * 魏開局**只有一座城**(濮陽),而題目要他去取陳留 —— 實測六輪裡
@@ -230,9 +237,19 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'chu',
       primary: {
         title: { zh: '西楚霸王', en: 'Hegemon-King of Western Chu' },
-        description: "Still hold Pengcheng, Xuchang, Chenliu and Wancheng in 186 — nine commanderies of Western Chu, and eighteen kings enfeoffed by your word.",
-        descriptionZh: "至186年仍據彭城、許昌、陳留、宛城 —— 西楚九郡,十八諸侯出於你一言。",
-        goal: { kind: 'hold-cities', cityIds: ['pengcheng', 'xuchang', 'chenliu', 'wancheng'], byYear: 186 },
+        description: "Still hold Xiapi, Xuchang and Runan in 182 — nine commanderies of Western Chu, and eighteen kings enfeoffed by your word; Pengcheng does not hold, and the histories say so too.",
+        descriptionZh: "至182年仍據下邳、許昌、汝南 —— 西楚九郡,十八諸侯出於你一言;而彭城守不住,那也是史書寫的。",
+        /*
+         * 四座城裡有兩座崩:**彭城 +4 年 1/4、宛城 +4 年 0/4**
+         * ——而彭城正是他的都城(「守成型先查都城」那條判準的又一例,
+         * 而史書上劉邦也確實襲下了彭城)。
+         * 撐得住的是下邳 4/4、許昌 4/4→3/4、汝南 4/4→3/4。
+         * 西楚 50 城六年後中位 33 —— 它在縮但沒有崩。
+         * 窗口 186(+8 年)先收到 184(+6 年)而仍是 0/3:
+         * 那三座在 +6 年是 4/4、3/4、3/4,**三個 3/4 級的城疊起來還是不夠**。
+         * 再收到 182(+4 年),那時三座全是 4/4。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'xuchang', 'runan'], byYear: 182 },
       },
       secondary: [
         {
@@ -254,9 +271,15 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'yong',
       primary: {
         title: { zh: '廢丘死守', en: 'Feiqiu Holds' },
-        description: "Still hold Chang'an in 183 — the other two of the Three Qin folded in weeks; you held out ten months.",
-        descriptionZh: "至183年仍據長安 —— 三秦另外兩家數週而降,你守了十個月。",
-        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 183 },
+        description: "Still hold Chang'an in 179 — the other two of the Three Qin folded in weeks; you held out ten months.",
+        descriptionZh: "至179年仍據長安 —— 三秦另外兩家數週而降,你守了十個月。",
+        /*
+         * 長安 +1 年 2/4、**+2 年 0/4**,而窗口原本開到 183(開局 +5 年)。
+         * 「守了十個月」那句話自己就把期限寫出來了 —— 收到 179(+1 年)。
+         * 他在這張盤整個在崩(郿 +4 年 0/4、金城 0/4、安定 0/4),
+         * 唯一撐得住的是酒泉 3/4;但那不是廢丘死守的意思,所以留在次要。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['changan'], byYear: 179 },
       },
       secondary: [
         {
@@ -300,9 +323,16 @@ export const OBJ_CHUHAN: Record<string, ScenarioObjective[]> = {
       forceId: 'wei',
       primary: {
         title: { zh: '首鼠兩端', en: 'Hedging Between Two Kings' },
-        description: 'Still hold Luoyang and Puyang in 186 — Wei Bao changed sides once too often.',
-        descriptionZh: "至186年仍保洛陽、濮陽 —— 魏豹反覆於楚漢之間,終為韓信所擒。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'puyang'], byYear: 186 },
+        description: 'Still hold Luoyang and Puyang in 182 — Wei Bao changed sides once too often.',
+        descriptionZh: "至182年仍保洛陽、濮陽 —— 魏豹反覆於楚漢之間,終為韓信所擒。",
+        /*
+         * 這兩座他守得極穩(+6 年都是 4/4,而且魏在這張盤是長的:5 城 → 中位 9)。
+         * 掃描仍會翻面 —— 而這是 what-they-actually-do 與 objective-sweep
+         * **互相對不上**的又一例(工具說 +6 年 4/4,掃描說只守到 +2 年)。
+         * 窗口 186 → 184 → 182 收兩次,對齊掃描實跑的下緣。
+         * 這張盤七家共 50+25+23 城互咬,單輪噪聲比別張大得多。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'puyang'], byYear: 182 },
       },
     },
     {
