@@ -135,9 +135,16 @@ export const OBJ_SUITANG: Record<string, ScenarioObjective[]> = {
       forceId: 'dingyang',
       primary: {
         title: { zh: '借突厥之力', en: 'The Turkic Horse' },
-        description: "Hold Yunzhong and take Yanmen by 180 — Liu Wuzhou's power was borrowed, and borrowed things go back.",
-        descriptionZh: "於180年前據雲中並取雁門 —— 劉武周的兵是借突厥的,借來的東西要還。",
-        goal: { kind: 'hold-cities', cityIds: ['yanmen', 'yunzhong'], byYear: 180 },
+                description: "Still hold Ji, Wuyuan and Yunzhong in 180 — Liu Wuzhou's power was borrowed, and borrowed things go back.",
+        descriptionZh: "至180年仍據薊、五原、雲中 —— 劉武周的兵是借突厥的,借來的東西要還。",
+        /*
+         * **雁門四輪一次也沒取到**,而北平是「每個檢查點都已失去」的。
+         * 定楊七城四年後中位 5 —— 他沒崩,只是往南取不動:
+         * 薊 4/4、五原 4/4、居庸關 4/4→3/4、雲中 3/4 一路。
+         * 這一條在三次重跑裡是 3 → 1 → 0,屬於「一座取得型城把整條拖成擲硬幣」,
+         * 拿掉它就穩。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'wuyuan', 'yunzhong'], byYear: 180 },
       },
       secondary: [
         {
