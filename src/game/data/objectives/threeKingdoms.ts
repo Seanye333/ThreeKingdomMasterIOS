@@ -2297,9 +2297,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'yan-baihu',
       primary: {
         title: { zh: '劃江而治', en: 'A River Between Us' },
-        description: 'Hold Wu commandery and Wuxi through 196 — the terms your brother went to ask for.',
-        descriptionZh: '守住吳郡與無錫至196年 —— 你弟弟去談的正是這個。',
-        goal: { kind: 'hold-cities', cityIds: ['wu', 'wuxi'], byYear: 196 },
+        description: 'Hold Wuxi through 196 — the terms your brother went to ask for, and the one place you can actually keep.',
+        descriptionZh: '守住無錫至196年 —— 你弟弟去談的正是劃江而治,而談得下來的只有這一座。',
+        /*
+         * **吳郡 +1 年就只剩 1/4**(孫策第一件事就是取吳郡),而無錫 +1/+2 年
+         * 都是 4/4。兩座城的山賊之主,題目只能寫他真的按得住的那一座。
+         * 窗口留在 196:無錫 +2 年也還有 4/4,但**嚴白虎 196 年就死了**,
+         * 放到 197 會被 objectiveLifespan 那條硬性測試擋下(我試過一次)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['wuxi'], byYear: 196 },
       },
       secondary: [
         {
@@ -2575,9 +2581,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'gongsun',
       primary: {
         title: { zh: '白馬義從', en: 'The White Horse Volunteers' },
-        description: "Still hold Beiping and Ji in 204. Frontier troops, used to running with the steppe horse — and after Jieqiao he drew back further every year.",
-        descriptionZh: "至204年仍據北平、薊。邊地之兵,慣與胡騎相馳 —— 而界橋之後,他愈退愈深。",
-        goal: { kind: 'hold-cities', cityIds: ['beiping', 'ji'], byYear: 204 },
+        description: "Still hold Ji and Liucheng in 199. Frontier troops used to running with the steppe horse — and after Jieqiao he drew back every year, until the tower burned.",
+        descriptionZh: "至199年仍據薊、柳城。邊地之兵,慣與胡騎相馳 —— 而界橋之後,他愈退愈深;199年他就登樓自焚了。",
+        /*
+         * **第五張栽在北平上的公孫家** —— 這張盤他四輪一次也沒握住北平
+         * (連守成那幾行都沒出現)。而薊 4/4、柳城 4/4→3/4、漁陽 4/4→3/4。
+         * 窗口 204 也太長:他 199 年登易京樓自焚,收到 199(+1 年)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ji', 'liucheng'], byYear: 199 },
       },
     },
     {
@@ -2627,9 +2638,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '官渡決機', en: 'Decide It at Guandu' },
-        description: 'Destroy the Yuan Shao force by 207.',
-        descriptionZh: "於207年前擊滅袁紹。",
-        goal: { kind: 'defeat-force', forceId: 'yuan-shao', byYear: 207 },
+        description: 'Break Yuan Shao down to eleven cities by 207 — Guandu decided not who died but who could raise an army again.',
+        descriptionZh: "於207年前將袁紹逼到只剩十一城 —— 官渡決的不是誰死,是誰還能再起兵。",
+        /*
+         * 「擊滅袁紹」四輪 0 中,而逐輪量期限內袁紹最少剩幾城:2、3、11、6 ——
+         * **壓得下去,但四輪裡兩輪壓不到底**。改 break-force,門檻取最少值的
+         * 上緣 11(開局 16 城,上限 15,兩道邊界交得到)。徹底翦除留在次要。
+         */
+        goal: { kind: 'break-force', forceId: 'yuan-shao', maxCities: 11, byYear: 207 },
       },
     },
     {
@@ -2655,9 +2671,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-biao',
       primary: {
         title: { zh: '荊襄之守', en: 'The Jing Heartland' },
-        description: "Still hold Xiangyang, Jiangling and Jiangxia in 206 — the nine commanderies were never all yours at once.",
-        descriptionZh: "至206年仍據襄陽、江陵、江夏 —— 荊襄九郡從來沒有同時全在你手上。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 206 },
+        description: 'Still hold Xincheng and Changsha in 203 — the nine commanderies of Jing were never all yours at once.',
+        descriptionZh: "至203年仍據新城、長沙 —— 荊襄九郡從來沒有同時全在你手上。",
+        /*
+         * **第五張栽在襄陽上的劉表**(這張 +2 年 1/4、+4 年 0/4),
+         * 而江夏也只有 1~3/4、新野與長阪坡是「每個檢查點都已失去」。
+         * 撐得住的是新城 3/4 3/4 3/4 與長沙 3/4 3/4 2/4。窗口 206 → 203。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['xincheng', 'changsha'], byYear: 203 },
       },
       secondary: [
         {
