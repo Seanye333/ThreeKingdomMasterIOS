@@ -81,9 +81,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'yan',
       primary: {
         title: { zh: '築黃金台', en: 'The Terrace of Gold' },
-        description: "Still hold Ji and Beiping in 197 — pile gold on a terrace and the able will come; Linzi is what comes after.",
-        descriptionZh: "至197年仍據薊、北平 —— 築台置金以招賢,樂毅郭隗劇辛皆自此來;臨淄是那之後的事。",
-        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 197 },
+                description: 'Still hold Liaodong, Xiangping and Lelang in 184 — the terrace of gold drew Yue Yi, Guo Wei and Ju Xin; Linzi comes later.',
+        descriptionZh: "至184年仍據遼東、襄平、樂浪 —— 築台置金以招賢,樂毅郭隗劇辛皆自此來;臨淄是那之後的事。",
+        /*
+         * 窗口原本 197 —— **開局 +19 年**。而薊與北平正是燕最先丟的兩座
+         * (第三張量到同一件事:田單 +7 年 0/4、秦滅六國 1/4、這張連前六名都排不進),
+         * 遼東 / 襄平 / 樂浪 / 帶方 則是 **+10 年還全是 4/4**。
+         * 燕守得住的一直是最東邊那一段 —— 三張盤同一個答案。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['liaodong', 'xiangping', 'lelang'], byYear: 184 },
       },
       secondary: [
         {
@@ -144,9 +150,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'han',
       primary: {
         title: { zh: '勁弩勁韓', en: 'The Crossbows of Han' },
-        description: 'Still hold Luoyang and Xuchang in 198 — smallest of the seven, first to be eaten.',
-        descriptionZh: "至198年仍保洛陽、許昌 —— 七雄之末,秦之近攻首當其衝。",
-        goal: { kind: 'hold-cities', cityIds: ['luoyang', 'xuchang'], byYear: 198 },
+                description: 'Still hold Luoyang in 184 — smallest of the seven, first to be eaten, and one city is what holds.',
+        descriptionZh: "至184年仍保洛陽 —— 七雄之末,秦之近攻首當其衝;守得住的只有這一座。",
+        /*
+         * 窗口原本是 198 —— **開局 +20 年**,全庫最長的幾條之一。
+         * 韓四城十年後中位還是 4(它沒崩),但只有洛陽穩:3/4 一路,
+         * 而許昌、汝南各 2/4、新野 +6 年 0/4。
+         * 「地小,守則有餘」——那就只寫守得住的那一座,窗口收到 +6 年。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['luoyang'], byYear: 184 },
       },
       secondary: [
         {
@@ -389,9 +401,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'zhao',
       primary: {
         title: { zh: '胡服騎射', en: 'Ride and Shoot' },
-        description: "Still hold Ye and Bohai in 184. He put his people in nomad coats and taught them to shoot from the saddle; the northern army is what the realm fears.",
-        descriptionZh: "至184年仍據鄴、渤海。胡服騎射以教百姓 —— 北邊之師,天下所畏。",
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'bohai'], byYear: 184 },
+                description: 'Still hold Ye and Nanpi in 184. He put the people in nomad dress and taught them to shoot from the saddle.',
+        descriptionZh: "至184年仍據鄴、南皮。胡服騎射以教百姓 —— 北邊之師,天下所畏。",
+        /*
+         * 這張的趙是長的(14 城 → 六年後中位 23),鄴也穩(4/4 4/4 3/4)——
+         * 弱的是渤海(排不進前六)。換成南皮(4/4 一路)就成立。
+         * 注意跟七雄/伊闕那兩張不同:**那兩張的鄴是弱的,這張的鄴不弱** ——
+         * 逐張量的意義就在這裡。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'nanpi'], byYear: 184 },
       },
     },
     {
