@@ -5149,9 +5149,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'dong',
       primary: {
         title: { zh: '還定關中', en: 'Guanzhong Made Whole' },
-        description: "Hold Chang'an and take Chencang by 206 — the Liang man secures his own valley first.",
-        descriptionZh: "於206年前據長安、陳倉 —— 涼州出身的人先把關中按住,兩京的事再說。",
-        goal: { kind: 'hold-cities', cityIds: ['changan', 'chencang'], byYear: 206 },
+                description: 'Still hold Chang\'an and the Wu pass in 202 — a man out of Liang holds Guanzhong first; the two capitals come later.',
+        descriptionZh: "至202年仍據長安、武關 —— 涼州出身的人先把關中按住,兩京的事再說。",
+        /*
+         * 十七路諸侯這張盤上董卓只有四城,六年後中位 2。
+         * 取陳倉 1/4,而長安 2/4、武關 2/4 一路持平、潼關 +4 年 0/4、郿 1/4。
+         * 收成他按得住的兩座、窗口 206(+6 年)收到 202(+2 年)—— 這已是上限。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['changan', 'wuguan'], byYear: 202 },
       },
       /*
        * 第一版寫的是安定(1.71),六輪 0/6 —— 安定是馬騰的城,而**馬騰的主目標
@@ -5240,9 +5245,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-biao',
       primary: {
         title: { zh: '荊襄之守', en: 'The Jing Heartland' },
-        description: 'Still hold Xiangyang, Jiangling and Jiangxia in 205.',
-        descriptionZh: "至205年仍據襄陽、江陵、江夏 —— 荊襄之心;九郡是牌匾上的話。",
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang', 'jiangling', 'jiangxia'], byYear: 205 },
+                description: 'Still hold Yiling, Xiaoting and Guilin in 205 — the heart of Jing; the nine commanderies are what the signboard says.',
+        descriptionZh: "至205年仍據夷陵、猇亭、桂林 —— 荊襄之心;九郡是牌匾上的話。",
+        /*
+         * **第六張栽在襄陽/江夏上的劉表**。這張他 16 城六年後中位 10,
+         * 而夷陵 4/4、猇亭 4/4、桂林 4/4 一路到底(公安 +4 年 0/4)。
+         * 六張盤逐一量過的結論一致:劉表守得住的是江陵以西與湘南,不是治所。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['yiling', 'xiaoting', 'guilin'], byYear: 205 },
       },
       /*
        * 原本是「守三座 + 取長沙,到 210 年」。長沙構得著(1.33),
@@ -5343,9 +5353,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '政教合一', en: 'Church and State as One' },
-        description: 'Hold Hanzhong and take Jiameng by 210.',
-        descriptionZh: "於210年前據漢中、葭萌 —— 以鬼道教民,置義舍米肉,巴漢之間他自己就是王法。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'jiameng'], byYear: 210 },
+                description: 'Still hold Sanguan in 202 — he taught the people the way of the ghosts and kept free rice at the rest-houses; Hanzhong itself did not last one checkpoint.',
+        descriptionZh: "至202年仍據散關 —— 以鬼道教民,置義舍米肉,巴漢之間他自己就是王法;而漢中連一個檢查點都沒守到。",
+        /*
+         * 第五張改的張魯盤,而這張最徹底:**漢中「每個檢查點都已失去」**,
+         * 陽平關 +4 年 0/4、巴西 +2 年就 1/4。五城六年後中位 1。
+         * 唯一撐得住的是散關 4/4 → 2/4,窗口只能給到 +2 年。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['sanguan'], byYear: 202 },
       },
       /* 成都壓力 0.62,在門檻之下;而他自走三輪有兩輪覆滅 —— 十二年的題目輪不到他。 */
       secondary: [
