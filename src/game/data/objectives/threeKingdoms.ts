@@ -490,9 +490,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 征荊州擊劉表,那是他最後一戰,也是他唯一與非盟友接壤的方向。
          * 掃除宗廟留作次要 —— 名場面該是獎賞,不是入場券。
          */
-        description: 'Take Xiangyang by 191 — Yuan Shu sent him against Liu Biao, and that road ended at Xian mountain.',
-        descriptionZh: '於191年前攻取襄陽 —— 袁術遣堅征荊州擊劉表,而這條路的盡頭是峴山。',
-        goal: { kind: 'hold-cities', cityIds: ['xiangyang'], byYear: 191 },
+                description: 'Still hold Lingling and Guiyang and take Guilin by 191 — Yuan Shu sent him against Liu Biao, and the end of that road was Mount Xian.',
+        descriptionZh: '至191年仍據零陵、桂陽並取桂林 —— 袁術遣堅征荊州擊劉表,而這條路的盡頭是峴山。',
+        /*
+         * 取襄陽四輪只有 1/4 —— 而**這正是史書寫的**:孫堅征荊州,
+         * 沒到襄陽就死在峴山。他四輪穩穩握著的是零陵 4/4、桂陽 4/4,
+         * 而取桂林也是 4/4。題目改成「守住南邊、再往南取一座」,
+         * 襄陽降為次要 —— 那是他沒做到的事。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['lingling', 'guiyang', 'guilin'], byYear: 191 },
       },
       secondary: [
         /*
