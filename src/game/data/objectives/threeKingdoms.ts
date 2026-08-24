@@ -685,9 +685,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
          * 開局四座都在他手裡,問題從來不是取,是守得住幾年。
          */
         title: { zh: '合四州之地', en: 'Four Provinces Under One Hand' },
-        description: 'Still hold Ye, Linzi, Ji and Jinyang in 205 — "lie across the north of the river and join four provinces."',
-        descriptionZh: '至205年仍據鄴、臨淄、薊、晉陽 —— 沮授說的「橫大河之北,合四州之地」。',
-        goal: { kind: 'hold-cities', cityIds: ['ye', 'linzi', 'ji', 'taiyuan'], byYear: 205 },
+                description: 'Still hold Ye and Linzi in 202 — Ju Shou\'s "span the north of the great river"; after Guandu only two of the four hold.',
+        descriptionZh: '至202年仍據鄴、臨淄 —— 沮授說的「橫大河之北,合四州之地」;而官渡之後,四州只剩兩座撐得住。',
+        /*
+         * 四座城,四輪逐城量(+2/+4/+6 年):臨淄 4/4 2/4 2/4、太原 3/4 1/4 1/4、
+         * 薊 3/4 1/4 1/4、**鄴 2/4 0/4 1/4** —— 官渡之後袁紹整個垮,
+         * 而題目要的是他垮之前的那個版圖。窗口 205(開局 +5 年)收到 202(+2 年),
+         * 城收到兩座。順帶修好文案:原文寫「晉陽」而 cityIds 是太原(同一地兩個名)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['ye', 'linzi'], byYear: 202 },
       },
       secondary: [
         {
@@ -747,9 +753,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'liu-bei',
       primary: {
         title: { zh: '一寸之地', en: 'One Foot of Ground' },
-        description: 'Hold Xiapi and Xiaopei together — keep Xu province instead of losing it a third time.',
-        descriptionZh: '同時據有下邳與小沛 —— 這一次別再把徐州丟掉。',
-        goal: { kind: 'hold-cities', cityIds: ['xiapi', 'xiaopei'], byYear: 204 },
+                description: 'Still hold Langya and Xiaopei in 202 — this time do not lose Xuzhou; Xiapi is the one that will not stay.',
+        descriptionZh: '至202年仍據琅琊、小沛 —— 這一次別再把徐州丟掉;而下邳是留不住的那一座。',
+        /*
+         * 原本沒有期限,而且挑的是**下邳** —— 四輪逐城量:下邳 1/4 一路到底、
+         * 彭城 +4 年 0/4,而琅琊 4/4 3/4 2/4、小沛 3/4 2/4 1/4。
+         * 劉備在這張盤四城六年後中位剩 1,窗口只能給到 +2 年。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['langya', 'xiaopei'], byYear: 202 },
       },
       secondary: [
         {
@@ -3625,9 +3636,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'sun',
       primary: {
         title: { zh: '襲取荊州', en: 'Seize Jing' },
-        description: 'Take Jiangling by 222 — while Guan Yu looks north.',
-        descriptionZh: "於222年前襲取江陵 —— 趁關羽北望之時。",
-        goal: { kind: 'hold-cities', cityIds: ['jiangling'], byYear: 222 },
+                description: 'Take Hefei and Linhai by 222 — Jing has to wait for Guan Yu to march north; the north bank can move now.',
+        descriptionZh: "於222年前攻取合肥、臨海 —— 荊州要等關羽北望,而江北這一頭現在就動得了。",
+        /*
+         * 「襲取江陵」+4 年只有 1/4 —— 白衣渡江要等關羽北上,而這張盤(218)
+         * 關羽還沒動。他四輪真正取得到的是**臨海 4/4 一路到底**與合肥
+         * (1/4 → 2/4 → 4/4)。襲荊州降為次要,那是 219 那張盤的題目。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['hefei', 'linhai'], byYear: 222 },
       },
       secondary: [
         {
