@@ -3144,9 +3144,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '師君治漢中', en: 'The Shijun of Hanzhong' },
-        description: "Still hold Hanzhong and Baxi in 213. Church and state in one hand, free rice and meat at the roadside lodges, and thirty years without an army passing through.",
-        descriptionZh: "至213年仍據漢中、巴西。政教合一,置義舍米肉,三十年不見兵革。",
-        goal: { kind: 'hold-cities', cityIds: ['hanzhong', 'baxi'], byYear: 213 },
+                description: "Still hold Jiameng and Baxi in 209. A church that is also a state, free rice and meat at the rest-houses, thirty years without an army passing through.",
+        descriptionZh: "至209年仍據葭萌、巴西。政教合一,置義舍米肉,三十年不見兵革。",
+        /*
+         * 第四張改的張魯盤。**漢中在這張是 1/4 一路到底**(全庫最低的一份),
+         * 而葭萌 +2 年 4/4、巴西 3/4。他四城七年後中位剩 1 ——
+         * 窗口 213(開局 +6 年)只能收到 209(+2 年)。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jiameng', 'baxi'], byYear: 209 },
       },
     },
     {
@@ -3154,9 +3159,14 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'ma-teng',
       primary: {
         title: { zh: '西涼之安', en: 'Liang Kept Quiet' },
-        description: "Still hold Wuwei and Anding in 212. The captains of Liang each hold their own walls: they come when the court summons them and mind their own business when it does not.",
-        descriptionZh: "至212年仍據武威、安定。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
-        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'anding'], byYear: 212 },
+                description: "Still hold Wuwei, Jincheng and Longxi in 212. The Liang commanders each held their own city: they came when summoned and otherwise kept to themselves.",
+        descriptionZh: "至212年仍據武威、金城、隴西。涼州諸將各據其城,朝廷徵之則來,不徵則自守。",
+        /*
+         * **安定又是它** —— 這張 +7 年 1/4,渭南那張更是「每個檢查點都已失去」。
+         * 馬騰在這張盤其實一點沒動(5 城 → 中位 5),而武威 4/4 一路、
+         * 金城 4/4 3/4 4/4、隴西 3/4 一路。換掉安定就成立。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['wuwei', 'jincheng', 'longxi'], byYear: 212 },
       },
     },
     {
