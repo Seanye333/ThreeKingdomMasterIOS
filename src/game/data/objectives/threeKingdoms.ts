@@ -2825,15 +2825,20 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'zhang-lu',
       primary: {
         title: { zh: '五斗米道', en: 'The Way of the Five Pecks' },
-        description: 'Still hold the Yangping Pass and Jiameng in 207 — thirty years of church rule and not one campaign. Chengdu is Liu Zhang\'s, and not part of this.',
-        descriptionZh: "至207年仍據陽平關、葭萌 —— 政教合一之地,三十年不見兵革。成都是劉璋的,不在此列。",
+                description: 'Still hold Jiameng in 207 — thirty years of church rule and not one campaign; on this board it is the one place he can keep.',
+        descriptionZh: "至207年仍據葭萌 —— 政教合一之地,三十年不見兵革;而在這張盤上他只按得住這一座。",
         /*
          * 「漢中」是張魯目標裡的老問題(同一句話寫在五張盤上),而在這張盤上
          * 逐城量下來:漢中 +3 年 2/4、+6 年 1/4,而**陽平關一路 2/4 沒掉**、
          * 葭萌 +3 年 3/4。張魯四城九年後中位剩 1 —— 他整個在縮,
          * 而縮到最後手裡的是那兩道關口,不是漢中本城。窗口 212(+8 年)收到 207。
          */
-        goal: { kind: 'hold-cities', cityIds: ['yangping', 'jiameng'], byYear: 207 },
+        /*
+         * 再改一次。陽平關 2/4、葭萌 3/4 —— **兩座各自過半的城疊起來仍是
+         * 擲硬幣**(第三次撞上同一堵牆:鉅鹿的魏、徐州牧的陶謙、這裡)。
+         * 張魯在這張四城九年後中位 1,只寫最穩的那一座。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['jiameng'], byYear: 207 },
       },
       secondary: [
         {
