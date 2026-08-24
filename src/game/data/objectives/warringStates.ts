@@ -1271,9 +1271,15 @@ export const OBJ_WARRINGSTATES: Record<string, ScenarioObjective[]> = {
       forceId: 'yan',
       primary: {
         title: { zh: '北土之守', en: 'The Northern Ground' },
-        description: "Still hold Ji and Beiping in 184. Yan is pressed by the tribes to the north and hemmed by Qi and Jin within: cold country and plain people.",
-        descriptionZh: "至184年仍據薊、北平。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
-        goal: { kind: 'hold-cities', cityIds: ['ji', 'beiping'], byYear: 184 },
+                description: 'Still hold Xiangping, Lelang and Daifang in 182. Yan pressed on the Man and Mo to the north and on Qi and Jin within — a cold country with plain people.',
+        descriptionZh: "至182年仍據襄平、樂浪、帶方。燕北迫蠻貊,內措齊晉 —— 苦寒而民樸。",
+        /*
+         * **第四張栽在薊/北平上的燕** —— 兩座都排不進這張盤的前六名,
+         * 而襄平 4/4 4/4 3/4、樂浪 4/4 4/4 3/4、帶方同。燕 11 城六年後中位 4:
+         * 它在崩,而崩剩下的永遠是最東邊那一段。窗口 184 → 182。
+         * 四張盤(七雄/田單/秦滅六國/長平)同一個答案,而這是最後一張。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['xiangping', 'lelang', 'daifang'], byYear: 182 },
       },
     },
     {
