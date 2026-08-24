@@ -3768,6 +3768,17 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       id: 'obj-221-shu-emperor-xianbei',
       forceId: 'xianbei',
       primary: {
+        /*
+         * ⚠ 盤面平衡,不是題目寫錯 —— 同 220、關羽守住荊州那兩條。
+         * 實測 6 輪:開局兩城,烏丸在第一個檢查點就已失去、柳城 2/6,中位 0。
+         *
+         * 把鮮卑出現的六張盤排開之後,分界線很乾淨:
+         *   **開局三城的(219 漢中王、222 夷陵)自走 3/3;
+         *     開局兩城的(220、221、關羽守住荊州)常常 0**,
+         *   而 228 街亭、229 三帝鼎立同樣兩城卻過得去 —— 差別在那兩張的魏
+         *   正忙著對蜀/對吳。
+         * 要動就是給鮮卑第三座城,那是設計決定,不在目標檔裡改。
+         */
         title: { zh: '控弦十萬', en: 'A Hundred Thousand Bows' },
         description: "Survive to 227. Kebi Neng united the steppe south of the desert and was never beaten in the field — Wang Xiong had him killed by an assassin in 235.",
         descriptionZh: "存續至227年 —— 軻比能統一漠南,終其身未嘗敗於陣前;殺死他的是幽州刺史王雄派的刺客韓龍。",
