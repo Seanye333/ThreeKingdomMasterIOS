@@ -4285,9 +4285,15 @@ export const OBJ_THREEKINGDOMS: Record<string, ScenarioObjective[]> = {
       forceId: 'cao',
       primary: {
         title: { zh: '淮南屯田', en: 'The Huainan Colonies' },
-        description: 'Still hold Hefei and Shouchun in 250 — Deng Ai\'s canals feed the front.',
-        descriptionZh: "至250年仍保合肥、壽春 —— 鄧艾開廣漕渠,淮南之田足以養兵。",
-        goal: { kind: 'hold-cities', cityIds: ['hefei', 'shouchun'], byYear: 250 },
+                description: 'Still hold Shouchun and Qiao in 250 — Deng Ai cut the Guangcao canal, and the Huainan fields could feed the army.',
+        descriptionZh: "至250年仍保壽春、譙 —— 鄧艾開廣漕渠,淮南之田足以養兵。",
+        /*
+         * **合肥是這一組裡最弱的一座**(+8 年 2/4;濡須更是 3/4 → 0/4),
+         * 而壽春 4/4 → 3/4、譙 4/4 一路、汝南 4/4 → 3/4。
+         * 魏 66 城八年後中位 53 —— 它沒崩,只是淮南前線那兩座會被吳啃。
+         * 屯田的重心本來就在壽春與淮北,不在合肥城下。
+         */
+        goal: { kind: 'hold-cities', cityIds: ['shouchun', 'qiao'], byYear: 250 },
       },
     },
     {
