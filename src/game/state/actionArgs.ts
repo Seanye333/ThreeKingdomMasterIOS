@@ -36,7 +36,8 @@ import { HONORIFICS } from '../data/honorifics';
 export type ArgWorld = Pick<
   GameState,
   'cities' | 'officers' | 'forces' | 'armies' | 'playerForceId'
-> & Partial<Pick<GameState, 'ports' | 'forts' | 'sites' | 'legions' | 'buildings' | 'lostItems' | 'destroyedItems'>>;
+> & Partial<Pick<GameState, 'ports' | 'forts' | 'sites' | 'legions' | 'buildings' | 'lostItems' | 'destroyedItems'
+  | 'popupQueue' | 'annals' | 'battleHistory' | 'tacticalBattle'>>;
 
 /** 這一局真的存在的東西,依「先自己人、再別人」排好,方便給出不同的兩個值。 */
 export interface Pools {
@@ -70,6 +71,20 @@ export interface Pools {
   customEvents: string[];
   wishes: string[];
   espionage: string[];
+  /*
+   * 物件型參數不用手捏 fixture ——**遊戲自己產出來的那一份最真**。
+   * `pushPopup(event)` 收的 PopupEvent 就在 `popupQueue` 裡、
+   * `recordAnnal(entry)` 收的 AnnalsEntry 就在 `annals` 裡。
+   *
+   * ⚠ 索引鍵是**型別名**,不是參數名。第一版用參數名,於是
+   * `addCustomEvent(event: HistoricalEvent)` 拿到了 `pushPopup` 的 PopupEvent
+   * ——兩個參數都叫 `event`,型別卻不同,當場拋
+   * `Cannot read properties of undefined (reading 'en')`。
+   * 同名不同型是常態,鍵一定要是型別。
+   * 手捏的 fixture 會跟著型別漂,而且捏出來的多半是遊戲不會產生的形狀
+   *(那正是青龍偃月刀與 dispatchExpedition 兩次踩到的東西)。
+   */
+  objects: Record<string, unknown[]>;
 }
 
 /** 這幾個集合在 store 裡有的是陣列有的是 map —— 一律取得出 id 列表。 */
@@ -182,6 +197,12 @@ export function buildPools(s: ArgWorld): Pools {
     customEvents: idsOf(s2.customEvents),
     wishes: idsOf(s2.officerWishes),
     espionage: idsOf(s2.pendingEspionage),
+    objects: {
+      PopupEvent: (s.popupQueue ?? []) as unknown[],
+      AnnalsEntry: (s.annals ?? []) as unknown[],
+      BattleDetail: (s.battleHistory ?? []) as unknown[],
+      TacticalBattle: s.tacticalBattle ? [s.tacticalBattle] : [],
+    },
   };
 }
 
@@ -281,6 +302,19 @@ export function resolveArg(
     if (!v) return { ok: false };
     return { ok: true, value: isArray ? [v] : v };
   }
+
+  // 物件型:拿遊戲自己產出來的那一份,**按型別名查**(見 Pools.objects 的說明)。
+  const typeName = /(?:import\([^)]*\)\.)?([A-Za-z0-9_]+)\s*(?:\[\])?$/.exec(
+    type.replace(/\s*\|\s*(null|undefined)\s*$/, '').trim(),
+  )?.[1];
+  const objPool = typeName ? pools.objects[typeName] : undefined;
+  if (objPool) {
+    const v = objPool[nth % Math.max(1, objPool.length)];
+    if (v === undefined) return { ok: false };
+    return { ok: true, value: v };
+  }
+  // `Partial<...>` 收得下空物件,而空 patch 本身就是合法的一次呼叫。
+  if (/^Partial</.test(type.trim())) return { ok: true, value: {} };
 
   const lit = firstLiteral(type);
   if (lit !== undefined) return { ok: true, value: lit };

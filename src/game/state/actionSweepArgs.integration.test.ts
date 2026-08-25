@@ -74,8 +74,12 @@ describe('有參 action 全掃 —— 參數取自活的戰役', () => {
     const st = useGameStore;
     const sc = SCENARIOS[0];
     st.getState().loadScenario(sc, sc.forces[0].id, 'normal');
-    // 走幾旬,好讓軍隊、報告、事件這些「有東西可操作」的狀態真的存在。
-    for (let t = 0; t < 3; t++) st.getState().endSeason();
+    /*
+     * 走十二旬 —— 不只是「有東西可操作」,更是為了讓**物件型參數有實物可取**:
+     * 彈出事件、編年、戰報這幾個集合開局都是空的,三旬也還太少。
+     * (實測:3 旬時 annals 空,12 旬有 25 筆、battleHistory 有 33 筆。)
+     */
+    for (let t = 0; t < 12; t++) st.getState().endSeason();
 
     const { sigs, unparsed } = readActionSignatures();
     const aliases = literalAliases();
