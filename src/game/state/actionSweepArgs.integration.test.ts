@@ -68,12 +68,34 @@ const SKIP = new Set<string>([
  */
 const FLOOR = 120;
 
+/**
+ * 掃三種**世界**,不是三次同一個世界。
+ *
+ * 只掃一局的話,每個 action 都只走過一次它的快樂路徑 ——
+ * 分支覆蓋因此卡在三成多:「你不是這座城的主人」「府庫不足」「還在打仗」
+ * 這些分岔一次也沒進去過。
+ *
+ * 挑的三家刻意不同型:**大國 / 中等 / 一城小號**。同一個 `raiseTroops`,
+ * 在府庫充裕的大國走的是扣錢那一支,在窮小號走的是「不夠」那一支。
+ */
+const WORLDS: Array<{ scenarioId: string; forceId: string; why: string }> = [
+  // 赤壁的曹操:48 城,府庫與人手都不缺 —— 走得到「花得起」那一支。
+  { scenarioId: 'scn-208-chibi', forceId: 'cao', why: '大國(48 城)' },
+  // 孫策定江東的孫策:**開局只有一座城** —— 走得到「不夠 / 沒有人 / 沒有鄰城」那一支。
+  { scenarioId: 'scn-195-jiangdong', forceId: 'sun', why: '一城小號' },
+  // 反董卓聯軍:十一家混戰,開局外交最複雜 —— 走得到同盟 / 互不侵犯那幾支。
+  { scenarioId: 'scn-190-anti-dong-zhuo', forceId: 'cao', why: '十一家混戰的開局外交' },
+];
+
 describe('有參 action 全掃 —— 參數取自活的戰役', () => {
-  it('每一個參數解得出來的 action 都能被呼叫,而不破壞任何不變量', () => {
+  it.each(WORLDS)('$why:每一個參數解得出來的 action 都能被呼叫,而不破壞任何不變量', ({ scenarioId, forceId }) => {
     resetTroopTracking();
     const st = useGameStore;
-    const sc = SCENARIOS[0];
-    st.getState().loadScenario(sc, sc.forces[0].id, 'normal');
+    const sc = SCENARIOS.find((x) => x.id === scenarioId);
+    expect(sc, `盤 ${scenarioId} 不見了 —— 這張表要跟著劇本改`).toBeTruthy();
+    const force = sc!.forces.find((f) => f.id === forceId);
+    expect(force, `${scenarioId} 上沒有 ${forceId} —— 這張表要跟著劇本改`).toBeTruthy();
+    st.getState().loadScenario(sc!, force!.id, 'normal');
     /*
      * 走十二旬 —— 不只是「有東西可操作」,更是為了讓**物件型參數有實物可取**:
      * 彈出事件、編年、戰報這幾個集合開局都是空的,三旬也還太少。
@@ -149,7 +171,7 @@ describe('有參 action 全掃 —— 參數取自活的戰役', () => {
     // 這幾行是這支測試的**產出**之一:覆蓋到哪裡、還差多少,寫在紀錄裡。
     // eslint-disable-next-line no-console
     console.log(
-      `[actionSweepArgs] 有參 ${withArgs.length} 個:呼叫 ${called}、跳過 ${skipped.length}`
+      `[actionSweepArgs] ${sc!.id}/${force!.id} 有參 ${withArgs.length} 個:呼叫 ${called}、跳過 ${skipped.length}`
       + `;簽名切不出來的另有 ${unparsed.length} 個(${unparsed.join(', ')})`,
     );
     if (process.env.SWEEP_SKIPS) {
