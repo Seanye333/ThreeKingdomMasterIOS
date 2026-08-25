@@ -83,9 +83,19 @@ describe('有參 action 全掃 —— 參數取自活的戰役', () => {
     const threw: string[] = [];
     const broke: string[] = [];
     const skipped: string[] = [];
+    const calledOnce = new Set<string>();
     let called = 0;
 
+    /*
+     * 跑**兩趟**。有一批 action 操作的是「本局才會長出來」的東西
+     * (`recallConvoy` 要先有輜重隊、`deleteCommandTemplate` 要先有範本),
+     * 開局那幾個集合都是空的,第一趟只能跳過。
+     * 第一趟按下去會把它們造出來,第二趟就掃得到 —— 而且造它們的是
+     * **遊戲自己的 action**,不是測試手捏的假資料。
+     */
+    for (const pass of [1, 2] as const)
     for (const sig of [...withArgs].sort((a, b) => a.name.localeCompare(b.name))) {
+      if (pass === 2 && calledOnce.has(sig.name)) continue;
       const live = st.getState() as unknown as Record<string, unknown>;
       const fn = live[sig.name];
       if (typeof fn !== 'function') { skipped.push(`${sig.name}(不在 runtime 上)`); continue; }
@@ -103,7 +113,7 @@ describe('有參 action 全掃 —— 參數取自活的戰役', () => {
         if (!r.ok) {
           if (p.optional) continue;      // 選填的解不出來就不傳
           ok = false;
-          skipped.push(`${sig.name}(${p.name}: ${p.type.slice(0, 30)})`);
+          if (pass === 2) skipped.push(`${sig.name}(${p.name}: ${p.type.slice(0, 30)})`);
           break;
         }
         args.push(r.value);
@@ -113,6 +123,7 @@ describe('有參 action 全掃 —— 參數取自活的戰役', () => {
       try {
         (fn as (...a: unknown[]) => unknown)(...args);
         called++;
+        calledOnce.add(sig.name);
       } catch (e) {
         threw.push(`${sig.name}(${args.map((a) => JSON.stringify(a)).join(', ')}): ${e instanceof Error ? e.message : String(e)}`);
         continue;

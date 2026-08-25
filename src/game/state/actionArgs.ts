@@ -31,6 +31,7 @@ import { TRIBES } from '../data/tribes';
 import { PROVINCES } from '../data/provinces';
 import { FOREIGN_REALMS } from '../data/foreignRealms';
 import { BUILDING_DEFS } from '../data/buildings';
+import { HONORIFICS } from '../data/honorifics';
 
 export type ArgWorld = Pick<
   GameState,
@@ -59,10 +60,28 @@ export interface Pools {
   forts: string[];
   sites: string[];
   legions: string[];
+  honorifics: string[];
+  /* 這幾個是**本局才會長出來**的東西(送了輜重才有輜重隊、開了游歷才有游歷)。
+     開局為空,所以掃描跑兩趟:第一趟造出它們,第二趟才掃得到 recall/cancel 那一批。 */
+  convoys: string[];
+  expeditions: string[];
+  musters: string[];
+  templates: string[];
+  customEvents: string[];
+  wishes: string[];
+  espionage: string[];
+}
+
+/** 這幾個集合在 store 裡有的是陣列有的是 map —— 一律取得出 id 列表。 */
+function idsOf(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map((x) => (x as { id?: string })?.id).filter((x): x is string => !!x);
+  if (v && typeof v === 'object') return Object.keys(v as Record<string, unknown>);
+  return [];
 }
 
 export function buildPools(s: ArgWorld): Pools {
   const me = s.playerForceId;
+  const s2 = s as unknown as Record<string, unknown>;
   const cities = Object.keys(s.cities);
   const ownCities = cities.filter((c) => s.cities[c]?.ownerForceId === me);
   const officers = Object.values(s.officers)
@@ -105,6 +124,14 @@ export function buildPools(s: ArgWorld): Pools {
     forts: Object.keys(s.forts ?? {}),
     sites: Object.keys(s.sites ?? {}),
     legions: Object.keys(s.legions ?? {}),
+    honorifics: HONORIFICS.map((h) => h.id),
+    convoys: idsOf(s2.convoys),
+    expeditions: idsOf(s2.expeditions),
+    musters: idsOf(s2.musters),
+    templates: idsOf(s2.commandTemplates),
+    customEvents: idsOf(s2.customEvents),
+    wishes: idsOf(s2.officerWishes),
+    espionage: idsOf(s2.pendingEspionage),
   };
 }
 
@@ -123,9 +150,9 @@ export function firstLiteral(type: string): string | undefined {
  * `mergeArmyInto(a, a)`、`arrangeMarriage(x, x)` 這種自我配對會炸,
  * 而那是測試餵錯,不是遊戲的錯。
  */
-const OFFICER_NAMES = /^(officerId|officerIds|targetOfficerId2?|agentOfficerId|attackerOfficerId|challengerId|championId|childOfficerId|companionId|defenderId|detachOfficerId|envoyId|envoyOfficerId|foeChampionId|foeVoiceId|heirId|loserId|masterId|mentorId|mentorOfficerId|myChampionId|myVoiceId|pupilId|slayerId|spyId|studentId|toOfficerId|tutorId|victimId|winnerId|finalistIds|captured|dead)$/;
-const CITY_NAMES = /^(cityId|fromCityId|toCityId|targetCityId|myCityId|theirCityId|nearCityId|destinationCityId)$/;
-const ARMY_NAMES = /^(armyId|targetArmyId|enemyArmyId|sourceArmyId|destArmyId|toArmyId)$/;
+const OFFICER_NAMES = /^(aId|bId|cId|targetId|parentOfficerId|officerId|officerIds|targetOfficerId2?|agentOfficerId|attackerOfficerId|challengerId|championId|childOfficerId|companionId|defenderId|detachOfficerId|envoyId|envoyOfficerId|foeChampionId|foeVoiceId|heirId|loserId|masterId|mentorId|mentorOfficerId|myChampionId|myVoiceId|pupilId|slayerId|spyId|studentId|toOfficerId|tutorId|victimId|winnerId|finalistIds|captured|dead)$/;
+const CITY_NAMES = /^(newTargetId|cityId|fromCityId|toCityId|targetCityId|myCityId|theirCityId|nearCityId|destinationCityId)$/;
+const ARMY_NAMES = /^(playerArmyId|armyId|targetArmyId|enemyArmyId|sourceArmyId|destArmyId|toArmyId)$/;
 const FORCE_NAMES = /^(forceId|targetForceId|allyForceId|foeForceId|fromForceId|brokerForceId|cultForceId|grantorForceId|loserForceId|vassalForceId|winnerForceId|forceA|forceB|inviteeForceIds)$/;
 
 const NUMBERS: Record<string, number> = {
@@ -139,6 +166,7 @@ const STRINGS: Record<string, string> = {
   zh: '測試', en: 'test', text: 'test', label: 'test', name: 'test',
   motto: 'test', eraName: '建安', dynastyTitle: '魏', key: 'test-hint',
   dateStr: '2026-01-01', track: null as unknown as string,
+  slotId: 'sweep-slot',
 };
 
 /**
@@ -191,6 +219,10 @@ export function resolveArg(
     [/^fortId$/, 'forts'],
     [/^siteId$/, 'sites'],
     [/^legionId$/, 'legions'],
+    [/^honorificId$/, 'honorifics'],
+    [/^targetConvoyId$/, 'convoys'],
+    [/^opId$/, 'espionage'],
+    [/^wishId$/, 'wishes'],
   ];
   for (const [re, key] of byPool) {
     if (!re.test(name)) continue;
