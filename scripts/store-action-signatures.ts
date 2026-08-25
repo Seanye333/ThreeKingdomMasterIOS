@@ -64,7 +64,15 @@ export function literalAliases(): Map<string, string[]> {
   for (const f of files) {
     const txt = readFileSync(f, 'utf8');
     for (const m of txt.matchAll(/export type ([A-Za-z0-9_]+)\s*=\s*([^;]+);/g)) {
-      const [, name, rhs] = m;
+      const [, name, rawRhs] = m;
+      /*
+       * 先把註解刮掉。多行聯集幾乎都長這樣:
+       *   export type ShipClass =
+       *     | 'transport'   // 運船 — moves troops across water
+       * 不刮的話切出來的是 `'transport' // 運船…`,`/^'[^']*'$/` 對不上,
+       * 整個別名就被判成「不是純字面量」而漏掉 —— 第一版就是這麼漏了十幾個。
+       */
+      const rhs = rawRhs.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
       const parts = rhs.split('|').map((p) => p.trim()).filter(Boolean);
       if (!parts.length) continue;
       const lits = parts.filter((p) => /^'[^']*'$/.test(p));
