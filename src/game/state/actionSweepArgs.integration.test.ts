@@ -78,17 +78,23 @@ const FLOOR = 120;
  * 挑的三家刻意不同型:**大國 / 中等 / 一城小號**。同一個 `raiseTroops`,
  * 在府庫充裕的大國走的是扣錢那一支,在窮小號走的是「不夠」那一支。
  */
-const WORLDS: Array<{ scenarioId: string; forceId: string; why: string }> = [
+const WORLDS: Array<{ scenarioId: string; forceId: string; seasons?: number; why: string }> = [
   // 赤壁的曹操:48 城,府庫與人手都不缺 —— 走得到「花得起」那一支。
   { scenarioId: 'scn-208-chibi', forceId: 'cao', why: '大國(48 城)' },
   // 孫策定江東的孫策:**開局只有一座城** —— 走得到「不夠 / 沒有人 / 沒有鄰城」那一支。
   { scenarioId: 'scn-195-jiangdong', forceId: 'sun', why: '一城小號' },
   // 反董卓聯軍:十一家混戰,開局外交最複雜 —— 走得到同盟 / 互不侵犯那幾支。
   { scenarioId: 'scn-190-anti-dong-zhuo', forceId: 'cao', why: '十一家混戰的開局外交' },
+  /*
+   * 走六十旬再掃 —— 前三個世界都還在開局附近,而一大批分支只有**局勢已經
+   * 發生過**才進得去:打過仗才有俘虜與傷兵、結過盟才撕得了約、
+   * 有人當上州牧才談得上考課。暖機本身就是這一格的內容。
+   */
+  { scenarioId: 'scn-200-guandu', forceId: 'cao', seasons: 60, why: '走過六十旬的中局' },
 ];
 
 describe('有參 action 全掃 —— 參數取自活的戰役', () => {
-  it.each(WORLDS)('$why:每一個參數解得出來的 action 都能被呼叫,而不破壞任何不變量', ({ scenarioId, forceId }) => {
+  it.each(WORLDS)('$why:每一個參數解得出來的 action 都能被呼叫,而不破壞任何不變量', ({ scenarioId, forceId, seasons }) => {
     resetTroopTracking();
     const st = useGameStore;
     const sc = SCENARIOS.find((x) => x.id === scenarioId);
@@ -101,7 +107,7 @@ describe('有參 action 全掃 —— 參數取自活的戰役', () => {
      * 彈出事件、編年、戰報這幾個集合開局都是空的,三旬也還太少。
      * (實測:3 旬時 annals 空,12 旬有 25 筆、battleHistory 有 33 筆。)
      */
-    for (let t = 0; t < 12; t++) st.getState().endSeason();
+    for (let t = 0; t < (seasons ?? 12); t++) st.getState().endSeason();
 
     const { sigs, unparsed } = readActionSignatures();
     const aliases = literalAliases();
