@@ -178,6 +178,7 @@ export function resolveArg(
   type: string,
   pools: Pools,
   nth: number,
+  aliases?: Map<string, string[]>,
 ): { ok: true; value: unknown } | { ok: false } {
   const isArray = /\[\]$/.test(type) || /^EntityId\[\]/.test(type);
   const pick = (arr: string[]): string | undefined => arr[nth % Math.max(1, arr.length)];
@@ -233,6 +234,20 @@ export function resolveArg(
 
   const lit = firstLiteral(type);
   if (lit !== undefined) return { ok: true, value: lit };
+
+  /*
+   * 型別別名回原始碼查:`import('../systems/law').LawSeverity` 與光禿禿的
+   * `TaxRate` 都是別處宣告的字面量聯集。抄一份到這裡會跟著實作漂,
+   * 所以查索引(`literalAliases()`)—— 型別改了取值自動跟著改,
+   * 不再是字面量聯集就查不到、於是跳過。
+   */
+  const aliasName = /(?:import\([^)]*\)\.)?([A-Za-z0-9_]+)/.exec(
+    type.replace(/\s*\|\s*(null|undefined)\s*$/, '').trim(),
+  )?.[1];
+  if (aliasName) {
+    const vals = aliases?.get(aliasName);
+    if (vals?.length) return { ok: true, value: vals[nth % vals.length] };
+  }
 
   const base = type.replace(/\s*\|\s*(null|undefined)\s*$/, '').trim();
   if (base === 'boolean') return { ok: true, value: true };

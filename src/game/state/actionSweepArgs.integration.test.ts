@@ -52,7 +52,7 @@ beforeAll(() => {
 import { useGameStore } from './store';
 import { SCENARIOS } from '../data/scenarios';
 import { assertInvariants, resetTroopTracking } from '../../test/worldInvariants';
-import { readActionSignatures } from '../../../scripts/store-action-signatures';
+import { readActionSignatures, literalAliases } from '../../../scripts/store-action-signatures';
 import { buildPools, resolveArg, type ArgWorld } from './actionArgs';
 
 /** 換掉整個世界的那幾個 —— 見檔頭。 */
@@ -78,6 +78,7 @@ describe('有參 action 全掃 —— 參數取自活的戰役', () => {
     for (let t = 0; t < 3; t++) st.getState().endSeason();
 
     const { sigs, unparsed } = readActionSignatures();
+    const aliases = literalAliases();
     const withArgs = sigs.filter((s) => s.params.length > 0 && !SKIP.has(s.name));
 
     const threw: string[] = [];
@@ -109,7 +110,7 @@ describe('有參 action 全掃 —— 參數取自活的戰役', () => {
         const kind = p.name.replace(/^(target|foe|my|to|from|source|dest|enemy)/, '').toLowerCase();
         const nth = seen.get(kind) ?? 0;
         seen.set(kind, nth + 1);
-        const r = resolveArg(p.name, p.type, pools, nth);
+        const r = resolveArg(p.name, p.type, pools, nth, aliases);
         if (!r.ok) {
           if (p.optional) continue;      // 選填的解不出來就不傳
           ok = false;
