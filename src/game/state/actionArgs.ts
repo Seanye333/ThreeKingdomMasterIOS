@@ -83,13 +83,63 @@ export function buildPools(s: ArgWorld): Pools {
   const me = s.playerForceId;
   const s2 = s as unknown as Record<string, unknown>;
   const cities = Object.keys(s.cities);
-  const ownCities = cities.filter((c) => s.cities[c]?.ownerForceId === me);
+  const ownCitiesRaw = cities.filter((c) => s.cities[c]?.ownerForceId === me);
+  /*
+   * 城池池要**把相鄰的一對排到最前面**。
+   *
+   * 一堆 action 收的是 `(fromCityId, toCityId)` —— 運糧、游歷、調兵、開商路。
+   * 隨便給兩座城,它們一律回 `{ ok:false, reason:'bad route' }`,
+   * 於是「送出去」那條路徑一次也沒被走過,連帶「召回」那一批永遠沒有東西可召。
+   * 給一對真的相鄰的城,`ok:false` 才會變成真的執行 —— 而執行才是要測的。
+   */
+  const ownSet = new Set(ownCitiesRaw);
+  /*
+   * ⚠ 光是「兩座城相鄰」還不夠 —— 參數之間要**互相對得上**。
+   *
+   * `dispatchExpedition(officerId, fromCityId, toCityId, mode)` 先是被
+   * 「bad route」擋下(兩座城不相鄰),排好相鄰之後換成
+   * 「officer not in this city」擋下 —— 因為武將池挑的人不在 from 那座城裡。
+   * (而武將的位置欄位叫 `locationCityId` 不是 `cityId`;第一版寫錯,
+   *  於是錨點永遠找不到人、靜靜地退回「只求相鄰」那條後路。)
+   *
+   * 這是青龍偃月刀那一課的第二次現身:**每個參數各自合法,組合起來仍然是
+   * 遊戲不會產生的狀態**。所以錨點要一次挑定:
+   * 一座我的城,它有一個我的武將在裡面,而且隔壁也是我的城。
+   */
+  const officersAt = new Map<string, string[]>();
+  for (const o of Object.values(s.officers)) {
+    if (o.status === 'dead' || o.forceId !== me) continue;
+    const at = (o as { locationCityId?: string }).locationCityId;
+    if (!at) continue;
+    officersAt.set(at, [...(officersAt.get(at) ?? []), o.id]);
+  }
+  let pair: [string, string] | null = null;
+  let anchorOfficer: string | null = null;
+  for (const c of ownCitiesRaw) {
+    if (!officersAt.get(c)?.length) continue;
+    const n = (s.cities[c]?.adjacentCityIds ?? []).find((x) => ownSet.has(x) && x !== c);
+    if (n) { pair = [c, n]; anchorOfficer = officersAt.get(c)![0]; break; }
+  }
+  // 退而求其次:找不到「有人駐守且隔壁也是我的」就只求相鄰。
+  if (!pair) {
+    for (const c of ownCitiesRaw) {
+      const n = (s.cities[c]?.adjacentCityIds ?? []).find((x) => ownSet.has(x) && x !== c);
+      if (n) { pair = [c, n]; break; }
+    }
+  }
+  const ownCities = pair
+    ? [pair[0], pair[1], ...ownCitiesRaw.filter((c) => c !== pair![0] && c !== pair![1])]
+    : ownCitiesRaw;
   const officers = Object.values(s.officers)
     .filter((o) => o.status !== 'dead')
     .map((o) => o.id);
-  const ownOfficers = Object.values(s.officers)
+  const ownOfficersRaw = Object.values(s.officers)
     .filter((o) => o.status !== 'dead' && o.forceId === me)
     .map((o) => o.id);
+  // 駐在錨點城裡的那個人排第一 —— 見上面的說明。
+  const ownOfficers = anchorOfficer
+    ? [anchorOfficer, ...ownOfficersRaw.filter((o) => o !== anchorOfficer)]
+    : ownOfficersRaw;
   const forces = Object.keys(s.forces);
   return {
     cities,
