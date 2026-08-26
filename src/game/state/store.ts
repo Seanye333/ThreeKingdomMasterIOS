@@ -196,6 +196,7 @@ import { trackService } from '../systems/formerLord';
 import { pruneSeats } from '../systems/hotseat';
 import { rollAIWishFlavor } from '../systems/aiWishesFlavor';
 import { appointmentBonusFor, pruneStaleAppointments, vacatePostsOf, traitRefusal, isOnCooldown } from '../systems/appointmentEffects';
+import { succeedRuler } from '../systems/aging';
 import { canPromoteToRank } from '../systems/imperialEffects';
 import { COMMAND_DEFS } from '../systems/commands';
 import { planMassMuster, musterStrain, MUSTER_GATHER_SEASONS, MUSTER_CAMPAIGN_SEASONS, type MusterOptions } from '../systems/muster';
@@ -450,6 +451,70 @@ import { loadFromSlot, saveToSlot, deleteSlot, listSlots } from './saveSlots';
 
 import type { GameStore } from './storeTypes';
 export type { GameStore };
+
+
+/**
+ * 屍體不佔職位 —— 一次性動作把人弄死之後,要把他的職位一併交出來。
+ *
+ * `executeOfficer` 早就這麼做了(那裡的註解寫著「Without this the panels showed
+ * the executed man still governing until the next 旬 swept him out」),
+ * 而其餘六個會致死的一次性 action 沒有跟上:舌戰慘敗身故、單挑被斬、
+ * 戰後處置、責罰致死、孟獲之死、劇本效果賜死。
+ *
+ * 季節結算那條路徑不需要這一層(`endSeason` 自己會掃),
+ * 差別就在**一次性動作**:它 set 完就回,沒有人替它收尾。
+ *
+ * 抓到這個的是 `actionSweepArgs` 那支掃描 —— 而且是**間歇性**的紅:
+ * 舌戰慘敗是否致死由 rng 決定,三次裡才炸一次。
+ */
+/**
+ * 一次性動作把人弄死之後的收尾:**去職 + 繼統**。
+ *
+ * `vacatedLedgers` 管職位,而君主是另一件事 —— 一個勢力可以「由屍體統率」
+ * 而所有職位帳本都乾乾淨淨。兩件都要做。
+ */
+function afterDeaths(
+  state: GameState,
+  updatedOfficers: Record<EntityId, Officer>,
+  deadIds: EntityId | EntityId[],
+): Partial<GameState> {
+  const ids = Array.isArray(deadIds) ? deadIds : [deadIds];
+  let officers = updatedOfficers;
+  let cities = state.cities;
+  let forces = state.forces;
+  for (const f of Object.values(forces)) {
+    const ruler = officers[f.rulerOfficerId];
+    if (!ruler || ruler.status !== 'dead') continue;
+    if (!ids.includes(f.rulerOfficerId)) continue;   // 只收拾這次弄死的
+    const r = succeedRuler(f, officers, cities, forces, []);
+    officers = r.officers; cities = r.cities; forces = r.forces;
+  }
+  return { officers, cities, forces, ...vacatedLedgers(state, ids) };
+}
+
+function vacatedLedgers(
+  state: GameState,
+  officerIds: EntityId | EntityId[],
+): Pick<GameState, 'appointments' | 'provinceGovernors' | 'cityDelegations'> {
+  let ledgers = {
+    appointments: state.appointments ?? [],
+    provinceGovernors: state.provinceGovernors ?? {},
+    cityDelegations: state.cityDelegations ?? {},
+  };
+  for (const id of Array.isArray(officerIds) ? officerIds : [officerIds]) {
+    const v = vacatePostsOf(id, ledgers);
+    ledgers = {
+      appointments: v.appointments,
+      provinceGovernors: v.provinceGovernors,
+      cityDelegations: v.cityDelegations,
+    };
+  }
+  return {
+    appointments: ledgers.appointments as GameState['appointments'],
+    provinceGovernors: ledgers.provinceGovernors as GameState['provinceGovernors'],
+    cityDelegations: ledgers.cityDelegations as GameState['cityDelegations'],
+  };
+}
 
 
 /**
@@ -11282,7 +11347,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         const age = state.date.year - o.birthYear;
         const outcome = routConsequence(o, age, rng);
         if (outcome === 'death') {
-          set({ officers: { ...state.officers, [officerId]: { ...o, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined } } });
+          set(afterDeaths(
+            state,
+            { ...state.officers, [officerId]: { ...o, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined } },
+            officerId,
+          ));
         } else if (outcome === 'shame') {
           set({ officers: { ...state.officers, [officerId]: withAffliction(o, { kind: 'shame', seasons: 4, charisma: -10, intelligence: -8 }) } });
         }
@@ -11572,7 +11641,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
         officers[victimId] = { ...victim, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined };
-        set({ officers });
+        set(afterDeaths(state, officers, victimId));
         // 陣斬名將 — a momentous, real death-match kill by one of your champions.
         if (killerForce && killerForce === state.playerForceId) {
           get().pushPopup({
@@ -12317,6 +12386,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
       },
       applyScenarioEffects: (effects) => {
         const state = get();
+        const slain: EntityId[] = [];   // 這一批效果賜死的人 —— 屍體不佔職位
         const player = state.forces[state.playerForceId ?? ''];
         if (!player) return;
         const officers = { ...state.officers };
@@ -12340,7 +12410,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           } else if (e.kind === 'slay' && e.targetId) {
             // 罵死 — a scripted rout that actually breaks the foe (王朗墜馬而亡).
             const o = officers[e.targetId];
-            if (o && o.status !== 'dead') officers[e.targetId] = { ...o, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined };
+            if (o && o.status !== 'dead') {
+              officers[e.targetId] = { ...o, status: 'dead', forceId: null, task: null, woundedSeasons: undefined, woundSeverity: undefined };
+              slain.push(e.targetId);
+            }
           } else if (e.kind === 'ally' && e.targetId && state.playerForceId) {
             // 游说结盟 — shift diplomacy with the target force; a decisive win
             // (amount ≥20) seals the alliance, a loss merely sours the score.
@@ -12354,7 +12427,11 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
           // 'relationship' / 'morale' / 'note' are display-only here.
         }
-        set({ officers, cities, ...(diploTouched ? { diplomacy: { ...state.diplomacy, relations } } : {}) });
+        set({
+          officers, cities,
+          ...(diploTouched ? { diplomacy: { ...state.diplomacy, relations } } : {}),
+          ...(slain.length ? vacatedLedgers(state, slain) : {}),
+        });
         // 說降來投 — a 說客 turned an enemy general to your side.
         if (defectorName) {
           get().pushPopup({
@@ -13493,9 +13570,18 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             return { ...b, damaged: true };
           });
         }
+        /*
+         * 屍體與俘虜都不佔職位 —— 戰後處置一次改掉一批人的身分,
+         * 而州牧/委任/朝職的帳本不會自己跟著動。
+         * (`endSeason` 會掃,但那是下一旬的事;面板在這一刻就已經不對了。)
+         */
+        const unseated = Object.values(titleGrant.officers)
+          .filter((o) => o.status === 'dead' || o.status === 'imprisoned')
+          .map((o) => o.id);
         set({
           officers: titleGrant.officers,
           cities,
+          ...(unseated.length ? vacatedLedgers(state, unseated) : {}),
           ...(battleSpoils.length > 0 ? { lostItems: [...state.lostItems, ...battleSpoils] } : {}),
           armies: nextArmies,
           pendingCommands: nextFieldPending,
@@ -14775,7 +14861,10 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
             };
           }
         }
-        set({ officers: officersNext });
+        set({
+          officers: officersNext,
+          ...(punishment === 'execute' ? vacatedLedgers(s0, officerId) : {}),
+        });
         const zh = punishment === 'execute'
           ? `${p.zh}${o.name.zh} —— 斬一人以警百人,三軍肅然(眾將忠誠 +${p.loyaltyOthers})。`
           : `${p.zh}${o.name.zh} —— 其忠誠 ${p.loyaltySelf}${p.loyaltyOthers ? `,眾將 +${p.loyaltyOthers}` : ''}。`;
@@ -15993,6 +16082,7 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
         }
         const chief = state.officers['meng-huo'];
         set({
+          ...(chief ? vacatedLedgers(state, 'meng-huo') : {}),
           ...(chief
             ? { officers: { ...state.officers, 'meng-huo': { ...chief, status: 'dead' as const, forceId: null, task: null } } }
             : {}),

@@ -447,7 +447,15 @@ interface SuccessionResult {
   forces: Record<EntityId, Force>;
 }
 
-function succeedRuler(
+/**
+ * 繼統 —— 君主死後由誰接手。
+ *
+ * 匯出(原本是檔內私有)是因為**一次性動作也會死君主**:舌戰慘敗身故、
+ * 單挑被斬、軍法處死。那幾條路徑不經過 `processAging`,
+ * 於是勢力會「由屍體統率」直到下一旬才被掃掉 —— 而面板在那一刻就已經不對。
+ * 抓到它的是 store 的 action 全掃(間歇性,因為是否致死由 rng 決定)。
+ */
+export function succeedRuler(
   force: Force,
   officersIn: Record<EntityId, Officer>,
   citiesIn: Record<EntityId, City>,
