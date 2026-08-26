@@ -13333,8 +13333,21 @@ const def = DEFENSE_BUILDINGS[current.buildingId!];
           }
         }
 
-        // If attacker won, city falls (taken with attacker's surviving troops).
-        if (winner === 'attacker' && target && !tb.field) {
+        /*
+         * If attacker won, city falls (taken with attacker's surviving troops).
+         *
+         * ⚠ `!tb.practice` 這一項是後補的。同一個函式裡另外兩處後果
+         * (13395 的戰功/成就、13559 的入城三選)本來就寫著 `!tb.practice`,
+         * **只有這一處漏了** —— 而這一處正是最重的:守城演習若讓「攻方」贏,
+         * 城會被判給演武用的合成勢力 `__spar__`,盤上立刻出現一座
+         * 由不存在的勢力持有的城。
+         *
+         * 目前介面不會走到(演習從 `endPracticeDrill` 收尾,不呼叫這裡),
+         * 所以這是**深度防禦**而不是線上的漏洞;但同一函式內三處後果只有兩處
+         * 設防,本身就是缺陷 —— 多一個呼叫端就會變成真的。
+         * 是 store action fuzzer 搖出來的。
+         */
+        if (winner === 'attacker' && target && !tb.field && !tb.practice) {
           const attackerCmd = tb.units.find((u) => u.side === 'attacker' && u.isCommander);
           if (attackerCmd) {
             const survivingTroops = tb.units

@@ -60,6 +60,11 @@ const SKIP = new Set<string>([
   'reset', 'loadScenario', 'observeScenario', 'startChallenge',
   // 這兩個會把 store 換成另一份存檔 / 另一種模式,同理。
   'loadFromSlot', 'importSave',
+  // `loadRandomScenario` 也是換掉整個世界 —— 是 fuzzer 找出來的漏網之魚:
+  // 它一跑,後面每個 action 都在一個隨機盤上動,而演武的 `__spar__` 力量
+  // 會留在城的 ownerForceId 上,於是報出「某城由不存在的勢力持有」。
+  // 兇手是掃描自己換了世界,不是遊戲。
+  'loadRandomScenario',
 ]);
 
 /**

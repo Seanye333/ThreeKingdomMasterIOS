@@ -305,6 +305,24 @@ export function assertInvariants(turn: number): void {
 let lastTroopTotal: number | null = null;
 
 /** Call at the top of any test that boots a new campaign. */
+/**
+ * 不丟例外的版本 —— 給 fuzzer 用。
+ *
+ * `assertInvariants` 用 vitest 的 `expect`,一違反就丟。測試要的正是那個,
+ * 但 fuzzer 要的是「記下來、繼續搖」:一輪裡可能有好幾個 action 各留一個殘局,
+ * 第一個就停等於每搖一次只看得到一件事。
+ *
+ * 共用同一份規則表,所以 fuzzer 找到的東西跟測試判的是同一件事。
+ */
+export function checkInvariants(turn = 0): string | null {
+  try {
+    assertInvariants(turn);
+    return null;
+  } catch (e) {
+    return e instanceof Error ? e.message.split('\n')[0] : String(e);
+  }
+}
+
 export function resetTroopTracking(): void {
   lastTroopTotal = null;
 }
