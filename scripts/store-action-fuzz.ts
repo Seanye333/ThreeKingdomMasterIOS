@@ -48,10 +48,25 @@ const findings = new Map<string, { kind: string; msg: string; hits: number; wher
 const st = useGameStore;
 
 for (let round = 0; round < ROUNDS; round++) {
-  // 每一輪換一張盤、換一家、換暖機長度 —— 三個維度都動,免得只搖到同一個角落。
-  const sc = SCENARIOS[round % SCENARIOS.length];
-  const force = sc.forces[round % sc.forces.length];
-  const seasons = 4 + (round % 5) * 12;
+  /*
+   * 每一輪換一張盤、換一家、換暖機長度 —— 三個維度都動,免得只搖到同一個角落。
+   *
+   * ⚠ 這裡犯過兩次同一類錯,都是「看起來在搖、其實沒動」:
+   *   一、三個維度都用 `round % n` —— 同一張盤永遠配同一家。
+   *   二、改成 `round * 7`、`round * 3` 之後**更糟**:七家的盤上
+   *       `round*7 % 7` 恆為 0,永遠是第一家;旬數 `(round*3)%6` 只在
+   *       4 與 34 之間跳。**乘一個常數不等於錯開 —— 那個常數可能與
+   *       池子大小同因數。**
+   * 所以改用雜湊:每個維度各拿 round 的一個獨立雜湊值,池子多大都不會退化。
+   */
+  const hash = (n: number, salt: number): number => {
+    let h = (n * 2654435761 + salt * 40503) >>> 0;
+    h ^= h >>> 15; h = (h * 2246822507) >>> 0; h ^= h >>> 13;
+    return h >>> 0;
+  };
+  const sc = SCENARIOS[round % SCENARIOS.length];   // 盤要輪完,所以照序走
+  const force = sc.forces[hash(round, 1) % sc.forces.length];
+  const seasons = 4 + (hash(round, 2) % 6) * 10;
   st.getState().loadScenario(sc, force.id, 'normal');
   for (let t = 0; t < seasons; t++) st.getState().endSeason();
   const where = `${sc.id}/${force.id}/${seasons}旬`;
