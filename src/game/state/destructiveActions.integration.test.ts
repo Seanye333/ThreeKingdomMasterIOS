@@ -348,3 +348,71 @@ describe('原子性 — 前置條件不足時不得半途改動', () => {
     expect(worldHash(), '對他人城池下令不得改變世界').toBe(before);
   });
 });
+
+/**
+ * ── fuzzer 找到、必須釘住的三條 ──────────────────────────────────────
+ *
+ * 這三條都是 `scripts/store-action-fuzz.ts` 搖出來的,而三條的共同點是
+ * **它們原本只在特定隨機下才會炸**:舌戰慘敗是否致死由 rng 決定,
+ * 六次裡才炸一兩次。靠掃描碰運氣抓到一次是幸運;把它釘成**確定性**的測試,
+ * 才是真的守住 —— 所以下面每一條都自己把狀態擺好、把 rng 定死,不賭。
+ */
+describe('不可逆之舉 — 一次性動作把人弄死之後的收尾', () => {
+  beforeEach(boot);
+
+  it('舌戰慘敗身故的人,不再佔著州牧與委任', () => {
+    const victim = myOfficers().find((o) => o.id !== st.getState().forces[st.getState().playerForceId!].rulerOfficerId)!;
+    const posts = installPosts(victim.id);
+    /*
+     * `routConsequence` 只讓**性烈或年過六十**的人有性命之虞
+     *(王朗策馬而出,氣血上湧墜馬而亡);隨手抓一個人來罵只會回 'none',
+     * 那樣這條測試會靜靜地什麼都沒測到。所以先把年紀擺到六十五,
+     * 再把 rng 定死回 0 —— 兩個條件都不賭。
+     */
+    st.setState({ officers: { ...st.getState().officers,
+      [victim.id]: { ...st.getState().officers[victim.id], birthYear: st.getState().date.year - 65 } } });
+    st.getState().debateRout(victim.id, () => 0);
+    expect(st.getState().officers[victim.id].status, '這一條要的是「他真的死了」的那條路徑').toBe('dead');
+    expectPostsVacated('舌戰慘敗', victim.id, posts);
+    expectNoDanglingPosts('舌戰慘敗');
+    assertInvariants(0);
+  });
+
+  it('舌戰慘敗身故的若是君主,勢力要有新主而不是由屍體統率', () => {
+    const s = st.getState();
+    const pid = s.playerForceId!;
+    const rulerId = s.forces[pid].rulerOfficerId;
+    expect(myOfficers().length, '要有人可以繼統').toBeGreaterThan(1);
+    // 同上:年紀擺到六十五 + rng 定死,才走得到「身故」那一支。
+    st.setState({ officers: { ...s.officers,
+      [rulerId]: { ...s.officers[rulerId], birthYear: s.date.year - 65 } } });
+    st.getState().debateRout(rulerId, () => 0);
+    const after = st.getState();
+    expect(after.officers[rulerId].status, '這一條要的是君主真的死了').toBe('dead');
+    const newRuler = after.forces[pid]?.rulerOfficerId;
+    if (newRuler) {
+      expect(after.officers[newRuler]?.status, `勢力 ${pid} 仍由屍體統率`).not.toBe('dead');
+    }
+    expectNoDanglingPosts('君主舌戰慘敗');
+    assertInvariants(0);
+  });
+
+  it('守城演習即使判「攻方勝」,城也不會易主', () => {
+    const s = st.getState();
+    const pid = s.playerForceId!;
+    const city = Object.values(s.cities).find(
+      (c) => c.ownerForceId === pid
+        && Object.values(s.officers).some((o) => o.locationCityId === c.id && o.forceId === pid && IS_LIVE(o)),
+    );
+    if (!city) return;
+    const started = st.getState().startPracticeBattle?.(city.id);
+    expect(started, '演習沒開起來的話,這條測試等於沒測').toBe(true);
+    const tb = st.getState().tacticalBattle!;
+    expect(tb.practice, '開起來的必須是演習').toBe(true);
+    // 這正是 fuzzer 走到的那一步:演習的場面被當成真的會戰去結算。
+    st.getState().applyTacticalResolution([], [], 0, 'attacker');
+    expect(st.getState().cities[city.id].ownerForceId,
+      '演習判攻方勝就把城送給了合成的演武勢力').toBe(pid);
+    assertInvariants(0);
+  });
+});
